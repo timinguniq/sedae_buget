@@ -1,0 +1,26 @@
+abstract final class CImages {
+  static const add = 'asset/image/add.png';
+  static const defaultUserAvatar = 'asset/image/default_user_avatar.png';
+  static const emptyData = 'asset/image/empty_data.png';
+  static const emptyEvent = 'asset/image/empty_event.png';
+  static const emptyPoint = 'asset/image/empty_point.png';
+  static const follow = 'asset/image/follow.svg';
+  static const highlight1 = 'asset/image/highlight1.png';
+  static const highlight2 = 'asset/image/highlight2.png';
+  static const highlight3 = 'asset/image/highlight3.png';
+  static const highlight4 = 'asset/image/highlight4.png';
+  static const lockContent = 'asset/image/lock_content.png';
+  static const logo = 'asset/image/logo.svg';
+  static const logoWhite = 'asset/image/logo_white.svg';
+  static const noResultFound = 'asset/image/no_result_found.png';
+  static const onboarding1 = 'asset/image/onboarding1.png';
+  static const onboarding2 = 'asset/image/onboarding2.png';
+  static const onboarding3 = 'asset/image/onboarding3.png';
+  static const profileBorder = 'asset/image/profile_border.svg';
+  static const voteHighlight1 = 'asset/image/vote_highlight1.svg';
+  static const voteHighlight2 = 'asset/image/vote_highlight2.svg';
+  static const welcome = 'asset/image/welcome.png';
+  static const allowNotification = 'asset/image/allow_notification.svg';
+  static const allowNotificationGuideIos = 'asset/image/allow_notification_guide_ios.svg';
+  static const allowNotificationGuideAos = 'asset/image/allow_notification_guide_aos.svg';
+}
