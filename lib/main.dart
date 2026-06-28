@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:sedae_budget/presentation/presentation.dart';
+import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -24,14 +25,19 @@ Future<void> main() async {
 
       await initializeDateFormatting();
       await dotenv.load();
+      configureBudgetDependencies();
 
       //await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-      FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-      await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
-      await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(!kDebugMode);
+      try {
+        FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
+        await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
+        await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(!kDebugMode);
 
-      await RemoteConfig.initialize();
+        await RemoteConfig.initialize();
+      } catch (e, s) {
+        _logger.w('Firebase/RemoteConfig unavailable (local boot): $e', stackTrace: s);
+      }
 
       await SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
@@ -51,7 +57,11 @@ Future<void> main() async {
     }, (e, s) {
       // 글로벌 에러 핸들링
       _logger.e('Unhandled Exception:', error: e, stackTrace: s);
-      FirebaseCrashlytics.instance.recordError(e, s, fatal: true);
+      try {
+        FirebaseCrashlytics.instance.recordError(e, s, fatal: true);
+      } catch (_) {
+        // Crashlytics unavailable (local boot); ignore.
+      }
     }),
   );
 }
