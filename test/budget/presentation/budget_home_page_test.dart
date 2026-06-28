@@ -3,11 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart' as provider;
+import 'package:sedae_budget/data/peer/mock_peer_stats_source.dart';
 import 'package:sedae_budget/domain/budget/transaction_repository.dart';
 import 'package:sedae_budget/domain/budget/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/budget_home.page.dart';
+import 'package:sedae_budget/presentation/page/compare/peer_provider.dart';
 
 class _FakeRepo implements TransactionRepository {
   @override
@@ -25,7 +27,11 @@ void main() {
     await tester.pumpWidget(provider.ChangeNotifierProvider(
       create: (_) => ThemeService(),
       child: ProviderScope(
-        overrides: [transactionUsecaseProvider.overrideWithValue(TransactionUsecase(_FakeRepo()))],
+        overrides: [
+          transactionUsecaseProvider.overrideWithValue(TransactionUsecase(_FakeRepo())),
+          // 홈 테스트를 또래/프로필/SharedPreferences 의존에서 격리(고정 30대 목업).
+          peerStatsProvider.overrideWithValue(MockPeerStatsSource().forGroup(AgeGroup.thirties)),
+        ],
         child: MaterialApp(home: const BudgetHomePage()),
       ),
     ));

@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
+import 'package:sedae_budget/presentation/page/budget/widget/peer_rank_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/summary_hero_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/transaction_tile.dart';
+import 'package:sedae_budget/presentation/page/compare/peer_provider.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 class BudgetHomePage extends ConsumerWidget {
@@ -15,6 +17,7 @@ class BudgetHomePage extends ConsumerWidget {
     final month = ref.watch(selectedMonthProvider);
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
     final usecase = ref.read(transactionUsecaseProvider);
+    final peer = ref.watch(peerStatsProvider);
 
     return DefaultLayout(
       child: Padding(
@@ -35,7 +38,9 @@ class BudgetHomePage extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('불러오기 실패: $e', style: context.typo.body2W400)),
             data: (txs) => ListView(children: [
-              SummaryHeroCard(expense: usecase.totalExpense(txs), income: usecase.totalIncome(txs)),
+              SummaryHeroCard(expense: usecase.totalExpense(txs), income: usecase.totalIncome(txs), peerAvgExpense: peer.avgMonthlyExpense),
+              const SizedBox(height: 13),
+              PeerRankCard(stats: peer, myExpense: usecase.totalExpense(txs)),
               const SizedBox(height: 13),
               GestureDetector(
                 onTap: () => context.push(RoutePath.categoryAnalysis.path),
