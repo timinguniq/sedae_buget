@@ -4,6 +4,8 @@ enum RoutePath {
   /// splash
   splash('/splash'),
 
+  onboarding('/onboarding'),
+
   /// budget tabs
   budgetHome('/budget'),
   compare('/compare'),

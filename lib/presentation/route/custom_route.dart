@@ -4,6 +4,7 @@ import 'package:sedae_budget/presentation/page/budget/budget_home.page.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart';
 import 'package:sedae_budget/presentation/page/budget/category_analysis.page.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart';
+import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -27,6 +28,7 @@ final router = GoRouter(
   initialLocation: RoutePath.splash.path,
   routes: [
     GoRoute(path: RoutePath.splash.path, builder: (_, _) => const SplashPage()),
+    GoRoute(path: RoutePath.onboarding.path, builder: (_, _) => const OnboardingFlowPage()),
     StatefulShellRoute.indexedStack(
       builder: (_, _, shell) => MainShell(navigationShell: shell),
       branches: [
