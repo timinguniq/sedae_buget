@@ -63,4 +63,7 @@ lib/firebase_options.dart
 
 # docs
 /docs/
+.claude/
+CLAUDE.md
+
 
