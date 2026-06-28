@@ -7,6 +7,7 @@ abstract class Typo {
     required this.medium,
     required this.semiBold,
     required this.bold,
+    required this.extraBold,
   });
 
   final String name;
@@ -14,6 +15,7 @@ abstract class Typo {
   final FontWeight medium;
   final FontWeight semiBold;
   final FontWeight bold;
+  final FontWeight extraBold;
 }
 
 class Pretendard implements Typo {
@@ -33,4 +35,7 @@ class Pretendard implements Typo {
 
   @override
   FontWeight get bold => FontWeight.w700;
+
+  @override
+  FontWeight get extraBold => FontWeight.w800;
 }

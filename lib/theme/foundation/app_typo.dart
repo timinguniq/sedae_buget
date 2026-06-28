@@ -14,6 +14,7 @@ class AppTypo {
   late FontWeight medium = typo.medium;
   late FontWeight semiBold = typo.semiBold;
   late FontWeight bold = typo.bold;
+  late FontWeight extraBold = typo.extraBold;
 
   /// Font Color
   final Color fontColor;
@@ -144,5 +145,11 @@ class AppTypo {
   late final TextStyle titleReadingW400 = titleReading;
   late final TextStyle titleReadingW600 = titleReading.copyWith(fontWeight: typo.semiBold);
   late final TextStyle titleReadingW700 = titleReading.copyWith(fontWeight: typo.bold);
+
+  /// 큰 금액 표시용 (디자인 display-800). 예: 홈 총지출 ₩1,920,000
+  late final TextStyle amountDisplay = textBasic.copyWith(
+    fontSize: 31, height: 1.0, letterSpacing: -0.9, fontWeight: typo.extraBold,
+  );
+  late final TextStyle amountDisplaySmall = amountDisplay.copyWith(fontSize: 25, letterSpacing: -0.5);
 
 }
