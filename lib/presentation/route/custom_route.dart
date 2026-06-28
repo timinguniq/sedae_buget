@@ -4,6 +4,7 @@ import 'package:sedae_budget/presentation/page/budget/budget_home.page.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart';
 import 'package:sedae_budget/presentation/page/budget/category_analysis.page.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart';
+import 'package:sedae_budget/presentation/page/compare/compare.page.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
 import 'package:sedae_budget/presentation/page/login/login.page.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +35,7 @@ final router = GoRouter(
       builder: (_, _, shell) => MainShell(navigationShell: shell),
       branches: [
         StatefulShellBranch(routes: [GoRoute(path: RoutePath.budgetHome.path, builder: (_, _) => const BudgetHomePage())]),
-        StatefulShellBranch(routes: [GoRoute(path: RoutePath.compare.path, builder: (_, _) => const ComingSoonPlaceholder(title: '세대 비교'))]),
+        StatefulShellBranch(routes: [GoRoute(path: RoutePath.compare.path, builder: (_, _) => const ComparePage())]),
         StatefulShellBranch(routes: [GoRoute(path: RoutePath.history.path, builder: (_, _) => const TransactionListPage())]),
         StatefulShellBranch(routes: [GoRoute(path: RoutePath.report.path, builder: (_, _) => const ComingSoonPlaceholder(title: '리포트'))]),
       ],
