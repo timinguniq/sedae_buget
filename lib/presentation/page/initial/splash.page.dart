@@ -14,47 +14,47 @@ class SplashPage extends ConsumerStatefulWidget {
   ConsumerState<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends ConsumerState<SplashPage> with SingleTickerProviderStateMixin {
+class _SplashPageState extends ConsumerState<SplashPage> {
   static const _animationTime = 2000;
-
-  late AnimationController controller;
-  late Animation<double> fadeIn;
-  late Animation<Offset> moveUp;
 
   @override
   void initState() {
     super.initState();
-    controller = AnimationController(duration: const Duration(milliseconds: _animationTime), vsync: this);
-    fadeIn = Tween<double>(begin: 0, end: 1).animate(
-      CurvedAnimation(parent: controller, curve: const Interval(0, 500 / _animationTime)),
-    );
-
-    moveUp = Tween<Offset>(begin: const Offset(0, 3), end: Offset.zero).animate(
-      CurvedAnimation(parent: controller, curve: const Interval(0, 700 / _animationTime, curve: Curves.easeInOutSine)),
-    );
-
-    controller.forward();
     WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(appInitialize()));
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return DefaultLayout(
-      backgroundColor: context.color.primary.normal,
-      child: Center(
-        child: FadeTransition(
-          opacity: fadeIn,
-          child: SlideTransition(
-            position: moveUp,
-            child: const MascotDongle(size: 88, faceColor: Colors.white),
+      backgroundColor: context.color.background.normal,
+      child: Stack(
+        children: [
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const LottieAsset(CLotties.splashIcon, width: 134, height: 134, repeat: false),
+                const SizedBox(height: 28),
+                Text('세대 가계부', style: context.typo.title3.copyWith(
+                  fontWeight: context.typo.extraBold,
+                  letterSpacing: -0.6,
+                  color: context.color.label.normal,
+                )),
+                const SizedBox(height: 7),
+                Text('내 또래는 얼마나 쓸까?', style: context.typo.caption1W600.copyWith(
+                  color: context.color.label.assistive,
+                )),
+              ],
+            ),
           ),
-        ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 46),
+              child: const LottieAsset(CLotties.splashLoadingDots, height: 20, repeat: true),
+            ),
+          ),
+        ],
       ),
     );
   }
