@@ -24,7 +24,7 @@ class _SettingPageState extends State<SettingPage> {
     return DefaultLayout(
       appBar: AppBar(title: const Text('설정')),
       child: ListView(padding: const EdgeInsets.all(20), children: [
-        const GuestProfileCard(),
+        const ProfileCard(),
         const SizedBox(height: 20),
         Text('화면', style: context.typo.label2W600.copyWith(color: context.color.label.assistive)),
         const SizedBox(height: 8),

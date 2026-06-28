@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart' as provider;
@@ -15,9 +16,11 @@ void main() {
 
   testWidgets('renders and dark chip switches theme mode', (tester) async {
     final service = ThemeService();
-    await tester.pumpWidget(provider.ChangeNotifierProvider<ThemeService>.value(
-      value: service,
-      child: const MaterialApp(home: SettingPage()),
+    await tester.pumpWidget(ProviderScope(
+      child: provider.ChangeNotifierProvider<ThemeService>.value(
+        value: service,
+        child: const MaterialApp(home: SettingPage()),
+      ),
     ));
     await tester.pump();
 
