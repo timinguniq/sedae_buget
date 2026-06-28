@@ -1,4 +1,3 @@
-import 'package:sedae_budget/entity/budget/transaction.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 abstract class TransactionRepository {

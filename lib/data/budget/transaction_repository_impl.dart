@@ -1,6 +1,5 @@
 import 'package:sedae_budget/data/budget/transaction_local_data_source.dart';
 import 'package:sedae_budget/domain/budget/transaction_repository.dart';
-import 'package:sedae_budget/entity/budget/transaction.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 class TransactionRepositoryImpl implements TransactionRepository {
