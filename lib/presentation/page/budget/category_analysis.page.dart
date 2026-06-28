@@ -3,15 +3,24 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
+import 'package:sedae_budget/presentation/page/compare/peer_provider.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-class CategoryAnalysisPage extends ConsumerWidget {
+class CategoryAnalysisPage extends ConsumerStatefulWidget {
   const CategoryAnalysisPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<CategoryAnalysisPage> createState() => _CategoryAnalysisPageState();
+}
+
+class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
+  bool _showPeer = false;
+
+  @override
+  Widget build(BuildContext context) {
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
     final usecase = ref.read(transactionUsecaseProvider);
+    final peer = ref.watch(peerStatsProvider);
     final won = NumberFormat.decimalPattern('ko');
     return DefaultLayout(
       appBar: AppBar(title: const Text('카테고리 분석')),
@@ -29,9 +38,18 @@ class CategoryAnalysisPage extends ConsumerWidget {
           final restSum = entries.skip(6).fold<int>(0, (s, e) => s + e.value);
           final labels = [...top.map((e) => e.key.label), if (restSum > 0) '기타'];
           final values = [...top.map((e) => e.value), if (restSum > 0) restSum];
+          // BudgetCategory per row (null for '기타' rollup)
+          final cats = [...top.map((e) => e.key), if (restSum > 0) null];
           final colors = [context.color.primary.normal, ...Palette.neutralRamp];
           final total = values.fold<int>(0, (s, v) => s + v);
           return ListView(padding: const EdgeInsets.all(20), children: [
+            // 또래 비교 토글
+            Row(children: [
+              Text('또래 비교', style: context.typo.body2W500.copyWith(color: context.color.label.normal)),
+              const Spacer(),
+              Switch(value: _showPeer, onChanged: (v) => setState(() => _showPeer = v)),
+            ]),
+            const SizedBox(height: 12),
             Center(child: SizedBox(
               width: 180, height: 180,
               child: Stack(alignment: Alignment.center, children: [
@@ -43,9 +61,14 @@ class CategoryAnalysisPage extends ConsumerWidget {
               ]),
             )),
             const SizedBox(height: 20),
-            ...List.generate(labels.length, (i) => CategoryRow(
-                label: labels[i], amount: values[i],
-                color: colors[i % colors.length], percent: values[i] / total)),
+            ...List.generate(labels.length, (i) {
+              final cat = cats[i];
+              final peerAmt = (_showPeer && cat != null) ? peer.avgByCategory[cat] : null;
+              return CategoryRow(
+                  label: labels[i], amount: values[i],
+                  color: colors[i % colors.length], percent: values[i] / total,
+                  peerAmount: peerAmt);
+            }),
           ]);
         },
       ),
