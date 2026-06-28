@@ -19,6 +19,12 @@ class _FakeDataSource implements TransactionLocalDataSource {
     if (throwOnGet) throw Exception('db error');
     return store;
   }
+
+  @override
+  Future<List<Transaction>> getRange(DateTime start, DateTime end) async {
+    if (throwOnGet) throw Exception('db error');
+    return store;
+  }
 }
 
 void main() {

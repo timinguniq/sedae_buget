@@ -31,6 +31,9 @@ class TransactionUsecase {
   Future<Result<List<Transaction>>> getMonth(int year, int month) =>
       _repo.getMonth(year, month);
 
+  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) =>
+      _repo.getRange(start, end);
+
   Map<BudgetCategory, int> categorySummary(List<Transaction> txs) {
     final map = <BudgetCategory, int>{};
     for (final t in txs.where((t) => t.type == TransactionType.expense)) {

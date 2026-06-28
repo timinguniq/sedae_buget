@@ -15,6 +15,10 @@ class _FakeRepo implements TransactionRepository {
   @override
   Future<Result<List<Transaction>>> getMonth(int year, int month) async =>
       const Result.success([]);
+
+  @override
+  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
+      const Result.success([]);
 }
 
 Transaction expense(int amount, int categoryId) => Transaction.create(

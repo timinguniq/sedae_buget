@@ -16,6 +16,9 @@ class _CapturingRepo implements TransactionRepository {
   Future<Result<Transaction>> upsert(Transaction tx) async { saved = tx; return Result.success(tx); }
   @override
   Future<Result<List<Transaction>>> getMonth(int y, int m) async => const Result.success([]);
+  @override
+  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
+      const Result.success([]);
 }
 
 void main() {

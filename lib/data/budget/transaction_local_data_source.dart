@@ -7,6 +7,7 @@ import 'package:sedae_budget/entity/budget/transaction_type.dart';
 abstract class TransactionLocalDataSource {
   Future<void> upsert(Transaction tx);
   Future<List<Transaction>> getMonth(int year, int month);
+  Future<List<Transaction>> getRange(DateTime start, DateTime end);
 }
 
 class DriftTransactionLocalDataSource implements TransactionLocalDataSource {
@@ -22,6 +23,12 @@ class DriftTransactionLocalDataSource implements TransactionLocalDataSource {
     final start = DateTime(year, month);
     final end = DateTime(year, month + 1); // 12월이면 다음 해 1월로 자동 보정
     final rows = await _dao.rowsForMonth(start, end);
+    return rows.map(_toDomain).toList();
+  }
+
+  @override
+  Future<List<Transaction>> getRange(DateTime start, DateTime end) async {
+    final rows = await _dao.rowsInRange(start, end);
     return rows.map(_toDomain).toList();
   }
 

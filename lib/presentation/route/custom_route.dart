@@ -7,6 +7,7 @@ import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart
 import 'package:sedae_budget/presentation/page/compare/compare.page.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
 import 'package:sedae_budget/presentation/page/login/login.page.dart';
+import 'package:sedae_budget/presentation/page/report/report.page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -37,7 +38,7 @@ final router = GoRouter(
         StatefulShellBranch(routes: [GoRoute(path: RoutePath.budgetHome.path, builder: (_, _) => const BudgetHomePage())]),
         StatefulShellBranch(routes: [GoRoute(path: RoutePath.compare.path, builder: (_, _) => const ComparePage())]),
         StatefulShellBranch(routes: [GoRoute(path: RoutePath.history.path, builder: (_, _) => const TransactionListPage())]),
-        StatefulShellBranch(routes: [GoRoute(path: RoutePath.report.path, builder: (_, _) => const ComingSoonPlaceholder(title: '리포트'))]),
+        StatefulShellBranch(routes: [GoRoute(path: RoutePath.report.path, builder: (_, _) => const ReportPage())]),
       ],
     ),
     GoRoute(path: RoutePath.transactionEdit.path, builder: (_, state) =>

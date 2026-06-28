@@ -30,4 +30,16 @@ class TransactionRepositoryImpl implements TransactionRepository {
       );
     }
   }
+
+  @override
+  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async {
+    try {
+      final list = await _local.getRange(start, end);
+      return Result.success(list);
+    } catch (e) {
+      return Result.failure(
+        ErrorResult(resultCode: 'LOCAL_DB_ERROR', message: e.toString()),
+      );
+    }
+  }
 }

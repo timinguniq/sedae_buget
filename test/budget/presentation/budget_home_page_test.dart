@@ -19,6 +19,9 @@ class _FakeRepo implements TransactionRepository {
         Transaction.create(amount: 12000, categoryId: 7, date: DateTime(y, m, 10),
             type: TransactionType.expense, memo: '택시'),
       ]);
+  @override
+  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
+      const Result.success([]);
 }
 
 void main() {

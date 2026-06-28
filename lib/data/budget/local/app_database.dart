@@ -40,7 +40,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
       into(transactions).insertOnConflictUpdate(row);
 
   /// [start, end) 범위 + 미삭제만, 최신순.
-  Future<List<TransactionRow>> rowsForMonth(DateTime start, DateTime end) {
+  Future<List<TransactionRow>> rowsInRange(DateTime start, DateTime end) {
     return (select(transactions)
           ..where((t) =>
               t.date.isBiggerOrEqualValue(start) &
@@ -49,4 +49,7 @@ class TransactionDao extends DatabaseAccessor<AppDatabase>
           ..orderBy([(t) => OrderingTerm(expression: t.date, mode: OrderingMode.desc)]))
         .get();
   }
+
+  Future<List<TransactionRow>> rowsForMonth(DateTime start, DateTime end) =>
+      rowsInRange(start, end);
 }
