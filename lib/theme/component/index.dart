@@ -3,3 +3,5 @@ export 'icon/index.dart';
 export 'image/index.dart';
 export 'indicator/index.dart';
 export 'lottie/index.dart';
+export 'mascot/index.dart';
+export 'donut/index.dart';

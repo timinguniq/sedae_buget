@@ -61,3 +61,6 @@ lib/firebase_options.dart
 # screenshots
 /screenshots
 
+# docs
+/docs/
+

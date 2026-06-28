@@ -11,6 +11,7 @@ class LightTheme implements AppTheme {
       normal: Palette.primaryNormal,
       strong: Palette.primaryStrong,
       heavy: Palette.primaryHeavy,
+      tint: Palette.coralTint,
     ),
     label: LabelColorType(
       normal: Palette.labelNormal,
@@ -23,6 +24,7 @@ class LightTheme implements AppTheme {
     ),
     background: BackgroundColorType(
       normal: Palette.backgroundNormal,
+      surface: Palette.surface,
       alternative: Palette.backgroundAlternative,
     ),
     line: LineColorType(
@@ -73,11 +75,8 @@ class LightTheme implements AppTheme {
 
   @override
   AppDeco deco = const AppDeco(
-    shadow: [
-      BoxShadow(
-        color: Palette.materialScrim13,
-        blurRadius: 35,
-      ),
-    ],
+    shadow: [BoxShadow(color: Color(0x122B2724), blurRadius: 34, offset: Offset(0, 12))],
+    cardShadow: [BoxShadow(color: Color(0x122B2724), blurRadius: 34, offset: Offset(0, 12))],
+    coralShadow: [BoxShadow(color: Color(0x42F2603C), blurRadius: 26, offset: Offset(0, 12))],
   );
 }

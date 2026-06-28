@@ -118,3 +118,20 @@ void _manager() {
 
    */
 }
+
+/// Phase 1 로컬 가계부 의존성. Firebase 없이 독립 실행 가능.
+void configureBudgetDependencies() {
+  if (locator.isRegistered<TransactionUsecase>()) return;
+  final db = AppDatabase();
+  locator
+    ..registerSingleton<AppDatabase>(db)
+    ..registerSingleton<TransactionLocalDataSource>(
+      DriftTransactionLocalDataSource(db.transactionDao),
+    )
+    ..registerSingleton<TransactionRepository>(
+      TransactionRepositoryImpl(locator<TransactionLocalDataSource>()),
+    )
+    ..registerSingleton<TransactionUsecase>(
+      TransactionUsecase(locator<TransactionRepository>()),
+    );
+}
