@@ -1,10 +1,10 @@
 {
     "name": "세대 가계부",
-    "short_name": "세대 가계부",
+    "short_name": "세대가계부",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
+    "background_color": "#F2603C",
+    "theme_color": "#F2603C",
     "description": "A new Flutter project.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
