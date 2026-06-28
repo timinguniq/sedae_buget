@@ -4,6 +4,19 @@ enum RoutePath {
   /// splash
   splash('/splash'),
 
+  /// budget tabs
+  budgetHome('/budget'),
+  compare('/compare'),
+  history('/history'),
+  report('/report'),
+
+  /// budget detail (pushed)
+  transactionEdit('/budget/edit'),
+  categoryAnalysis('/budget/category'),
+
+  /// setting
+  setting('/setting'),
+
   ;
 
   const RoutePath(this.path);
