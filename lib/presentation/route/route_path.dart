@@ -19,6 +19,8 @@ enum RoutePath {
   /// setting
   setting('/setting'),
 
+  login('/login'),
+
   ;
 
   const RoutePath(this.path);

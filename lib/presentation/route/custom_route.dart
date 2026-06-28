@@ -5,6 +5,7 @@ import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart
 import 'package:sedae_budget/presentation/page/budget/category_analysis.page.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
+import 'package:sedae_budget/presentation/page/login/login.page.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -42,6 +43,7 @@ final router = GoRouter(
         TransactionEditPage(existing: state.extra as Transaction?)),
     GoRoute(path: RoutePath.categoryAnalysis.path, builder: (_, _) => const CategoryAnalysisPage()),
     GoRoute(path: RoutePath.setting.path, builder: (_, _) => const SettingPage()),
+    GoRoute(path: RoutePath.login.path, builder: (_, _) => const LoginPage()),
   ],
   debugLogDiagnostics: true,
   observers: [
