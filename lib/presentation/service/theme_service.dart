@@ -3,31 +3,38 @@
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/theme/theme.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ThemeService with ChangeNotifier {
-  ThemeService({
-    AppTheme? appTheme,
-  }) : theme = appTheme ?? LightTheme();
+  static const _prefsKey = 'theme_mode';
+  ThemeMode _mode = ThemeMode.system;
+  ThemeMode get themeMode => _mode;
 
-  AppTheme theme;
-
-  void toggleTheme() {
-    if (theme.brightness == Brightness.light) {
-      theme = DarkTheme();
-    } else {
-      theme = LightTheme();
-    }
+  Future<void> loadPersisted() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_prefsKey);
+    _mode = ThemeMode.values.firstWhere((m) => m.name == raw, orElse: () => ThemeMode.system);
     notifyListeners();
   }
 
+  Future<void> setMode(ThemeMode mode) async {
+    _mode = mode;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_prefsKey, mode.name);
+  }
+
+  ThemeData lightThemeData() => _build(LightTheme());
+  ThemeData darkThemeData() => _build(DarkTheme());
+
   /// Material ThemeData 커스텀
-  ThemeData themeData() {
+  ThemeData _build(AppTheme theme) {
     return ThemeData(
       // Iterable<Adaptation<Object>>? adaptations,
       // bool? applyElevationOverlayColor,
       // NoDefaultCupertinoThemeData? cupertinoOverrideTheme,
       // Iterable<ThemeExtension<dynamic>>? extensions,
-      inputDecorationTheme: inputDecorationTheme(),
+      inputDecorationTheme: inputDecorationTheme(theme),
       // MaterialTapTargetSize? materialTapTargetSize,
       // PageTransitionsTheme? pageTransitionsTheme,
       // TargetPlatform? platform,
@@ -65,19 +72,19 @@ class ThemeService with ChangeNotifier {
       // String? fontFamily,
       // List<String>? fontFamilyFallback,
       // String? package,
-      iconTheme: iconThemeData(),
+      iconTheme: iconThemeData(theme),
       // IconThemeData? primaryIconTheme,
       // TextTheme? primaryTextTheme,
       // Typography? typography,
 
       /// COMPONENT THEMES
       // ActionIconThemeData? actionIconTheme,
-      appBarTheme: appBarTheme(),
+      appBarTheme: appBarTheme(theme),
       // BadgeThemeData? badgeTheme,
       // MaterialBannerThemeData? bannerTheme,
       // BottomAppBarTheme? bottomAppBarTheme,
-      bottomNavigationBarTheme: bottomNavigationBarTheme(),
-      bottomSheetTheme: bottomSheetThemeData(),
+      bottomNavigationBarTheme: bottomNavigationBarTheme(theme),
+      bottomSheetTheme: bottomSheetThemeData(theme),
       // ButtonBarThemeData? buttonBarTheme,
       // ButtonThemeData? buttonTheme,
       // CardTheme? cardTheme,
@@ -88,13 +95,13 @@ class ThemeService with ChangeNotifier {
       // DatePickerThemeData? datePickerTheme,
       // DialogTheme? dialogTheme,
       // DividerThemeData? dividerTheme,
-      dividerTheme: dividerTheme(),
-      drawerTheme: drawerTheme(),
+      dividerTheme: dividerTheme(theme),
+      drawerTheme: drawerTheme(theme),
       // DropdownMenuThemeData? dropdownMenuTheme,
       // ElevatedButtonThemeData? elevatedButtonTheme,
       // ExpansionTileThemeData? expansionTileTheme,
       // FilledButtonThemeData? filledButtonTheme,
-      floatingActionButtonTheme: floatingActionButtonTheme(),
+      floatingActionButtonTheme: floatingActionButtonTheme(theme),
       // iconButtonTheme: iconButtonThemeData(),
       // ListTileThemeData? listTileTheme,
       // MenuBarThemeData? menuBarTheme,
@@ -105,7 +112,7 @@ class ThemeService with ChangeNotifier {
       // NavigationRailThemeData? navigationRailTheme,
       // OutlinedButtonThemeData? outlinedButtonTheme,
       // PopupMenuThemeData? popupMenuTheme,
-      progressIndicatorTheme: progressIndicatorThemeData(),
+      progressIndicatorTheme: progressIndicatorThemeData(theme),
       // RadioThemeData? radioTheme,
       // SearchBarThemeData? searchBarTheme,
       // SearchViewThemeData? searchViewTheme,
@@ -113,7 +120,7 @@ class ThemeService with ChangeNotifier {
       // SliderThemeData? sliderTheme,
       // SnackBarThemeData? snackBarTheme,
       // SwitchThemeData? switchTheme,
-      tabBarTheme: tabBarTheme(),
+      tabBarTheme: tabBarTheme(theme),
       // TextButtonThemeData? textButtonTheme,
       // TextSelectionThemeData? textSelectionTheme,
       // TimePickerThemeData? timePickerTheme,
@@ -122,7 +129,7 @@ class ThemeService with ChangeNotifier {
     );
   }
 
-  InputDecorationTheme inputDecorationTheme() {
+  InputDecorationTheme inputDecorationTheme(AppTheme theme) {
     return InputDecorationTheme(
       labelStyle: theme.typo.body1W500.copyWith(color: theme.color.primary.strong),
       // floatingLabelStyle:,
@@ -176,23 +183,23 @@ class ThemeService with ChangeNotifier {
     );
   }
 
-  AppBarTheme appBarTheme() {
+  AppBarTheme appBarTheme(AppTheme theme) {
     return AppBarTheme(
       backgroundColor: theme.color.background.normal,
-      iconTheme: iconThemeData(),
-      actionsIconTheme: iconThemeData(),
+      iconTheme: iconThemeData(theme),
+      actionsIconTheme: iconThemeData(theme),
       centerTitle: true,
     );
   }
 
-  IconThemeData iconThemeData() {
+  IconThemeData iconThemeData(AppTheme theme) {
     return IconThemeData(
       size: IconSize.md.getIconSize(),
       color: theme.color.line.strong,
     );
   }
 
-  BottomNavigationBarThemeData bottomNavigationBarTheme() {
+  BottomNavigationBarThemeData bottomNavigationBarTheme(AppTheme theme) {
     return BottomNavigationBarThemeData(
       backgroundColor: theme.color.background.normal,
       selectedLabelStyle: theme.typo.caption2W500,
@@ -205,7 +212,7 @@ class ThemeService with ChangeNotifier {
     );
   }
 
-  BottomSheetThemeData bottomSheetThemeData() {
+  BottomSheetThemeData bottomSheetThemeData(AppTheme theme) {
     return BottomSheetThemeData(
       modalBackgroundColor: theme.color.background.normal,
       modalBarrierColor: theme.color.material.scrim40,
@@ -219,7 +226,7 @@ class ThemeService with ChangeNotifier {
     );
   }
 
-  DividerThemeData dividerTheme() {
+  DividerThemeData dividerTheme(AppTheme theme) {
     return DividerThemeData(
       color: theme.color.line.strong,
       space: 1,
@@ -227,7 +234,7 @@ class ThemeService with ChangeNotifier {
     );
   }
 
-  DrawerThemeData drawerTheme() {
+  DrawerThemeData drawerTheme(AppTheme theme) {
     return DrawerThemeData(
       elevation: 0,
       backgroundColor: theme.color.background.normal,
@@ -235,7 +242,7 @@ class ThemeService with ChangeNotifier {
     );
   }
 
-  FloatingActionButtonThemeData floatingActionButtonTheme() {
+  FloatingActionButtonThemeData floatingActionButtonTheme(AppTheme theme) {
     return FloatingActionButtonThemeData(
       foregroundColor: theme.color.background.normal,
       backgroundColor: theme.color.primary.normal,
@@ -250,7 +257,7 @@ class ThemeService with ChangeNotifier {
     );
   }
 
-  ProgressIndicatorThemeData progressIndicatorThemeData() {
+  ProgressIndicatorThemeData progressIndicatorThemeData(AppTheme theme) {
     return ProgressIndicatorThemeData(
       color: theme.color.line.strong,
       linearTrackColor: theme.color.line.normal,
@@ -259,7 +266,7 @@ class ThemeService with ChangeNotifier {
     );
   }
 
-  TabBarThemeData tabBarTheme() {
+  TabBarThemeData tabBarTheme(AppTheme theme) {
     return TabBarTheme(
       indicatorColor: theme.color.primary.strong,
       indicatorSize: TabBarIndicatorSize.tab,
@@ -272,10 +279,13 @@ class ThemeService with ChangeNotifier {
   }
 }
 
+final _lightTheme = LightTheme();
+final _darkTheme = DarkTheme();
+
 extension ThemeServiceExt on BuildContext {
   ThemeService get themeService => watch<ThemeService>();
 
-  AppTheme get theme => themeService.theme;
+  AppTheme get theme => Theme.of(this).brightness == Brightness.dark ? _darkTheme : _lightTheme;
 
   AppColor get color => theme.color;
 

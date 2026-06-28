@@ -43,7 +43,7 @@ Future<void> main() async {
       runApp(
         ProviderScope(
           child: provider.ChangeNotifierProvider(
-            create: (context) => ThemeService(),
+            create: (context) => ThemeService()..loadPersisted(),
             child: const MyApp(),
           ),
         ),
@@ -67,9 +67,11 @@ class MyApp extends StatelessWidget {
         child: child!,
       ),
       routerConfig: router,
-      title: 'Base flutter app',
+      title: '세대 가계부',
       debugShowCheckedModeBanner: false,
-      theme: context.themeService.themeData(),
+      theme: context.themeService.lightThemeData(),
+      darkTheme: context.themeService.darkThemeData(),
+      themeMode: context.themeService.themeMode,
     );
   }
 }
