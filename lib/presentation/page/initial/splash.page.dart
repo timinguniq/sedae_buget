@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sedae_budget/presentation/page/onboarding/user_profile_provider.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
@@ -60,6 +61,8 @@ class _SplashPageState extends ConsumerState<SplashPage> with SingleTickerProvid
 
   Future<void> appInitialize() async {
     await Future.delayed(const Duration(milliseconds: _animationTime));
-    if (mounted) context.go(RoutePath.budgetHome.path);
+    final profile = await ref.read(userProfileProvider.future);
+    if (!mounted) return;
+    context.go(profile == null ? RoutePath.onboarding.path : RoutePath.budgetHome.path);
   }
 }
