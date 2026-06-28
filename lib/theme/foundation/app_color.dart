@@ -31,11 +31,13 @@ class PrimaryColorType {
     required this.normal,
     required this.strong,
     required this.heavy,
+    required this.tint,
   });
 
   final Color normal;
   final Color strong;
   final Color heavy;
+  final Color tint;
 }
 
 class LabelColorType {
@@ -61,10 +63,12 @@ class LabelColorType {
 class BackgroundColorType {
   const BackgroundColorType({
     required this.normal,
+    required this.surface,
     required this.alternative,
   });
 
   final Color normal;
+  final Color surface;
   final Color alternative;
 }
 

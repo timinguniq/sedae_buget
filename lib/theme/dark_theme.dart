@@ -8,60 +8,31 @@ class DarkTheme implements AppTheme {
   @override
   AppColor color = const AppColor(
     primary: PrimaryColorType(
-      normal: Palette.primaryNormal,
-      strong: Palette.primaryStrong,
-      heavy: Palette.primaryHeavy,
+      normal: Palette.primaryNormal, strong: Palette.primaryHeavy,
+      heavy: Palette.primaryHeavy, tint: Palette.coralTintDark,
     ),
     label: LabelColorType(
-      normal: Palette.labelNormal,
-      strong: Palette.labelStrong,
-      neutral: Palette.labelNeutral,
-      alternative: Palette.labelAlternative,
-      assistive: Palette.labelAssistive,
-      disable: Palette.labelDisable,
-      white: Palette.fillWhite,
+      normal: Palette.darkText, strong: Palette.darkText, neutral: Palette.darkTextSecondary,
+      alternative: Palette.darkTextMuted, assistive: Palette.darkTextFaint,
+      disable: Palette.darkTextDisabled, white: Palette.labelWhite,
     ),
     background: BackgroundColorType(
-      normal: Palette.backgroundNormal,
-      alternative: Palette.backgroundAlternative,
+      normal: Palette.darkBg, surface: Palette.darkSurface, alternative: Palette.darkSurfaceSunken,
     ),
     line: LineColorType(
-      normal: Palette.lineNormal,
-      strong: Palette.lineStrong,
-      neutral: Palette.lineNeutral,
-      alternative: Palette.lineAlternative,
-      white: Palette.lineWhite,
-      orange: Palette.lineOrange,
+      normal: Palette.darkBorder, strong: Palette.darkText, neutral: Palette.darkSurfaceSunken,
+      alternative: Palette.darkBorder, white: Palette.lineWhite, orange: Palette.primaryNormal,
     ),
     status: StatusColorType(
-      positive: Palette.statusPositive,
-      cautionary: Palette.statusCautionary,
-      destructive: Palette.statusDestructive,
+      positive: Palette.statusPositive, cautionary: Palette.primaryNormal, destructive: Palette.statusDestructive,
     ),
-    accent: AccentColorType(
-      yellow: Palette.accentYellow,
-      blue: Palette.accentBlue,
-      violet: Palette.accentViolet,
-      jade: Palette.accentJade,
-    ),
-    static: StaticColorType(
-      white: Palette.staticWhite,
-      black: Palette.staticBlack,
-    ),
+    accent: AccentColorType(yellow: Palette.accentYellow, blue: Palette.accentBlue, violet: Palette.accentViolet, jade: Palette.accentJade),
+    static: StaticColorType(white: Palette.staticWhite, black: Palette.staticBlack),
     fill: FillColorType(
-      white: Palette.fillWhite,
-      black: Palette.fillBlack,
-      grey: Palette.fillGrey,
-      lightGrey: Palette.fillLightGrey,
-      yellow: Palette.fillYellow,
-      lightBlue: Palette.fillLightBlue,
-      lightPink: Palette.fillLightPink,
+      white: Palette.darkSurface, black: Palette.fillBlack, grey: Palette.darkSurfaceSunken,
+      lightGrey: Palette.darkSurfaceSunken, yellow: Palette.fillYellow, lightBlue: Palette.fillLightBlue, lightPink: Palette.coralTintDark,
     ),
-    material: MaterialColorType(
-      scrim13: Palette.materialScrim13,
-      scrim40: Palette.materialScrim40,
-      toast: Palette.materialToast,
-    ),
+    material: MaterialColorType(scrim13: Palette.materialScrim13, scrim40: Palette.materialScrim40, toast: Palette.materialToast),
     undefined: Palette.undefined,
   );
 
@@ -73,11 +44,8 @@ class DarkTheme implements AppTheme {
 
   @override
   AppDeco deco = const AppDeco(
-    shadow: [
-      BoxShadow(
-        color: Palette.materialScrim13,
-        blurRadius: 35,
-      ),
-    ],
+    shadow: [BoxShadow(color: Color(0x59000000), blurRadius: 34, offset: Offset(0, 12))],
+    cardShadow: [BoxShadow(color: Color(0x59000000), blurRadius: 34, offset: Offset(0, 12))],
+    coralShadow: [BoxShadow(color: Color(0x42F2603C), blurRadius: 26, offset: Offset(0, 12))],
   );
 }
