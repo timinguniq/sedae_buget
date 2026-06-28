@@ -18,6 +18,7 @@ enum BudgetCategory {
   final int id;
   final String label;
 
+  /// Throws [StateError] if [id] is not one of the 12 defined category ids.
   static BudgetCategory fromId(int id) =>
       BudgetCategory.values.firstWhere((e) => e.id == id);
 }

@@ -28,6 +28,18 @@ void main() {
     final deleted = tx.markDeleted();
     expect(deleted.deletedAt, isNotNull);
     expect(deleted.syncStatus, SyncStatus.pending);
+    expect(deleted.deletedAt, deleted.updatedAt);
+  });
+
+  test('markUpdated advances updatedAt and re-flags pending', () {
+    final tx = Transaction.create(
+      amount: 1, categoryId: 1, date: DateTime(2026, 1, 1),
+      type: TransactionType.expense,
+    ).copyWith(syncStatus: SyncStatus.synced, updatedAt: DateTime(2020));
+
+    final updated = tx.markUpdated();
+    expect(updated.syncStatus, SyncStatus.pending);
+    expect(updated.updatedAt.isAfter(DateTime(2020)), isTrue);
   });
 
   test('json round-trips', () {

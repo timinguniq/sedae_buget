@@ -51,9 +51,12 @@ extension TransactionX on Transaction {
   Transaction markUpdated() =>
       copyWith(updatedAt: DateTime.now(), syncStatus: SyncStatus.pending);
 
-  Transaction markDeleted() => copyWith(
-        deletedAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-        syncStatus: SyncStatus.pending,
-      );
+  Transaction markDeleted() {
+    final now = DateTime.now();
+    return copyWith(
+      deletedAt: now,
+      updatedAt: now,
+      syncStatus: SyncStatus.pending,
+    );
+  }
 }
