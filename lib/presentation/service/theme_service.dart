@@ -48,7 +48,13 @@ class ThemeService with ChangeNotifier {
       // Brightness? brightness,
       // Color? canvasColor,
       // Color? cardColor,
-      // ColorScheme? colorScheme,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: theme.color.primary.normal,
+        brightness: theme.brightness,
+      ).copyWith(
+        primary: theme.color.primary.normal,
+        onPrimary: theme.color.static.white,
+      ),
       // Color? colorSchemeSeed,
       // Color? dialogBackgroundColor,
       // Color? disabledColor,
@@ -117,7 +123,7 @@ class ThemeService with ChangeNotifier {
       // SearchBarThemeData? searchBarTheme,
       // SearchViewThemeData? searchViewTheme,
       // SegmentedButtonThemeData? segmentedButtonTheme,
-      // SliderThemeData? sliderTheme,
+      sliderTheme: sliderThemeData(theme),
       // SnackBarThemeData? snackBarTheme,
       // SwitchThemeData? switchTheme,
       tabBarTheme: tabBarTheme(theme),
@@ -263,6 +269,15 @@ class ThemeService with ChangeNotifier {
       linearTrackColor: theme.color.line.normal,
       linearMinHeight: 2,
       refreshBackgroundColor: theme.color.background.alternative,
+    );
+  }
+
+  SliderThemeData sliderThemeData(AppTheme theme) {
+    return SliderThemeData(
+      activeTrackColor: theme.color.primary.normal,
+      inactiveTrackColor: theme.color.line.normal,
+      thumbColor: theme.color.primary.normal,
+      overlayColor: theme.color.primary.normal.withValues(alpha: 0.12),
     );
   }
 

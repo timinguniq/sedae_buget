@@ -106,12 +106,12 @@ class _AgeStep extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
               decoration: BoxDecoration(
-                color: selected == g ? context.color.primary.normal.withValues(alpha: 0.08) : context.color.background.surface,
+                color: selected == g ? context.color.primary.tint : context.color.background.surface,
                 borderRadius: BorderRadius.circular(CSize.card.radius),
                 border: Border.all(color: selected == g ? context.color.primary.normal : context.color.line.normal,
                     width: selected == g ? 2 : 1)),
               child: Text(g.label, style: context.typo.body1W600.copyWith(
-                color: selected == g ? context.color.primary.strong : context.color.label.normal)),
+                color: context.color.label.normal)),
             ),
           ),
         )),
@@ -133,7 +133,7 @@ class _IncomeStep extends StatelessWidget {
         const SizedBox(height: 16),
         Text('월 소득은 어느 정도인가요?', style: context.typo.heading2W700.copyWith(color: context.color.label.normal)),
         const SizedBox(height: 20),
-        Text('₩${won.format(income.round())}', style: context.typo.amountDisplay.copyWith(color: context.color.primary.strong)),
+        Text('₩${won.format(income.round())}', style: context.typo.amountDisplay.copyWith(color: context.color.label.normal)),
         Slider(min: 0, max: 10000000, divisions: 100, value: income, onChanged: onChanged),
         const SizedBox(height: 8),
         Text('소득 정보는 기기에만 저장되며 또래 평균 비교에만 사용됩니다.',
