@@ -50,4 +50,12 @@ class TransactionUsecase {
   int totalIncome(List<Transaction> txs) => txs
       .where((t) => t.type == TransactionType.income)
       .fold(0, (sum, t) => sum + t.amount);
+
+  /// 저축률 계산의 소득 기준. 프로필 월소득이 양수면 그것, 아니면 이달 수입 거래 합.
+  int effectiveIncome({required int txIncome, int? profileIncome}) =>
+      (profileIncome ?? 0) > 0 ? profileIncome! : txIncome;
+
+  /// 저축률(%) = (소득 - 지출) / 소득 × 100, 반올림. 소득 0이면 0.
+  int savingsRatePercent({required int income, required int expense}) =>
+      income > 0 ? ((income - expense) * 100 / income).round() : 0;
 }

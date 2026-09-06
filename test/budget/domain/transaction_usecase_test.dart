@@ -69,4 +69,18 @@ void main() {
     expect(usecase.totalExpense(txs), 1000);
     expect(usecase.totalIncome(txs), 5000);
   });
+
+  group('savings', () {
+    test('effectiveIncome prefers positive profile income', () {
+      expect(usecase.effectiveIncome(txIncome: 1000000, profileIncome: 3000000), 3000000);
+      expect(usecase.effectiveIncome(txIncome: 1000000, profileIncome: 0), 1000000);
+      expect(usecase.effectiveIncome(txIncome: 1000000), 1000000);
+    });
+
+    test('savingsRatePercent rounds and guards zero income', () {
+      expect(usecase.savingsRatePercent(income: 3000000, expense: 2100000), 30);
+      expect(usecase.savingsRatePercent(income: 0, expense: 500000), 0);
+      expect(usecase.savingsRatePercent(income: 1000000, expense: 1200000), -20);
+    });
+  });
 }

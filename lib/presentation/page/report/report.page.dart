@@ -20,6 +20,7 @@ class ReportPage extends ConsumerWidget {
     final asyncProfile = ref.watch(userProfileProvider);
     final selfTrend = ref.watch(selfTrendProvider);
     final generationAvg = ref.watch(generationAvgProvider);
+    final savingsRate = ref.watch(savingsRateProvider) ?? 0;
 
     final ageGroup = asyncProfile.value?.ageGroup ?? AgeGroup.thirties;
 
@@ -34,11 +35,6 @@ class ReportPage extends ConsumerWidget {
           final s = summary.requireValue;
           final won = NumberFormat.decimalPattern('ko');
           final totalExpense = s.expense;
-          final income = (asyncProfile.value?.monthlyIncome ?? 0) > 0
-              ? asyncProfile.value!.monthlyIncome
-              : s.income;
-          final savingsRate =
-              income > 0 ? ((income - totalExpense) * 100 / income).round() : 0;
           final peerDiff = peer.diffPercent(totalExpense);
 
           final mySummary = s.byCategory;
