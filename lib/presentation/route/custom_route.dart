@@ -7,6 +7,8 @@ import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart
 import 'package:sedae_budget/presentation/page/compare/compare.page.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
 import 'package:sedae_budget/presentation/page/login/login.page.dart';
+import 'package:sedae_budget/presentation/page/login/auth_provider.dart';
+import 'package:sedae_budget/presentation/page/onboarding/user_profile_provider.dart';
 import 'package:sedae_budget/presentation/page/report/report.page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,33 +30,51 @@ abstract class CRoute {
   static void pop<T>([T? result]) => canPop() ? (rootNavigatorKey.currentContext!).pop<T?>(result) : null;
 }
 
-final router = GoRouter(
-  navigatorKey: rootNavigatorKey,
-  initialLocation: RoutePath.splash.path,
-  routes: [
-    GoRoute(path: RoutePath.splash.path, builder: (_, _) => const SplashPage()),
-    GoRoute(path: RoutePath.onboarding.path, builder: (_, _) => const OnboardingFlowPage()),
-    StatefulShellRoute.indexedStack(
-      builder: (_, _, shell) => MainShell(navigationShell: shell),
-      branches: [
-        StatefulShellBranch(routes: [GoRoute(path: RoutePath.budgetHome.path, builder: (_, _) => const BudgetHomePage())]),
-        StatefulShellBranch(routes: [GoRoute(path: RoutePath.compare.path, builder: (_, _) => const ComparePage())]),
-        StatefulShellBranch(routes: [GoRoute(path: RoutePath.history.path, builder: (_, _) => const TransactionListPage())]),
-        StatefulShellBranch(routes: [GoRoute(path: RoutePath.report.path, builder: (_, _) => const ReportPage())]),
-      ],
+/// authProvider/userProfileProvider 변동 시 go_router redirect를 재평가시키는 브리지.
+class RouterRefreshNotifier extends ChangeNotifier {
+  RouterRefreshNotifier(Ref ref) {
+    ref.listen(authProvider, (_, _) => notifyListeners());
+    ref.listen(userProfileProvider, (_, _) => notifyListeners());
+  }
+}
+
+final routerProvider = Provider<GoRouter>((ref) {
+  final refresh = RouterRefreshNotifier(ref);
+  ref.onDispose(refresh.dispose);
+  return GoRouter(
+    navigatorKey: rootNavigatorKey,
+    initialLocation: RoutePath.splash.path,
+    refreshListenable: refresh,
+    redirect: (context, state) => authGateRedirect(
+      auth: ref.read(authProvider),
+      profile: ref.read(userProfileProvider),
+      location: state.matchedLocation,
     ),
-    GoRoute(path: RoutePath.transactionEdit.path, builder: (_, state) =>
-        TransactionEditPage(existing: state.extra as Transaction?)),
-    GoRoute(path: RoutePath.categoryAnalysis.path, builder: (_, _) => const CategoryAnalysisPage()),
-    GoRoute(path: RoutePath.setting.path, builder: (_, _) => const SettingPage()),
-    GoRoute(path: RoutePath.login.path, builder: (_, _) => const LoginPage()),
-  ],
-  debugLogDiagnostics: true,
-  observers: [
-    //FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
-    //AmplitudeNavigatorObserver(),
-  ],
-);
+    routes: [
+      GoRoute(path: RoutePath.splash.path, builder: (_, _) => const SplashPage()),
+      GoRoute(path: RoutePath.onboarding.path, builder: (_, _) => const OnboardingFlowPage()),
+      StatefulShellRoute.indexedStack(
+        builder: (_, _, shell) => MainShell(navigationShell: shell),
+        branches: [
+          StatefulShellBranch(routes: [GoRoute(path: RoutePath.budgetHome.path, builder: (_, _) => const BudgetHomePage())]),
+          StatefulShellBranch(routes: [GoRoute(path: RoutePath.compare.path, builder: (_, _) => const ComparePage())]),
+          StatefulShellBranch(routes: [GoRoute(path: RoutePath.history.path, builder: (_, _) => const TransactionListPage())]),
+          StatefulShellBranch(routes: [GoRoute(path: RoutePath.report.path, builder: (_, _) => const ReportPage())]),
+        ],
+      ),
+      GoRoute(path: RoutePath.transactionEdit.path, builder: (_, state) =>
+          TransactionEditPage(existing: state.extra as Transaction?)),
+      GoRoute(path: RoutePath.categoryAnalysis.path, builder: (_, _) => const CategoryAnalysisPage()),
+      GoRoute(path: RoutePath.setting.path, builder: (_, _) => const SettingPage()),
+      GoRoute(path: RoutePath.login.path, builder: (_, _) => const LoginPage()),
+    ],
+    debugLogDiagnostics: true,
+    observers: [
+      //FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
+      //AmplitudeNavigatorObserver(),
+    ],
+  );
+});
 
 /*
 CustomTransitionPage<dynamic> mainPageBuilder(_, GoRouterState state, Widget child) {

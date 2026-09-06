@@ -68,17 +68,17 @@ Future<void> main() async {
   );
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp.router(
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
         child: child!,
       ),
-      routerConfig: router,
+      routerConfig: ref.watch(routerProvider),
       title: '세대 가계부',
       debugShowCheckedModeBanner: false,
       theme: context.themeService.lightThemeData(),
