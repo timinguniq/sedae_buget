@@ -112,4 +112,21 @@ void main() {
       isEmpty,
     );
   });
+
+  test('HTTP(dio)는 core/data에만 있다', () {
+    for (final layer in ['domain', 'entity', 'presentation', 'theme']) {
+      expect(violations(layer, ['dio/']), isEmpty, reason: layer);
+    }
+  });
+
+  test('data는 로컬 저장 기술을 쓰지 않는다(Stub 영속화 제외)', () {
+    expect(
+      violations(
+        'data',
+        ['drift/', 'shared_preferences/', 'flutter_secure_storage/'],
+        skip: (p) => p.startsWith('lib/data/remote/stub/'),
+      ),
+      isEmpty,
+    );
+  });
 }
