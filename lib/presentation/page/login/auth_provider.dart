@@ -21,5 +21,8 @@ class AuthNotifier extends AsyncNotifier<AuthUser?> {
   }
 }
 
-final authProvider =
-    AsyncNotifierProvider<AuthNotifier, AuthUser?>(AuthNotifier.new);
+/// 전역 가드가 기다리는 provider라 실패를 즉시 드러낸다(Riverpod 기본 자동 재시도 끔).
+final authProvider = AsyncNotifierProvider<AuthNotifier, AuthUser?>(
+  AuthNotifier.new,
+  retry: (_, _) => null,
+);

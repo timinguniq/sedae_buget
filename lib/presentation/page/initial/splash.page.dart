@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/onboarding/user_profile_provider.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
@@ -61,7 +62,13 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
   Future<void> appInitialize() async {
     await Future.delayed(const Duration(milliseconds: _animationTime));
-    final profile = await ref.read(userProfileProvider.future);
+    UserProfile? profile;
+    try {
+      profile = await ref.read(userProfileProvider.future);
+    } catch (_) {
+      // 프로필 조회 실패(네트워크 등)여도 스플래시에 머물지 않는다.
+      // 이동 후에는 전역 가드(authGateRedirect)가 로그인/온보딩으로 보낸다.
+    }
     if (!mounted) return;
     context.go(profile == null ? RoutePath.onboarding.path : RoutePath.budgetHome.path);
   }

@@ -50,10 +50,17 @@ void registerFakePeerDependencies() =>
     locator.registerSingleton<PeerStatsRepository>(FakePeerStatsRepository());
 
 /// 인증·프로필 의존성을 fake로 등록한다. `tearDown(() => locator.reset())`과 함께 쓴다.
-void registerFakeUserDependencies({AuthUser? user, UserProfile? profile}) {
+/// [profileRepository]를 주면 [profile] 대신 그 저장소를 등록한다(실패 시나리오용).
+void registerFakeUserDependencies({
+  AuthUser? user,
+  UserProfile? profile,
+  UserProfileRepository? profileRepository,
+}) {
   final auth = InMemoryAuthRepository(user);
   locator
     ..registerSingleton<AuthRepository>(auth)
     ..registerSingleton<AuthUsecase>(AuthUsecase(auth, StubSocialIdTokenProvider()))
-    ..registerSingleton<UserProfileRepository>(InMemoryUserProfileRepository(profile));
+    ..registerSingleton<UserProfileRepository>(
+      profileRepository ?? InMemoryUserProfileRepository(profile),
+    );
 }

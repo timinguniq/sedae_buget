@@ -93,7 +93,8 @@ void main() {
     expect(find.text(_loginMark), findsOneWidget);
 
     await t.tap(find.byType(SocialLoginButton).first); // kakao
-    await t.pump(); // signIn → state 변경 → refreshListenable → redirect
+    await t.pump(); // signIn → auth 변경 → 프로필 재조회(loading) → 가드 보류
+    await t.pump(); // 프로필 확정 → refreshListenable → redirect
     await t.pump(const Duration(milliseconds: 300)); // 온보딩 build
     expect(find.text(_onboardingMark), findsOneWidget);
   });
@@ -108,7 +109,8 @@ void main() {
     await t.pump(const Duration(milliseconds: 300)); // 설정 화면 build
 
     await t.tap(find.text('로그아웃'));
-    await t.pump(); // signOut → state 변경 → refreshListenable → redirect
+    await t.pump(); // signOut → auth 변경 → 프로필 재조회(loading) → 가드 보류
+    await t.pump(); // 프로필 null 확정 → refreshListenable → redirect
     await t.pump(const Duration(milliseconds: 300)); // 로그인 화면 build
     expect(find.text(_loginMark), findsOneWidget);
   });
