@@ -58,7 +58,7 @@ Future<void> _boot(WidgetTester t) async {
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
   setUp(() {
-    configurePeerDependencies();
+    registerFakePeerDependencies();
     locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_EmptyRepo()));
   });
   tearDown(() => locator.reset());

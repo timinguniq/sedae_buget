@@ -41,7 +41,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final stats = await MockPeerStatsRepository().forGroup(AgeGroup.thirties);
+    final stats = StubPeerData.forGroup(AgeGroup.thirties);
     await tester.pumpWidget(provider.ChangeNotifierProvider(
       create: (_) => ThemeService(),
       child: ProviderScope(

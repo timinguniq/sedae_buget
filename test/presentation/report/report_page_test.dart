@@ -64,7 +64,7 @@ void main() {
   setUpAll(() => initializeDateFormatting('ko'));
   setUp(() {
     locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo()));
-    configurePeerDependencies();
+    registerFakePeerDependencies();
     registerFakeUserDependencies();
   });
   tearDown(() => locator.reset());
@@ -76,7 +76,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final stats = await MockPeerStatsRepository().forGroup(AgeGroup.thirties);
+    final stats = StubPeerData.forGroup(AgeGroup.thirties);
     await tester.pumpWidget(
       provider.ChangeNotifierProvider(
         create: (_) => ThemeService(),

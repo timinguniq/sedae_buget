@@ -156,10 +156,12 @@ void configureBudgetDependencies() {
     );
 }
 
-/// 또래 통계 의존성. 현재 목업, 서버 구현 시 이 함수만 교체.
+/// 또래 통계 의존성(서버). [configureApiDependencies]가 먼저 호출되어 있어야 한다.
 void configurePeerDependencies() {
   if (locator.isRegistered<PeerStatsRepository>()) return;
-  locator.registerSingleton<PeerStatsRepository>(MockPeerStatsRepository());
+  locator.registerSingleton<PeerStatsRepository>(
+    ApiPeerStatsRepository(locator<ApiClient>()),
+  );
 }
 
 /// 인증·프로필 의존성. 둘 다 서버(ApiAuthRepository, ApiUserProfileRepository).

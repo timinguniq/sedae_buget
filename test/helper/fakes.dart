@@ -35,6 +35,20 @@ class InMemoryUserProfileRepository implements UserProfileRepository {
   Future<void> clear() async => profile = null;
 }
 
+/// Stub 서버와 같은 결정적 수치를 돌려주는 또래 통계 fake.
+class FakePeerStatsRepository implements PeerStatsRepository {
+  @override
+  Future<PeerStats> forGroup(AgeGroup g) async => StubPeerData.forGroup(g);
+
+  @override
+  Future<Map<AgeGroup, int>> generationAverages() async =>
+      {for (final g in AgeGroup.values) g: StubPeerData.forGroup(g).avgMonthlyExpense};
+}
+
+/// 또래 통계 의존성을 fake로 등록한다.
+void registerFakePeerDependencies() =>
+    locator.registerSingleton<PeerStatsRepository>(FakePeerStatsRepository());
+
 /// 인증·프로필 의존성을 fake로 등록한다. `tearDown(() => locator.reset())`과 함께 쓴다.
 void registerFakeUserDependencies({AuthUser? user, UserProfile? profile}) {
   final auth = InMemoryAuthRepository(user);
