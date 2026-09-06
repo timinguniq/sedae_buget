@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart' as provider;
+import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/domain/budget/transaction_repository.dart';
 import 'package:sedae_budget/domain/budget/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
@@ -22,15 +23,19 @@ class _Repo implements TransactionRepository {
       const Result.success([]);
 }
 
-Widget _app(List<Transaction> list) => provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: ProviderScope(
-        overrides: [transactionUsecaseProvider.overrideWithValue(TransactionUsecase(_Repo(list)))],
-        child: const MaterialApp(home: CategoryAnalysisPage()),
-      ),
-    );
+Widget _app(List<Transaction> list) {
+  locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_Repo(list)));
+  return provider.ChangeNotifierProvider(
+    create: (_) => ThemeService(),
+    child: const ProviderScope(
+      child: MaterialApp(home: CategoryAnalysisPage()),
+    ),
+  );
+}
 
 void main() {
+  tearDown(() => locator.reset());
+
   testWidgets('shows donut + rows when data', (tester) async {
     await tester.pumpWidget(_app([
       Transaction.create(amount: 10000, categoryId: 7, date: DateTime(2026, 6, 5), type: TransactionType.expense),

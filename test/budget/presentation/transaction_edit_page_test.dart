@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart' as provider;
+import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/domain/budget/transaction_repository.dart';
 import 'package:sedae_budget/domain/budget/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
@@ -23,6 +24,7 @@ class _CapturingRepo implements TransactionRepository {
 
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
+  tearDown(() => locator.reset());
 
   // Pushes TransactionEditPage onto a real GoRouter stack so the page's
   // context.pop() (go_router) has somewhere to pop back to. Phone-sized
@@ -35,6 +37,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final repo = _CapturingRepo();
+    locator.registerSingleton<TransactionUsecase>(TransactionUsecase(repo));
     final router = GoRouter(
       initialLocation: '/',
       routes: [
@@ -46,7 +49,6 @@ void main() {
       provider.ChangeNotifierProvider(
         create: (_) => ThemeService(),
         child: ProviderScope(
-          overrides: [transactionUsecaseProvider.overrideWithValue(TransactionUsecase(repo))],
           child: MaterialApp.router(routerConfig: router),
         ),
       ),

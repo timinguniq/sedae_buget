@@ -1,4 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
+import 'package:sedae_budget/domain/budget/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/budget_provider.dart';
 
@@ -6,7 +8,7 @@ import 'package:sedae_budget/presentation/page/budget/budget_provider.dart';
 final selfTrendProvider =
     FutureProvider<List<({DateTime month, int expense})>>((ref) async {
   final anchor = ref.watch(selectedMonthProvider);
-  final usecase = ref.read(transactionUsecaseProvider);
+  final usecase = locator<TransactionUsecase>();
   const n = 6;
   final start = DateTime(anchor.year, anchor.month - (n - 1));
   final end = DateTime(anchor.year, anchor.month + 1); // exclusive

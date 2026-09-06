@@ -19,7 +19,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
   @override
   Widget build(BuildContext context) {
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
-    final usecase = ref.read(transactionUsecaseProvider);
+    final monthlySummary = ref.watch(monthlySummaryProvider);
     final peer = ref.watch(peerStatsProvider);
     final won = NumberFormat.decimalPattern('ko');
     return DefaultLayout(
@@ -28,7 +28,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('불러오기 실패: $e')),
         data: (txs) {
-          final summary = usecase.categorySummary(txs);
+          final summary = monthlySummary.requireValue.byCategory;
           if (summary.isEmpty) {
             return Center(child: Text('지출이 없어요',
                 style: context.typo.body2W400.copyWith(color: context.color.label.alternative)));

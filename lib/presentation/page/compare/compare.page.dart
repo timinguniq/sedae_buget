@@ -15,14 +15,15 @@ class ComparePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final peer = ref.watch(peerStatsProvider);
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
-    final usecase = ref.read(transactionUsecaseProvider);
+    final summary = ref.watch(monthlySummaryProvider);
 
     return DefaultLayout(
       child: asyncTxs.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
         data: (txs) {
-          final myExpense = usecase.totalExpense(txs);
+          final s = summary.requireValue;
+          final myExpense = s.expense;
           if (myExpense == 0) {
             return Center(
               child: Padding(
@@ -37,7 +38,7 @@ class ComparePage extends ConsumerWidget {
               ),
             );
           }
-          final mySummary = usecase.categorySummary(txs);
+          final mySummary = s.byCategory;
           final top6 = (mySummary.entries.toList()
                 ..sort((a, b) => b.value.compareTo(a.value)))
               .take(6)

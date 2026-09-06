@@ -16,7 +16,7 @@ class ReportPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final peer = ref.watch(peerStatsProvider);
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
-    final usecase = ref.read(transactionUsecaseProvider);
+    final summary = ref.watch(monthlySummaryProvider);
     final asyncProfile = ref.watch(userProfileProvider);
     final selfTrend = ref.watch(selfTrendProvider);
 
@@ -27,16 +27,17 @@ class ReportPage extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
         data: (txs) {
+          final s = summary.requireValue;
           final won = NumberFormat.decimalPattern('ko');
-          final totalExpense = usecase.totalExpense(txs);
+          final totalExpense = s.expense;
           final income = (asyncProfile.value?.monthlyIncome ?? 0) > 0
               ? asyncProfile.value!.monthlyIncome
-              : usecase.totalIncome(txs);
+              : s.income;
           final savingsRate =
               income > 0 ? ((income - totalExpense) * 100 / income).round() : 0;
           final peerDiff = peer.diffPercent(totalExpense);
 
-          final mySummary = usecase.categorySummary(txs);
+          final mySummary = s.byCategory;
           final insightLine = _buildInsightLine(mySummary, peer, ageGroup);
 
           return ListView(

@@ -54,4 +54,18 @@ void main() {
       isEmpty,
     );
   });
+
+  test('presentation에서 DI(locator) 접근은 *_provider.dart 에서만 한다', () {
+    expect(
+      violations(
+        'presentation',
+        [
+          'sedae_budget/core/dependency_injection',
+          'sedae_budget/core/core.dart',
+        ],
+        skip: (p) => p.endsWith('_provider.dart'),
+      ),
+      isEmpty,
+    );
+  });
 }

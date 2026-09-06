@@ -16,7 +16,7 @@ class BudgetHomePage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final month = ref.watch(selectedMonthProvider);
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
-    final usecase = ref.read(transactionUsecaseProvider);
+    final summary = ref.watch(monthlySummaryProvider);
     final peer = ref.watch(peerStatsProvider);
 
     return DefaultLayout(
@@ -37,24 +37,27 @@ class BudgetHomePage extends ConsumerWidget {
           Expanded(child: asyncTxs.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('불러오기 실패: $e', style: context.typo.body2W400)),
-            data: (txs) => ListView(children: [
-              SummaryHeroCard(expense: usecase.totalExpense(txs), income: usecase.totalIncome(txs), peerAvgExpense: peer.avgMonthlyExpense),
-              const SizedBox(height: 13),
-              PeerRankCard(stats: peer, myExpense: usecase.totalExpense(txs)),
-              const SizedBox(height: 13),
-              GestureDetector(
-                onTap: () => context.push(RoutePath.categoryAnalysis.path),
-                child: _CategoryPreview(summary: usecase.categorySummary(txs))),
-              const SizedBox(height: 13),
-              Text('최근 내역', style: context.typo.label1W600.copyWith(color: context.color.label.normal)),
-              if (txs.isEmpty)
-                Padding(padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Center(child: Text('내역이 없어요. + 로 추가하세요',
-                    style: context.typo.body2W400.copyWith(color: context.color.label.alternative))))
-              else
-                ...txs.take(5).map((t) => TransactionTile(tx: t,
-                  onTap: () => context.push(RoutePath.transactionEdit.path, extra: t))),
-            ]),
+            data: (txs) {
+              final s = summary.requireValue;
+              return ListView(children: [
+                SummaryHeroCard(expense: s.expense, income: s.income, peerAvgExpense: peer.avgMonthlyExpense),
+                const SizedBox(height: 13),
+                PeerRankCard(stats: peer, myExpense: s.expense),
+                const SizedBox(height: 13),
+                GestureDetector(
+                  onTap: () => context.push(RoutePath.categoryAnalysis.path),
+                  child: _CategoryPreview(summary: s.byCategory)),
+                const SizedBox(height: 13),
+                Text('최근 내역', style: context.typo.label1W600.copyWith(color: context.color.label.normal)),
+                if (txs.isEmpty)
+                  Padding(padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Center(child: Text('내역이 없어요. + 로 추가하세요',
+                      style: context.typo.body2W400.copyWith(color: context.color.label.alternative))))
+                else
+                  ...txs.take(5).map((t) => TransactionTile(tx: t,
+                    onTap: () => context.push(RoutePath.transactionEdit.path, extra: t))),
+              ]);
+            },
           )),
         ]),
       ),

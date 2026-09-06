@@ -3,9 +3,6 @@ import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart
 import 'package:sedae_budget/domain/budget/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-final transactionUsecaseProvider =
-    Provider<TransactionUsecase>((ref) => locator<TransactionUsecase>());
-
 class SelectedMonthNotifier extends Notifier<DateTime> {
   @override
   DateTime build() {
@@ -21,11 +18,12 @@ final selectedMonthProvider =
     NotifierProvider<SelectedMonthNotifier, DateTime>(SelectedMonthNotifier.new);
 
 class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
+  TransactionUsecase get _usecase => locator<TransactionUsecase>();
+
   @override
   Future<List<Transaction>> build() async {
     final month = ref.watch(selectedMonthProvider);
-    final res =
-        await ref.read(transactionUsecaseProvider).getMonth(month.year, month.month);
+    final res = await _usecase.getMonth(month.year, month.month);
     if (res is Success<List<Transaction>>) {
       return res.data;
     }
@@ -39,23 +37,23 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
     required TransactionType type,
     String? memo,
   }) async {
-    await ref.read(transactionUsecaseProvider).add(
-          amount: amount,
-          categoryId: categoryId,
-          date: date,
-          type: type,
-          memo: memo,
-        );
+    await _usecase.add(
+      amount: amount,
+      categoryId: categoryId,
+      date: date,
+      type: type,
+      memo: memo,
+    );
     ref.invalidateSelf();
   }
 
   Future<void> edit(Transaction tx) async {
-    await ref.read(transactionUsecaseProvider).update(tx);
+    await _usecase.update(tx);
     ref.invalidateSelf();
   }
 
   Future<void> delete(Transaction tx) async {
-    await ref.read(transactionUsecaseProvider).delete(tx);
+    await _usecase.delete(tx);
     ref.invalidateSelf();
   }
 }
@@ -63,3 +61,19 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
 final monthlyTransactionsProvider =
     AsyncNotifierProvider<MonthlyTransactionsNotifier, List<Transaction>>(
         MonthlyTransactionsNotifier.new);
+
+/// 이달 거래의 파생 요약(뷰 상태). 위젯은 usecase 대신 이 값을 읽는다.
+typedef MonthlySummary = ({
+  int expense,
+  int income,
+  Map<BudgetCategory, int> byCategory,
+});
+
+final monthlySummaryProvider = Provider<AsyncValue<MonthlySummary>>((ref) {
+  final usecase = locator<TransactionUsecase>();
+  return ref.watch(monthlyTransactionsProvider).whenData((txs) => (
+        expense: usecase.totalExpense(txs),
+        income: usecase.totalIncome(txs),
+        byCategory: usecase.categorySummary(txs),
+      ));
+});
