@@ -102,8 +102,13 @@ void main() {
     await tester.pump();
 
     expect(find.text('이달의 발견'), findsOneWidget);
+    expect(find.text('월간 리포트'), findsOneWidget);
+    expect(find.text('또래 상위'), findsOneWidget);
     expect(find.textContaining('저축률'), findsWidgets);
-    expect(find.textContaining('세대별'), findsOneWidget);
+    expect(find.text('소득 대비'), findsOneWidget);
+    expect(find.text('세대별 월평균 지출'), findsOneWidget);
+    expect(find.text('세대별 대표 소비'), findsOneWidget);
+    expect(find.text('최근 6개월 내 지출'), findsOneWidget);
     expect(find.textContaining('또래보다'), findsWidgets);
   });
 }

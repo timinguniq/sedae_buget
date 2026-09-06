@@ -76,6 +76,26 @@ void main() {
     expect(find.byType(CategoryRow), findsWidgets);
   });
 
+  testWidgets('custom header shows title, month total and month navigator', (tester) async {
+    await tester.pumpWidget(_app([
+      Transaction.create(amount: 1920000, categoryId: 7, date: DateTime(2026, 6, 5), type: TransactionType.expense),
+    ]));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text('카테고리 분석'), findsOneWidget);
+    expect(find.byType(RoundIconButton), findsOneWidget);
+    expect(find.textContaining('총지출'), findsOneWidget);
+    expect(find.text('192만'), findsOneWidget);
+
+    final now = DateTime.now();
+    String label(DateTime m) => '${m.year}.${m.month.toString().padLeft(2, '0')}';
+    expect(find.text(label(DateTime(now.year, now.month))), findsOneWidget);
+    await tester.tap(find.byKey(const Key('month-next')));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text(label(DateTime(now.year, now.month + 1))), findsOneWidget);
+  });
+
   testWidgets('shows empty state when no expenses', (tester) async {
     await tester.pumpWidget(_app(const []));
     await tester.pump();

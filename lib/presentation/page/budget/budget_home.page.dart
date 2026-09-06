@@ -4,9 +4,12 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_rank_card.dart';
+import 'package:sedae_budget/presentation/page/budget/widget/savings_rate_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/summary_hero_card.dart';
+import 'package:sedae_budget/presentation/page/budget/widget/top_category_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/transaction_tile.dart';
 import 'package:sedae_budget/presentation/page/compare/peer_provider.dart';
+import 'package:sedae_budget/presentation/page/report/report_provider.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 class BudgetHomePage extends ConsumerWidget {
@@ -18,6 +21,7 @@ class BudgetHomePage extends ConsumerWidget {
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
     final summary = ref.watch(monthlySummaryProvider);
     final asyncPeer = ref.watch(peerStatsProvider);
+    final savingsRate = ref.watch(savingsRateProvider);
 
     return DefaultLayout(
       child: Padding(
@@ -26,12 +30,12 @@ class BudgetHomePage extends ConsumerWidget {
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(DateFormat('yyyy년 M월', 'ko').format(month),
-                  style: context.typo.caption1W500.copyWith(color: context.color.label.assistive)),
-              Text('이번 달 요약', style: context.typo.heading2W700.copyWith(color: context.color.label.normal)),
+                  style: context.typo.caption1W600.copyWith(color: context.color.label.assistive)),
+              Text('이번 달 요약', style: context.typo.pageTitle.copyWith(color: context.color.label.normal)),
             ]),
             GestureDetector(
               onTap: () => context.push(RoutePath.setting.path),
-              child: const MascotDongle(size: 40)),
+              child: const MascotDongle(size: 40, ring: false)),
           ]),
           const SizedBox(height: 16),
           Expanded(child: asyncPeer.when(
@@ -45,13 +49,17 @@ class BudgetHomePage extends ConsumerWidget {
               return ListView(children: [
                 SummaryHeroCard(expense: s.expense, income: s.income, peerAvgExpense: peer.avgMonthlyExpense),
                 const SizedBox(height: 13),
-                PeerRankCard(stats: peer, myExpense: s.expense),
+                PeerRankCard(stats: peer, myExpense: s.expense,
+                  onDetail: () => context.go(RoutePath.compare.path)),
                 const SizedBox(height: 13),
-                GestureDetector(
-                  onTap: () => context.push(RoutePath.categoryAnalysis.path),
-                  child: _CategoryPreview(summary: s.byCategory)),
+                TopCategoryCard(summary: s.byCategory, peerByCategory: peer.avgByCategory,
+                  onTap: () => context.push(RoutePath.categoryAnalysis.path)),
+                if (savingsRate != null) ...[
+                  const SizedBox(height: 13),
+                  SavingsRateCard(rate: savingsRate, peerRate: (peer.avgSavingsRate * 100).round()),
+                ],
                 const SizedBox(height: 13),
-                Text('최근 내역', style: context.typo.label1W600.copyWith(color: context.color.label.normal)),
+                Text('최근 내역', style: context.typo.sectionTitle.copyWith(color: context.color.label.normal)),
                 if (txs.isEmpty)
                   Padding(padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Center(child: Text('내역이 없어요. + 로 추가하세요',
@@ -65,25 +73,6 @@ class BudgetHomePage extends ConsumerWidget {
           )),
         ]),
       ),
-    );
-  }
-}
-
-class _CategoryPreview extends StatelessWidget {
-  const _CategoryPreview({required this.summary});
-  final Map summary; // Map<BudgetCategory, int>
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.color.background.surface,
-        borderRadius: BorderRadius.circular(CSize.card.radius),
-        border: Border.all(color: context.color.line.normal)),
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-        Text('카테고리 분석', style: context.typo.body1W600.copyWith(color: context.color.label.normal)),
-        Text('자세히 ›', style: context.typo.caption1W500.copyWith(color: context.color.label.assistive)),
-      ]),
     );
   }
 }

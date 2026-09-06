@@ -6,13 +6,16 @@ import 'package:sedae_budget/theme/theme.dart';
 /// 코랄 원형 얼굴 마스코트 '동글이'(점선 링 + 눈 2 + 미소). [size]로 26~88px 스케일.
 /// [size] >= [inkThreshold]면 디자인대로 잉크색 이목구비 + 볼터치, 작으면 흰색 이목구비.
 class MascotDongle extends StatelessWidget {
-  const MascotDongle({super.key, this.size = 40, this.faceColor, this.featureColor});
+  const MascotDongle({super.key, this.size = 40, this.faceColor, this.featureColor, this.ring = true});
 
   final double size;
   final Color? faceColor;
 
   /// 눈·미소 색. null이면 크기에 따라 잉크(큰 사이즈) / 흰색(작은 사이즈).
   final Color? featureColor;
+
+  /// 점선 링 표시 여부(홈 히어로 워터마크는 링 없음).
+  final bool ring;
 
   static const double inkThreshold = 64;
 
@@ -25,23 +28,25 @@ class MascotDongle extends StatelessWidget {
         face: faceColor ?? Palette.primaryNormal,
         feature: featureColor ?? (large ? Palette.labelNormal : Palette.staticWhite),
         cheeks: large,
+        ring: ring,
       )),
     );
   }
 }
 
 class _DonglePainter extends CustomPainter {
-  const _DonglePainter({required this.face, required this.feature, required this.cheeks});
+  const _DonglePainter({required this.face, required this.feature, required this.cheeks, required this.ring});
   final Color face;
   final Color feature;
   final bool cheeks;
+  final bool ring;
 
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width, r = w / 2;
     final c = Offset(r, r);
     canvas.drawCircle(c, r, Paint()..color = face);
-    _dashedRing(canvas, c, r - w * 0.11, w * 0.03);
+    if (ring) _dashedRing(canvas, c, r - w * 0.11, w * 0.03);
 
     final eye = Paint()..color = feature;
     final er = w * 0.045;
@@ -79,5 +84,5 @@ class _DonglePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DonglePainter old) =>
-      old.face != face || old.feature != feature || old.cheeks != cheeks;
+      old.face != face || old.feature != feature || old.cheeks != cheeks || old.ring != ring;
 }
