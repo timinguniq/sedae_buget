@@ -32,20 +32,21 @@ class ApiClient {
     return ApiClient(dio);
   }
 
-  Future<T> get<T>(String path, {Map<String, dynamic>? query}) =>
-      _run(() => _dio.get<T>(path, queryParameters: query));
+  Future<T> get<T>(String path, {Map<String, dynamic>? query}) async =>
+      (await _run(() => _dio.get<T>(path, queryParameters: query))).data as T;
 
-  Future<T> post<T>(String path, {Object? body}) =>
-      _run(() => _dio.post<T>(path, data: body));
+  Future<T> post<T>(String path, {Object? body}) async =>
+      (await _run(() => _dio.post<T>(path, data: body))).data as T;
 
-  Future<T> put<T>(String path, {Object? body}) =>
-      _run(() => _dio.put<T>(path, data: body));
+  Future<T> put<T>(String path, {Object? body}) async =>
+      (await _run(() => _dio.put<T>(path, data: body))).data as T;
 
+  /// 바디 없는 삭제(204).
   Future<void> delete(String path) => _run(() => _dio.delete<void>(path));
 
-  Future<T> _run<T>(Future<Response<T>> Function() call) async {
+  Future<Response<T>> _run<T>(Future<Response<T>> Function() call) async {
     try {
-      return (await call()).data as T;
+      return await call();
     } on DioException catch (e) {
       throw ApiException.fromDio(e);
     }
