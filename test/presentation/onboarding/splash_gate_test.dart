@@ -3,12 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as provider;
+import 'package:sedae_budget/core/ads/index.dart';
 import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/initial/splash.page.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
 import 'package:sedae_budget/presentation/service/theme_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helper/fakes.dart';
 
@@ -26,6 +28,9 @@ class _FailingProfileRepo implements UserProfileRepository {
 }
 
 void main() {
+  late FakeAdService ads;
+
+  setUp(() async => ads = await registerFakeAdDependencies());
   tearDown(() => locator.reset());
 
   Widget buildApp(GoRouter router) => ProviderScope(
@@ -86,5 +91,24 @@ void main() {
     // 전환 애니메이션 중이라 SplashPage 자체는 아직 트리에 있을 수 있다. 목적 페이지가 떴는지로 판단.
     expect(find.text('먼저 나이대를 알려주세요'), findsOneWidget);
     expect(find.text('HOME'), findsNothing);
+  });
+
+  testWidgets('4번 켠 뒤(5번째 실행) → 홈 진입 후 전면 광고를 띄우고 카운트를 0으로', (t) async {
+    registerFakeUserDependencies(user: _user, profile: _profile);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(LaunchInterstitial.prefsKey, 4);
+    await boot(t);
+    expect(find.text('HOME'), findsOneWidget);
+    expect(ads.showInterstitialCalls, 1);
+    expect(prefs.getInt(LaunchInterstitial.prefsKey), 0);
+  });
+
+  testWidgets('5번째가 아니면 전면 광고를 띄우지 않는다', (t) async {
+    registerFakeUserDependencies(user: _user, profile: _profile);
+    await boot(t);
+    expect(find.text('HOME'), findsOneWidget);
+    expect(ads.loadInterstitialCalls, 0);
+    expect(ads.showInterstitialCalls, 0);
+    expect((await SharedPreferences.getInstance()).getInt(LaunchInterstitial.prefsKey), 1);
   });
 }

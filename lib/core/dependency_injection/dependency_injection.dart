@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:sedae_budget/core/core.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final locator = GetIt.instance;
 final _logger = CustomLogger.create(tag: 'DI');
@@ -180,4 +182,13 @@ void configureUserDependencies() {
     ..registerSingleton<UserProfileRepository>(
       ApiUserProfileRepository(locator<ApiClient>()),
     );
+}
+
+/// 광고 의존성. web은 google_mobile_ads가 지원하지 않으므로 Null Object([NoAdService])를 끼운다.
+void configureAdDependencies(SharedPreferences prefs) {
+  if (locator.isRegistered<AdService>()) return;
+  final AdService ads = kIsWeb ? const NoAdService() : AdMobAdService();
+  locator
+    ..registerSingleton<AdService>(ads)
+    ..registerSingleton<LaunchInterstitial>(LaunchInterstitial(prefs, ads));
 }

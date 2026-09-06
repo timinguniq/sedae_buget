@@ -9,33 +9,40 @@ import 'package:sedae_budget/domain/budget/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart';
+import 'package:sedae_budget/presentation/page/budget/widget/day_ad_banner.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/transaction_tile.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
 class _FakeRepo implements TransactionRepository {
+  List<Transaction> txs = [
+    Transaction.create(
+        amount: 5000, categoryId: 7, date: DateTime(2026, 6, 5),
+        type: TransactionType.expense),
+  ];
+
   @override
   Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
   @override
   Future<Result<Transaction>> delete(Transaction tx) async => Result.success(tx);
   @override
-  Future<Result<List<Transaction>>> getMonth(int y, int m) async => Result.success([
-        Transaction.create(
-            amount: 5000, categoryId: 7, date: DateTime(2026, 6, 5),
-            type: TransactionType.expense),
-      ]);
+  Future<Result<List<Transaction>>> getMonth(int y, int m) async => Result.success(txs);
   @override
   Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
       const Result.success([]);
 }
 
 void main() {
+  late _FakeRepo repo;
+
   setUpAll(() => initializeDateFormatting('ko'));
-  setUp(() {
-    locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo()));
+  setUp(() async {
+    repo = _FakeRepo();
+    locator.registerSingleton<TransactionUsecase>(TransactionUsecase(repo));
     registerFakePeerDependencies();
     registerFakeCategoryDependencies();
+    await registerFakeAdDependencies();
   });
   tearDown(() => locator.reset());
 
@@ -79,6 +86,62 @@ void main() {
     await tester.tap(find.widgetWithText(DesignChip, label));
     await tester.pump();
     expect(find.byType(TransactionTile), findsOneWidget);
+  });
+
+  testWidgets('하루 그룹마다 끝에 배너 광고 자리(DayAdBanner)가 붙는다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    repo.txs = [
+      Transaction.create(amount: 5000, categoryId: 7, date: DateTime(2026, 6, 5), type: TransactionType.expense),
+      Transaction.create(amount: 3000, categoryId: 7, date: DateTime(2026, 6, 3), type: TransactionType.expense),
+      Transaction.create(amount: 2000, categoryId: 7, date: DateTime(2026, 6, 3), type: TransactionType.expense),
+    ];
+
+    await tester.pumpWidget(provider.ChangeNotifierProvider(
+      create: (_) => ThemeService(),
+      child: ProviderScope(
+        child: MaterialApp(home: const TransactionListPage()),
+      ),
+    ));
+    await tester.pump();
+    await tester.pump();
+
+    final banners = find.byType(DayAdBanner);
+    expect(banners, findsNWidgets(2)); // 6/5, 6/3 두 그룹
+    // 첫 배너는 6/5 타일 뒤, 6/3 헤더 앞에 놓인다.
+    final firstBannerY = tester.getTopLeft(banners.first).dy;
+    expect(firstBannerY, greaterThanOrEqualTo(tester.getBottomLeft(find.byType(TransactionTile).first).dy));
+    expect(firstBannerY, lessThanOrEqualTo(tester.getTopLeft(find.text('6월 3일')).dy));
+    // 광고가 로드되지 않으면(fake) 빈 프레임을 남기지 않는다.
+    expect(find.text('광고'), findsNothing);
+  });
+
+  testWidgets('배너 광고는 위에서부터 최대 3개만 붙는다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    repo.txs = [
+      for (final d in [5, 4, 3, 2, 1])
+        Transaction.create(amount: 1000, categoryId: 7, date: DateTime(2026, 6, d), type: TransactionType.expense),
+    ];
+
+    await tester.pumpWidget(provider.ChangeNotifierProvider(
+      create: (_) => ThemeService(),
+      child: ProviderScope(
+        child: MaterialApp(home: const TransactionListPage()),
+      ),
+    ));
+    await tester.pump();
+    await tester.pump();
+
+    final banners = find.byType(DayAdBanner);
+    expect(banners, findsNWidgets(3)); // 6/5, 6/4, 6/3 그룹 끝에만
+    // 마지막 배너는 네 번째 그룹(6/2) 헤더보다 위에 있다.
+    expect(tester.getTopLeft(banners.last).dy, lessThanOrEqualTo(tester.getTopLeft(find.text('6월 2일')).dy));
+    expect(find.text('6월 1일'), findsOneWidget); // 다섯 그룹 모두 그려진 상태에서 센 것
   });
 
   test('dateGroupLabel: 오늘 / 어제 / M월 D일', () {
