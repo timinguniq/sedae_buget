@@ -4,6 +4,7 @@ import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 
 final locator = GetIt.instance;
+final _logger = CustomLogger.create(tag: 'DI');
 
 void configureDependencyInjection(LocalStorage storage) {
   _data(storage);
@@ -119,6 +120,25 @@ void _manager() {
    */
 }
 
+/// API 인프라. 다른 configure*보다 먼저 호출한다. env가 local이면 Stub API를 끼운다.
+void configureApiDependencies(AuthTokenStore tokenStore) {
+  if (locator.isRegistered<ApiClient>()) return;
+  final env = EnvironmentConfig.env;
+  final isStub = env == AppEnvironment.local;
+  if (!isStub && env.endpoint.server.isEmpty) {
+    _logger.w('env=${env.name}인데 서버 주소가 비어 있음 — environment_config.dart에 기입 필요');
+  }
+  locator
+    ..registerSingleton<AuthTokenStore>(tokenStore)
+    ..registerSingleton<ApiClient>(
+      ApiClient.create(
+        baseUrl: env.endpoint.server,
+        tokenStore: tokenStore,
+        extra: [if (isStub) StubApiInterceptor(store: SharedPrefsStubStateStore())],
+      ),
+    );
+}
+
 /// Phase 1 로컬 가계부 의존성. Firebase 없이 독립 실행 가능.
 void configureBudgetDependencies() {
   if (locator.isRegistered<TransactionUsecase>()) return;
@@ -142,12 +162,18 @@ void configurePeerDependencies() {
   locator.registerSingleton<PeerStatsRepository>(MockPeerStatsRepository());
 }
 
-/// 인증·프로필 의존성. 현재 SharedPreferences 로컬, 서버 도입 시 구현체만 교체.
+/// 인증·프로필 의존성. 인증은 서버 세션(ApiAuthRepository), 프로필은 SharedPreferences(서버 전환 예정).
+/// [configureApiDependencies]가 먼저 호출되어 있어야 한다.
 void configureUserDependencies() {
   if (locator.isRegistered<AuthUsecase>()) return;
   locator
-    ..registerSingleton<AuthRepository>(SharedPrefsAuthRepository())
-    ..registerSingleton<AuthUsecase>(AuthUsecase(locator<AuthRepository>()))
+    ..registerSingleton<AuthRepository>(
+      ApiAuthRepository(locator<ApiClient>(), locator<AuthTokenStore>()),
+    )
+    ..registerSingleton<SocialIdTokenProvider>(StubSocialIdTokenProvider())
+    ..registerSingleton<AuthUsecase>(
+      AuthUsecase(locator<AuthRepository>(), locator<SocialIdTokenProvider>()),
+    )
     ..registerSingleton<UserProfileRepository>(
       SharedPrefsUserProfileRepository(),
     );

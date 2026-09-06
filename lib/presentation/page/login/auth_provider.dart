@@ -9,9 +9,9 @@ class AuthNotifier extends AsyncNotifier<AuthUser?> {
   @override
   Future<AuthUser?> build() => _usecase.currentUser();
 
-  /// 백엔드 없음 → 목업 로그인: 제공자별 가짜 닉네임으로 로컬 저장.
-  Future<void> signInMock(AuthProvider provider) async {
-    final user = await _usecase.signInMock(provider);
+  /// 소셜 로그인 → 서버 세션. 성공 시 사용자 상태 갱신.
+  Future<void> signIn(AuthProvider provider) async {
+    final user = await _usecase.signIn(provider);
     state = AsyncData(user);
   }
 

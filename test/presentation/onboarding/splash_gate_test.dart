@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
+import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/initial/splash.page.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
 import 'package:sedae_budget/presentation/service/theme_service.dart';
 
+import '../../helper/fakes.dart';
+
 void main() {
-  setUp(configureUserDependencies);
+  tearDown(() => locator.reset());
+
   Widget buildApp(GoRouter router) => ProviderScope(
         child: provider.ChangeNotifierProvider(
           create: (_) => ThemeService(),
@@ -31,7 +34,7 @@ void main() {
       );
 
   testWidgets('no profile → navigates to onboarding', (t) async {
-    SharedPreferences.setMockInitialValues({});
+    registerFakeUserDependencies();
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
@@ -47,9 +50,9 @@ void main() {
   });
 
   testWidgets('saved profile → navigates to home', (t) async {
-    SharedPreferences.setMockInitialValues({
-      'user_profile': '{"ageGroup":"thirties","monthlyIncome":3000000}',
-    });
+    registerFakeUserDependencies(
+      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+    );
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);

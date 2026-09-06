@@ -12,6 +12,8 @@ import 'package:sedae_budget/presentation/page/compare/peer_provider.dart';
 import 'package:sedae_budget/presentation/page/report/report.page.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 
+import '../../helper/fakes.dart';
+
 class _FakeRepo implements TransactionRepository {
   @override
   Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
@@ -63,7 +65,7 @@ void main() {
   setUp(() {
     locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo()));
     configurePeerDependencies();
-    configureUserDependencies();
+    registerFakeUserDependencies();
   });
   tearDown(() => locator.reset());
 
