@@ -7,22 +7,26 @@ import 'package:sedae_budget/presentation/page/compare/widget/distribution_histo
 import 'package:sedae_budget/presentation/page/compare/widget/category_battle_row.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-/// 세대 비교 화면. 또래 통계는 목업(MockPeerStatsSource) — 추후 서버 교체.
+/// 세대 비교 화면. 또래 통계는 목업(MockPeerStatsRepository) — 추후 서버 교체.
 class ComparePage extends ConsumerWidget {
   const ComparePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final peer = ref.watch(peerStatsProvider);
+    final asyncPeer = ref.watch(peerStatsProvider);
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
-    final usecase = ref.read(transactionUsecaseProvider);
+    final summary = ref.watch(monthlySummaryProvider);
 
     return DefaultLayout(
-      child: asyncTxs.when(
+      child: asyncPeer.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('또래 통계 실패: $e')),
+        data: (peer) => asyncTxs.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
         data: (txs) {
-          final myExpense = usecase.totalExpense(txs);
+          final s = summary.requireValue;
+          final myExpense = s.expense;
           if (myExpense == 0) {
             return Center(
               child: Padding(
@@ -37,7 +41,7 @@ class ComparePage extends ConsumerWidget {
               ),
             );
           }
-          final mySummary = usecase.categorySummary(txs);
+          final mySummary = s.byCategory;
           final top6 = (mySummary.entries.toList()
                 ..sort((a, b) => b.value.compareTo(a.value)))
               .take(6)
@@ -64,6 +68,7 @@ class ComparePage extends ConsumerWidget {
             ],
           );
         },
+        ),
       ),
     );
   }

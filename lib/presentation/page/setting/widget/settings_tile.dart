@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 설정 화면용 카드형 행(라벨 + 값/트레일링 + 탭).

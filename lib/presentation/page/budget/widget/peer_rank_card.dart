@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-/// 또래 순위 카드. 통계 값은 목업(MockPeerStatsSource) — 추후 서버 교체.
+/// 또래 순위 카드. 통계 값은 목업(MockPeerStatsRepository) — 추후 서버 교체.
 class PeerRankCard extends StatelessWidget {
   const PeerRankCard({super.key, required this.stats, required this.myExpense});
   final PeerStats stats;

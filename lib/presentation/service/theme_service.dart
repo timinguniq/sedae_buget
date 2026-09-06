@@ -5,6 +5,9 @@ import 'package:sedae_budget/theme/theme.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+/// `context.theme/color/deco/typo` 확장은 theme 계층 소유. 기존 import 호환을 위해 re-export.
+export 'package:sedae_budget/theme/foundation/theme_context.dart';
+
 class ThemeService with ChangeNotifier {
   static const _prefsKey = 'theme_mode';
   ThemeMode _mode = ThemeMode.system;
@@ -294,17 +297,6 @@ class ThemeService with ChangeNotifier {
   }
 }
 
-final _lightTheme = LightTheme();
-final _darkTheme = DarkTheme();
-
 extension ThemeServiceExt on BuildContext {
   ThemeService get themeService => watch<ThemeService>();
-
-  AppTheme get theme => Theme.of(this).brightness == Brightness.dark ? _darkTheme : _lightTheme;
-
-  AppColor get color => theme.color;
-
-  AppDeco get deco => theme.deco;
-
-  AppTypo get typo => theme.typo;
 }

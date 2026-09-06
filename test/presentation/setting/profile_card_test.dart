@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart' as provider;
+import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/presentation/page/setting/widget/profile_card.dart';
 import 'package:sedae_budget/presentation/service/theme_service.dart';
 
@@ -17,6 +18,7 @@ Widget _wrap(Widget child) => ProviderScope(
     );
 
 void main() {
+  setUp(configureUserDependencies);
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
   });

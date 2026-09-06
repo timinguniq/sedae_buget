@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 미구현 화면용 플레이스홀더(마스코트 + '곧 제공' + 부제).

@@ -135,3 +135,20 @@ void configureBudgetDependencies() {
       TransactionUsecase(locator<TransactionRepository>()),
     );
 }
+
+/// 또래 통계 의존성. 현재 목업, 서버 구현 시 이 함수만 교체.
+void configurePeerDependencies() {
+  if (locator.isRegistered<PeerStatsRepository>()) return;
+  locator.registerSingleton<PeerStatsRepository>(MockPeerStatsRepository());
+}
+
+/// 인증·프로필 의존성. 현재 SharedPreferences 로컬, 서버 도입 시 구현체만 교체.
+void configureUserDependencies() {
+  if (locator.isRegistered<AuthUsecase>()) return;
+  locator
+    ..registerSingleton<AuthRepository>(SharedPrefsAuthRepository())
+    ..registerSingleton<AuthUsecase>(AuthUsecase(locator<AuthRepository>()))
+    ..registerSingleton<UserProfileRepository>(
+      SharedPrefsUserProfileRepository(),
+    );
+}

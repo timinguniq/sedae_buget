@@ -1,7 +1,8 @@
+import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-/// 결정적(랜덤 아님) 목업 또래 통계 생성기. 추후 서버 데이터로 교체.
-class MockPeerStatsSource {
+/// 결정적(랜덤 아님) 목업 또래 통계. 추후 서버 구현으로 교체.
+class MockPeerStatsRepository implements PeerStatsRepository {
   // 나이대별 또래 평균 월지출(원).
   static const _means = <AgeGroup, int>{
     AgeGroup.teens: 800000,
@@ -33,7 +34,8 @@ class MockPeerStatsSource {
     BudgetCategory.etc: 0.05,
   };
 
-  PeerStats forGroup(AgeGroup group) {
+  @override
+  Future<PeerStats> forGroup(AgeGroup group) async {
     final mean = _means[group]!;
     return PeerStats(
       ageGroup: group,

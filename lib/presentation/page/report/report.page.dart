@@ -14,29 +14,30 @@ class ReportPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final peer = ref.watch(peerStatsProvider);
+    final asyncPeer = ref.watch(peerStatsProvider);
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
-    final usecase = ref.read(transactionUsecaseProvider);
+    final summary = ref.watch(monthlySummaryProvider);
     final asyncProfile = ref.watch(userProfileProvider);
     final selfTrend = ref.watch(selfTrendProvider);
+    final generationAvg = ref.watch(generationAvgProvider);
+    final savingsRate = ref.watch(savingsRateProvider) ?? 0;
 
     final ageGroup = asyncProfile.value?.ageGroup ?? AgeGroup.thirties;
 
     return DefaultLayout(
-      child: asyncTxs.when(
+      child: asyncPeer.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('또래 통계 실패: $e')),
+        data: (peer) => asyncTxs.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
         data: (txs) {
+          final s = summary.requireValue;
           final won = NumberFormat.decimalPattern('ko');
-          final totalExpense = usecase.totalExpense(txs);
-          final income = (asyncProfile.value?.monthlyIncome ?? 0) > 0
-              ? asyncProfile.value!.monthlyIncome
-              : usecase.totalIncome(txs);
-          final savingsRate =
-              income > 0 ? ((income - totalExpense) * 100 / income).round() : 0;
+          final totalExpense = s.expense;
           final peerDiff = peer.diffPercent(totalExpense);
 
-          final mySummary = usecase.categorySummary(txs);
+          final mySummary = s.byCategory;
           final insightLine = _buildInsightLine(mySummary, peer, ageGroup);
 
           return ListView(
@@ -94,7 +95,12 @@ class ReportPage extends ConsumerWidget {
                   style: context.typo.body1W600
                       .copyWith(color: context.color.label.normal)),
               const SizedBox(height: 10),
-              GenerationAvgChart(myGroup: ageGroup),
+              generationAvg.when(
+                loading: () => const SizedBox(height: 96),
+                error: (e, _) => const SizedBox(height: 96),
+                data: (avgs) =>
+                    GenerationAvgChart(myGroup: ageGroup, avgByGroup: avgs),
+              ),
 
               const SizedBox(height: 24),
 
@@ -112,6 +118,7 @@ class ReportPage extends ConsumerWidget {
             ],
           );
         },
+        ),
       ),
     );
   }

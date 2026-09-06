@@ -18,7 +18,7 @@ abstract class RemoteConfig {
 
   static final _instance = FirebaseRemoteConfig.instance;
 
-  static AppInitialInfo _initialInfo = AppInitialInfo.empty();
+  static AppInitialInfo _initialInfo = AppInitialInfo.empty(currentBuild: CPackageInfo.buildNumber);
 
   static Future<void> initialize() async {
     _logger.i('initialize() : start.');

@@ -3,7 +3,6 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:sedae_budget/core/core.dart';
-import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';

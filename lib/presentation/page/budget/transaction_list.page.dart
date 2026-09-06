@@ -11,15 +11,18 @@ class TransactionListPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
-    final peer = ref.watch(peerStatsProvider);
-    final usecase = ref.read(transactionUsecaseProvider);
+    final asyncPeer = ref.watch(peerStatsProvider);
+    final summary = ref.watch(monthlySummaryProvider);
     return DefaultLayout(
       appBar: AppBar(title: const Text('내역')),
-      child: asyncTxs.when(
+      child: asyncPeer.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('또래 통계 실패: $e')),
+        data: (peer) => asyncTxs.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('불러오기 실패: $e')),
         data: (txs) {
-          final mySummary = usecase.categorySummary(txs);
+          final mySummary = summary.requireValue.byCategory;
           return txs.isEmpty
             ? Center(child: Text('내역이 없어요', style: context.typo.body2W400.copyWith(color: context.color.label.alternative)))
             : ListView(children: txs.map((t) => TransactionTile(
@@ -30,6 +33,7 @@ class TransactionListPage extends ConsumerWidget {
                         (peer.avgByCategory[BudgetCategory.fromId(t.categoryId)] ?? 0),
               )).toList());
         },
+        ),
       ),
     );
   }

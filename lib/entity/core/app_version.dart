@@ -1,7 +1,6 @@
 import 'dart:io';
 
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:sedae_budget/core/core.dart';
 
 part 'app_version.freezed.dart';
 part 'app_version.g.dart';
@@ -16,8 +15,8 @@ abstract class AppVersion with _$AppVersion {
 
   factory AppVersion.fromJson(Map<String, dynamic> json) => _$AppVersionFromJson(json);
 
-  factory AppVersion.empty() => AppVersion(
-    releaseVersion: CPackageInfo.buildNumber,
+  factory AppVersion.empty({required int releaseVersion}) => AppVersion(
+    releaseVersion: releaseVersion,
     minimumAvailableVersion: 0,
     link: Platform.isIOS
         ? 'itms-apps://apps.apple.com/kr/app/1506564650'

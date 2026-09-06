@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/data/peer/mock_peer_stats_source.dart';
+import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/summary_hero_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_rank_card.dart';
 import 'package:sedae_budget/presentation/service/theme_service.dart';
@@ -19,7 +19,7 @@ void main() {
   });
 
   testWidgets('rank card shows 등 and 상위', (t) async {
-    final stats = MockPeerStatsSource().forGroup(AgeGroup.thirties);
+    final stats = await MockPeerStatsRepository().forGroup(AgeGroup.thirties);
     await t.pumpWidget(_wrap(PeerRankCard(stats: stats, myExpense: 2600000)));
     await t.pump();
     expect(find.textContaining('등'), findsOneWidget);

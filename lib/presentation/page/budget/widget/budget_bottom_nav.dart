@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 하단 4탭 + 탭1·탭2 사이 중앙 코랄 원형 FAB 커스텀 바.
