@@ -19,7 +19,7 @@ class CategoryBattleRow extends StatelessWidget {
           Text(category.label, style: context.typo.label2W600.copyWith(color: context.color.label.normal)),
           Text(diff == 0 ? '또래와 비슷' : (diff < 0 ? '${-diff}% 적음' : '$diff% 많음'),
             style: context.typo.caption1W600.copyWith(
-              color: diff <= 0 ? context.color.primary.strong : context.color.label.alternative)),
+              color: diff > 0 ? context.color.primary.normal : context.color.label.alternative)),
         ]),
         const SizedBox(height: 6),
         _bar(context, '나', mine / maxv, context.color.primary.normal),
