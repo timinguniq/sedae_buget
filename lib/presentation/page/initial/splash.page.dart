@@ -61,6 +61,9 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   }
 
   Future<void> appInitialize() async {
+    // 실행 횟수를 세고, N번째면 스플래시 동안 전면 광고를 미리 로드한다.
+    final launchAd = ref.read(launchInterstitialProvider);
+    await launchAd.onAppLaunched();
     await Future.delayed(const Duration(milliseconds: _animationTime));
     UserProfile? profile;
     try {
@@ -71,5 +74,6 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     }
     if (!mounted) return;
     context.go(profile == null ? RoutePath.onboarding.path : RoutePath.budgetHome.path);
+    await launchAd.showIfDue();
   }
 }

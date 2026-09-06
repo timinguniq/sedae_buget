@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:sedae_budget/presentation/presentation.dart';
+import 'package:sedae_budget/core/ads/index.dart';
 import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/core/http_client/auth_token_store.dart';
 import 'package:sedae_budget/core/local_storage/local_storage.dart';
@@ -13,6 +14,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/app_config/remote_config.dart';
 import 'core/util/logger/custom_logger.dart';
 import 'package:provider/provider.dart' as provider;
@@ -31,6 +33,8 @@ Future<void> main() async {
       configureBudgetDependencies();
       configurePeerDependencies();
       configureUserDependencies();
+      configureAdDependencies(await SharedPreferences.getInstance());
+      unawaited(locator<AdService>().initialize()); // 부팅을 막지 않고 미리 워밍업
 
       //await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 

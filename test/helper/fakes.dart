@@ -1,7 +1,10 @@
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:sedae_budget/core/ads/index.dart';
 import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// presentation 테스트용 인메모리 fake. 실제 API 구현체 대신 get_it에 등록한다.
 class InMemoryAuthRepository implements AuthRepository {
@@ -86,6 +89,41 @@ class FakePeerStatsRepository implements PeerStatsRepository {
 /// 또래 통계 의존성을 fake로 등록한다.
 void registerFakePeerDependencies() =>
     locator.registerSingleton<PeerStatsRepository>(FakePeerStatsRepository());
+
+/// 광고 SDK 없이 호출 횟수만 기록하는 fake. 배너는 항상 실패(null), 전면은 [interstitial]의 결과를 따른다.
+class FakeAdService implements AdService {
+  FakeAdService({Future<bool>? interstitial}) : _interstitial = interstitial ?? Future.value(true);
+
+  final Future<bool> _interstitial;
+  int loadInterstitialCalls = 0;
+  int showInterstitialCalls = 0;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<BannerAd?> loadBanner() async => null;
+
+  @override
+  Future<bool> loadInterstitial() {
+    loadInterstitialCalls++;
+    return _interstitial;
+  }
+
+  @override
+  Future<void> showInterstitial() async => showInterstitialCalls++;
+}
+
+/// 광고 의존성을 fake로 등록한다. 앱 실행 카운트(SharedPreferences mock)는 0에서 시작한다.
+Future<FakeAdService> registerFakeAdDependencies() async {
+  SharedPreferences.setMockInitialValues({});
+  final prefs = await SharedPreferences.getInstance();
+  final ads = FakeAdService();
+  locator
+    ..registerSingleton<AdService>(ads)
+    ..registerSingleton<LaunchInterstitial>(LaunchInterstitial(prefs, ads));
+  return ads;
+}
 
 /// 인증·프로필 의존성을 fake로 등록한다. `tearDown(() => locator.reset())`과 함께 쓴다.
 /// [profileRepository]를 주면 [profile] 대신 그 저장소를 등록한다(실패 시나리오용).

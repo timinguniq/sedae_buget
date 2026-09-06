@@ -1,3 +1,4 @@
+export 'ads/index.dart';
 export 'analytics/index.dart';
 export 'app_config/index.dart';
 export 'dependency_injection/dependency_injection.dart';
