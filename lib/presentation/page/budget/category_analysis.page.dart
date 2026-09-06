@@ -20,11 +20,14 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
   Widget build(BuildContext context) {
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
     final monthlySummary = ref.watch(monthlySummaryProvider);
-    final peer = ref.watch(peerStatsProvider);
+    final asyncPeer = ref.watch(peerStatsProvider);
     final won = NumberFormat.decimalPattern('ko');
     return DefaultLayout(
       appBar: AppBar(title: const Text('카테고리 분석')),
-      child: asyncTxs.when(
+      child: asyncPeer.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('또래 통계 실패: $e')),
+        data: (peer) => asyncTxs.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('불러오기 실패: $e')),
         data: (txs) {
@@ -71,6 +74,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
             }),
           ]);
         },
+        ),
       ),
     );
   }

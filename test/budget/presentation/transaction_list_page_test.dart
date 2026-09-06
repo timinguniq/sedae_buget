@@ -27,8 +27,10 @@ class _FakeRepo implements TransactionRepository {
 
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
-  setUp(() =>
-      locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo())));
+  setUp(() {
+    locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo()));
+    configurePeerDependencies();
+  });
   tearDown(() => locator.reset());
 
   testWidgets('renders a TransactionTile for each transaction', (tester) async {

@@ -25,6 +25,7 @@ class _Repo implements TransactionRepository {
 
 Widget _app(List<Transaction> list) {
   locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_Repo(list)));
+  configurePeerDependencies();
   return provider.ChangeNotifierProvider(
     create: (_) => ThemeService(),
     child: const ProviderScope(

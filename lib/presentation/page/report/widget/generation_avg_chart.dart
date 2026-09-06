@@ -1,27 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:sedae_budget/data/peer/mock_peer_stats_source.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 
 /// 세대별 월평균 지출 막대 차트. 내 나이대(myGroup) 강조.
 class GenerationAvgChart extends StatelessWidget {
-  const GenerationAvgChart({super.key, required this.myGroup});
+  const GenerationAvgChart({super.key, required this.myGroup, required this.avgByGroup});
 
   final AgeGroup myGroup;
+  final Map<AgeGroup, int> avgByGroup;
 
   @override
   Widget build(BuildContext context) {
-    final source = MockPeerStatsSource();
     final groups = AgeGroup.values;
-    final avgs = {for (final g in groups) g: source.forGroup(g).avgMonthlyExpense};
-    final maxAvg = avgs.values.fold<int>(1, (m, v) => v > m ? v : m);
+    final maxAvg = avgByGroup.values.fold<int>(1, (m, v) => v > m ? v : m);
 
     return SizedBox(
       height: 96,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: groups.map((g) {
-          final h = 4.0 + 74.0 * avgs[g]! / maxAvg;
+          final h = 4.0 + 74.0 * avgByGroup[g]! / maxAvg;
           final isMe = g == myGroup;
           return Expanded(
             child: Padding(

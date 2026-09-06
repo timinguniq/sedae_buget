@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
-import 'package:sedae_budget/data/peer/mock_peer_stats_source.dart';
+import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/budget/transaction_repository.dart';
 import 'package:sedae_budget/domain/budget/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
@@ -60,8 +60,10 @@ class _FakeRepo implements TransactionRepository {
 
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
-  setUp(() =>
-      locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo())));
+  setUp(() {
+    locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo()));
+    configurePeerDependencies();
+  });
   tearDown(() => locator.reset());
 
   testWidgets('report page renders insight, stats, and section headers',
@@ -71,13 +73,13 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
+    final stats = await MockPeerStatsRepository().forGroup(AgeGroup.thirties);
     await tester.pumpWidget(
       provider.ChangeNotifierProvider(
         create: (_) => ThemeService(),
         child: ProviderScope(
           overrides: [
-            peerStatsProvider.overrideWithValue(
-                MockPeerStatsSource().forGroup(AgeGroup.thirties)),
+            peerStatsProvider.overrideWith((_) => stats),
           ],
           child: MaterialApp(
             theme: ThemeService().lightThemeData(),

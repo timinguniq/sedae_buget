@@ -68,4 +68,8 @@ void main() {
       isEmpty,
     );
   });
+
+  test('presentation은 data 구현체를 직접 import하지 않는다', () {
+    expect(violations('presentation', ['sedae_budget/data']), isEmpty);
+  });
 }

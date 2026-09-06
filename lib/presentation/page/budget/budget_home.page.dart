@@ -17,7 +17,7 @@ class BudgetHomePage extends ConsumerWidget {
     final month = ref.watch(selectedMonthProvider);
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
     final summary = ref.watch(monthlySummaryProvider);
-    final peer = ref.watch(peerStatsProvider);
+    final asyncPeer = ref.watch(peerStatsProvider);
 
     return DefaultLayout(
       child: Padding(
@@ -34,7 +34,10 @@ class BudgetHomePage extends ConsumerWidget {
               child: const MascotDongle(size: 40)),
           ]),
           const SizedBox(height: 16),
-          Expanded(child: asyncTxs.when(
+          Expanded(child: asyncPeer.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, _) => Center(child: Text('또래 통계 실패: $e')),
+            data: (peer) => asyncTxs.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('불러오기 실패: $e', style: context.typo.body2W400)),
             data: (txs) {
@@ -58,6 +61,7 @@ class BudgetHomePage extends ConsumerWidget {
                     onTap: () => context.push(RoutePath.transactionEdit.path, extra: t))),
               ]);
             },
+            ),
           )),
         ]),
       ),

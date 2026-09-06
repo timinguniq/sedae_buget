@@ -45,7 +45,7 @@ class SummaryHeroCard extends StatelessWidget {
   }
 }
 
-// 또래 값은 목업(MockPeerStatsSource) 기반 — 추후 서버 데이터로 교체.
+// 또래 값은 목업(MockPeerStatsRepository) 기반 — 추후 서버 데이터로 교체.
 String _peerLabel(int me, int peer) {
   if (peer == 0) return '또래 평균 집계 중';
   final d = ((me - peer) * 100 / peer).round();

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 
-/// 또래 월지출 분포 막대 + 내 위치 강조. 통계는 목업(MockPeerStatsSource) — 추후 서버 교체.
+/// 또래 월지출 분포 막대 + 내 위치 강조. 통계는 목업(MockPeerStatsRepository) — 추후 서버 교체.
 class DistributionHistogram extends StatelessWidget {
   const DistributionHistogram({super.key, required this.stats, required this.myExpense});
   final PeerStats stats;
