@@ -28,4 +28,20 @@ void main() {
     expect(s.lightThemeData().scaffoldBackgroundColor, const Color(0xFFFBFAF7));
     expect(s.darkThemeData().scaffoldBackgroundColor, const Color(0xFF1A1714));
   });
+
+  test('filled button theme is design coral h54 r16', () {
+    final style = ThemeService().lightThemeData().filledButtonTheme.style!;
+    expect(style.minimumSize!.resolve({})!.height, 54);
+    expect(style.backgroundColor!.resolve({}), const Color(0xFFF2603C));
+    final shape = style.shape!.resolve({}) as RoundedRectangleBorder;
+    expect(shape.borderRadius, BorderRadius.circular(16));
+    expect(style.textStyle!.resolve({})!.fontWeight, FontWeight.w700);
+  });
+
+  test('switch and slider themes use coral', () {
+    final theme = ThemeService().lightThemeData();
+    expect(theme.switchTheme.trackColor!.resolve({WidgetState.selected}), const Color(0xFFF2603C));
+    expect(theme.sliderTheme.activeTrackColor, const Color(0xFFF2603C));
+    expect(theme.sliderTheme.trackHeight, 8);
+  });
 }
