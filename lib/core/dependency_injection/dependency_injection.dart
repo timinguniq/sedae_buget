@@ -162,7 +162,7 @@ void configurePeerDependencies() {
   locator.registerSingleton<PeerStatsRepository>(MockPeerStatsRepository());
 }
 
-/// 인증·프로필 의존성. 인증은 서버 세션(ApiAuthRepository), 프로필은 SharedPreferences(서버 전환 예정).
+/// 인증·프로필 의존성. 둘 다 서버(ApiAuthRepository, ApiUserProfileRepository).
 /// [configureApiDependencies]가 먼저 호출되어 있어야 한다.
 void configureUserDependencies() {
   if (locator.isRegistered<AuthUsecase>()) return;
@@ -175,6 +175,6 @@ void configureUserDependencies() {
       AuthUsecase(locator<AuthRepository>(), locator<SocialIdTokenProvider>()),
     )
     ..registerSingleton<UserProfileRepository>(
-      SharedPrefsUserProfileRepository(),
+      ApiUserProfileRepository(locator<ApiClient>()),
     );
 }
