@@ -70,6 +70,8 @@ void main() {
 
   testWidgets('keypad entry saves amount', (tester) async {
     final repo = await pumpEditPage(tester);
+    expect(find.text('저장하기'), findsOneWidget);
+    expect(find.text('₩0'), findsOneWidget);
     for (final k in ['1', '2', '0', '0', '0']) {
       await tester.tap(find.text(k));
       await tester.pump();
@@ -93,6 +95,7 @@ void main() {
     final repo = await pumpEditPage(tester,
         customs: const [CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12)]);
 
+    await tester.ensureVisible(find.text('반려동물')); // 가로 스크롤 칩 행 끝
     await tester.tap(find.text('반려동물'));
     await tester.pump();
     for (final k in ['1', '0', '0', '0']) {
@@ -111,6 +114,7 @@ void main() {
   testWidgets('추가 칩으로 만든 카테고리가 바로 선택된다', (tester) async {
     final repo = await pumpEditPage(tester);
 
+    await tester.ensureVisible(find.byKey(const Key('category-add-chip'))); // 가로 스크롤 칩 행 끝
     await tester.tap(find.byKey(const Key('category-add-chip')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));

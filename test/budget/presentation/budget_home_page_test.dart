@@ -62,8 +62,7 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.textContaining('12,000'), findsWidgets);
-    expect(find.text('택시'), findsNothing); // memo shown in subtitle via textContaining
-    expect(find.textContaining('택시'), findsOneWidget);
+    expect(find.text('택시'), findsOneWidget); // memo is the tile title (design)
 
     // 디자인 카드 4종 + 최근 내역
     expect(find.text('이번 달 요약'), findsOneWidget);

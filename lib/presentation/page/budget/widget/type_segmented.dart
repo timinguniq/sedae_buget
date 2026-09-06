@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
+/// 지출/수입 세그먼트. 디자인: `background.alternative` 트랙 r12 padding 3, 선택 코랄 r9 700·12 흰색.
 class TypeSegmented extends StatelessWidget {
   const TypeSegmented({super.key, required this.value, required this.onChanged});
   final TransactionType value;
@@ -11,22 +12,29 @@ class TypeSegmented extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget seg(TransactionType t, String label) {
       final sel = t == value;
-      return Expanded(child: GestureDetector(
+      return GestureDetector(
         onTap: () => onChanged(t),
+        behavior: HitTestBehavior.opaque,
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          decoration: BoxDecoration(
-            color: sel ? context.color.primary.normal : context.color.background.alternative,
-            borderRadius: BorderRadius.circular(CSize.sm.radius),
-          ),
-          alignment: Alignment.center,
-          child: Text(label, style: context.typo.label1W600.copyWith(
-            color: sel ? context.color.label.white : context.color.label.neutral)),
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+          decoration: sel
+              ? BoxDecoration(color: context.color.primary.normal, borderRadius: BorderRadius.circular(9))
+              : null,
+          child: Text(label, style: context.typo.caption1W600.copyWith(
+            fontWeight: sel ? context.typo.bold : context.typo.semiBold,
+            color: sel ? context.color.static.white : context.color.label.alternative)),
         ),
-      ));
+      );
     }
-    return Row(children: [
-      seg(TransactionType.expense, '지출'), const SizedBox(width: 8), seg(TransactionType.income, '수입'),
-    ]);
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: context.color.background.alternative,
+        borderRadius: BorderRadius.circular(CSize.sm.radius),
+      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        seg(TransactionType.expense, '지출'), seg(TransactionType.income, '수입'),
+      ]),
+    );
   }
 }

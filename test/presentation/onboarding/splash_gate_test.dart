@@ -62,14 +62,14 @@ void main() {
   testWidgets('first launch (not logged in) → leaves splash to onboarding', (t) async {
     registerFakeUserDependencies();
     await boot(t);
-    expect(find.text('나이대를 알려주세요'), findsOneWidget);
+    expect(find.text('먼저 나이대를 알려주세요'), findsOneWidget);
     expect(find.text('HOME'), findsNothing);
   });
 
   testWidgets('logged in, no profile → navigates to onboarding', (t) async {
     registerFakeUserDependencies(user: _user);
     await boot(t);
-    expect(find.text('나이대를 알려주세요'), findsOneWidget);
+    expect(find.text('먼저 나이대를 알려주세요'), findsOneWidget);
     expect(find.text('HOME'), findsNothing);
   });
 
@@ -77,14 +77,14 @@ void main() {
     registerFakeUserDependencies(user: _user, profile: _profile);
     await boot(t);
     expect(find.text('HOME'), findsOneWidget);
-    expect(find.text('나이대를 알려주세요'), findsNothing);
+    expect(find.text('먼저 나이대를 알려주세요'), findsNothing);
   });
 
   testWidgets('profile fetch fails → still leaves splash', (t) async {
     registerFakeUserDependencies(user: _user, profileRepository: _FailingProfileRepo());
     await boot(t);
     // 전환 애니메이션 중이라 SplashPage 자체는 아직 트리에 있을 수 있다. 목적 페이지가 떴는지로 판단.
-    expect(find.text('나이대를 알려주세요'), findsOneWidget);
+    expect(find.text('먼저 나이대를 알려주세요'), findsOneWidget);
     expect(find.text('HOME'), findsNothing);
   });
 }
