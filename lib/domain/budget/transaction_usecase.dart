@@ -22,11 +22,9 @@ class TransactionUsecase {
     ));
   }
 
-  Future<Result<Transaction>> update(Transaction tx) =>
-      _repo.upsert(tx.markUpdated());
+  Future<Result<Transaction>> update(Transaction tx) => _repo.upsert(tx);
 
-  Future<Result<Transaction>> delete(Transaction tx) =>
-      _repo.upsert(tx.markDeleted());
+  Future<Result<Transaction>> delete(Transaction tx) => _repo.delete(tx);
 
   Future<Result<List<Transaction>>> getMonth(int year, int month) =>
       _repo.getMonth(year, month);

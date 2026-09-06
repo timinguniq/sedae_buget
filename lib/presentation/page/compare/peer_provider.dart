@@ -11,9 +11,6 @@ final peerStatsProvider = FutureProvider<PeerStats>((ref) {
 });
 
 /// 세대별 월평균 지출(리포트 '세대별' 차트용).
-final generationAvgProvider = FutureProvider<Map<AgeGroup, int>>((ref) async {
-  final repo = locator<PeerStatsRepository>();
-  return {
-    for (final g in AgeGroup.values) g: (await repo.forGroup(g)).avgMonthlyExpense,
-  };
-});
+final generationAvgProvider = FutureProvider<Map<AgeGroup, int>>(
+  (ref) => locator<PeerStatsRepository>().generationAverages(),
+);

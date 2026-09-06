@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
 import 'package:sedae_budget/presentation/service/theme_service.dart';
 
+import '../../helper/fakes.dart';
+
 void main() {
-  setUp(configureUserDependencies);
-  setUp(() => SharedPreferences.setMockInitialValues({}));
+  setUp(() => registerFakeUserDependencies());
+  tearDown(() => locator.reset());
 
   testWidgets('age select enables 다음, income step shows 시작하기', (t) async {
     t.view.physicalSize = const Size(390, 844);

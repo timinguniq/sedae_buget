@@ -7,7 +7,7 @@ import 'package:sedae_budget/presentation/page/compare/widget/distribution_histo
 import 'package:sedae_budget/presentation/page/compare/widget/category_battle_row.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-/// 세대 비교 화면. 또래 통계는 목업(MockPeerStatsRepository) — 추후 서버 교체.
+/// 세대 비교 화면. 또래 통계는 서버(PeerStatsRepository).
 class ComparePage extends ConsumerWidget {
   const ComparePage({super.key});
 

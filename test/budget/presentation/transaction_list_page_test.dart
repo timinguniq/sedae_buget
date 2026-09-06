@@ -11,9 +11,13 @@ import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/transaction_tile.dart';
 
+import '../../helper/fakes.dart';
+
 class _FakeRepo implements TransactionRepository {
   @override
   Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
+  @override
+  Future<Result<Transaction>> delete(Transaction tx) async => Result.success(tx);
   @override
   Future<Result<List<Transaction>>> getMonth(int y, int m) async => Result.success([
         Transaction.create(
@@ -29,7 +33,7 @@ void main() {
   setUpAll(() => initializeDateFormatting('ko'));
   setUp(() {
     locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo()));
-    configurePeerDependencies();
+    registerFakePeerDependencies();
   });
   tearDown(() => locator.reset());
 

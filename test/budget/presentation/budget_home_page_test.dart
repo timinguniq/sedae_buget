@@ -16,6 +16,8 @@ class _FakeRepo implements TransactionRepository {
   @override
   Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
   @override
+  Future<Result<Transaction>> delete(Transaction tx) async => Result.success(tx);
+  @override
   Future<Result<List<Transaction>>> getMonth(int y, int m) async => Result.success([
         Transaction.create(amount: 12000, categoryId: 7, date: DateTime(y, m, 10),
             type: TransactionType.expense, memo: '택시'),
@@ -32,12 +34,12 @@ void main() {
   tearDown(() => locator.reset());
 
   testWidgets('shows total expense and a transaction', (tester) async {
-    final stats = await MockPeerStatsRepository().forGroup(AgeGroup.thirties);
+    final stats = StubPeerData.forGroup(AgeGroup.thirties);
     await tester.pumpWidget(provider.ChangeNotifierProvider(
       create: (_) => ThemeService(),
       child: ProviderScope(
         overrides: [
-          // 홈 테스트를 또래/프로필/SharedPreferences 의존에서 격리(고정 30대 목업).
+          // 홈 테스트를 또래/프로필 의존에서 격리(고정 30대 Stub 수치).
           peerStatsProvider.overrideWith((_) => stats),
         ],
         child: MaterialApp(home: const BudgetHomePage()),

@@ -11,17 +11,17 @@ enum AppEnvironment {
   ),
   dev(
     AppEndpoint(
-      server: 'https://api-develop.kooky.run',
+      server: '', // TODO: 서버 주소 확정 시 기입
     ),
   ),
   staging(
     AppEndpoint(
-      server: 'https://api.staging.kooky.run',
+      server: '', // TODO: 서버 주소 확정 시 기입
     ),
   ),
   prod(
     AppEndpoint(
-      server: 'https://api.kooky.io',
+      server: '', // TODO: 서버 주소 확정 시 기입
     ),
   );
 
@@ -35,7 +35,21 @@ abstract class EnvironmentConfig {
 
   static AppEnvironment? _env;
 
-  static AppEnvironment get env => _env ?? AppEnvironment.dev;
+  /// `local`이면 서버 대신 Stub API(인프로세스)를 쓴다.
+  // TODO: 서버 준비 후 기본값을 AppEnvironment.prod로 변경
+  static AppEnvironment get env => _env ?? _fromDartDefine ?? AppEnvironment.local;
+
+  /// `--dart-define=env=dev` 처럼 빌드 시 지정한 환경. 없거나 잘못된 이름이면 null.
+  static AppEnvironment? get _fromDartDefine {
+    const name = String.fromEnvironment('env');
+    if (name.isEmpty) return null;
+    try {
+      return AppEnvironment.values.byName(name);
+    } catch (_) {
+      _logger.e("Unknown env '$name'");
+      return null;
+    }
+  }
 
   //static String get baseWebUrl => EnvironmentConfig.env.endpoint.baseWebUrl;
 

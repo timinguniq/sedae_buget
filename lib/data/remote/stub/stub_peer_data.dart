@@ -1,8 +1,9 @@
-import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-/// 결정적(랜덤 아님) 목업 또래 통계. 추후 서버 구현으로 교체.
-class MockPeerStatsRepository implements PeerStatsRepository {
+/// Stub 서버가 응답하는 결정적(랜덤 아님) 또래 통계. 테스트 기대값도 여기서 만든다.
+abstract class StubPeerData {
+  StubPeerData._();
+
   // 나이대별 또래 평균 월지출(원).
   static const _means = <AgeGroup, int>{
     AgeGroup.teens: 800000,
@@ -34,8 +35,7 @@ class MockPeerStatsRepository implements PeerStatsRepository {
     BudgetCategory.etc: 0.05,
   };
 
-  @override
-  Future<PeerStats> forGroup(AgeGroup group) async {
+  static PeerStats forGroup(AgeGroup group) {
     final mean = _means[group]!;
     return PeerStats(
       ageGroup: group,
@@ -49,7 +49,7 @@ class MockPeerStatsRepository implements PeerStatsRepository {
   }
 
   // 0.45*mean ~ 1.75*mean 선형 분포(결정적, 오름차순).
-  List<int> _spread(int mean, int count) {
+  static List<int> _spread(int mean, int count) {
     final lo = (mean * 0.45).round(), hi = (mean * 1.75).round();
     return List.generate(count, (i) => lo + ((hi - lo) * i / (count - 1)).round());
   }

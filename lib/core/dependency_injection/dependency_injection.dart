@@ -4,6 +4,7 @@ import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 
 final locator = GetIt.instance;
+final _logger = CustomLogger.create(tag: 'DI');
 
 void configureDependencyInjection(LocalStorage storage) {
   _data(storage);
@@ -119,36 +120,58 @@ void _manager() {
    */
 }
 
-/// Phase 1 로컬 가계부 의존성. Firebase 없이 독립 실행 가능.
+/// API 인프라. 다른 configure*보다 먼저 호출한다. env가 local이면 Stub API를 끼운다.
+void configureApiDependencies(AuthTokenStore tokenStore) {
+  if (locator.isRegistered<ApiClient>()) return;
+  final env = EnvironmentConfig.env;
+  final isStub = env == AppEnvironment.local;
+  if (!isStub && env.endpoint.server.isEmpty) {
+    _logger.w('env=${env.name}인데 서버 주소가 비어 있음 — environment_config.dart에 기입 필요');
+  }
+  locator
+    ..registerSingleton<AuthTokenStore>(tokenStore)
+    ..registerSingleton<ApiClient>(
+      ApiClient.create(
+        baseUrl: env.endpoint.server,
+        tokenStore: tokenStore,
+        extra: [if (isStub) StubApiInterceptor(store: SharedPrefsStubStateStore())],
+      ),
+    );
+}
+
+/// 거래 의존성(서버). [configureApiDependencies]가 먼저 호출되어 있어야 한다.
 void configureBudgetDependencies() {
   if (locator.isRegistered<TransactionUsecase>()) return;
-  final db = AppDatabase();
   locator
-    ..registerSingleton<AppDatabase>(db)
-    ..registerSingleton<TransactionLocalDataSource>(
-      DriftTransactionLocalDataSource(db.transactionDao),
-    )
     ..registerSingleton<TransactionRepository>(
-      TransactionRepositoryImpl(locator<TransactionLocalDataSource>()),
+      ApiTransactionRepository(locator<ApiClient>()),
     )
     ..registerSingleton<TransactionUsecase>(
       TransactionUsecase(locator<TransactionRepository>()),
     );
 }
 
-/// 또래 통계 의존성. 현재 목업, 서버 구현 시 이 함수만 교체.
+/// 또래 통계 의존성(서버). [configureApiDependencies]가 먼저 호출되어 있어야 한다.
 void configurePeerDependencies() {
   if (locator.isRegistered<PeerStatsRepository>()) return;
-  locator.registerSingleton<PeerStatsRepository>(MockPeerStatsRepository());
+  locator.registerSingleton<PeerStatsRepository>(
+    ApiPeerStatsRepository(locator<ApiClient>()),
+  );
 }
 
-/// 인증·프로필 의존성. 현재 SharedPreferences 로컬, 서버 도입 시 구현체만 교체.
+/// 인증·프로필 의존성. 둘 다 서버(ApiAuthRepository, ApiUserProfileRepository).
+/// [configureApiDependencies]가 먼저 호출되어 있어야 한다.
 void configureUserDependencies() {
   if (locator.isRegistered<AuthUsecase>()) return;
   locator
-    ..registerSingleton<AuthRepository>(SharedPrefsAuthRepository())
-    ..registerSingleton<AuthUsecase>(AuthUsecase(locator<AuthRepository>()))
+    ..registerSingleton<AuthRepository>(
+      ApiAuthRepository(locator<ApiClient>(), locator<AuthTokenStore>()),
+    )
+    ..registerSingleton<SocialIdTokenProvider>(StubSocialIdTokenProvider())
+    ..registerSingleton<AuthUsecase>(
+      AuthUsecase(locator<AuthRepository>(), locator<SocialIdTokenProvider>()),
+    )
     ..registerSingleton<UserProfileRepository>(
-      SharedPrefsUserProfileRepository(),
+      ApiUserProfileRepository(locator<ApiClient>()),
     );
 }

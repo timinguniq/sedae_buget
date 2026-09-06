@@ -19,7 +19,7 @@ void main() {
   });
 
   testWidgets('rank card shows 등 and 상위', (t) async {
-    final stats = await MockPeerStatsRepository().forGroup(AgeGroup.thirties);
+    final stats = StubPeerData.forGroup(AgeGroup.thirties);
     await t.pumpWidget(_wrap(PeerRankCard(stats: stats, myExpense: 2600000)));
     await t.pump();
     expect(find.textContaining('등'), findsOneWidget);

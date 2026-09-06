@@ -11,11 +11,15 @@ import 'package:sedae_budget/theme/theme.dart';
 import 'package:sedae_budget/presentation/page/budget/category_analysis.page.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
 
+import '../../helper/fakes.dart';
+
 class _Repo implements TransactionRepository {
   _Repo(this._list);
   final List<Transaction> _list;
   @override
   Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
+  @override
+  Future<Result<Transaction>> delete(Transaction tx) async => Result.success(tx);
   @override
   Future<Result<List<Transaction>>> getMonth(int y, int m) async => Result.success(_list);
   @override
@@ -25,7 +29,7 @@ class _Repo implements TransactionRepository {
 
 Widget _app(List<Transaction> list) {
   locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_Repo(list)));
-  configurePeerDependencies();
+  registerFakePeerDependencies();
   return provider.ChangeNotifierProvider(
     create: (_) => ThemeService(),
     child: const ProviderScope(

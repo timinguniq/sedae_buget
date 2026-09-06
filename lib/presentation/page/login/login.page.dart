@@ -12,7 +12,7 @@ class LoginPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     Future<void> signIn(AuthProvider p) async {
-      await ref.read(authProvider.notifier).signInMock(p);
+      await ref.read(authProvider.notifier).signIn(p);
       // 전역 가드(refreshListenable)가 로그인 성공 후 온보딩/홈으로 라우팅한다.
     }
     return DefaultLayout(

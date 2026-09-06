@@ -7,14 +7,17 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 
+import '../helper/fakes.dart';
+
 void main() {
   setUp(() {
-    configureUserDependencies();
-    SharedPreferences.setMockInitialValues({});
+    registerFakeUserDependencies();
+    SharedPreferences.setMockInitialValues({}); // ThemeService 테마 모드 저장용
     PackageInfo.setMockInitialValues(
       appName: 'sedae', packageName: 'com.sedae.budget',
       version: '1.0.0', buildNumber: '1', buildSignature: '');
   });
+  tearDown(() => locator.reset());
 
   testWidgets('renders and dark chip switches theme mode', (tester) async {
     final service = ThemeService();
