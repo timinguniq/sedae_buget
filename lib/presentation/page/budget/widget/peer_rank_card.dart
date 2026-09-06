@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 또래 순위 카드. 통계 값은 목업(MockPeerStatsRepository) — 추후 서버 교체.

@@ -76,4 +76,15 @@ void main() {
   test('presentation/page는 저장 기술(shared_preferences)을 직접 쓰지 않는다', () {
     expect(violations('presentation/page', ['shared_preferences']), isEmpty);
   });
+
+  test('theme은 presentation/domain/data를 import하지 않는다', () {
+    expect(
+      violations('theme', [
+        'sedae_budget/presentation',
+        'sedae_budget/domain',
+        'sedae_budget/data',
+      ]),
+      isEmpty,
+    );
+  });
 }

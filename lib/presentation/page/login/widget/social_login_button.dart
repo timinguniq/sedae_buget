@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 class SocialLoginButton extends StatelessWidget {

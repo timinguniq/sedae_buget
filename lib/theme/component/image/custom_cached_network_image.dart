@@ -1,7 +1,6 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/core/core.dart';
-import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 final _logger = CustomLogger.create(tag: (CCachedNetworkImage).toString());

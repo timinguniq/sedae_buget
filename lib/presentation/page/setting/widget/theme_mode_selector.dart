@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 라이트/다크/시스템 테마 모드 선택 칩 3개.
