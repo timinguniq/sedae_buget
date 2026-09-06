@@ -63,6 +63,7 @@ void main() {
   setUp(() {
     locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo()));
     configurePeerDependencies();
+    configureUserDependencies();
   });
   tearDown(() => locator.reset());
 

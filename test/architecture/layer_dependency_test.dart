@@ -72,4 +72,8 @@ void main() {
   test('presentation은 data 구현체를 직접 import하지 않는다', () {
     expect(violations('presentation', ['sedae_budget/data']), isEmpty);
   });
+
+  test('presentation/page는 저장 기술(shared_preferences)을 직접 쓰지 않는다', () {
+    expect(violations('presentation/page', ['shared_preferences']), isEmpty);
+  });
 }

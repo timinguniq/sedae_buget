@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart' as provider;
+import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/presentation/page/initial/splash.page.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
 import 'package:sedae_budget/presentation/service/theme_service.dart';
 
 void main() {
+  setUp(configureUserDependencies);
   Widget buildApp(GoRouter router) => ProviderScope(
         child: provider.ChangeNotifierProvider(
           create: (_) => ThemeService(),
