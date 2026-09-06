@@ -87,4 +87,29 @@ void main() {
       isEmpty,
     );
   });
+
+  test('entity는 상위 계층/flutter를 import하지 않는다', () {
+    expect(
+      violations('entity', [
+        'sedae_budget/core',
+        'sedae_budget/domain',
+        'sedae_budget/data',
+        'sedae_budget/presentation',
+        'sedae_budget/theme',
+        'flutter/',
+      ]),
+      isEmpty,
+    );
+  });
+
+  test('core는 composition root 외에는 domain/data를 import하지 않는다', () {
+    expect(
+      violations(
+        'core',
+        ['sedae_budget/domain', 'sedae_budget/data'],
+        skip: (p) => p.startsWith('lib/core/dependency_injection/'),
+      ),
+      isEmpty,
+    );
+  });
 }

@@ -1,6 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:intl/intl.dart';
-import 'package:sedae_budget/core/core.dart';
 
 part 'app_service_status.freezed.dart';
 part 'app_service_status.g.dart';
@@ -32,5 +31,5 @@ DateTime _formatStringToDateTime(String date) {
 }
 
 String _dateTimeToString(DateTime date) {
-  return date.format(_DATE_TIME_FORMAT);
+  return DateFormat(_DATE_TIME_FORMAT, 'ko-KR').format(date);
 }
