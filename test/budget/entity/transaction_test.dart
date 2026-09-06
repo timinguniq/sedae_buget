@@ -1,10 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/budget/transaction.dart';
 import 'package:sedae_budget/entity/budget/transaction_type.dart';
-import 'package:sedae_budget/entity/budget/sync_status.dart';
 
 void main() {
-  test('create sets uuid id, timestamps and pending status', () {
+  test('create sets uuid id and placeholder timestamps', () {
     final tx = Transaction.create(
       amount: 12000,
       categoryId: 7,
@@ -14,32 +13,7 @@ void main() {
     );
     expect(tx.id, isNotEmpty);
     expect(tx.amount, 12000);
-    expect(tx.deletedAt, isNull);
-    expect(tx.syncStatus, SyncStatus.pending);
     expect(tx.createdAt, tx.updatedAt);
-  });
-
-  test('markDeleted sets tombstone and re-flags pending', () {
-    final tx = Transaction.create(
-      amount: 1, categoryId: 1, date: DateTime(2026, 1, 1),
-      type: TransactionType.expense,
-    ).copyWith(syncStatus: SyncStatus.synced);
-
-    final deleted = tx.markDeleted();
-    expect(deleted.deletedAt, isNotNull);
-    expect(deleted.syncStatus, SyncStatus.pending);
-    expect(deleted.deletedAt, deleted.updatedAt);
-  });
-
-  test('markUpdated advances updatedAt and re-flags pending', () {
-    final tx = Transaction.create(
-      amount: 1, categoryId: 1, date: DateTime(2026, 1, 1),
-      type: TransactionType.expense,
-    ).copyWith(syncStatus: SyncStatus.synced, updatedAt: DateTime(2020));
-
-    final updated = tx.markUpdated();
-    expect(updated.syncStatus, SyncStatus.pending);
-    expect(updated.updatedAt.isAfter(DateTime(2020)), isTrue);
   });
 
   test('json round-trips', () {

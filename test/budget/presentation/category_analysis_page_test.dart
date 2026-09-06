@@ -19,6 +19,8 @@ class _Repo implements TransactionRepository {
   @override
   Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
   @override
+  Future<Result<Transaction>> delete(Transaction tx) async => Result.success(tx);
+  @override
   Future<Result<List<Transaction>>> getMonth(int y, int m) async => Result.success(_list);
   @override
   Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>

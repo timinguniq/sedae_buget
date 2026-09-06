@@ -5,10 +5,17 @@ import 'package:sedae_budget/entity/entity.dart';
 
 class _FakeRepo implements TransactionRepository {
   Transaction? lastUpserted;
+  Transaction? lastDeleted;
 
   @override
   Future<Result<Transaction>> upsert(Transaction tx) async {
     lastUpserted = tx;
+    return Result.success(tx);
+  }
+
+  @override
+  Future<Result<Transaction>> delete(Transaction tx) async {
+    lastDeleted = tx;
     return Result.success(tx);
   }
 
@@ -35,7 +42,7 @@ void main() {
     usecase = TransactionUsecase(repo);
   });
 
-  test('add builds a pending transaction and upserts it', () async {
+  test('add builds a transaction and upserts it', () async {
     await usecase.add(
       amount: 9000, categoryId: 7, date: DateTime(2026, 6, 2),
       type: TransactionType.expense,
@@ -44,9 +51,17 @@ void main() {
     expect(repo.lastUpserted!.categoryId, 7);
   });
 
-  test('delete upserts a tombstoned transaction', () async {
-    await usecase.delete(expense(1, 1));
-    expect(repo.lastUpserted!.deletedAt, isNotNull);
+  test('update upserts the given transaction unchanged', () async {
+    final tx = expense(1, 1);
+    await usecase.update(tx);
+    expect(repo.lastUpserted, tx);
+  });
+
+  test('delete delegates to repository delete', () async {
+    final tx = expense(1, 1);
+    await usecase.delete(tx);
+    expect(repo.lastDeleted, tx);
+    expect(repo.lastUpserted, isNull);
   });
 
   test('categorySummary sums expenses per category', () {

@@ -12,6 +12,10 @@ class _FakeRepo implements TransactionRepository {
       Result.success(tx);
 
   @override
+  Future<Result<Transaction>> delete(Transaction tx) async =>
+      Result.success(tx);
+
+  @override
   Future<Result<List<Transaction>>> getMonth(int year, int month) async =>
       Result.success([
         Transaction.create(

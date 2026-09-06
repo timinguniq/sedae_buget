@@ -15,10 +15,6 @@ _Transaction _$TransactionFromJson(Map<String, dynamic> json) => _Transaction(
   memo: json['memo'] as String?,
   createdAt: DateTime.parse(json['createdAt'] as String),
   updatedAt: DateTime.parse(json['updatedAt'] as String),
-  deletedAt: json['deletedAt'] == null
-      ? null
-      : DateTime.parse(json['deletedAt'] as String),
-  syncStatus: $enumDecode(_$SyncStatusEnumMap, json['syncStatus']),
 );
 
 Map<String, dynamic> _$TransactionToJson(_Transaction instance) =>
@@ -31,16 +27,9 @@ Map<String, dynamic> _$TransactionToJson(_Transaction instance) =>
       'memo': instance.memo,
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt.toIso8601String(),
-      'deletedAt': instance.deletedAt?.toIso8601String(),
-      'syncStatus': _$SyncStatusEnumMap[instance.syncStatus]!,
     };
 
 const _$TransactionTypeEnumMap = {
   TransactionType.expense: 'expense',
   TransactionType.income: 'income',
-};
-
-const _$SyncStatusEnumMap = {
-  SyncStatus.pending: 'pending',
-  SyncStatus.synced: 'synced',
 };

@@ -10,9 +10,6 @@ Transaction transactionFromJson(Map<String, dynamic> json) => Transaction(
       memo: json['memo'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String).toLocal(),
       updatedAt: DateTime.parse(json['updatedAt'] as String).toLocal(),
-      // 서버 단독 전환(Task 6)에서 두 필드가 엔티티에서 제거되면 아래 두 줄도 제거.
-      deletedAt: null,
-      syncStatus: SyncStatus.synced,
     );
 
 /// PUT 바디. id/createdAt/updatedAt은 서버 소관이라 보내지 않는다.

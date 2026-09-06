@@ -1,6 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
-import 'package:sedae_budget/entity/budget/sync_status.dart';
 import 'package:sedae_budget/entity/budget/transaction_type.dart';
 
 part 'transaction.freezed.dart';
@@ -15,12 +14,11 @@ abstract class Transaction with _$Transaction {
     required DateTime date,
     required TransactionType type,
     String? memo,
-    required DateTime createdAt,
-    required DateTime updatedAt,
-    DateTime? deletedAt, // tombstone (삭제 동기화 대비)
-    required SyncStatus syncStatus,
+    required DateTime createdAt, // 서버가 정함
+    required DateTime updatedAt, // 서버가 정함
   }) = _Transaction;
 
+  /// 새 거래. id는 클라이언트 UUID, 타임스탬프는 서버 응답으로 대체되는 자리표시.
   factory Transaction.create({
     required int amount,
     required int categoryId,
@@ -38,25 +36,9 @@ abstract class Transaction with _$Transaction {
       memo: memo,
       createdAt: now,
       updatedAt: now,
-      deletedAt: null,
-      syncStatus: SyncStatus.pending,
     );
   }
 
   factory Transaction.fromJson(Map<String, dynamic> json) =>
       _$TransactionFromJson(json);
-}
-
-extension TransactionX on Transaction {
-  Transaction markUpdated() =>
-      copyWith(updatedAt: DateTime.now(), syncStatus: SyncStatus.pending);
-
-  Transaction markDeleted() {
-    final now = DateTime.now();
-    return copyWith(
-      deletedAt: now,
-      updatedAt: now,
-      syncStatus: SyncStatus.pending,
-    );
-  }
 }
