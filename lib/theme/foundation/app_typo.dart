@@ -114,7 +114,7 @@ class AppTypo {
   late final TextStyle captionLineW600 = captionLine.copyWith(fontWeight: typo.semiBold);
 
   late final TextStyle _accentTextBasic = TextStyle(
-    fontFamily: 'IBMPlexSans',
+    fontFamily: typo.name,
     color: fontColor,
     fontSize: 100,
     fontWeight: typo.regular,
@@ -151,5 +151,18 @@ class AppTypo {
     fontSize: 31, height: 1.0, letterSpacing: -0.9, fontWeight: typo.extraBold,
   );
   late final TextStyle amountDisplaySmall = amountDisplay.copyWith(fontSize: 25, letterSpacing: -0.5);
+
+  /// 입력 화면 금액 (디자인 800·42)
+  late final TextStyle amountHero = amountDisplay.copyWith(fontSize: 42, letterSpacing: -1.2);
+
+  /// 화면 타이틀 (디자인 800·21, ls −0.5). 예: "이번 달 요약", "내역"
+  late final TextStyle pageTitle = textBasic.copyWith(
+    fontSize: 21, height: 1.2, letterSpacing: -0.5, fontWeight: typo.extraBold,
+  );
+
+  /// 카드 섹션 타이틀 (디자인 700·13.5). 예: "또래 중 내 지출 순위"
+  late final TextStyle sectionTitle = textBasic.copyWith(
+    fontSize: 13.5, height: 1.3, fontWeight: typo.bold,
+  );
 
 }

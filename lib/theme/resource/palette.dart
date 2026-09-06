@@ -8,6 +8,7 @@ abstract class Palette {
   static const Color primaryNormal = Color(0xFFF2603C);
   static const Color primaryStrong = Color(0xFFD94E2C);
   static const Color primaryHeavy = Color(0xFFFF6E47);
+  static const Color coralSoft = Color(0xFFFF8A6B); // 다크 배지 텍스트
   static const Color coralTint = Color(0xFFFEF0EB);
 
   /// label (warm ink/gray) ----------\\
@@ -29,6 +30,7 @@ abstract class Palette {
   static const Color lineNormal = Color(0xFFEDE9E3); // border
   static const Color lineStrong = Color(0xFF2B2724);
   static const Color lineNeutral = Color(0xFFDCD5CC); // neutral-300
+  static const Color neutral400 = Color(0xFFC9C1B8);
   static const Color lineAlternative = Color(0xFFF1ECE4);
   static const Color lineWhite = Color(0xFFFFFFFF);
   static const Color lineOrange = Color(0xFFF2603C);
@@ -62,10 +64,15 @@ abstract class Palette {
   static const Color materialScrim40 = Color(0x66000000);
   static const Color materialToast = Color(0xF95D5E62);
 
-  /// neutral ramp (차트/도넛/바) ----------\\
+  /// neutral ramp (차트/도넛/바) — 디자인 램프 300·400·500·600·700·200 순 ----------\\
   static const List<Color> neutralRamp = [
-    Color(0xFFDCD5CC), Color(0xFFCFC8BF), Color(0xFFB8B0A8),
+    Color(0xFFDCD5CC), Color(0xFFC9C1B8), Color(0xFFB8B0A8),
     Color(0xFFA29A92), Color(0xFF8C857D), Color(0xFFE6E1D8),
+  ];
+
+  /// dark chart ramp (다크 도넛/바) ----------\\
+  static const List<Color> darkRamp = [
+    Color(0xFF3A332C), Color(0xFF4A433C), Color(0xFF5A534C),
   ];
 
   /// dark ----------\\

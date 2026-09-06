@@ -21,7 +21,7 @@ void main() {
     type: TransactionType.expense,
   );
 
-  testWidgets('overPeer=true renders 또래보다 많이 badge', (tester) async {
+  testWidgets('overPeer=true renders 또래보다 잦음 badge', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -29,7 +29,7 @@ void main() {
     await tester.pumpWidget(_wrap(SizedBox(width: 390, child: TransactionTile(tx: tx, overPeer: true))));
     await tester.pump();
 
-    expect(find.text('또래보다 많이'), findsOneWidget);
+    expect(find.text('또래보다 잦음'), findsOneWidget);
   });
 
   testWidgets('overPeer defaults false — no badge rendered', (tester) async {
@@ -40,7 +40,7 @@ void main() {
     await tester.pumpWidget(_wrap(SizedBox(width: 390, child: TransactionTile(tx: tx))));
     await tester.pump();
 
-    expect(find.text('또래보다 많이'), findsNothing);
+    expect(find.text('또래보다 잦음'), findsNothing);
   });
 
   // 회귀: 긴 메모 + 배지가 좁은 폭에서 RenderFlex 오버플로 없이 렌더되어야 한다
@@ -61,6 +61,6 @@ void main() {
     await tester.pumpWidget(_wrap(SizedBox(width: 390, child: TransactionTile(tx: longTx, overPeer: true))));
     await tester.pump();
 
-    expect(find.text('또래보다 많이'), findsOneWidget);
+    expect(find.text('또래보다 잦음'), findsOneWidget);
   });
 }

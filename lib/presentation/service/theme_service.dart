@@ -109,7 +109,7 @@ class ThemeService with ChangeNotifier {
       // DropdownMenuThemeData? dropdownMenuTheme,
       // ElevatedButtonThemeData? elevatedButtonTheme,
       // ExpansionTileThemeData? expansionTileTheme,
-      // FilledButtonThemeData? filledButtonTheme,
+      filledButtonTheme: filledButtonTheme(theme),
       floatingActionButtonTheme: floatingActionButtonTheme(theme),
       // iconButtonTheme: iconButtonThemeData(),
       // ListTileThemeData? listTileTheme,
@@ -128,7 +128,7 @@ class ThemeService with ChangeNotifier {
       // SegmentedButtonThemeData? segmentedButtonTheme,
       sliderTheme: sliderThemeData(theme),
       // SnackBarThemeData? snackBarTheme,
-      // SwitchThemeData? switchTheme,
+      switchTheme: switchThemeData(theme),
       tabBarTheme: tabBarTheme(theme),
       // TextButtonThemeData? textButtonTheme,
       // TextSelectionThemeData? textSelectionTheme,
@@ -195,9 +195,29 @@ class ThemeService with ChangeNotifier {
   AppBarTheme appBarTheme(AppTheme theme) {
     return AppBarTheme(
       backgroundColor: theme.color.background.normal,
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
       iconTheme: iconThemeData(theme),
       actionsIconTheme: iconThemeData(theme),
       centerTitle: true,
+    );
+  }
+
+  /// 디자인 기본 버튼: h54 / r16 / 코랄 + 코랄 그림자 / 700·16
+  FilledButtonThemeData filledButtonTheme(AppTheme theme) {
+    return FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: theme.color.primary.normal,
+        foregroundColor: theme.color.static.white,
+        disabledBackgroundColor: theme.color.fill.grey,
+        disabledForegroundColor: theme.color.label.assistive,
+        minimumSize: const Size(64, 54),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        textStyle: theme.typo.body1W600.copyWith(fontWeight: theme.typo.bold),
+        elevation: 6,
+        shadowColor: theme.deco.coralShadow.first.color,
+      ),
     );
   }
 
@@ -275,12 +295,32 @@ class ThemeService with ChangeNotifier {
     );
   }
 
+  /// 디자인 슬라이더: 트랙 8px / 썸 28px(흰색 + 코랄 3.5px 테두리)
   SliderThemeData sliderThemeData(AppTheme theme) {
     return SliderThemeData(
+      trackHeight: 8,
       activeTrackColor: theme.color.primary.normal,
       inactiveTrackColor: theme.color.line.normal,
       thumbColor: theme.color.primary.normal,
+      thumbShape: _RingThumbShape(fill: theme.color.static.white),
+      overlayShape: const RoundSliderOverlayShape(overlayRadius: 22),
       overlayColor: theme.color.primary.normal.withValues(alpha: 0.12),
+      activeTickMarkColor: Colors.transparent,
+      inactiveTickMarkColor: Colors.transparent,
+    );
+  }
+
+  /// 디자인 토글: 42×24, 켜짐 코랄 트랙 + 흰 썸
+  SwitchThemeData switchThemeData(AppTheme theme) {
+    return SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected) ? theme.color.static.white : theme.color.label.assistive,
+      ),
+      trackColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected) ? theme.color.primary.normal : theme.color.line.normal,
+      ),
+      trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+      trackOutlineWidth: const WidgetStatePropertyAll(0),
     );
   }
 
@@ -299,4 +339,43 @@ class ThemeService with ChangeNotifier {
 
 extension ThemeServiceExt on BuildContext {
   ThemeService get themeService => watch<ThemeService>();
+}
+
+/// 흰 원 + 코랄 테두리 썸 (테두리 색은 [SliderThemeData.thumbColor]).
+class _RingThumbShape extends SliderComponentShape {
+  const _RingThumbShape({required this.fill});
+
+  final Color fill;
+  static const double radius = 14;
+  static const double border = 3.5;
+
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => Size.fromRadius(radius);
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    required Animation<double> activationAnimation,
+    required Animation<double> enableAnimation,
+    required bool isDiscrete,
+    required TextPainter labelPainter,
+    required RenderBox parentBox,
+    required SliderThemeData sliderTheme,
+    required TextDirection textDirection,
+    required double value,
+    required double textScaleFactor,
+    required Size sizeWithOverflow,
+  }) {
+    final canvas = context.canvas;
+    canvas.drawCircle(center, radius, Paint()..color = fill);
+    canvas.drawCircle(
+      center,
+      radius - border / 2,
+      Paint()
+        ..color = sliderTheme.thumbColor ?? Palette.primaryNormal
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = border,
+    );
+  }
 }

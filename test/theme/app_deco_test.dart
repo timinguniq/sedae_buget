@@ -4,6 +4,7 @@ import 'package:sedae_budget/theme/theme.dart';
 void main() {
   test('radius scale matches design tokens', () {
     expect(CSize.sm.radius, 12);
+    expect(CSize.md.radius, 18);
     expect(CSize.card.radius, 20);
     expect(CSize.lg.radius, 22);
     expect(CSize.pill.radius, 999);

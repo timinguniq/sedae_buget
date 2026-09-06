@@ -12,6 +12,8 @@ import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/budget_home.page.dart';
 import 'package:sedae_budget/presentation/page/compare/peer_provider.dart';
 
+import '../../helper/fakes.dart';
+
 class _FakeRepo implements TransactionRepository {
   @override
   Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
@@ -29,11 +31,20 @@ class _FakeRepo implements TransactionRepository {
 
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
-  setUp(() =>
-      locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo())));
+  setUp(() {
+    locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo()));
+    registerFakeUserDependencies(
+      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+    );
+  });
   tearDown(() => locator.reset());
 
   testWidgets('shows total expense and a transaction', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
     final stats = StubPeerData.forGroup(AgeGroup.thirties);
     await tester.pumpWidget(provider.ChangeNotifierProvider(
       create: (_) => ThemeService(),
@@ -51,7 +62,13 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.textContaining('12,000'), findsWidgets);
-    expect(find.text('택시'), findsNothing); // memo shown in subtitle via textContaining
-    expect(find.textContaining('택시'), findsOneWidget);
+    expect(find.text('택시'), findsOneWidget); // memo is the tile title (design)
+
+    // 디자인 카드 4종 + 최근 내역
+    expect(find.text('이번 달 요약'), findsOneWidget);
+    expect(find.text('또래 중 내 지출 순위'), findsOneWidget);
+    expect(find.text('많이 쓴 카테고리'), findsOneWidget);
+    expect(find.text(BudgetCategory.fromId(7).label), findsWidgets);
+    expect(find.text('최근 내역'), findsOneWidget);
   });
 }

@@ -17,24 +17,55 @@ class LoginPage extends ConsumerWidget {
     }
     return DefaultLayout(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        padding: const EdgeInsets.fromLTRB(26, 0, 26, 32),
         child: Column(children: [
-          const Spacer(),
-          const MascotDongle(size: 88),
-          const SizedBox(height: 20),
-          Text('세대 가계부', style: context.typo.heading2W700.copyWith(color: context.color.label.normal)),
-          const SizedBox(height: 8),
-          Text('내 또래는 얼마나 쓸까?',
-            style: context.typo.body1W500.copyWith(color: context.color.label.alternative)),
-          const Spacer(),
+          Expanded(
+            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+              const MascotDongle(size: 88),
+              const SizedBox(height: 22),
+              Text('세대 가계부',
+                style: context.typo.titleW700.copyWith(
+                  fontWeight: context.typo.extraBold, letterSpacing: -0.7, color: context.color.label.normal)),
+              const SizedBox(height: 9),
+              Text('내 또래는 얼마나 쓸까?',
+                style: context.typo.label2W600.copyWith(
+                  fontWeight: context.typo.bold, color: context.color.primary.normal)),
+              const SizedBox(height: 8),
+              Text('또래·세대 평균과 내 소비를\n나란히 비교하는 가계부',
+                textAlign: TextAlign.center,
+                style: context.typo.caption1W500.copyWith(
+                  fontSize: 12.5, height: 1.55, color: context.color.label.assistive)),
+            ]),
+          ),
           for (final p in AuthProvider.values)
             SocialLoginButton(provider: p, onTap: () => signIn(p)),
-          const SizedBox(height: 8),
-          Text('시작하면 이용약관 및 개인정보처리방침에 동의하게 됩니다.',
-            textAlign: TextAlign.center,
-            style: context.typo.caption1W400.copyWith(color: context.color.label.assistive)),
+          const SizedBox(height: 7),
+          const _TermsNotice(),
         ]),
       ),
+    );
+  }
+}
+
+/// "로그인 시 이용약관 및 개인정보처리방침에 / 동의하는 것으로 간주됩니다." (강조 2곳 600·alternative)
+class _TermsNotice extends StatelessWidget {
+  const _TermsNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    final emphasis = TextStyle(fontWeight: context.typo.semiBold, color: context.color.label.alternative);
+    return Text.rich(
+      TextSpan(
+        style: context.typo.caption2W500.copyWith(fontSize: 10.5, height: 1.55, color: context.color.label.disable),
+        children: [
+          const TextSpan(text: '로그인 시 '),
+          TextSpan(text: '이용약관', style: emphasis),
+          const TextSpan(text: ' 및 '),
+          TextSpan(text: '개인정보처리방침', style: emphasis),
+          const TextSpan(text: '에\n동의하는 것으로 간주됩니다.'),
+        ],
+      ),
+      textAlign: TextAlign.center,
     );
   }
 }

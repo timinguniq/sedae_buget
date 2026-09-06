@@ -27,7 +27,7 @@ enum CSize {
 
   double get radius => switch (this) {
         CSize.sm => 12,
-        CSize.md => 16,
+        CSize.md => 18,
         CSize.card => 20,
         CSize.lg => 22,
         CSize.pill => 999,

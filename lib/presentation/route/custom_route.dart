@@ -3,6 +3,7 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/budget_home.page.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart';
 import 'package:sedae_budget/presentation/page/budget/category_analysis.page.dart';
+import 'package:sedae_budget/presentation/page/budget/category_manage.page.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.page.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
@@ -65,6 +66,8 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: RoutePath.transactionEdit.path, builder: (_, state) =>
           TransactionEditPage(existing: state.extra as Transaction?)),
       GoRoute(path: RoutePath.categoryAnalysis.path, builder: (_, _) => const CategoryAnalysisPage()),
+      GoRoute(path: RoutePath.categoryManage.path, builder: (_, state) =>
+          CategoryManagePage(initialEditing: state.extra as bool? ?? false)),
       GoRoute(path: RoutePath.setting.path, builder: (_, _) => const SettingPage()),
       GoRoute(path: RoutePath.login.path, builder: (_, _) => const LoginPage()),
     ],

@@ -139,7 +139,7 @@ void configureApiDependencies(AuthTokenStore tokenStore) {
     );
 }
 
-/// 거래 의존성(서버). [configureApiDependencies]가 먼저 호출되어 있어야 한다.
+/// 거래·카테고리 의존성(서버). [configureApiDependencies]가 먼저 호출되어 있어야 한다.
 void configureBudgetDependencies() {
   if (locator.isRegistered<TransactionUsecase>()) return;
   locator
@@ -148,6 +148,12 @@ void configureBudgetDependencies() {
     )
     ..registerSingleton<TransactionUsecase>(
       TransactionUsecase(locator<TransactionRepository>()),
+    )
+    ..registerSingleton<CategoryRepository>(
+      ApiCategoryRepository(locator<ApiClient>()),
+    )
+    ..registerSingleton<CategoryUsecase>(
+      CategoryUsecase(locator<CategoryRepository>()),
     );
 }
 

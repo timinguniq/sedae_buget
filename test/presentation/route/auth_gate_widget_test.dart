@@ -15,8 +15,8 @@ import 'package:sedae_budget/presentation/service/theme_service.dart';
 
 import '../../helper/fakes.dart';
 
-const _loginMark = '시작하면 이용약관 및 개인정보처리방침에 동의하게 됩니다.';
-const _onboardingMark = '나이대를 알려주세요';
+const _loginMark = 'Google로 시작하기';
+const _onboardingMark = '먼저 나이대를 알려주세요';
 const _user = AuthUser(provider: AuthProvider.kakao, nickname: '카카오 사용자');
 const _profile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000);
 

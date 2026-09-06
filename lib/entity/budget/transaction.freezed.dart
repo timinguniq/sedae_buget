@@ -16,7 +16,9 @@ T _$identity<T>(T value) => value;
 mixin _$Transaction {
 
  String get id; int get amount;// 원 단위 정수
- int get categoryId; DateTime get date; TransactionType get type; String? get memo; DateTime get createdAt;// 서버가 정함
+ int get categoryId;// 통계청 12분류 id. 커스텀 카테고리면 그 상위 분류
+ DateTime get date; TransactionType get type; String? get memo;/// 사용자가 만든 카테고리(CustomCategory) id. null이면 기본 분류 그대로.
+ String? get customCategoryId; DateTime get createdAt;// 서버가 정함
  DateTime get updatedAt;
 /// Create a copy of Transaction
 /// with the given fields replaced by the non-null parameter values.
@@ -30,16 +32,16 @@ $TransactionCopyWith<Transaction> get copyWith => _$TransactionCopyWithImpl<Tran
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.type, type) || other.type == type)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.type, type) || other.type == type)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.customCategoryId, customCategoryId) || other.customCategoryId == customCategoryId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,amount,categoryId,date,type,memo,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,amount,categoryId,date,type,memo,customCategoryId,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Transaction(id: $id, amount: $amount, categoryId: $categoryId, date: $date, type: $type, memo: $memo, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Transaction(id: $id, amount: $amount, categoryId: $categoryId, date: $date, type: $type, memo: $memo, customCategoryId: $customCategoryId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -50,7 +52,7 @@ abstract mixin class $TransactionCopyWith<$Res>  {
   factory $TransactionCopyWith(Transaction value, $Res Function(Transaction) _then) = _$TransactionCopyWithImpl;
 @useResult
 $Res call({
- String id, int amount, int categoryId, DateTime date, TransactionType type, String? memo, DateTime createdAt, DateTime updatedAt
+ String id, int amount, int categoryId, DateTime date, TransactionType type, String? memo, String? customCategoryId, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -67,7 +69,7 @@ class _$TransactionCopyWithImpl<$Res>
 
 /// Create a copy of Transaction
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? amount = null,Object? categoryId = null,Object? date = null,Object? type = null,Object? memo = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? amount = null,Object? categoryId = null,Object? date = null,Object? type = null,Object? memo = freezed,Object? customCategoryId = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
@@ -75,6 +77,7 @@ as int,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore:
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as TransactionType,memo: freezed == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
+as String?,customCategoryId: freezed == customCategoryId ? _self.customCategoryId : customCategoryId // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,
@@ -162,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int amount,  int categoryId,  DateTime date,  TransactionType type,  String? memo,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  int amount,  int categoryId,  DateTime date,  TransactionType type,  String? memo,  String? customCategoryId,  DateTime createdAt,  DateTime updatedAt)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Transaction() when $default != null:
-return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.type,_that.memo,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.type,_that.memo,_that.customCategoryId,_that.createdAt,_that.updatedAt);case _:
   return orElse();
 
 }
@@ -183,10 +186,10 @@ return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.type,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int amount,  int categoryId,  DateTime date,  TransactionType type,  String? memo,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  int amount,  int categoryId,  DateTime date,  TransactionType type,  String? memo,  String? customCategoryId,  DateTime createdAt,  DateTime updatedAt)  $default,) {final _that = this;
 switch (_that) {
 case _Transaction():
-return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.type,_that.memo,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.type,_that.memo,_that.customCategoryId,_that.createdAt,_that.updatedAt);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -203,10 +206,10 @@ return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.type,_th
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int amount,  int categoryId,  DateTime date,  TransactionType type,  String? memo,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  int amount,  int categoryId,  DateTime date,  TransactionType type,  String? memo,  String? customCategoryId,  DateTime createdAt,  DateTime updatedAt)?  $default,) {final _that = this;
 switch (_that) {
 case _Transaction() when $default != null:
-return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.type,_that.memo,_that.createdAt,_that.updatedAt);case _:
+return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.type,_that.memo,_that.customCategoryId,_that.createdAt,_that.updatedAt);case _:
   return null;
 
 }
@@ -218,16 +221,19 @@ return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.type,_th
 @JsonSerializable()
 
 class _Transaction implements Transaction {
-  const _Transaction({required this.id, required this.amount, required this.categoryId, required this.date, required this.type, this.memo, required this.createdAt, required this.updatedAt});
+  const _Transaction({required this.id, required this.amount, required this.categoryId, required this.date, required this.type, this.memo, this.customCategoryId, required this.createdAt, required this.updatedAt});
   factory _Transaction.fromJson(Map<String, dynamic> json) => _$TransactionFromJson(json);
 
 @override final  String id;
 @override final  int amount;
 // 원 단위 정수
 @override final  int categoryId;
+// 통계청 12분류 id. 커스텀 카테고리면 그 상위 분류
 @override final  DateTime date;
 @override final  TransactionType type;
 @override final  String? memo;
+/// 사용자가 만든 카테고리(CustomCategory) id. null이면 기본 분류 그대로.
+@override final  String? customCategoryId;
 @override final  DateTime createdAt;
 // 서버가 정함
 @override final  DateTime updatedAt;
@@ -245,16 +251,16 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.type, type) || other.type == type)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.type, type) || other.type == type)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.customCategoryId, customCategoryId) || other.customCategoryId == customCategoryId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
-int get hashCode => Object.hash(runtimeType,id,amount,categoryId,date,type,memo,createdAt,updatedAt);
+int get hashCode => Object.hash(runtimeType,id,amount,categoryId,date,type,memo,customCategoryId,createdAt,updatedAt);
 
 @override
 String toString() {
-  return 'Transaction(id: $id, amount: $amount, categoryId: $categoryId, date: $date, type: $type, memo: $memo, createdAt: $createdAt, updatedAt: $updatedAt)';
+  return 'Transaction(id: $id, amount: $amount, categoryId: $categoryId, date: $date, type: $type, memo: $memo, customCategoryId: $customCategoryId, createdAt: $createdAt, updatedAt: $updatedAt)';
 }
 
 
@@ -265,7 +271,7 @@ abstract mixin class _$TransactionCopyWith<$Res> implements $TransactionCopyWith
   factory _$TransactionCopyWith(_Transaction value, $Res Function(_Transaction) _then) = __$TransactionCopyWithImpl;
 @override @useResult
 $Res call({
- String id, int amount, int categoryId, DateTime date, TransactionType type, String? memo, DateTime createdAt, DateTime updatedAt
+ String id, int amount, int categoryId, DateTime date, TransactionType type, String? memo, String? customCategoryId, DateTime createdAt, DateTime updatedAt
 });
 
 
@@ -282,7 +288,7 @@ class __$TransactionCopyWithImpl<$Res>
 
 /// Create a copy of Transaction
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? amount = null,Object? categoryId = null,Object? date = null,Object? type = null,Object? memo = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? amount = null,Object? categoryId = null,Object? date = null,Object? type = null,Object? memo = freezed,Object? customCategoryId = freezed,Object? createdAt = null,Object? updatedAt = null,}) {
   return _then(_Transaction(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,amount: null == amount ? _self.amount : amount // ignore: cast_nullable_to_non_nullable
@@ -290,6 +296,7 @@ as int,categoryId: null == categoryId ? _self.categoryId : categoryId // ignore:
 as int,date: null == date ? _self.date : date // ignore: cast_nullable_to_non_nullable
 as DateTime,type: null == type ? _self.type : type // ignore: cast_nullable_to_non_nullable
 as TransactionType,memo: freezed == memo ? _self.memo : memo // ignore: cast_nullable_to_non_nullable
+as String?,customCategoryId: freezed == customCategoryId ? _self.customCategoryId : customCategoryId // ignore: cast_nullable_to_non_nullable
 as String?,createdAt: null == createdAt ? _self.createdAt : createdAt // ignore: cast_nullable_to_non_nullable
 as DateTime,updatedAt: null == updatedAt ? _self.updatedAt : updatedAt // ignore: cast_nullable_to_non_nullable
 as DateTime,

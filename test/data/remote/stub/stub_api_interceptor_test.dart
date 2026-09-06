@@ -145,6 +145,110 @@ void main() {
     expect(gens.first['ageGroup'], 'teens');
   });
 
+  group('categories', () {
+    Future<Map<String, dynamic>> putCat(String id, String name, int baseId) =>
+        api.put<Map<String, dynamic>>(
+          ApiPath.category(id),
+          body: {'name': name, 'baseCategoryId': baseId},
+        );
+
+    setUp(() => tokens.t = 'stub.kakao');
+
+    test('empty → put(201) → list in creation order → put(200) updates', () async {
+      expect(await api.get<List<dynamic>>(ApiPath.categories), isEmpty);
+      await putCat('c1', '반려동물', 12);
+      await putCat('c2', '자기계발', 9);
+      final list = await api.get<List<dynamic>>(ApiPath.categories);
+      expect(list.map((e) => e['name']), ['반려동물', '자기계발']);
+      expect(list.first['baseCategoryId'], 12);
+
+      await putCat('c1', '댕댕이', 12);
+      final after = await api.get<List<dynamic>>(ApiPath.categories);
+      expect(after.map((e) => e['name']), ['댕댕이', '자기계발']);
+    });
+
+    test('기본 카테고리 id는 수정·삭제 불가 → 403 CATEGORY_IMMUTABLE', () async {
+      expect(
+        () => putCat('12', '기타 바꾸기', 12),
+        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'CATEGORY_IMMUTABLE')),
+      );
+      expect(
+        () => api.delete(ApiPath.category('1')),
+        throwsA(isA<ApiException>()
+            .having((e) => e.code, 'code', 'CATEGORY_IMMUTABLE')
+            .having((e) => e.statusCode, 'status', 403)),
+      );
+    });
+
+    test('name/baseCategoryId validation → 400 VALIDATION', () async {
+      expect(
+        () => putCat('c1', '   ', 12),
+        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'VALIDATION')),
+      );
+      expect(
+        () => putCat('c1', 'a' * (CustomCategory.maxNameLength + 1), 12),
+        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'VALIDATION')),
+      );
+      expect(
+        () => putCat('c1', '반려동물', 13),
+        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'VALIDATION')),
+      );
+    });
+
+    test('duplicate name → 409 CATEGORY_DUPLICATE (같은 id 갱신은 허용)', () async {
+      await putCat('c1', '반려동물', 12);
+      expect(
+        () => putCat('c2', '반려동물', 9),
+        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'CATEGORY_DUPLICATE')),
+      );
+      await putCat('c1', '반려동물', 9); // 자기 자신은 중복이 아니다
+    });
+
+    test('transaction with unknown customCategoryId → 400', () async {
+      expect(
+        () => api.put<Map<String, dynamic>>(ApiPath.transaction('t1'), body: {
+          'amount': 1000, 'categoryId': 12, 'date': '2026-09-02T00:00:00.000Z',
+          'type': 'expense', 'memo': null, 'customCategoryId': 'nope',
+        }),
+        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'VALIDATION')),
+      );
+    });
+
+    test('delete → 204, 참조하던 거래는 상위 기본 분류로 되돌아간다', () async {
+      await putCat('c1', '반려동물', 12);
+      await api.put<Map<String, dynamic>>(ApiPath.transaction('t1'), body: {
+        'amount': 1000, 'categoryId': 12, 'date': '2026-09-02T00:00:00.000Z',
+        'type': 'expense', 'memo': null, 'customCategoryId': 'c1',
+      });
+      expect(
+        (await api.get<List<dynamic>>(ApiPath.transactions, query: _range))
+            .single['customCategoryId'],
+        'c1',
+      );
+
+      await api.delete(ApiPath.category('c1'));
+      expect(await api.get<List<dynamic>>(ApiPath.categories), isEmpty);
+      final tx = (await api.get<List<dynamic>>(ApiPath.transactions, query: _range)).single;
+      expect(tx['customCategoryId'], isNull);
+      expect(tx['categoryId'], 12); // 상위 기본 분류는 그대로 → 또래 비교 집계 유지
+      expect(
+        () => api.delete(ApiPath.category('c1')),
+        throwsA(isA<ApiException>().having((e) => e.isNotFound, 'notFound', isTrue)),
+      );
+    });
+
+    test('카테고리도 StubStateStore로 영속화된다', () async {
+      final store = _MemStore();
+      final api1 = _client(tokens, store: store);
+      await api1.put<Map<String, dynamic>>(
+        ApiPath.category('c1'),
+        body: {'name': '반려동물', 'baseCategoryId': 12},
+      );
+      final api2 = _client(tokens, store: store); // 앱 재시작 시뮬레이션
+      expect((await api2.get<List<dynamic>>(ApiPath.categories)).single['name'], '반려동물');
+    });
+  });
+
   test('unknown path → 404 NOT_FOUND', () async {
     tokens.t = 'stub.kakao';
     expect(
