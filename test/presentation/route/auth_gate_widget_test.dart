@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart' as provider;
@@ -96,5 +97,23 @@ void main() {
     await t.pump(); // signInMock → state 변경 → refreshListenable → redirect
     await t.pump(const Duration(milliseconds: 300)); // 온보딩 build
     expect(find.text(_onboardingMark), findsOneWidget);
+  });
+
+  testWidgets('설정에서 로그아웃 → 로그인 화면', (t) async {
+    SharedPreferences.setMockInitialValues({
+      'auth_user': _authUserJson,
+      'user_profile': _profileJson,
+    });
+    await _boot(t); // 홈 진입
+    expect(find.byType(MainShell), findsOneWidget);
+
+    rootNavigatorKey.currentContext!.go(RoutePath.setting.path);
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300)); // 설정 화면 build
+
+    await t.tap(find.text('로그아웃'));
+    await t.pump(); // signOut → state 변경 → refreshListenable → redirect
+    await t.pump(const Duration(milliseconds: 300)); // 로그인 화면 build
+    expect(find.text(_loginMark), findsOneWidget);
   });
 }
