@@ -135,3 +135,9 @@ void configureBudgetDependencies() {
       TransactionUsecase(locator<TransactionRepository>()),
     );
 }
+
+/// 또래 통계 의존성. 현재 목업, 서버 구현 시 이 함수만 교체.
+void configurePeerDependencies() {
+  if (locator.isRegistered<PeerStatsRepository>()) return;
+  locator.registerSingleton<PeerStatsRepository>(MockPeerStatsRepository());
+}

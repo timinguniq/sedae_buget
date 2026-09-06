@@ -26,6 +26,7 @@ Future<void> main() async {
       await initializeDateFormatting();
       await dotenv.load();
       configureBudgetDependencies();
+      configurePeerDependencies();
 
       //await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
