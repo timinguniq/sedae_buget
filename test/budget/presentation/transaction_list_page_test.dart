@@ -34,6 +34,7 @@ void main() {
   setUp(() {
     locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo()));
     registerFakePeerDependencies();
+    registerFakeCategoryDependencies();
   });
   tearDown(() => locator.reset());
 

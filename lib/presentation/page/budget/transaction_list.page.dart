@@ -13,6 +13,7 @@ class TransactionListPage extends ConsumerWidget {
     final asyncTxs = ref.watch(monthlyTransactionsProvider);
     final asyncPeer = ref.watch(peerStatsProvider);
     final summary = ref.watch(monthlySummaryProvider);
+    final customs = ref.watch(customCategoriesProvider).value ?? const <CustomCategory>[];
     return DefaultLayout(
       appBar: AppBar(title: const Text('내역')),
       child: asyncPeer.when(
@@ -27,6 +28,7 @@ class TransactionListPage extends ConsumerWidget {
             ? Center(child: Text('내역이 없어요', style: context.typo.body2W400.copyWith(color: context.color.label.alternative)))
             : ListView(children: txs.map((t) => TransactionTile(
                 tx: t,
+                label: customs.labelFor(t),
                 onTap: () => context.push(RoutePath.transactionEdit.path, extra: t),
                 overPeer: t.type == TransactionType.expense &&
                     (mySummary[BudgetCategory.fromId(t.categoryId)] ?? 0) >

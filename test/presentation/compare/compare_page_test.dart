@@ -61,4 +61,47 @@ void main() {
     expect(find.text('나'), findsWidgets);   // battle bar labels + histogram
     expect(find.textContaining('등'), findsWidgets); // rank card
   });
+
+  // 또래 비교는 기본 분류(통계청 12분류)로만 이뤄진다. 커스텀 카테고리는 상위 분류에
+  // 합산될 뿐 별도 항목으로 나오지 않는다.
+  testWidgets('항목별 비교는 기본 카테고리 이름만 쓴다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    locator.unregister<TransactionUsecase>();
+    locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_CustomRepo()));
+
+    await tester.pumpWidget(provider.ChangeNotifierProvider(
+      create: (_) => ThemeService(),
+      child: ProviderScope(
+        overrides: [
+          peerStatsProvider.overrideWith((_) => StubPeerData.forGroup(AgeGroup.thirties)),
+        ],
+        child: const MaterialApp(home: ComparePage()),
+      ),
+    ));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('반려동물'), findsNothing);
+    expect(find.text(BudgetCategory.etc.label), findsOneWidget);
+  });
+}
+
+/// 지출 전액이 커스텀 카테고리('반려동물' → 기타)로 잡힌 달.
+class _CustomRepo implements TransactionRepository {
+  @override
+  Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
+  @override
+  Future<Result<Transaction>> delete(Transaction tx) async => Result.success(tx);
+  @override
+  Future<Result<List<Transaction>>> getMonth(int y, int m) async => Result.success([
+        Transaction.create(amount: 300000, categoryId: 12, date: DateTime(y, m, 5),
+            type: TransactionType.expense, customCategoryId: 'c1'),
+      ]);
+  @override
+  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
+      const Result.success([]);
 }

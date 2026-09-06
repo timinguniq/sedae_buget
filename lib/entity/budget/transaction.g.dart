@@ -13,6 +13,7 @@ _Transaction _$TransactionFromJson(Map<String, dynamic> json) => _Transaction(
   date: DateTime.parse(json['date'] as String),
   type: $enumDecode(_$TransactionTypeEnumMap, json['type']),
   memo: json['memo'] as String?,
+  customCategoryId: json['customCategoryId'] as String?,
   createdAt: DateTime.parse(json['createdAt'] as String),
   updatedAt: DateTime.parse(json['updatedAt'] as String),
 );
@@ -25,6 +26,7 @@ Map<String, dynamic> _$TransactionToJson(_Transaction instance) =>
       'date': instance.date.toIso8601String(),
       'type': _$TransactionTypeEnumMap[instance.type]!,
       'memo': instance.memo,
+      'customCategoryId': instance.customCategoryId,
       'createdAt': instance.createdAt.toIso8601String(),
       'updatedAt': instance.updatedAt.toIso8601String(),
     };

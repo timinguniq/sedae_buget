@@ -11,6 +11,8 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart';
 
+import '../../helper/fakes.dart';
+
 class _CapturingRepo implements TransactionRepository {
   Transaction? saved;
   @override
@@ -32,7 +34,10 @@ void main() {
   // context.pop() (go_router) has somewhere to pop back to. Phone-sized
   // viewport keeps the keypad + save button on-screen. DefaultLayout mounts a
   // perpetual Lottie, so we pump fixed durations instead of pumpAndSettle.
-  Future<_CapturingRepo> pumpEditPage(WidgetTester tester) async {
+  Future<_CapturingRepo> pumpEditPage(
+    WidgetTester tester, {
+    List<CustomCategory> customs = const [],
+  }) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
@@ -40,6 +45,7 @@ void main() {
 
     final repo = _CapturingRepo();
     locator.registerSingleton<TransactionUsecase>(TransactionUsecase(repo));
+    registerFakeCategoryDependencies(customs);
     final router = GoRouter(
       initialLocation: '/',
       routes: [
@@ -80,5 +86,51 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(repo.saved, isNull);
+  });
+
+  // 커스텀 카테고리를 고르면 상위 기본 분류가 함께 저장돼 또래 비교 집계가 유지된다.
+  testWidgets('custom category chip stores base id + customCategoryId', (tester) async {
+    final repo = await pumpEditPage(tester,
+        customs: const [CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12)]);
+
+    await tester.tap(find.text('반려동물'));
+    await tester.pump();
+    for (final k in ['1', '0', '0', '0']) {
+      await tester.tap(find.text(k));
+      await tester.pump();
+    }
+    await tester.tap(find.byKey(const Key('save-button')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(repo.saved?.customCategoryId, 'c1');
+    expect(repo.saved?.categoryId, BudgetCategory.etc.id);
+  });
+
+  // 추가 칩 → 시트에서 만든 카테고리가 곧바로 이 거래에 선택돼야 한다.
+  testWidgets('추가 칩으로 만든 카테고리가 바로 선택된다', (tester) async {
+    final repo = await pumpEditPage(tester);
+
+    await tester.tap(find.byKey(const Key('category-add-chip')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('카테고리 추가'), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('category-name-field')), '반려동물');
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('category-submit-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    for (final k in ['1', '0', '0', '0']) {
+      await tester.tap(find.text(k));
+      await tester.pump();
+    }
+    await tester.tap(find.byKey(const Key('save-button')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(repo.saved?.customCategoryId, isNotNull);
+    expect(repo.saved?.categoryId, BudgetCategory.etc.id); // 시트 기본 상위 분류
   });
 }

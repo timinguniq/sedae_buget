@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 
 class SettingPage extends StatefulWidget {
@@ -33,6 +36,17 @@ class _SettingPageState extends State<SettingPage> {
           onChanged: (m) => themeService.setMode(m)),
         const SizedBox(height: 20),
         Text('일반', style: context.typo.label2W600.copyWith(color: context.color.label.assistive)),
+        const SizedBox(height: 8),
+        Consumer(builder: (context, ref, _) {
+          final customs = ref.watch(customCategoriesProvider).value;
+          return SettingsTile(
+            key: const Key('category-manage-tile'),
+            label: '카테고리 관리',
+            value: '기본 ${BudgetCategory.values.length}'
+                '${customs == null ? '' : ' · 내 ${customs.length}'}',
+            onTap: () => context.push(RoutePath.categoryManage.path),
+          );
+        }),
         const SizedBox(height: 8),
         SettingsTile(label: '앱 버전', value: _version.isEmpty ? '...' : 'v$_version'),
         const SizedBox(height: 8),

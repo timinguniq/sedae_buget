@@ -10,10 +10,13 @@ abstract class Transaction with _$Transaction {
   const factory Transaction({
     required String id,
     required int amount, // 원 단위 정수
-    required int categoryId,
+    required int categoryId, // 통계청 12분류 id. 커스텀 카테고리면 그 상위 분류
     required DateTime date,
     required TransactionType type,
     String? memo,
+
+    /// 사용자가 만든 카테고리(CustomCategory) id. null이면 기본 분류 그대로.
+    String? customCategoryId,
     required DateTime createdAt, // 서버가 정함
     required DateTime updatedAt, // 서버가 정함
   }) = _Transaction;
@@ -25,6 +28,7 @@ abstract class Transaction with _$Transaction {
     required DateTime date,
     required TransactionType type,
     String? memo,
+    String? customCategoryId,
   }) {
     final now = DateTime.now();
     return Transaction(
@@ -34,6 +38,7 @@ abstract class Transaction with _$Transaction {
       date: date,
       type: type,
       memo: memo,
+      customCategoryId: customCategoryId,
       createdAt: now,
       updatedAt: now,
     );

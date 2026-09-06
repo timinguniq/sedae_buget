@@ -12,6 +12,7 @@ import '../helper/fakes.dart';
 void main() {
   setUp(() {
     registerFakeUserDependencies();
+    registerFakeCategoryDependencies();
     SharedPreferences.setMockInitialValues({}); // ThemeService 테마 모드 저장용
     PackageInfo.setMockInitialValues(
       appName: 'sedae', packageName: 'com.sedae.budget',

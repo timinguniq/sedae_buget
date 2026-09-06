@@ -85,6 +85,55 @@ void main() {
     expect(usecase.totalIncome(txs), 5000);
   });
 
+  group('categoryBreakdown', () {
+    // 반려동물 → 기타(12), 자기계발 → 오락·문화(9)
+    const pet = CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12);
+    const study = CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 9);
+
+    Transaction custom(int amount, String customId, int baseId) => Transaction.create(
+          amount: amount, categoryId: baseId, date: DateTime(2026, 6, 1),
+          type: TransactionType.expense, customCategoryId: customId,
+        );
+
+    test('splits custom categories out of their base and sorts by amount desc', () {
+      final rows = usecase.categoryBreakdown([
+        expense(5000, 12), // 기타 (커스텀 아님)
+        custom(9000, 'c1', 12), // 반려동물
+        custom(1000, 'c2', 9), // 자기계발
+      ], const [pet, study]);
+
+      expect(rows.map((r) => r.custom?.name ?? r.base.label),
+          ['반려동물', BudgetCategory.etc.label, '자기계발']);
+      expect(rows.map((r) => r.amount), [9000, 5000, 1000]);
+      // 커스텀 행도 상위 기본 분류를 그대로 들고 있다(또래 비교 집계 기준).
+      expect(rows.first.base, BudgetCategory.etc);
+    });
+
+    test('base totals stay whole — categorySummary keeps rolling custom spend up', () {
+      final txs = [expense(5000, 12), custom(9000, 'c1', 12)];
+      expect(usecase.categorySummary(txs)[BudgetCategory.etc], 14000);
+      final rows = usecase.categoryBreakdown(txs, const [pet]);
+      expect(rows.fold<int>(0, (s, r) => s + r.amount), 14000);
+    });
+
+    test('unused custom categories and income are left out', () {
+      final rows = usecase.categoryBreakdown([
+        expense(1000, 7),
+        Transaction.create(
+            amount: 5000, categoryId: 1, date: DateTime(2026, 6, 1),
+            type: TransactionType.income),
+      ], const [pet, study]);
+      expect(rows.length, 1);
+      expect(rows.single.base, BudgetCategory.transport);
+    });
+
+    test('unknown custom id falls back to the base category', () {
+      final rows = usecase.categoryBreakdown([custom(3000, 'gone', 12)], const []);
+      expect(rows.single.custom, isNull);
+      expect(rows.single.base, BudgetCategory.etc);
+    });
+  });
+
   group('savings', () {
     test('effectiveIncome prefers positive profile income', () {
       expect(usecase.effectiveIncome(txIncome: 1000000, profileIncome: 3000000), 3000000);

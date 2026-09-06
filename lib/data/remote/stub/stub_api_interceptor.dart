@@ -12,7 +12,7 @@ typedef _Json = Map<String, dynamic>;
 /// 서버 없이 계약(API 계약 v1)대로 응답하는 인프로세스 Stub. 네트워크로 나가지 않는다.
 ///
 /// - 인증은 무상태: 토큰 `stub.<provider>`에서 사용자를 복원한다.
-/// - 프로필·거래는 [StubApiState]에 보관하고 [StubStateStore]가 있으면 영속화한다.
+/// - 프로필·거래·사용자 카테고리는 [StubApiState]에 보관하고 [StubStateStore]가 있으면 영속화한다.
 /// - 또래 통계는 [StubPeerData](결정적).
 class StubApiInterceptor extends Interceptor {
   StubApiInterceptor({StubStateStore? store}) : _store = store;
@@ -53,8 +53,11 @@ class StubApiInterceptor extends Interceptor {
     if (m == 'GET' && p == ApiPath.me) return (200, _user(provider));
     if (p == ApiPath.profile) return _profile(m, o.data);
     if (m == 'GET' && p == ApiPath.transactions) return (200, _listTx(o.queryParameters));
-    final txId = _txId(p);
+    final txId = _idAfter(ApiPath.transactions, p);
     if (txId != null) return _tx(m, txId, o.data);
+    if (m == 'GET' && p == ApiPath.categories) return (200, _listCategories());
+    final catId = _idAfter(ApiPath.categories, p);
+    if (catId != null) return _category(m, catId, o.data);
     if (m == 'GET' && p == ApiPath.peerStats) {
       final g = AgeGroup.values.byName(o.queryParameters['ageGroup'] as String);
       return (200, peerStatsToJson(StubPeerData.forGroup(g)));
@@ -131,8 +134,9 @@ class StubApiInterceptor extends Interceptor {
 
   // transactions --------------------//
 
-  String? _txId(String path) {
-    const prefix = '${ApiPath.transactions}/';
+  /// `/v1/things/{id}` 형태 경로에서 id를 뽑는다. 모양이 다르면 null.
+  String? _idAfter(String collection, String path) {
+    final prefix = '$collection/';
     if (!path.startsWith(prefix)) return null;
     final id = path.substring(prefix.length);
     return id.isEmpty ? null : id;
@@ -155,6 +159,10 @@ class StubApiInterceptor extends Interceptor {
         final b = body as _Json;
         final existing = _state.transactions[id];
         final now = DateTime.now().toUtc().toIso8601String();
+        final customId = b['customCategoryId'] as String?;
+        if (customId != null && !_state.customCategories.containsKey(customId)) {
+          throw _StubError(400, 'VALIDATION', '없는 카테고리입니다: $customId');
+        }
         final row = <String, dynamic>{
           'id': id,
           'amount': b['amount'],
@@ -162,6 +170,7 @@ class StubApiInterceptor extends Interceptor {
           'date': b['date'],
           'type': b['type'],
           'memo': b['memo'],
+          'customCategoryId': customId,
           'createdAt': existing?['createdAt'] ?? now,
           'updatedAt': now,
         };
@@ -176,6 +185,51 @@ class StubApiInterceptor extends Interceptor {
         return (204, null);
     }
     throw _StubError(404, 'NOT_FOUND', '경로가 없습니다: $method ${ApiPath.transaction(id)}');
+  }
+
+  // categories --------------------//
+
+  List<_Json> _listCategories() =>
+      [for (final r in _state.customCategories.values) Map<String, dynamic>.of(r)];
+
+  Future<(int, Object?)> _category(String method, String id, Object? body) async {
+    // 기본 분류(1~12)는 계약 상수 — 사용자 카테고리 경로로 만들거나 지울 수 없다.
+    if (int.tryParse(id) != null) {
+      throw _StubError(403, 'CATEGORY_IMMUTABLE', '기본 카테고리는 수정하거나 삭제할 수 없습니다.');
+    }
+    switch (method) {
+      case 'PUT':
+        final b = body as _Json;
+        final name = (b['name'] as String?)?.trim() ?? '';
+        final baseId = (b['baseCategoryId'] as num?)?.toInt();
+        if (name.isEmpty || name.length > CustomCategory.maxNameLength) {
+          throw _StubError(
+              400, 'VALIDATION', '이름은 1~${CustomCategory.maxNameLength}자여야 합니다.');
+        }
+        if (baseId == null || baseId < 1 || baseId > 12) {
+          throw _StubError(400, 'VALIDATION', '상위 카테고리가 잘못되었습니다.');
+        }
+        final duplicated = _state.customCategories.entries.any(
+          (e) => e.key != id && (e.value['name'] as String).toLowerCase() == name.toLowerCase(),
+        );
+        if (duplicated) throw _StubError(409, 'CATEGORY_DUPLICATE', '이미 있는 이름입니다: $name');
+        final existing = _state.customCategories[id];
+        final row = <String, dynamic>{'id': id, 'name': name, 'baseCategoryId': baseId};
+        _state.customCategories[id] = row;
+        await _persist();
+        return (existing == null ? 201 : 200, Map<String, dynamic>.of(row));
+      case 'DELETE':
+        if (_state.customCategories.remove(id) == null) {
+          throw _StubError(404, 'NOT_FOUND', '카테고리가 없습니다: $id');
+        }
+        // 참조하던 거래는 상위 기본 분류로 되돌린다.
+        for (final tx in _state.transactions.values) {
+          if (tx['customCategoryId'] == id) tx['customCategoryId'] = null;
+        }
+        await _persist();
+        return (204, null);
+    }
+    throw _StubError(404, 'NOT_FOUND', '경로가 없습니다: $method ${ApiPath.category(id)}');
   }
 
   // persistence --------------------//

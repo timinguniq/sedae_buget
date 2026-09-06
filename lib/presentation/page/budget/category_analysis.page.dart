@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
@@ -18,8 +19,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
 
   @override
   Widget build(BuildContext context) {
-    final asyncTxs = ref.watch(monthlyTransactionsProvider);
-    final monthlySummary = ref.watch(monthlySummaryProvider);
+    final asyncBreakdown = ref.watch(categoryBreakdownProvider);
     final asyncPeer = ref.watch(peerStatsProvider);
     final won = NumberFormat.decimalPattern('ko');
     return DefaultLayout(
@@ -27,22 +27,26 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
       child: asyncPeer.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('또래 통계 실패: $e')),
-        data: (peer) => asyncTxs.when(
+        data: (peer) => asyncBreakdown.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('불러오기 실패: $e')),
-        data: (txs) {
-          final summary = monthlySummary.requireValue.byCategory;
-          if (summary.isEmpty) {
+        data: (breakdown) {
+          if (breakdown.isEmpty) {
             return Center(child: Text('지출이 없어요',
                 style: context.typo.body2W400.copyWith(color: context.color.label.alternative)));
           }
-          final entries = summary.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
-          final top = entries.take(6).toList();
-          final restSum = entries.skip(6).fold<int>(0, (s, e) => s + e.value);
-          final labels = [...top.map((e) => e.key.label), if (restSum > 0) '기타'];
-          final values = [...top.map((e) => e.value), if (restSum > 0) restSum];
-          // BudgetCategory per row (null for '기타' rollup)
-          final cats = [...top.map((e) => e.key), if (restSum > 0) null];
+          final top = breakdown.take(6).toList();
+          final restSum = breakdown.skip(6).fold<int>(0, (s, e) => s + e.amount);
+          final labels = [
+            ...top.map((e) => e.custom?.name ?? e.base.label),
+            if (restSum > 0) '기타',
+          ];
+          final values = [...top.map((e) => e.amount), if (restSum > 0) restSum];
+          // 또래 평균이 붙는 행은 기본 분류 행뿐이다('기타' 롤업·커스텀 카테고리는 null).
+          final cats = [
+            ...top.map((e) => e.custom == null ? e.base : null),
+            if (restSum > 0) null,
+          ];
           final colors = [context.color.primary.normal, ...Palette.neutralRamp];
           final total = values.fold<int>(0, (s, v) => s + v);
           return ListView(padding: const EdgeInsets.all(20), children: [
@@ -64,6 +68,19 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
               ]),
             )),
             const SizedBox(height: 20),
+            // 카테고리 개수 + 편집 진입(디자인: 분석 화면 → 카테고리 편집)
+            Row(children: [
+              Text('카테고리 ${breakdown.length}개',
+                  style: context.typo.caption1W600.copyWith(color: context.color.label.assistive)),
+              const Spacer(),
+              GestureDetector(
+                key: const Key('category-manage-link'),
+                onTap: () => context.push(RoutePath.categoryManage.path, extra: true),
+                child: Text('편집',
+                    style: context.typo.caption1W600.copyWith(color: context.color.primary.normal)),
+              ),
+            ]),
+            const SizedBox(height: 4),
             ...List.generate(labels.length, (i) {
               final cat = cats[i];
               final peerAmt = (_showPeer && cat != null) ? peer.avgByCategory[cat] : null;

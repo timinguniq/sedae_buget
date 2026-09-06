@@ -5,11 +5,20 @@ import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 class TransactionTile extends StatelessWidget {
-  const TransactionTile({super.key, required this.tx, this.onTap, this.overPeer = false});
+  const TransactionTile({
+    super.key,
+    required this.tx,
+    this.onTap,
+    this.overPeer = false,
+    this.label,
+  });
   final Transaction tx;
   final VoidCallback? onTap;
   // 또래 평균 초과 배지(빈도 데이터 부재 → 카테고리 지출 초과로 근사).
   final bool overPeer;
+
+  /// 표시할 카테고리 이름. null이면 기본 분류 이름(사용자 카테고리 이름을 넘길 때 쓴다).
+  final String? label;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +31,8 @@ class TransactionTile extends StatelessWidget {
       leading: CircleAvatar(
         backgroundColor: context.color.background.alternative,
         child: Icon(cat.style.icon, size: 18, color: context.color.label.neutral)),
-      title: Text(cat.label, style: context.typo.body2W600.copyWith(color: context.color.label.normal)),
+      title: Text(label ?? cat.label,
+          style: context.typo.body2W600.copyWith(color: context.color.label.normal)),
       subtitle: Row(
         children: [
           Flexible(

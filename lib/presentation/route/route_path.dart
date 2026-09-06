@@ -15,6 +15,7 @@ enum RoutePath {
   /// budget detail (pushed)
   transactionEdit('/budget/edit'),
   categoryAnalysis('/budget/category'),
+  categoryManage('/budget/category/manage'),
 
   /// setting
   setting('/setting'),

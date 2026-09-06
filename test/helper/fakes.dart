@@ -35,6 +35,44 @@ class InMemoryUserProfileRepository implements UserProfileRepository {
   Future<void> clear() async => profile = null;
 }
 
+/// 인메모리 사용자 카테고리 저장소. 생성 순서를 유지한다(서버 계약과 동일).
+class InMemoryCategoryRepository implements CategoryRepository {
+  InMemoryCategoryRepository([List<CustomCategory> seed = const []]) {
+    for (final c in seed) {
+      items[c.id] = c;
+    }
+  }
+
+  final Map<String, CustomCategory> items = {};
+
+  @override
+  Future<Result<List<CustomCategory>>> getAll() async =>
+      Result.success(items.values.toList());
+
+  @override
+  Future<Result<CustomCategory>> upsert(CustomCategory category) async {
+    items[category.id] = category;
+    return Result.success(category);
+  }
+
+  @override
+  Future<Result<CustomCategory>> delete(CustomCategory category) async {
+    items.remove(category.id);
+    return Result.success(category);
+  }
+}
+
+/// 사용자 카테고리 의존성을 fake로 등록한다.
+InMemoryCategoryRepository registerFakeCategoryDependencies([
+  List<CustomCategory> seed = const [],
+]) {
+  final repo = InMemoryCategoryRepository(seed);
+  locator
+    ..registerSingleton<CategoryRepository>(repo)
+    ..registerSingleton<CategoryUsecase>(CategoryUsecase(repo));
+  return repo;
+}
+
 /// Stub 서버와 같은 결정적 수치를 돌려주는 또래 통계 fake.
 class FakePeerStatsRepository implements PeerStatsRepository {
   @override
