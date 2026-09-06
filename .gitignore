@@ -4,6 +4,8 @@
 *.pyc
 *.swp
 .DS_Store
+Thumbs.db
+desktop.ini
 .atom/
 .build/
 .buildlog/
@@ -51,6 +53,25 @@ lib/firebase_options.dart
 
 # Dotenv
 *.env
+.env*
+!.env.example
+
+# Signing & credentials (never commit)
+# android/.gitignore covers these under android/ only — these catch them anywhere.
+*.jks
+*.keystore
+key.properties
+*.p12
+*.p8
+*.pem
+*.cer
+*.certSigningRequest
+*.mobileprovision
+
+# Release binaries
+*.apk
+*.aab
+*.ipa
 
 # functions
 /functions/*
