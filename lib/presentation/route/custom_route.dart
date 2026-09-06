@@ -9,9 +9,11 @@ import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.d
 import 'package:sedae_budget/presentation/page/login/login.page.dart';
 import 'package:sedae_budget/presentation/page/report/report.page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 part 'route_path.dart';
+part 'auth_gate.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
