@@ -64,7 +64,7 @@ class ThemeModeSelector extends StatelessWidget {
   Widget _preview(ThemeMode mode) => switch (mode) {
         ThemeMode.light => const _MiniScreen(bg: Palette.backgroundNormal, bar: Palette.fillGrey),
         ThemeMode.dark => const _MiniScreen(bg: Palette.darkBg, bar: Color(0xFF4A433C)),
-        ThemeMode.system => const Row(children: [
+        ThemeMode.system => const Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             Expanded(child: ColoredBox(color: Palette.backgroundNormal)),
             Expanded(child: ColoredBox(color: Palette.darkBg)),
           ]),

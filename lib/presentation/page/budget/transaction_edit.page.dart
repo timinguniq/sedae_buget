@@ -117,10 +117,11 @@ class _State extends ConsumerState<TransactionEditPage> {
                 controller: _memo,
                 textAlign: TextAlign.center,
                 style: context.typo.caption1W500.copyWith(color: context.color.label.normal),
+                // 전역 inputDecorationTheme의 outline 테두리가 collapsed에도 적용되므로 명시적으로 끈다.
                 decoration: InputDecoration.collapsed(
                   hintText: '메모 (선택)',
                   hintStyle: context.typo.caption1W500.copyWith(color: context.color.label.assistive),
-                ),
+                ).copyWith(enabledBorder: InputBorder.none, focusedBorder: InputBorder.none),
               ),
               const SizedBox(height: 8),
               Center(child: InkWell(

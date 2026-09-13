@@ -137,4 +137,12 @@ void main() {
     expect(repo.saved?.customCategoryId, isNotNull);
     expect(repo.saved?.categoryId, BudgetCategory.etc.id); // 시트 기본 상위 분류
   });
+
+  testWidgets('메모 필드는 전역 inputDecorationTheme의 outline 테두리를 받지 않는다', (tester) async {
+    await pumpEditPage(tester);
+    final memo = tester.widget<TextField>(
+        find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == '메모 (선택)'));
+    expect(memo.decoration?.enabledBorder, InputBorder.none);
+    expect(memo.decoration?.focusedBorder, InputBorder.none);
+  });
 }
