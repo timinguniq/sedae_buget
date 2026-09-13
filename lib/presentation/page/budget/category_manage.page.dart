@@ -175,7 +175,7 @@ class _GuideCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
       decoration: BoxDecoration(
-        color: context.color.label.normal,
+        color: InkCard.colorOf(context),
         borderRadius: BorderRadius.circular(CSize.md.radius)),
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
         const MascotDongle(size: 30),

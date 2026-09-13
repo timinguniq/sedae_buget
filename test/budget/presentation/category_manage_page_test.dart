@@ -10,6 +10,7 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/category_manage.page.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_edit_sheet.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
@@ -31,6 +32,7 @@ Future<InMemoryCategoryRepository> pumpPage(
   WidgetTester tester, {
   bool editing = false,
   List<CustomCategory> customs = const [_pet],
+  ThemeData? theme,
 }) async {
   tester.view.physicalSize = const Size(390, 1400);
   tester.view.devicePixelRatio = 1.0;
@@ -49,7 +51,7 @@ Future<InMemoryCategoryRepository> pumpPage(
   );
   await tester.pumpWidget(provider.ChangeNotifierProvider(
     create: (_) => ThemeService(),
-    child: ProviderScope(child: MaterialApp.router(routerConfig: router)),
+    child: ProviderScope(child: MaterialApp.router(theme: theme, routerConfig: router)),
   ));
   await tester.pump();
   router.push('/manage');
@@ -124,5 +126,13 @@ void main() {
 
     expect(repo.items.values.single.name, '반려동물');
     expect(repo.items.values.single.base, BudgetCategory.etc);
+  });
+
+  testWidgets('다크 모드에서 안내 카드 배경은 라이트용 잉크색이 아니라 sunken surface다', (tester) async {
+    await pumpPage(tester, theme: ThemeData(brightness: Brightness.dark));
+    final card = tester.widget<Container>(find
+        .ancestor(of: find.textContaining('또래 비교 통계의 기준'), matching: find.byType(Container))
+        .first);
+    expect((card.decoration as BoxDecoration).color, Palette.darkSurfaceSunken);
   });
 }
