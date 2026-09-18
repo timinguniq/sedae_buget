@@ -1,0 +1,41 @@
+# 테스트
+
+## 실행
+
+```bash
+flutter test                                   # 전체
+flutter test test/domain/auth_usecase_test.dart # 파일 하나
+flutter test test/architecture                  # 레이어 의존성 규칙만
+```
+
+커밋할 때는 Git `pre-commit` 훅이 커밋 대상 내용으로 전체 테스트를 실행한다(`docs/harness.md`).
+
+## 배치와 이름
+
+- 파일 이름은 `*_test.dart`.
+- 새 테스트는 대상 소스의 레이어·기능을 따라 `test/<레이어>/<기능>/`에 둔다. 예: `lib/data/peer/…` → `test/data/peer/…_test.dart`
+- 가계부(budget) 기능의 기존 테스트는 `test/budget/<레이어>/`에 있다. 옮기지 않고 그 자리에서 유지·추가한다.
+- 공용 테스트 대역은 `test/helper/`에 둔다.
+- 소스와 테스트의 경로가 1:1로 대응하지 않으므로 "짝 테스트 파일 존재" 자동 검사는 하지 않는다.
+
+## 테스트 대역
+
+- 모킹 라이브러리를 쓰지 않는다. `test/helper/fakes.dart`의 **인메모리 fake**(리포지토리 인터페이스 구현)를 쓴다.
+- presentation 테스트는 fake를 `get_it`에 등록한 뒤 위젯·provider를 검증한다.
+- HTTP 계층은 실제 서버 대신 Dio `Interceptor`로 검증한다: `StubApiInterceptor`(`lib/data/remote/stub/`)나 테스트 파일 안의 작은 인터셉터(응답 고정·오류·타임아웃).
+
+## 종류
+
+| 종류 | 위치 | 비고 |
+|---|---|---|
+| 단위(entity·domain·data·core) | `test/<레이어>/…` | Flutter 바인딩 없이 실행 |
+| 위젯·provider | `test/presentation/…`, `test/theme/…`, `test/budget/presentation/…` | `flutter_test` |
+| 아키텍처 | `test/architecture/` | `lib/`의 import를 읽어 레이어 규칙 검사. 규칙 설명은 `docs/architecture.md` |
+| 골든·통합 | 없음 | 도입하면 이 표와 `docs/harness.md`를 갱신 |
+
+## 품질 기준
+
+- 버그 수정과 새 로직은 **실패하는 테스트를 먼저 실행**하고, 수정 후 통과를 확인한다. 두 실행 결과를 작업 보고에 남긴다. 테스트 파일이 있다는 사실만으로는 테스트를 먼저 실행했다는 증거가 되지 않는다.
+- 테스트는 구현 세부가 아니라 동작을 검증한다.
+- 테스트가 0개 실행된 결과는 통과로 보지 않는다.
+- 커버리지·복잡도 임계값은 아직 두지 않는다(사유는 `docs/harness.md`).

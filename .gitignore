@@ -82,9 +82,21 @@ key.properties
 # screenshots
 /screenshots
 
-# docs
-/docs/
-.claude/
-CLAUDE.md
+# docs — 설계 문서는 비공개. 하네스 문서 2개만 추적한다.
+/docs/*
+!/docs/architecture.md
+!/docs/harness.md
+
+# Claude Code — 공통 훅·에이전트 설정만 추적한다. 개인 설정(settings.local.json 등)은 제외.
+.claude/*
+!.claude/settings.json
+!.claude/agents/
+
+# Codex — 공통 훅 등록만 추적한다. 개인 설정·세션 파일이 생겨도 올라가지 않게 한다.
+.codex/*
+!.codex/hooks.json
+
+# 하네스 초기 설정 작업서(일회성 개인 작업 문서). 결과물은 docs/harness.md에 있다.
+/HARNESS_SETUP*.md
 
 
