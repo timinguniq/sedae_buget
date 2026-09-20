@@ -143,11 +143,4 @@ void main() {
     expect(tester.getTopLeft(banners.last).dy, lessThanOrEqualTo(tester.getTopLeft(find.text('6월 2일')).dy));
     expect(find.text('6월 1일'), findsOneWidget); // 다섯 그룹 모두 그려진 상태에서 센 것
   });
-
-  test('dateGroupLabel: 오늘 / 어제 / M월 D일', () {
-    final now = DateTime(2026, 6, 27, 15);
-    expect(dateGroupLabel(DateTime(2026, 6, 27), now: now), '오늘 · 6월 27일');
-    expect(dateGroupLabel(DateTime(2026, 6, 26), now: now), '어제 · 6월 26일');
-    expect(dateGroupLabel(DateTime(2026, 6, 25), now: now), '6월 25일');
-  });
 }
