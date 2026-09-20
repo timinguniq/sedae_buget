@@ -1,14 +1,13 @@
 import 'package:dio/dio.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
-import 'package:sedae_budget/core/http_client/api_exception.dart';
 import 'package:sedae_budget/core/http_client/auth_token_interceptor.dart';
 import 'package:sedae_budget/core/http_client/auth_token_store.dart';
 
-/// 서버 API용 Dio 래퍼. 응답 바디를 그대로 돌려주고 실패는 [ApiException]으로 통일한다.
+/// 서버 API용 Dio 구성. retrofit 명세(`data/data_source/remote`)가 이 [dio]로 호출한다.
 class ApiClient {
-  ApiClient(this._dio);
+  ApiClient(this.dio);
 
-  final Dio _dio;
+  final Dio dio;
 
   /// [extra]는 토큰·로거 뒤에 붙는다(Stub 인터셉터 자리).
   factory ApiClient.create({
@@ -30,25 +29,5 @@ class ApiClient {
       ..add(PrettyDioLogger(requestBody: true, responseBody: false, maxWidth: 120))
       ..addAll(extra);
     return ApiClient(dio);
-  }
-
-  Future<T> get<T>(String path, {Map<String, dynamic>? query}) async =>
-      (await _run(() => _dio.get<T>(path, queryParameters: query))).data as T;
-
-  Future<T> post<T>(String path, {Object? body}) async =>
-      (await _run(() => _dio.post<T>(path, data: body))).data as T;
-
-  Future<T> put<T>(String path, {Object? body}) async =>
-      (await _run(() => _dio.put<T>(path, data: body))).data as T;
-
-  /// 바디 없는 삭제(204).
-  Future<void> delete(String path) => _run(() => _dio.delete<void>(path));
-
-  Future<Response<T>> _run<T>(Future<Response<T>> Function() call) async {
-    try {
-      return await call();
-    } on DioException catch (e) {
-      throw ApiException.fromDio(e);
-    }
   }
 }

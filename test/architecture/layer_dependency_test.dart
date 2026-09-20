@@ -30,7 +30,29 @@ List<String> violations(
   return out;
 }
 
+/// `lib/<path>` 바로 아래 폴더 이름.
+List<String> subfolders(String path) => Directory('lib/$path')
+    .listSync()
+    .whereType<Directory>()
+    .map((d) => d.uri.pathSegments.lastWhere((s) => s.isNotEmpty))
+    .toList();
+
 void main() {
+  test('data는 data_source(local/remote)·dto·repository_impl 폴더로만 구성한다', () {
+    expect(
+      subfolders('data'),
+      unorderedEquals(['data_source', 'dto', 'repository_impl']),
+    );
+    expect(subfolders('data/data_source'), unorderedEquals(['local', 'remote']));
+  });
+
+  test('domain은 manager·repository·usecase 폴더로만 구성한다', () {
+    expect(
+      subfolders('domain'),
+      everyElement(isIn(['manager', 'repository', 'usecase'])),
+    );
+  });
+
   test('domain은 data/presentation/core/theme/flutter를 import하지 않는다', () {
     expect(
       violations('domain', [
@@ -55,7 +77,7 @@ void main() {
     );
   });
 
-  test('presentation에서 DI(locator) 접근은 *_provider.dart 에서만 한다', () {
+  test('presentation에서 DI(locator) 접근은 화면 viewmodel과 service provider에서만 한다', () {
     expect(
       violations(
         'presentation',
@@ -63,7 +85,9 @@ void main() {
           'sedae_budget/core/dependency_injection',
           'sedae_budget/core/core.dart',
         ],
-        skip: (p) => p.endsWith('_provider.dart'),
+        skip: (p) =>
+            p.endsWith('.view_model.dart') ||
+            (p.startsWith('lib/presentation/service/') && p.endsWith('_provider.dart')),
       ),
       isEmpty,
     );
@@ -119,12 +143,12 @@ void main() {
     }
   });
 
-  test('data는 로컬 저장 기술을 쓰지 않는다(Stub 영속화 제외)', () {
+  test('data의 로컬 저장 기술은 data_source/local에서만 쓴다', () {
     expect(
       violations(
         'data',
         ['drift/', 'shared_preferences/', 'flutter_secure_storage/'],
-        skip: (p) => p.startsWith('lib/data/remote/stub/'),
+        skip: (p) => p.startsWith('lib/data/data_source/local/'),
       ),
       isEmpty,
     );

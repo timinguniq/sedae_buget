@@ -13,8 +13,8 @@ flutter test test/architecture                  # 레이어 의존성 규칙만
 ## 배치와 이름
 
 - 파일 이름은 `*_test.dart`.
-- 새 테스트는 대상 소스의 레이어·기능을 따라 `test/<레이어>/<기능>/`에 둔다. 예: `lib/data/peer/…` → `test/data/peer/…_test.dart`
-- 가계부(budget) 기능의 기존 테스트는 `test/budget/<레이어>/`에 있다. 옮기지 않고 그 자리에서 유지·추가한다.
+- 새 테스트는 대상 소스의 경로를 따라 `test/<레이어>/…`에 둔다. 예: `lib/data/repository_impl/…` → `test/data/repository_impl/…_test.dart`
+- 가계부(budget) 기능의 기존 entity·presentation 테스트는 `test/budget/<레이어>/`에 있다. 옮기지 않고 그 자리에서 유지·추가한다.
 - 공용 테스트 대역은 `test/helper/`에 둔다.
 - 소스와 테스트의 경로가 1:1로 대응하지 않으므로 "짝 테스트 파일 존재" 자동 검사는 하지 않는다.
 
@@ -22,7 +22,7 @@ flutter test test/architecture                  # 레이어 의존성 규칙만
 
 - 모킹 라이브러리를 쓰지 않는다. `test/helper/fakes.dart`의 **인메모리 fake**(리포지토리 인터페이스 구현)를 쓴다.
 - presentation 테스트는 fake를 `get_it`에 등록한 뒤 위젯·provider를 검증한다.
-- HTTP 계층은 실제 서버 대신 Dio `Interceptor`로 검증한다: `StubApiInterceptor`(`lib/data/remote/stub/`)나 테스트 파일 안의 작은 인터셉터(응답 고정·오류·타임아웃).
+- HTTP 계층은 실제 서버 대신 Dio `Interceptor`로 검증한다: `StubApiInterceptor`(`lib/data/data_source/remote/stub/`)나 테스트 파일 안의 작은 인터셉터(응답 고정·오류·타임아웃).
 
 ## 종류
 

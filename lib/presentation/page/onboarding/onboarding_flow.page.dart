@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
-import 'package:sedae_budget/presentation/page/onboarding/user_profile_provider.dart';
+import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 온보딩 소득 슬라이더 상한 (디자인 `₩6,000,000+`).

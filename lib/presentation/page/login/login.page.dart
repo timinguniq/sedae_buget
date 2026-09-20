@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
-import 'package:sedae_budget/presentation/page/login/auth_provider.dart';
+import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/page/login/widget/social_login_button.dart';
 import 'package:sedae_budget/theme/theme.dart';
 

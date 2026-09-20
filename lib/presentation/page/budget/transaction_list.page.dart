@@ -5,7 +5,7 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/day_ad_banner.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/transaction_tile.dart';
-import 'package:sedae_budget/presentation/page/compare/peer_provider.dart';
+import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/compare_format.dart';
 import 'package:sedae_budget/theme/theme.dart';
 

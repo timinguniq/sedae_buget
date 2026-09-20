@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sedae_budget/presentation/page/login/auth_provider.dart';
+import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 설정 하단 로그아웃 아웃라인 버튼: full-width h52 / r16 / surface 배경 / 연코랄 테두리 / 코랄 글씨 + 아이콘.

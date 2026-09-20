@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
-import 'package:sedae_budget/presentation/page/compare/peer_provider.dart';
+import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/category_battle_row.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/compare_format.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/distribution_histogram.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/insight_banner.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/rank_headline.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/versus_bar_card.dart';
-import 'package:sedae_budget/presentation/page/report/report_provider.dart';
+import 'package:sedae_budget/presentation/page/report/report.view_model.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 세대 비교 화면. 상단 시안 A(등수·분포·나 vs 또래·저축률) + 하단 시안 B(항목별 차이·인사이트).

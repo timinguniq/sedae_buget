@@ -91,7 +91,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 | 정적 분석 | `flutter analyze --no-pub --no-fatal-warnings --no-fatal-infos` |
 | 전체 테스트 | `flutter test` |
 | 일부 테스트 | `flutter test test/<경로>_test.dart` |
-| 코드 생성(freezed·json_serializable) | `dart run build_runner build` |
+| 코드 생성(freezed·json_serializable·retrofit) | `dart run build_runner build` |
 | 커밋 대상 검사(게이트) | `bash tool/commit_gate.sh` |
 | 하네스 자체 테스트 | `python3 -m unittest discover -s tool/test -p '*_test.py' -v` |
 | 앱 실행 | `flutter run` (`.env` 필요. 환경 지정은 `--dart-define=env=<이름>`) |
