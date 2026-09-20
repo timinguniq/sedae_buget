@@ -19,12 +19,7 @@ class DistributionHistogram extends StatelessWidget {
     if (samples.isEmpty) return const SizedBox(height: _plotHeight);
     final hist = stats.histogram(buckets);
     final maxH = hist.fold<int>(1, (m, v) => v > m ? v : m);
-    final lo = samples.fold<int>(samples.first, (m, v) => v < m ? v : m);
-    final hi = samples.fold<int>(samples.first, (m, v) => v > m ? v : m);
-    final span = (hi - lo) == 0 ? 1 : (hi - lo);
-    var myIdx = ((myExpense - lo) * buckets / span).floor();
-    if (myIdx < 0) myIdx = 0;
-    if (myIdx >= buckets) myIdx = buckets - 1;
+    final myIdx = stats.bucketIndexOf(myExpense, buckets);
 
     final axisLabel = context.typo.caption2W500.copyWith(color: context.color.label.assistive);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [

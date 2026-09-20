@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 또래 평균 대비 배지 `또래▲15%` / `또래▼10%`.
@@ -14,7 +15,7 @@ class PeerDeltaBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final over = mine > peer;
-    final pct = peer == 0 ? 0 : ((mine - peer).abs() * 100 / peer).round();
+    final pct = peerDeltaPercent(mine: mine, peer: peer).abs();
     final strong = over && pct >= 50;
     final accent = over ? context.color.primary.normal : context.color.label.alternative;
     final fg = strong ? context.color.static.white : accent;

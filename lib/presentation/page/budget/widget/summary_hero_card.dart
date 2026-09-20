@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 코랄 히어로 카드: 이번 달 총지출 + 또래 비교 pill + 수입/잔액 보조 + 우하단 마스코트 워터마크.
@@ -82,7 +83,7 @@ class _PeerPill extends StatelessWidget {
 
 (String?, String) _peerLabel(int me, int peer) {
   if (peer == 0) return (null, '또래 평균 집계 중');
-  final d = ((me - peer) * 100 / peer).round();
+  final d = peerDeltaPercent(mine: me, peer: peer);
   if (d == 0) return (null, '또래 평균과 비슷해요');
   return d < 0 ? ('▼', '또래 평균보다 ${-d}% 덜 썼어요') : ('▲', '또래 평균보다 $d% 더 썼어요');
 }

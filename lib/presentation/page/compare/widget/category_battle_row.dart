@@ -11,7 +11,7 @@ class CategoryBattleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final diff = peer == 0 ? 0 : ((mine - peer) * 100 / peer).round();
+    final diff = peerDeltaPercent(mine: mine, peer: peer);
     final more = diff > 0;
     // 디자인 스케일: +50% ≈ 한쪽 폭의 90%.
     final f = (diff.abs() / 55).clamp(0.0, 1.0);
