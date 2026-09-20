@@ -16,7 +16,7 @@ class PeerRankCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = stats.rankOf(myExpense);
     final below = stats.percentBelow(myExpense); // 또래 중 나보다 적게 쓴 %
-    final topPercent = 100 - below;              // 지출 상위 % (나보다 많이·같게 쓴 또래 비율)
+    final topPercent = stats.topPercent(myExpense); // 지출 상위 %
     return SurfaceCard(
       onTap: onDetail,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

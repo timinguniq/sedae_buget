@@ -10,11 +10,11 @@ class PeerStatsRepositoryImpl implements PeerStatsRepository {
   final PeerStatsApi _api;
 
   @override
-  Future<PeerStats> forGroup(AgeGroup group) async =>
-      (await callApi(() => _api.stats(group.name))).toEntity();
+  Future<Result<PeerStats>> forGroup(AgeGroup group) =>
+      guardApi(() async => (await _api.stats(group.name)).toEntity());
 
   @override
-  Future<Map<AgeGroup, int>> generationAverages() async => {
-        for (final dto in await callApi(_api.generations)) dto.ageGroup: dto.avgMonthlyExpense,
-      };
+  Future<Result<Map<AgeGroup, int>>> generationAverages() => guardApi(() async => {
+        for (final dto in await _api.generations()) dto.ageGroup: dto.avgMonthlyExpense,
+      });
 }

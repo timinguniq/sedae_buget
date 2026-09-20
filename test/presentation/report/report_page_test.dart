@@ -1,14 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
-import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/report/report.page.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 
@@ -65,12 +61,6 @@ class _FakeRepo implements TransactionRepository {
 
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
-  setUp(() {
-    locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo()));
-    registerFakePeerDependencies();
-    registerFakeUserDependencies();
-  });
-  tearDown(() => locator.reset());
 
   testWidgets('report page renders insight, stats, and section headers',
       (tester) async {
@@ -79,15 +69,17 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final stats = StubPeerData.forGroup(AgeGroup.thirties);
+    final container = fakeContainer(
+      transactions: _FakeRepo(),
+      peerRepository: FakePeerStatsRepository(),
+      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
+    );
     await tester.pumpWidget(
       provider.ChangeNotifierProvider(
         create: (_) => ThemeService(),
-        child: ProviderScope(
-          overrides: [
-            peerStatsProvider.overrideWith((_) => stats),
-          ],
-          child: MaterialApp(
+        child: fakeScope(
+          container,
+          MaterialApp(
             theme: ThemeService().lightThemeData(),
             home: const ReportPage(),
           ),

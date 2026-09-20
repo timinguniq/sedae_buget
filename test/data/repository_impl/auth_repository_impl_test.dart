@@ -40,20 +40,22 @@ void main() {
   });
 
   test('no token → currentUser null', () async {
-    expect(await repo.currentUser(), isNull);
+    expect((await repo.currentUser()).unwrap(), isNull);
   });
 
   test('signIn stores token and returns user; currentUser round-trips', () async {
-    final u = await repo.signIn(AuthProvider.naver, 'id-token');
+    final u = (await repo.signIn(AuthProvider.naver, 'id-token')).unwrap();
     expect(u.nickname, '네이버 사용자');
     expect(u.provider, AuthProvider.naver);
     expect(tokens.t, isNotEmpty);
-    expect((await repo.currentUser())?.provider, AuthProvider.naver);
+    expect((await repo.currentUser()).unwrap()?.provider, AuthProvider.naver);
   });
 
-  test('invalid token → 401 → token cleared, null', () async {
+  test('invalid token → 401 → token cleared, 미로그인으로 성공', () async {
     tokens.t = 'garbage';
-    expect(await repo.currentUser(), isNull);
+    final res = await repo.currentUser();
+    expect(res.failureOrNull, isNull, reason: '무효 세션은 실패가 아니라 미로그인이다');
+    expect(res.unwrap(), isNull);
     expect(tokens.t, isNull);
   });
 
@@ -63,15 +65,16 @@ void main() {
     expect(tokens.t, isNull);
   });
 
-  test('server error on /me propagates; signOut still clears token', () async {
+  test('server error on /me → server 실패; signOut은 실패를 알리고도 토큰을 지운다', () async {
     final dio = Dio()
       ..interceptors.add(AuthTokenInterceptor(tokens))
       ..interceptors.add(_ServerDown());
     final down = AuthRepositoryImpl(AuthApi(dio), tokens);
     tokens.t = 'stub.kakao';
-    expect(() => down.currentUser(), throwsA(isA<ApiException>()));
+    expect((await down.currentUser()).failureOrNull?.reason, FailureReason.server);
     expect(tokens.t, 'stub.kakao'); // 500은 토큰을 지우지 않는다
-    await down.signOut();
+    // 로그아웃은 서버가 죽어도 로컬 세션을 끝내지만, 실패를 삼키지는 않는다.
+    expect((await down.signOut()).failureOrNull?.reason, FailureReason.server);
     expect(tokens.t, isNull);
   });
 }

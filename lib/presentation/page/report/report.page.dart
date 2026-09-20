@@ -46,11 +46,11 @@ class ReportPage extends ConsumerWidget {
           final s = summary.requireValue;
           final won = NumberFormat.decimalPattern('ko');
           final totalExpense = s.expense;
-          final peerTop = 100 - peer.percentBelow(totalExpense); // 또래 상위 N%
+          final peerTop = peer.topPercent(totalExpense); // 또래 상위 N%
           // 소득 대비 지출(%) = 100 − 저축률. 소득(프로필 월소득 또는 이달 수입)이 없으면 표시 안 함.
           final hasIncome = (asyncProfile.value?.monthlyIncome ?? 0) > 0 || s.income > 0;
           final incomeRatio = (hasIncome && savingsRate != null) ? 100 - savingsRate : null;
-          final insight = _findInsight(s.byCategory, peer);
+          final insight = peer.largestCategoryGap(s.byCategory);
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -143,39 +143,19 @@ class ReportPage extends ConsumerWidget {
     );
   }
 
-  /// 또래 평균과 차이가 가장 큰 카테고리(둘 다 지출이 있는 항목만).
-  ({BudgetCategory category, int pct, int mine, int peer})? _findInsight(
-    Map<BudgetCategory, int> mySummary,
-    PeerStats peer,
-  ) {
-    BudgetCategory? best;
-    double bestPct = 0;
-
-    for (final c in BudgetCategory.values) {
-      final mine = mySummary[c] ?? 0;
-      final peerAvg = peer.avgByCategory[c] ?? 0;
-      if (mine <= 0 || peerAvg <= 0) continue;
-      final pct = (mine - peerAvg) * 100 / peerAvg;
-      if (pct.abs() > bestPct.abs()) {
-        bestPct = pct;
-        best = c;
-      }
-    }
-
-    if (best == null) return null;
-    return (category: best, pct: bestPct.round(), mine: mySummary[best]!, peer: peer.avgByCategory[best]!);
-  }
-
   /// "또래보다 [카테고리]에 / 1.5배 더 썼어요" (덜 쓴 경우 "N% 덜 썼어요").
-  InlineSpan _insightBody(BuildContext context, ({BudgetCategory category, int pct, int mine, int peer})? i) {
+  InlineSpan _insightBody(
+    BuildContext context,
+    ({BudgetCategory category, int deltaPercent, int mine, int peer})? i,
+  ) {
     if (i == null) return const TextSpan(text: '아직 분석할 지출이\n충분치 않아요');
-    final more = i.pct > 0;
+    final more = i.deltaPercent > 0;
     final ratio = i.mine / i.peer;
     final ratioText = ratio == ratio.roundToDouble() ? '${ratio.round()}' : ratio.toStringAsFixed(1);
     return TextSpan(children: [
       const TextSpan(text: '또래보다 '),
       TextSpan(text: i.category.label, style: MonthlyInsightCard.highlightStyle(context)),
-      TextSpan(text: '에\n${more ? '$ratioText배 더' : '${i.pct.abs()}% 덜'} 썼어요'),
+      TextSpan(text: '에\n${more ? '$ratioText배 더' : '${i.deltaPercent.abs()}% 덜'} 썼어요'),
     ]);
   }
 }

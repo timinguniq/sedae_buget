@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
+import 'package:sedae_budget/presentation/page/budget/transaction_feed.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/day_ad_banner.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/transaction_tile.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
@@ -86,14 +87,31 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                       style: context.typo.body2W400.copyWith(color: context.color.label.alternative)))
                   : ListView(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                      children: _grouped(context, filtered, (t) => TransactionTile(
-                        tx: t,
-                        label: customs.labelFor(t),
-                        onTap: () => context.push(RoutePath.transactionEdit.path, extra: t),
-                        overPeer: t.type == TransactionType.expense &&
-                            (mySummary[BudgetCategory.fromId(t.categoryId)] ?? 0) >
-                                (peer.avgByCategory[BudgetCategory.fromId(t.categoryId)] ?? 0),
-                      )),
+                      children: [
+                        for (final item in buildTransactionFeed(filtered))
+                          switch (item) {
+                            FeedDayHeader(:final day, :final isFirst) => Padding(
+                                padding: EdgeInsets.only(top: isFirst ? 6 : 14, bottom: 2),
+                                child: Text(dateGroupLabel(day),
+                                    style: context.typo.caption1W600
+                                        .copyWith(color: context.color.label.assistive)),
+                              ),
+                            FeedDivider() => Divider(
+                                height: 1, thickness: 1, color: context.color.line.alternative),
+                            FeedAdSlot(:final day) => DayAdBanner(key: ValueKey(day)),
+                            FeedTransaction(:final transaction) => TransactionTile(
+                                tx: transaction,
+                                label: customs.labelFor(transaction),
+                                onTap: () => context.push(RoutePath.transactionEdit.path,
+                                    extra: transaction),
+                                overPeer: transaction.type == TransactionType.expense &&
+                                    (mySummary[BudgetCategory.fromId(transaction.categoryId)] ?? 0) >
+                                        (peer.avgByCategory[
+                                                BudgetCategory.fromId(transaction.categoryId)] ??
+                                            0),
+                              ),
+                          },
+                      ],
                     ),
             ),
           ]);
@@ -103,50 +121,6 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
     );
   }
 
-  /// 하루 끝 배너 광고는 위에서부터 최대 이 개수만 붙인다.
-  static const _maxAdBanners = 3;
-
-  /// 날짜(내림차순) 그룹 헤더 + 그룹 안 타일 사이 구분선 + 하루 끝 배너 광고(최대 [_maxAdBanners]개).
-  List<Widget> _grouped(BuildContext context, List<Transaction> txs, Widget Function(Transaction) tile) {
-    final sorted = [...txs]..sort((a, b) => b.date.compareTo(a.date));
-    final widgets = <Widget>[];
-    var banners = 0;
-    void closeGroup(DateTime day) {
-      if (banners >= _maxAdBanners) return;
-      banners++;
-      widgets.add(DayAdBanner(key: ValueKey(day)));
-    }
-
-    DateTime? current;
-    for (final t in sorted) {
-      final day = DateTime(t.date.year, t.date.month, t.date.day);
-      if (day != current) {
-        if (current != null) closeGroup(current);
-        widgets.add(Padding(
-          padding: EdgeInsets.only(top: current == null ? 6 : 14, bottom: 2),
-          child: Text(dateGroupLabel(day),
-              style: context.typo.caption1W600.copyWith(color: context.color.label.assistive)),
-        ));
-        current = day;
-      } else {
-        widgets.add(Divider(height: 1, thickness: 1, color: context.color.line.alternative));
-      }
-      widgets.add(tile(t));
-    }
-    if (current != null) closeGroup(current);
-    return widgets;
-  }
-}
-
-/// 날짜 그룹 헤더 문구: 오늘 · M월 D일 / 어제 · M월 D일 / M월 D일.
-String dateGroupLabel(DateTime day, {DateTime? now}) {
-  final n = now ?? DateTime.now();
-  final today = DateTime(n.year, n.month, n.day);
-  final md = '${day.month}월 ${day.day}일';
-  final diff = today.difference(DateTime(day.year, day.month, day.day)).inDays;
-  if (diff == 0) return '오늘 · $md';
-  if (diff == 1) return '어제 · $md';
-  return md;
 }
 
 /// 헤더 우측 월 칩 `M월 ▼` — 탭하면 이전/다음 달 선택.

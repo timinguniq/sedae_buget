@@ -81,6 +81,7 @@ void main() {
     tokens.t = null;
     final res = await repo.getMonth(2026, 9);
     expect(res, isA<Error<List<Transaction>>>());
-    expect((res as Error<List<Transaction>>).error.resultCode, 'AUTH_002');
+    expect(res.failureOrNull?.code, 'AUTH_002');
+    expect(res.failureOrNull?.reason, FailureReason.unauthorized);
   });
 }

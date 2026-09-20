@@ -24,7 +24,7 @@ void main() {
   });
 
   test('forGroup parses server JSON into PeerStats equal to StubPeerData', () async {
-    final got = await repo.forGroup(AgeGroup.thirties);
+    final got = (await repo.forGroup(AgeGroup.thirties)).unwrap();
     final expected = StubPeerData.forGroup(AgeGroup.thirties);
     expect(got.ageGroup, AgeGroup.thirties);
     expect(got.avgMonthlyExpense, expected.avgMonthlyExpense);
@@ -35,12 +35,12 @@ void main() {
 
   test('forGroup asks the server for the given age group', () async {
     for (final group in AgeGroup.values) {
-      expect((await repo.forGroup(group)).ageGroup, group);
+      expect((await repo.forGroup(group)).unwrap().ageGroup, group);
     }
   });
 
   test('generationAverages returns every age group', () async {
-    final avgs = await repo.generationAverages();
+    final avgs = (await repo.generationAverages()).unwrap();
     expect(avgs.keys, unorderedEquals(AgeGroup.values));
     expect(avgs[AgeGroup.teens], StubPeerData.forGroup(AgeGroup.teens).avgMonthlyExpense);
   });

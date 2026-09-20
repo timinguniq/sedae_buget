@@ -1,10 +1,9 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
-import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/budget_home.view_model.dart';
+
+import '../../helper/fakes.dart';
 
 class _FakeRepo implements TransactionRepository {
   @override
@@ -29,13 +28,9 @@ class _FakeRepo implements TransactionRepository {
 }
 
 void main() {
-  setUp(() =>
-      locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo())));
-  tearDown(() => locator.reset());
 
   test('monthlyTransactionsProvider loads via usecase', () async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = fakeContainer(transactions: _FakeRepo());
 
     final list = await container.read(monthlyTransactionsProvider.future);
     expect(list.single.amount, 1200);
@@ -43,8 +38,7 @@ void main() {
 
   test('monthlySummaryProvider derives expense/income/byCategory from monthly txs',
       () async {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = fakeContainer(transactions: _FakeRepo());
 
     await container.read(monthlyTransactionsProvider.future);
     final s = container.read(monthlySummaryProvider).requireValue;
@@ -54,8 +48,7 @@ void main() {
   });
 
   test('selectedMonth prev/next shift the month', () {
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = fakeContainer(transactions: _FakeRepo());
 
     final initial = container.read(selectedMonthProvider);
     container.read(selectedMonthProvider.notifier).prev();
