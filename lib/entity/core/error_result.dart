@@ -1,5 +1,3 @@
-// TODO: resultCode를 String에서 ResultCode로 변경
-
 class ErrorResult<T> {
   ErrorResult({
     this.resultCode = 'SUCCESS',
