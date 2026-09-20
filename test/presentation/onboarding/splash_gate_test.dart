@@ -20,11 +20,13 @@ const _profile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000
 /// 서버 장애 시뮬레이션: 프로필 조회가 항상 실패한다.
 class _FailingProfileRepo implements UserProfileRepository {
   @override
-  Future<UserProfile?> current() async => throw Exception('network down');
+  Future<Result<UserProfile?>> current() async => const Result.failure(
+        ErrorResult(reason: FailureReason.offline, message: 'network down'),
+      );
   @override
-  Future<void> save(UserProfile profile) async {}
+  Future<Result<void>> save(UserProfile profile) async => const Result.success(null);
   @override
-  Future<void> clear() async {}
+  Future<Result<void>> clear() async => const Result.success(null);
 }
 
 void main() {

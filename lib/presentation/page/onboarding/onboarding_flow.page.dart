@@ -32,9 +32,18 @@ class _OnboardingFlowPageState extends ConsumerState<OnboardingFlowPage> {
   }
 
   Future<void> _finish() async {
-    await ref.read(userProfileProvider.notifier).save(
+    final res = await ref.read(userProfileProvider.notifier).save(
       UserProfile(ageGroup: _ageGroup!, monthlyIncome: _income.round()));
-    if (mounted) context.go(RoutePath.budgetHome.path);
+    if (!mounted) return;
+    // 저장이 안 됐는데 홈으로 보내면 가드가 다시 온보딩으로 되돌린다. 이유를 보여주고 머문다.
+    final error = res.failureOrNull;
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(error.message.isEmpty ? '프로필을 저장하지 못했어요' : error.message),
+      ));
+      return;
+    }
+    context.go(RoutePath.budgetHome.path);
   }
 
   @override

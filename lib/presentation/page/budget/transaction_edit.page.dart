@@ -48,20 +48,31 @@ class _State extends ConsumerState<TransactionEditPage> {
     if (_amount.amount <= 0) return;
     final notifier = ref.read(monthlyTransactionsProvider.notifier);
     final memo = _memo.text.trim().isEmpty ? null : _memo.text.trim();
-    if (_isEdit) {
-      await notifier.edit(widget.existing!.copyWith(
-        amount: _amount.amount, categoryId: _category.id, date: _date, type: _type, memo: memo,
-        customCategoryId: _customCategoryId));
-    } else {
-      await notifier.add(amount: _amount.amount, categoryId: _category.id, date: _date, type: _type,
-        memo: memo, customCategoryId: _customCategoryId);
-    }
-    if (mounted) context.pop();
+    final res = _isEdit
+        ? await notifier.edit(widget.existing!.copyWith(
+            amount: _amount.amount, categoryId: _category.id, date: _date, type: _type,
+            memo: memo, customCategoryId: _customCategoryId))
+        : await notifier.add(amount: _amount.amount, categoryId: _category.id, date: _date,
+            type: _type, memo: memo, customCategoryId: _customCategoryId);
+    _closeOr(res, '저장하지 못했어요');
   }
 
   Future<void> _delete() async {
-    await ref.read(monthlyTransactionsProvider.notifier).delete(widget.existing!);
-    if (mounted) context.pop();
+    final res = await ref.read(monthlyTransactionsProvider.notifier).delete(widget.existing!);
+    _closeOr(res, '삭제하지 못했어요');
+  }
+
+  /// 성공이면 화면을 닫고, 실패면 입력을 둔 채 문구만 보여준다.
+  void _closeOr(Result<Transaction> res, String fallback) {
+    if (!mounted) return;
+    final error = res.failureOrNull;
+    if (error == null) {
+      context.pop();
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(error.message.isEmpty ? fallback : error.message)),
+    );
   }
 
   /// 방금 만든 카테고리를 바로 선택한다(이 지출을 분류하려고 만든 것이므로).

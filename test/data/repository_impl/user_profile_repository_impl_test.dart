@@ -27,20 +27,17 @@ void main() {
   });
 
   test('save → current → clear round-trip (404 → null)', () async {
-    expect(await repo.current(), isNull);
+    expect((await repo.current()).unwrap(), isNull);
     await repo.save(const UserProfile(ageGroup: AgeGroup.twenties, monthlyIncome: 2500000));
-    final got = await repo.current();
+    final got = (await repo.current()).unwrap();
     expect(got?.ageGroup, AgeGroup.twenties);
     expect(got?.monthlyIncome, 2500000);
     await repo.clear();
-    expect(await repo.current(), isNull);
+    expect((await repo.current()).unwrap(), isNull);
   });
 
-  test('without token → 401 propagates as ApiException', () async {
+  test('without token → 401이 unauthorized 실패로 온다', () async {
     tokens.t = null;
-    expect(
-      () => repo.current(),
-      throwsA(isA<ApiException>().having((e) => e.isUnauthorized, 'unauthorized', isTrue)),
-    );
+    expect((await repo.current()).failureOrNull?.reason, FailureReason.unauthorized);
   });
 }

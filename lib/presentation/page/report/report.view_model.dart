@@ -13,9 +13,8 @@ final selfTrendProvider =
   const n = 6;
   final start = DateTime(anchor.year, anchor.month - (n - 1));
   final end = DateTime(anchor.year, anchor.month + 1); // exclusive
-  final res = await usecase.getRange(start, end);
-  final txs =
-      res is Success<List<Transaction>> ? res.data : <Transaction>[];
+  // 실패를 빈 목록으로 감추면 "지출 0"인 평탄한 추이로 보인다. 그대로 드러낸다.
+  final txs = (await usecase.getRange(start, end)).unwrap();
   return List.generate(n, (i) {
     final m = DateTime(anchor.year, anchor.month - (n - 1) + i);
     final expense = usecase.totalExpense(

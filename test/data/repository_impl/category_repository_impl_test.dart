@@ -42,13 +42,15 @@ void main() {
     await repo.upsert(CustomCategory.create(name: '반려동물', baseCategoryId: 12));
     final res = await repo.upsert(CustomCategory.create(name: '반려동물', baseCategoryId: 9));
     expect(res, isA<Error<CustomCategory>>());
-    expect((res as Error<CustomCategory>).error.resultCode, 'CATEGORY_DUPLICATE');
+    expect(res.failureOrNull?.code, 'CATEGORY_DUPLICATE');
+    expect(res.failureOrNull?.reason, FailureReason.conflict);
   });
 
   test('too long name → Failure VALIDATION', () async {
     final res = await repo.upsert(CustomCategory.create(
         name: 'a' * (CustomCategory.maxNameLength + 1), baseCategoryId: 1));
-    expect((res as Error<CustomCategory>).error.resultCode, 'VALIDATION');
+    expect(res.failureOrNull?.code, 'VALIDATION');
+    expect(res.failureOrNull?.reason, FailureReason.invalid);
   });
 
   test('delete removes it and returns the deleted category', () async {

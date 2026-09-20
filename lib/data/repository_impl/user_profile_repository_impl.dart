@@ -5,26 +5,26 @@ import 'package:sedae_budget/data/repository_impl/api_call.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-/// 서버에 저장되는 사용자 프로필(나이대·월소득). 없으면(404) null.
+/// 서버에 저장되는 사용자 프로필(나이대·월소득). 아직 만들지 않았으면(404) null.
 class UserProfileRepositoryImpl implements UserProfileRepository {
   UserProfileRepositoryImpl(this._api);
 
   final UserProfileApi _api;
 
   @override
-  Future<UserProfile?> current() async {
+  Future<Result<UserProfile?>> current() async {
     try {
-      return (await callApi(_api.get)).toEntity();
+      return Result.success((await callApi(_api.get)).toEntity());
     } on ApiException catch (e) {
-      if (e.isNotFound) return null;
-      rethrow;
+      if (e.isNotFound) return const Result.success(null);
+      return Result.failure(toErrorResult(e));
     }
   }
 
   @override
-  Future<void> save(UserProfile profile) =>
-      callApi(() => _api.put(UserProfileDto.fromEntity(profile)));
+  Future<Result<void>> save(UserProfile profile) =>
+      guardApi(() => _api.put(UserProfileDto.fromEntity(profile)));
 
   @override
-  Future<void> clear() => callApi(_api.delete);
+  Future<Result<void>> clear() => guardApi(_api.delete);
 }

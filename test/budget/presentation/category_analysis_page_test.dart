@@ -32,8 +32,9 @@ class _Repo implements TransactionRepository {
 /// 카테고리 목록 조회가 실패하는 저장소(네트워크 오류 시나리오).
 class _FailingCategoryRepo implements CategoryRepository {
   @override
-  Future<Result<List<CustomCategory>>> getAll() async =>
-      Result.failure(ErrorResult(resultCode: 'NETWORK_ERROR', message: '네트워크에 연결할 수 없습니다.'));
+  Future<Result<List<CustomCategory>>> getAll() async => const Result.failure(
+        ErrorResult(reason: FailureReason.offline, message: '네트워크에 연결할 수 없습니다.'),
+      );
   @override
   Future<Result<CustomCategory>> upsert(CustomCategory c) async => Result.success(c);
   @override

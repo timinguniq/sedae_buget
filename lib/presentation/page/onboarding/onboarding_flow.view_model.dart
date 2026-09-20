@@ -13,12 +13,14 @@ class UserProfileNotifier extends AsyncNotifier<UserProfile?> {
   Future<UserProfile?> build() async {
     final user = await ref.watch(authProvider.future);
     if (user == null) return null;
-    return _repo.current();
+    return (await _repo.current()).unwrap();
   }
 
-  Future<void> save(UserProfile profile) async {
-    await _repo.save(profile);
-    state = AsyncData(profile);
+  /// 저장에 실패하면 상태를 바꾸지 않고 실패를 돌려준다(입력을 잃지 않는다).
+  Future<Result<void>> save(UserProfile profile) async {
+    final res = await _repo.save(profile);
+    if (res.failureOrNull == null) state = AsyncData(profile);
+    return res;
   }
 
   Future<void> clear() async {

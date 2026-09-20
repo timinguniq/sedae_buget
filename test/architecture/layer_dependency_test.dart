@@ -53,6 +53,22 @@ void main() {
     );
   });
 
+  // 오류 규약: 실패를 Result로만 전달한다. throw/null/삼킴으로 갈라지지 않게 고정한다.
+  test('domain/repository의 메서드는 모두 Future<Result<...>>를 돌려준다', () {
+    final offenders = <String>[];
+    for (final f in Directory('lib/domain/repository')
+        .listSync()
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.dart') && !f.path.endsWith('index.dart'))) {
+      for (final line in f.readAsLinesSync()) {
+        final t = line.trim();
+        if (!t.startsWith('Future<')) continue;
+        if (!t.startsWith('Future<Result<')) offenders.add('${f.path} → $t');
+      }
+    }
+    expect(offenders, isEmpty);
+  });
+
   test('domain은 data/presentation/core/theme/flutter를 import하지 않는다', () {
     expect(
       violations('domain', [

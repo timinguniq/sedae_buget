@@ -13,14 +13,17 @@ class InMemoryAuthRepository implements AuthRepository {
   AuthUser? user;
 
   @override
-  Future<AuthUser?> currentUser() async => user;
+  Future<Result<AuthUser?>> currentUser() async => Result.success(user);
 
   @override
-  Future<AuthUser> signIn(AuthProvider provider, String idToken) async =>
-      user = AuthUser(provider: provider, nickname: '${provider.label} 사용자');
+  Future<Result<AuthUser>> signIn(AuthProvider provider, String idToken) async =>
+      Result.success(user = AuthUser(provider: provider, nickname: '${provider.label} 사용자'));
 
   @override
-  Future<void> signOut() async => user = null;
+  Future<Result<void>> signOut() async {
+    user = null;
+    return const Result.success(null);
+  }
 }
 
 class InMemoryUserProfileRepository implements UserProfileRepository {
@@ -29,13 +32,19 @@ class InMemoryUserProfileRepository implements UserProfileRepository {
   UserProfile? profile;
 
   @override
-  Future<UserProfile?> current() async => profile;
+  Future<Result<UserProfile?>> current() async => Result.success(profile);
 
   @override
-  Future<void> save(UserProfile p) async => profile = p;
+  Future<Result<void>> save(UserProfile p) async {
+    profile = p;
+    return const Result.success(null);
+  }
 
   @override
-  Future<void> clear() async => profile = null;
+  Future<Result<void>> clear() async {
+    profile = null;
+    return const Result.success(null);
+  }
 }
 
 /// 인메모리 사용자 카테고리 저장소. 생성 순서를 유지한다(서버 계약과 동일).
@@ -79,11 +88,12 @@ InMemoryCategoryRepository registerFakeCategoryDependencies([
 /// Stub 서버와 같은 결정적 수치를 돌려주는 또래 통계 fake.
 class FakePeerStatsRepository implements PeerStatsRepository {
   @override
-  Future<PeerStats> forGroup(AgeGroup g) async => StubPeerData.forGroup(g);
+  Future<Result<PeerStats>> forGroup(AgeGroup g) async =>
+      Result.success(StubPeerData.forGroup(g));
 
   @override
-  Future<Map<AgeGroup, int>> generationAverages() async =>
-      {for (final g in AgeGroup.values) g: StubPeerData.forGroup(g).avgMonthlyExpense};
+  Future<Result<Map<AgeGroup, int>>> generationAverages() async => Result.success(
+      {for (final g in AgeGroup.values) g: StubPeerData.forGroup(g).avgMonthlyExpense});
 }
 
 /// 또래 통계 의존성을 fake로 등록한다.

@@ -76,15 +76,46 @@ void main() {
     );
   });
 
-  test('guardApi: success → Result.success, ApiException → Result.failure(code, message)',
-      () async {
-    final ok = await guardApi(() => _me(_Resolve({'provider': 'kakao', 'nickname': 'n'})));
-    expect((ok as Success<AuthUserDto>).data.nickname, 'n');
+  group('guardApi', () {
+    Future<ErrorResult> failureOf(Interceptor i) async =>
+        (await guardApi(() => _me(i))).failureOrNull!;
 
-    final failed =
-        await guardApi(() => _me(_Reject(409, {'code': 'DUP', 'message': '중복'})));
-    final error = (failed as Error<AuthUserDto>).error;
-    expect(error.resultCode, 'DUP');
-    expect(error.message, '중복');
+    test('성공 → Result.success', () async {
+      final ok = await guardApi(() => _me(_Resolve({'provider': 'kakao', 'nickname': 'n'})));
+      expect((ok as Success<AuthUserDto>).data.nickname, 'n');
+    });
+
+    test('서버 도메인 코드와 문구는 그대로 옮긴다', () async {
+      final error = await failureOf(_Reject(409, {'code': 'DUP', 'message': '중복'}));
+      expect(error.code, 'DUP');
+      expect(error.message, '중복');
+    });
+
+    test('상태코드를 도메인 분류로 바꾼다', () async {
+      expect((await failureOf(_Reject(401, {'code': 'AUTH_002', 'message': ''}))).reason,
+          FailureReason.unauthorized);
+      expect((await failureOf(_Reject(403, {'code': 'CATEGORY_IMMUTABLE', 'message': ''}))).reason,
+          FailureReason.forbidden);
+      expect((await failureOf(_Reject(404, {'code': 'NOT_FOUND', 'message': ''}))).reason,
+          FailureReason.notFound);
+      expect((await failureOf(_Reject(409, {'code': 'DUP', 'message': ''}))).reason,
+          FailureReason.conflict);
+      expect((await failureOf(_Reject(400, {'code': 'VALIDATION', 'message': ''}))).reason,
+          FailureReason.invalid);
+      expect((await failureOf(_Reject(500, '<html>'))).reason, FailureReason.server);
+      expect((await failureOf(_Timeout())).reason, FailureReason.timeout);
+    });
+
+    test('HTTP·전송 계층 코드는 domain seam을 넘지 않는다', () async {
+      // 이전에는 resultCode에 'HTTP_500'·'TIMEOUT'이 그대로 담겨 위젯까지 갔다.
+      expect((await failureOf(_Reject(500, '<html>'))).code, isNull);
+      expect((await failureOf(_Timeout())).code, isNull);
+    });
+
+    test('모르는 상태코드는 unknown', () async {
+      final error = await failureOf(_Reject(418, {'code': 'TEAPOT', 'message': ''}));
+      expect(error.reason, FailureReason.unknown);
+      expect(error.code, 'TEAPOT');
+    });
   });
 }

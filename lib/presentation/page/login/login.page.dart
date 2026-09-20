@@ -14,6 +14,11 @@ class LoginPage extends ConsumerWidget {
     Future<void> signIn(AuthProvider p) async {
       await ref.read(authProvider.notifier).signIn(p);
       // 전역 가드(refreshListenable)가 로그인 성공 후 온보딩/홈으로 라우팅한다.
+      // 실패하면 가드가 로그인 화면을 유지하므로, 이유만 알려준다.
+      final error = ref.read(authProvider).error;
+      if (error != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
+      }
     }
     return DefaultLayout(
       child: Padding(

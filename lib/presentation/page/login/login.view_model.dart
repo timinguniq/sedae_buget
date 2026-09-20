@@ -7,14 +7,17 @@ class AuthNotifier extends AsyncNotifier<AuthUser?> {
   AuthUsecase get _usecase => locator<AuthUsecase>();
 
   @override
-  Future<AuthUser?> build() => _usecase.currentUser();
+  Future<AuthUser?> build() async => (await _usecase.currentUser()).unwrap();
 
-  /// 소셜 로그인 → 서버 세션. 성공 시 사용자 상태 갱신.
+  /// 소셜 로그인 → 서버 세션. 성공 시 사용자 상태 갱신, 실패면 AsyncError.
   Future<void> signIn(AuthProvider provider) async {
-    final user = await _usecase.signIn(provider);
-    state = AsyncData(user);
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () async => (await _usecase.signIn(provider)).unwrap(),
+    );
   }
 
+  /// 서버 응답과 무관하게 로컬 세션은 끝난다(로그아웃은 되돌리지 않는다).
   Future<void> signOut() async {
     await _usecase.signOut();
     state = const AsyncData(null);

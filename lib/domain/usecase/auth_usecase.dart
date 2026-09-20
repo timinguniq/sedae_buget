@@ -8,11 +8,15 @@ class AuthUsecase {
   final AuthRepository _repo;
   final SocialIdTokenProvider _social;
 
-  Future<AuthUser?> currentUser() => _repo.currentUser();
+  Future<Result<AuthUser?>> currentUser() => _repo.currentUser();
 
   /// 소셜 id_token을 받아 서버 세션으로 교환한다.
-  Future<AuthUser> signIn(AuthProvider provider) async =>
-      _repo.signIn(provider, await _social.idToken(provider));
+  /// 소셜 쪽에서 토큰을 못 받으면 서버를 부르지 않고 그 실패를 그대로 돌려준다.
+  Future<Result<AuthUser>> signIn(AuthProvider provider) async {
+    final token = await _social.idToken(provider);
+    if (token is! Success<String>) return Result.failure(token.failureOrNull!);
+    return _repo.signIn(provider, token.data);
+  }
 
-  Future<void> signOut() => _repo.signOut();
+  Future<Result<void>> signOut() => _repo.signOut();
 }

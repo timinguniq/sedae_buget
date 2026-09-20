@@ -11,11 +11,7 @@ class CustomCategoriesNotifier extends AsyncNotifier<List<CustomCategory>> {
   CategoryUsecase get _usecase => locator<CategoryUsecase>();
 
   @override
-  Future<List<CustomCategory>> build() async {
-    final res = await _usecase.getAll();
-    if (res is Success<List<CustomCategory>>) return res.data;
-    throw Exception((res as Error<List<CustomCategory>>).error.message);
-  }
+  Future<List<CustomCategory>> build() async => (await _usecase.getAll()).unwrap();
 
   Future<Result<CustomCategory>> add({
     required String name,
@@ -36,14 +32,17 @@ class CustomCategoriesNotifier extends AsyncNotifier<List<CustomCategory>> {
   Future<Result<CustomCategory>> _apply(
       Future<Result<CustomCategory>> Function() run) async {
     final res = await run();
-    if (res is Success<CustomCategory>) ref.invalidateSelf();
+    if (res.failureOrNull == null) ref.invalidateSelf();
     return res;
   }
 }
 
 /// 실패면 사용자에게 보여줄 문구, 성공이면 null.
-String? categoryErrorMessage(Result<CustomCategory> res) =>
-    res is Error<CustomCategory> ? (res.error.message ?? '저장하지 못했어요') : null;
+String? categoryErrorMessage(Result<CustomCategory> res) {
+  final error = res.failureOrNull;
+  if (error == null) return null;
+  return error.message.isEmpty ? '저장하지 못했어요' : error.message;
+}
 
 final customCategoriesProvider =
     AsyncNotifierProvider<CustomCategoriesNotifier, List<CustomCategory>>(
