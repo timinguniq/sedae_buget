@@ -17,7 +17,10 @@ class LoginPage extends ConsumerWidget {
       // 실패하면 가드가 로그인 화면을 유지하므로, 이유만 알려준다.
       final error = ref.read(authProvider).error;
       if (error != null && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
+        final message = error is ResultFailure ? error.error.message : '$error';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(message.isEmpty ? '로그인하지 못했어요' : message),
+        ));
       }
     }
     return DefaultLayout(

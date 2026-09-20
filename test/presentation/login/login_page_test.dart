@@ -11,13 +11,15 @@ import '../../helper/fakes.dart';
 
 /// 서버 세션 교환이 항상 실패하는 저장소.
 class _FailingAuthRepo implements AuthRepository {
-  static const _down = ErrorResult(reason: FailureReason.server, message: '잠시 후 다시 시도해 주세요.');
+  _FailingAuthRepo([this.message = '잠시 후 다시 시도해 주세요.']);
+
+  final String message;
 
   @override
   Future<Result<AuthUser?>> currentUser() async => const Result.success(null);
   @override
   Future<Result<AuthUser>> signIn(AuthProvider provider, String idToken) async =>
-      const Result.failure(_down);
+      Result.failure(ErrorResult(reason: FailureReason.server, message: message));
   @override
   Future<Result<void>> signOut() async => const Result.success(null);
 }
@@ -46,6 +48,29 @@ void main() {
 
     expect(find.text('카카오로 시작하기'), findsOneWidget);
     expect(find.text('잠시 후 다시 시도해 주세요.'), findsOneWidget);
+  });
+
+  // 서버가 코드만 주고 문구를 안 주면 빈 SnackBar가 뜨면 안 된다.
+  testWidgets('서버 문구가 비어 있으면 기본 문구를 보여준다', (t) async {
+    final container = fakeContainer(authRepository: _FailingAuthRepo(''));
+
+    t.view.physicalSize = const Size(390, 844);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.reset);
+
+    await t.pumpWidget(fakeScope(
+      container,
+      provider.ChangeNotifierProvider(
+        create: (_) => ThemeService(),
+        child: MaterialApp(home: const LoginPage(), theme: ThemeService().lightThemeData())),
+    ));
+    await t.pump();
+
+    await t.tap(find.text('카카오로 시작하기'));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 400));
+
+    expect(find.text('로그인하지 못했어요'), findsOneWidget);
   });
 
   testWidgets('renders 3 social buttons and kakao tap signs in', (t) async {
