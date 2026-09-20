@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
-import 'package:sedae_budget/presentation/page/compare/peer_provider.dart';
+import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 class CategoryAnalysisPage extends ConsumerStatefulWidget {

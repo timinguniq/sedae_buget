@@ -21,23 +21,23 @@ class _EchoHeaders extends Interceptor {
 
 void main() {
   late _MemTokens tokens;
-  late ApiClient api;
+  late Dio dio;
 
   setUp(() {
     tokens = _MemTokens();
-    api = ApiClient(Dio()
+    dio = Dio()
       ..interceptors.add(AuthTokenInterceptor(tokens))
-      ..interceptors.add(_EchoHeaders()));
+      ..interceptors.add(_EchoHeaders());
   });
 
   test('token present → Authorization: Bearer <token>', () async {
     tokens.t = 'abc';
-    final headers = await api.get<Map<String, dynamic>>('/x');
+    final headers = (await dio.get<Map<String, dynamic>>('/x')).data!;
     expect(headers['Authorization'], 'Bearer abc');
   });
 
   test('no token → no Authorization header', () async {
-    final headers = await api.get<Map<String, dynamic>>('/x');
+    final headers = (await dio.get<Map<String, dynamic>>('/x')).data!;
     expect(headers.containsKey('Authorization'), isFalse);
   });
 }

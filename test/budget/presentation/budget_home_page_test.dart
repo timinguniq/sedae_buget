@@ -5,12 +5,12 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/data/data.dart';
-import 'package:sedae_budget/domain/budget/transaction_repository.dart';
-import 'package:sedae_budget/domain/budget/transaction_usecase.dart';
+import 'package:sedae_budget/domain/repository/transaction_repository.dart';
+import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/budget_home.page.dart';
-import 'package:sedae_budget/presentation/page/compare/peer_provider.dart';
+import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 
 import '../../helper/fakes.dart';
 

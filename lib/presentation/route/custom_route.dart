@@ -8,8 +8,8 @@ import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart
 import 'package:sedae_budget/presentation/page/compare/compare.page.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
 import 'package:sedae_budget/presentation/page/login/login.page.dart';
-import 'package:sedae_budget/presentation/page/login/auth_provider.dart';
-import 'package:sedae_budget/presentation/page/onboarding/user_profile_provider.dart';
+import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
+import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
 import 'package:sedae_budget/presentation/page/report/report.page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

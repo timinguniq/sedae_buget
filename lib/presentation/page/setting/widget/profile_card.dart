@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
-import 'package:sedae_budget/presentation/page/login/auth_provider.dart';
-import 'package:sedae_budget/presentation/page/onboarding/user_profile_provider.dart';
+import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
+import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 로그인 상태 인지 프로필 카드. 디자인: 46px 마스코트 + 이름 700·15 + 나이대 500·11.5 + 우측 provider 배지.

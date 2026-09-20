@@ -146,13 +146,13 @@ void configureBudgetDependencies() {
   if (locator.isRegistered<TransactionUsecase>()) return;
   locator
     ..registerSingleton<TransactionRepository>(
-      ApiTransactionRepository(locator<ApiClient>()),
+      TransactionRepositoryImpl(TransactionApi(locator<ApiClient>().dio)),
     )
     ..registerSingleton<TransactionUsecase>(
       TransactionUsecase(locator<TransactionRepository>()),
     )
     ..registerSingleton<CategoryRepository>(
-      ApiCategoryRepository(locator<ApiClient>()),
+      CategoryRepositoryImpl(CategoryApi(locator<ApiClient>().dio)),
     )
     ..registerSingleton<CategoryUsecase>(
       CategoryUsecase(locator<CategoryRepository>()),
@@ -163,24 +163,24 @@ void configureBudgetDependencies() {
 void configurePeerDependencies() {
   if (locator.isRegistered<PeerStatsRepository>()) return;
   locator.registerSingleton<PeerStatsRepository>(
-    ApiPeerStatsRepository(locator<ApiClient>()),
+    PeerStatsRepositoryImpl(PeerStatsApi(locator<ApiClient>().dio)),
   );
 }
 
-/// 인증·프로필 의존성. 둘 다 서버(ApiAuthRepository, ApiUserProfileRepository).
+/// 인증·프로필 의존성. 둘 다 서버(AuthRepositoryImpl, UserProfileRepositoryImpl).
 /// [configureApiDependencies]가 먼저 호출되어 있어야 한다.
 void configureUserDependencies() {
   if (locator.isRegistered<AuthUsecase>()) return;
   locator
     ..registerSingleton<AuthRepository>(
-      ApiAuthRepository(locator<ApiClient>(), locator<AuthTokenStore>()),
+      AuthRepositoryImpl(AuthApi(locator<ApiClient>().dio), locator<AuthTokenStore>()),
     )
     ..registerSingleton<SocialIdTokenProvider>(StubSocialIdTokenProvider())
     ..registerSingleton<AuthUsecase>(
       AuthUsecase(locator<AuthRepository>(), locator<SocialIdTokenProvider>()),
     )
     ..registerSingleton<UserProfileRepository>(
-      ApiUserProfileRepository(locator<ApiClient>()),
+      UserProfileRepositoryImpl(UserProfileApi(locator<ApiClient>().dio)),
     );
 }
 

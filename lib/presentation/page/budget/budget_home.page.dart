@@ -8,8 +8,8 @@ import 'package:sedae_budget/presentation/page/budget/widget/savings_rate_card.d
 import 'package:sedae_budget/presentation/page/budget/widget/summary_hero_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/top_category_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/transaction_tile.dart';
-import 'package:sedae_budget/presentation/page/compare/peer_provider.dart';
-import 'package:sedae_budget/presentation/page/report/report_provider.dart';
+import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
+import 'package:sedae_budget/presentation/page/report/report.view_model.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 class BudgetHomePage extends ConsumerWidget {
