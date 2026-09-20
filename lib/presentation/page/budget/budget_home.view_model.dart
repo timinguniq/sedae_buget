@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 
 class SelectedMonthNotifier extends Notifier<DateTime> {
   @override
@@ -18,7 +18,7 @@ final selectedMonthProvider =
     NotifierProvider<SelectedMonthNotifier, DateTime>(SelectedMonthNotifier.new);
 
 class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
-  TransactionUsecase get _usecase => locator<TransactionUsecase>();
+  TransactionUsecase get _usecase => ref.read(transactionUsecaseProvider);
 
   @override
   Future<List<Transaction>> build() async {
@@ -67,7 +67,7 @@ typedef MonthlySummary = ({
 });
 
 final monthlySummaryProvider = Provider<AsyncValue<MonthlySummary>>((ref) {
-  final usecase = locator<TransactionUsecase>();
+  final usecase = ref.watch(transactionUsecaseProvider);
   return ref.watch(monthlyTransactionsProvider).whenData((txs) => (
         expense: usecase.totalExpense(txs),
         income: usecase.totalIncome(txs),

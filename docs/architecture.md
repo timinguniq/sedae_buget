@@ -19,7 +19,7 @@
 - 원격 API: `data_source/remote/*_api.dart`는 retrofit 애너테이션으로 엔드포인트만 선언하고 DTO만 주고받는다. 호출·`DioException`→`ApiException`/`Result` 변환(`repository_impl/api_call.dart`)·엔티티 변환은 `repository_impl`이 한다. 명세나 DTO를 바꾸면 코드 생성을 다시 실행한다.
 - 오류 규약: `domain/repository`의 모든 메서드는 `Result<T>`를 돌려준다(`test/architecture/layer_dependency_test.dart`가 강제). 실패 이유는 `FailureReason` 도메인 enum이고, HTTP 상태코드·전송 오류 코드는 `repository_impl/api_call.dart`에서 번역돼 domain으로 넘어가지 않는다. 서버가 준 도메인 코드(`CATEGORY_DUPLICATE` 등)만 `ErrorResult.code`로 남는다. 화면은 provider 안에서 `Result.unwrap()`으로 `AsyncValue` 오류로 바꾸거나, 변경 작업이면 `Result`를 그대로 받아 문구를 띄운다.
 - 상태 관리: Riverpod. 통신이 필요한 화면은 `page/<기능>/<화면>.view_model.dart`에 Notifier·provider를 둔다. 여러 화면이 같은 서버 상태를 볼 때는 그 상태를 가진 화면의 viewmodel을 함께 쓴다(예: 세션 `login.view_model.dart`, 이달 거래 `budget_home.view_model.dart`).
-- DI: `get_it`. 등록은 composition root인 `lib/core/dependency_injection/`에서만 한다.
+- DI: `get_it`. 등록은 composition root인 `lib/core/dependency_injection/`에서만 한다. 화면이 의존성을 얻는 **seam은 `presentation/service/*_provider.dart`** 하나다(`dependency_provider.dart`·`ad_provider.dart`). viewmodel·페이지는 `ref.watch/read(…Provider)`로만 얻고 locator를 직접 부르지 않는다. 테스트는 전역 locator를 등록하는 대신 이 provider를 `overrideWithValue`로 바꾼다.
 - 라우팅: `go_router` (`lib/presentation/route/`).
 - 코드 생성: `freezed`, `json_serializable`, `retrofit_generator`. 생성 파일(`*.g.dart`, `*.freezed.dart`)은 커밋하며, 의존성 검사에서는 제외한다.
 
@@ -31,7 +31,7 @@
 | `domain` | `data`, `presentation`, `core`, `theme`, `package:flutter/` |
 | `data` | `presentation`, `theme`, `package:flutter/`, 로컬 저장 기술(`drift`, `shared_preferences`, `flutter_secure_storage`) — 단 `lib/data/data_source/local/`은 허용 |
 | `core` | `domain`, `data` — 단 `lib/core/dependency_injection/`(composition root)는 허용 |
-| `presentation` | `data` 구현체. DI(`core/dependency_injection`, `core/core.dart`)는 화면 `*.view_model.dart`와 `service/*_provider.dart`에서만 접근 |
+| `presentation` | `data` 구현체. DI(`core/dependency_injection`, `core/core.dart`)는 `service/*_provider.dart`에서만 접근 |
 | `presentation/page` | `shared_preferences` 직접 사용 |
 | `theme` | `presentation`, `domain`, `data` |
 | `domain`·`entity`·`presentation`·`theme` | `package:dio/` (HTTP는 `core`·`data`에만) |
@@ -39,11 +39,12 @@
 ## 예시
 
 ```dart
-// 허용: viewmodel이 DI에서 유스케이스를 꺼낸다 (lib/presentation/page/budget/category_manage.view_model.dart)
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
+// 허용: viewmodel이 provider seam에서 유스케이스를 얻는다 (lib/presentation/page/budget/category_manage.view_model.dart)
 import 'package:sedae_budget/domain/usecase/category_usecase.dart';
+import 'package:sedae_budget/presentation/service/dependency_provider.dart';
+// CategoryUsecase get _usecase => ref.read(categoryUsecaseProvider);
 
-// 금지: 페이지·위젯이 locator를 직접 부른다 → *.view_model.dart를 거친다
+// 금지: 페이지·viewmodel이 locator를 직접 부른다 → service/*_provider.dart를 거친다
 // 금지: presentation이 data 구현체를 import한다 → domain 인터페이스에 의존한다
 import 'package:sedae_budget/data/repository_impl/category_repository_impl.dart';
 

@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 
 class AuthNotifier extends AsyncNotifier<AuthUser?> {
-  AuthUsecase get _usecase => locator<AuthUsecase>();
+  AuthUsecase get _usecase => ref.read(authUsecaseProvider);
 
   @override
   Future<AuthUser?> build() async => (await _usecase.currentUser()).unwrap();

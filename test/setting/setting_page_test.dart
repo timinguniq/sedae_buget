@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
@@ -13,25 +12,24 @@ import '../helper/fakes.dart';
 
 void main() {
   setUp(() {
-    registerFakeCategoryDependencies();
     SharedPreferences.setMockInitialValues({}); // ThemeService 테마 모드 저장용
     PackageInfo.setMockInitialValues(
       appName: 'sedae', packageName: 'com.sedae.budget',
       version: '1.0.0', buildNumber: '1', buildSignature: '');
   });
-  tearDown(() => locator.reset());
 
-  Widget app(ThemeService service) => ProviderScope(
-        child: provider.ChangeNotifierProvider<ThemeService>.value(
+  Widget app(ProviderContainer container, ThemeService service) => fakeScope(
+        container,
+        provider.ChangeNotifierProvider<ThemeService>.value(
           value: service,
           child: const MaterialApp(home: SettingPage()),
         ),
       );
 
   testWidgets('renders and dark chip switches theme mode', (tester) async {
-    registerFakeUserDependencies();
+    final container = fakeContainer(categories: InMemoryCategoryRepository());
     final service = ThemeService();
-    await tester.pumpWidget(app(service));
+    await tester.pumpWidget(app(container, service));
     await tester.pump();
 
     expect(find.text('설정'), findsOneWidget);
@@ -51,10 +49,11 @@ void main() {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
-    registerFakeUserDependencies(
+    final container = fakeContainer(
       user: const AuthUser(provider: AuthProvider.naver, nickname: '네이버 사용자'),
+      categories: InMemoryCategoryRepository(),
     );
-    await tester.pumpWidget(app(ThemeService()));
+    await tester.pumpWidget(app(container, ThemeService()));
     await tester.pump();
     await tester.pump();
 

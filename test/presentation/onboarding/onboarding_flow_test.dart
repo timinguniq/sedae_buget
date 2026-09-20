@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
@@ -24,10 +23,9 @@ class _FailingSaveRepo implements UserProfileRepository {
 }
 
 void main() {
-  tearDown(() => locator.reset());
 
   /// 온보딩을 띄우고 소득 단계까지 진행한다.
-  Future<void> pumpToIncomeStep(WidgetTester t) async {
+  Future<void> pumpToIncomeStep(WidgetTester t, ProviderContainer container) async {
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
@@ -36,7 +34,7 @@ void main() {
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingFlowPage()),
       GoRoute(path: '/budget', builder: (_, _) => const Scaffold(body: Text('HOME'))),
     ]);
-    await t.pumpWidget(ProviderScope(child: provider.ChangeNotifierProvider(
+    await t.pumpWidget(fakeScope(container, provider.ChangeNotifierProvider(
       create: (_) => ThemeService(),
       child: MaterialApp.router(routerConfig: router,
         theme: ThemeService().lightThemeData()))));
@@ -51,8 +49,7 @@ void main() {
 
   // 이전에는 저장 실패를 버리고 홈으로 보냈고, 가드가 말없이 온보딩으로 되돌렸다.
   testWidgets('프로필 저장이 실패하면 홈으로 가지 않고 이유를 보여준다', (t) async {
-    registerFakeUserDependencies(profileRepository: _FailingSaveRepo());
-    await pumpToIncomeStep(t);
+    await pumpToIncomeStep(t, fakeContainer(profileRepository: _FailingSaveRepo()));
 
     await t.tap(find.text('시작하기'));
     await t.pump();
@@ -63,7 +60,6 @@ void main() {
   });
 
   testWidgets('age select enables 다음, income step shows 시작하기', (t) async {
-    registerFakeUserDependencies();
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
@@ -72,7 +68,7 @@ void main() {
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingFlowPage()),
       GoRoute(path: '/budget', builder: (_, _) => const Scaffold(body: Text('HOME'))),
     ]);
-    await t.pumpWidget(ProviderScope(child: provider.ChangeNotifierProvider(
+    await t.pumpWidget(fakeScope(fakeContainer(), provider.ChangeNotifierProvider(
       create: (_) => ThemeService(),
       child: MaterialApp.router(routerConfig: router,
         theme: ThemeService().lightThemeData()))));

@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
-import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart';
@@ -44,7 +41,6 @@ class _FailingRepo implements TransactionRepository {
 
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
-  tearDown(() => locator.reset());
 
   // Pushes TransactionEditPage onto a real GoRouter stack so the page's
   // context.pop() (go_router) has somewhere to pop back to. Phone-sized
@@ -61,8 +57,10 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final repo = _CapturingRepo();
-    locator.registerSingleton<TransactionUsecase>(TransactionUsecase(repository ?? repo));
-    registerFakeCategoryDependencies(customs);
+    final container = fakeContainer(
+      transactions: repository ?? repo,
+      categories: InMemoryCategoryRepository(customs),
+    );
     final router = GoRouter(
       initialLocation: '/',
       routes: [
@@ -73,9 +71,7 @@ void main() {
     await tester.pumpWidget(
       provider.ChangeNotifierProvider(
         create: (_) => ThemeService(),
-        child: ProviderScope(
-          child: MaterialApp.router(routerConfig: router),
-        ),
+        child: fakeScope(container, MaterialApp.router(routerConfig: router)),
       ),
     );
     await tester.pump();

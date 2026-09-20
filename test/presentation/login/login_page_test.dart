@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
-import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
@@ -26,22 +23,18 @@ class _FailingAuthRepo implements AuthRepository {
 }
 
 void main() {
-  tearDown(() => locator.reset());
 
   // 이전에는 로그인 실패가 처리되지 않은 비동기 예외로 사라졌다.
   testWidgets('로그인이 실패하면 이유를 보여주고 로그인 화면에 머문다', (t) async {
-    final auth = _FailingAuthRepo();
-    locator
-      ..registerSingleton<AuthRepository>(auth)
-      ..registerSingleton<AuthUsecase>(AuthUsecase(auth, StubSocialIdTokenProvider()))
-      ..registerSingleton<UserProfileRepository>(InMemoryUserProfileRepository());
+    final container = fakeContainer(authRepository: _FailingAuthRepo());
 
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
 
-    await t.pumpWidget(ProviderScope(
-      child: provider.ChangeNotifierProvider(
+    await t.pumpWidget(fakeScope(
+      container,
+      provider.ChangeNotifierProvider(
         create: (_) => ThemeService(),
         child: MaterialApp(home: const LoginPage(), theme: ThemeService().lightThemeData())),
     ));
@@ -56,17 +49,15 @@ void main() {
   });
 
   testWidgets('renders 3 social buttons and kakao tap signs in', (t) async {
-    registerFakeUserDependencies();
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
 
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = fakeContainer();
 
-    await t.pumpWidget(UncontrolledProviderScope(
-      container: container,
-      child: provider.ChangeNotifierProvider(
+    await t.pumpWidget(fakeScope(
+      container,
+      provider.ChangeNotifierProvider(
         create: (_) => ThemeService(),
         child: MaterialApp(home: const LoginPage(),
           theme: ThemeService().lightThemeData())),

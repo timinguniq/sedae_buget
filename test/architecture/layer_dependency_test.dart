@@ -93,7 +93,8 @@ void main() {
     );
   });
 
-  test('presentation에서 DI(locator) 접근은 화면 viewmodel과 service provider에서만 한다', () {
+  // 의존성 교체 seam은 service/*_provider.dart 하나다. 화면·viewmodel은 provider를 통해서만 얻는다.
+  test('presentation에서 DI(locator) 접근은 service provider에서만 한다', () {
     expect(
       violations(
         'presentation',
@@ -102,8 +103,7 @@ void main() {
           'sedae_budget/core/core.dart',
         ],
         skip: (p) =>
-            p.endsWith('.view_model.dart') ||
-            (p.startsWith('lib/presentation/service/') && p.endsWith('_provider.dart')),
+            p.startsWith('lib/presentation/service/') && p.endsWith('_provider.dart'),
       ),
       isEmpty,
     );

@@ -1,16 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
-import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/budget_home.page.dart';
-import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 
 import '../../helper/fakes.dart';
 
@@ -31,13 +27,6 @@ class _FakeRepo implements TransactionRepository {
 
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
-  setUp(() {
-    locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_FakeRepo()));
-    registerFakeUserDependencies(
-      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
-    );
-  });
-  tearDown(() => locator.reset());
 
   testWidgets('shows total expense and a transaction', (tester) async {
     tester.view.physicalSize = const Size(390, 844);
@@ -45,16 +34,15 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    final stats = StubPeerData.forGroup(AgeGroup.thirties);
+    // 홈 테스트를 또래/프로필 의존에서 격리(고정 30대 Stub 수치).
+    final container = fakeContainer(
+      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+      transactions: _FakeRepo(),
+      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
+    );
     await tester.pumpWidget(provider.ChangeNotifierProvider(
       create: (_) => ThemeService(),
-      child: ProviderScope(
-        overrides: [
-          // 홈 테스트를 또래/프로필 의존에서 격리(고정 30대 Stub 수치).
-          peerStatsProvider.overrideWith((_) => stats),
-        ],
-        child: MaterialApp(home: const BudgetHomePage()),
-      ),
+      child: fakeScope(container, MaterialApp(home: const BudgetHomePage())),
     ));
     // DefaultLayout always renders a perpetually-animating loading Lottie
     // (opacity 0 when not loading), so pumpAndSettle never settles. Pump a

@@ -4,9 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
-import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/login/widget/social_login_button.dart';
 import 'package:sedae_budget/presentation/page/main/main_shell.dart';
@@ -34,8 +32,9 @@ class _EmptyRepo implements TransactionRepository {
       const Result.success([]);
 }
 
-Widget _buildApp() => ProviderScope(
-      child: provider.ChangeNotifierProvider(
+Widget _buildApp(ProviderContainer container) => fakeScope(
+      container,
+      provider.ChangeNotifierProvider(
         create: (_) => ThemeService(),
         child: Consumer(
           builder: (_, ref, _) => MaterialApp.router(
@@ -46,11 +45,24 @@ Widget _buildApp() => ProviderScope(
       ),
     );
 
-Future<void> _boot(WidgetTester t) async {
+/// 게이트 테스트의 공통 의존성: 빈 거래 저장소 + 또래 통계·광고 fake.
+Future<ProviderContainer> _container({AuthUser? user, UserProfile? profile}) async {
+  final ads = FakeAdService();
+  return fakeContainer(
+    user: user,
+    profile: profile,
+    transactions: _EmptyRepo(),
+    peerRepository: FakePeerStatsRepository(),
+    adService: ads,
+    launchInterstitial: await fakeLaunchInterstitial(ads),
+  );
+}
+
+Future<void> _boot(WidgetTester t, ProviderContainer container) async {
   t.view.physicalSize = const Size(390, 844);
   t.view.devicePixelRatio = 1.0;
   addTearDown(t.view.reset);
-  await t.pumpWidget(_buildApp());
+  await t.pumpWidget(_buildApp(container));
   await t.pump(); // splash + postFrameCallback
   await t.pump(const Duration(milliseconds: 2100)); // splash 2초 경과
   await t.pump(); // splash가 go() → redirect 평가
@@ -59,38 +71,28 @@ Future<void> _boot(WidgetTester t) async {
 
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
-  setUp(() async {
-    registerFakePeerDependencies();
-    locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_EmptyRepo()));
-    await registerFakeAdDependencies();
-  });
-  tearDown(() => locator.reset());
 
   testWidgets('미로그인 → 로그인 화면', (t) async {
-    registerFakeUserDependencies();
-    await _boot(t);
+    await _boot(t, await _container());
     expect(find.text(_loginMark), findsOneWidget);
     expect(find.text(_onboardingMark), findsNothing);
   });
 
   testWidgets('로그인 + 프로필 없음 → 온보딩', (t) async {
-    registerFakeUserDependencies(user: _user);
-    await _boot(t);
+    await _boot(t, await _container(user: _user));
     expect(find.text(_onboardingMark), findsOneWidget);
     expect(find.text(_loginMark), findsNothing);
   });
 
   testWidgets('로그인 + 프로필 → 홈(MainShell)', (t) async {
-    registerFakeUserDependencies(user: _user, profile: _profile);
-    await _boot(t);
+    await _boot(t, await _container(user: _user, profile: _profile));
     expect(find.byType(MainShell), findsOneWidget);
     expect(find.text(_loginMark), findsNothing);
     expect(find.text(_onboardingMark), findsNothing);
   });
 
   testWidgets('로그인 화면에서 첫 소셜 버튼 탭 → (프로필 없음) 온보딩', (t) async {
-    registerFakeUserDependencies();
-    await _boot(t); // 로그인 화면 진입
+    await _boot(t, await _container()); // 로그인 화면 진입
     expect(find.text(_loginMark), findsOneWidget);
 
     await t.tap(find.byType(SocialLoginButton).first); // kakao
@@ -101,8 +103,7 @@ void main() {
   });
 
   testWidgets('설정에서 로그아웃 → 로그인 화면', (t) async {
-    registerFakeUserDependencies(user: _user, profile: _profile);
-    await _boot(t); // 홈 진입
+    await _boot(t, await _container(user: _user, profile: _profile)); // 홈 진입
     expect(find.byType(MainShell), findsOneWidget);
 
     rootNavigatorKey.currentContext!.go(RoutePath.setting.path);

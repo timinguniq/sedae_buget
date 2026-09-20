@@ -3,9 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
-import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart';
@@ -37,21 +35,24 @@ void main() {
   late _FakeRepo repo;
 
   setUpAll(() => initializeDateFormatting('ko'));
-  setUp(() async {
-    repo = _FakeRepo();
-    locator.registerSingleton<TransactionUsecase>(TransactionUsecase(repo));
-    registerFakePeerDependencies();
-    registerFakeCategoryDependencies();
-    await registerFakeAdDependencies();
-  });
-  tearDown(() => locator.reset());
+  setUp(() => repo = _FakeRepo());
+
+  /// 내역 화면의 공통 의존성: 거래·카테고리·또래·광고 fake.
+  Future<ProviderContainer> container() async {
+    final ads = FakeAdService();
+    return fakeContainer(
+      transactions: repo,
+      categories: InMemoryCategoryRepository(),
+      peerRepository: FakePeerStatsRepository(),
+      adService: ads,
+      launchInterstitial: await fakeLaunchInterstitial(ads),
+    );
+  }
 
   testWidgets('renders a TransactionTile for each transaction', (tester) async {
     await tester.pumpWidget(provider.ChangeNotifierProvider(
       create: (_) => ThemeService(),
-      child: ProviderScope(
-        child: MaterialApp(home: const TransactionListPage()),
-      ),
+      child: fakeScope(await container(), const MaterialApp(home: TransactionListPage())),
     ));
     // DefaultLayout mounts a perpetual Lottie, so pumpAndSettle never settles.
     await tester.pump();
@@ -67,9 +68,7 @@ void main() {
 
     await tester.pumpWidget(provider.ChangeNotifierProvider(
       create: (_) => ThemeService(),
-      child: ProviderScope(
-        child: MaterialApp(home: const TransactionListPage()),
-      ),
+      child: fakeScope(await container(), const MaterialApp(home: TransactionListPage())),
     ));
     await tester.pump();
     await tester.pump();
@@ -101,9 +100,7 @@ void main() {
 
     await tester.pumpWidget(provider.ChangeNotifierProvider(
       create: (_) => ThemeService(),
-      child: ProviderScope(
-        child: MaterialApp(home: const TransactionListPage()),
-      ),
+      child: fakeScope(await container(), const MaterialApp(home: TransactionListPage())),
     ));
     await tester.pump();
     await tester.pump();
@@ -130,9 +127,7 @@ void main() {
 
     await tester.pumpWidget(provider.ChangeNotifierProvider(
       create: (_) => ThemeService(),
-      child: ProviderScope(
-        child: MaterialApp(home: const TransactionListPage()),
-      ),
+      child: fakeScope(await container(), const MaterialApp(home: TransactionListPage())),
     ));
     await tester.pump();
     await tester.pump();

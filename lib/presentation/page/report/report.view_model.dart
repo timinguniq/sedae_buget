@@ -1,15 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
-import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/budget_home.view_model.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
+import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 
 /// 최근 6개월 자기 지출 추이 (oldest → newest).
 final selfTrendProvider =
     FutureProvider<List<({DateTime month, int expense})>>((ref) async {
   final anchor = ref.watch(selectedMonthProvider);
-  final usecase = locator<TransactionUsecase>();
+  final usecase = ref.watch(transactionUsecaseProvider);
   const n = 6;
   final start = DateTime(anchor.year, anchor.month - (n - 1));
   final end = DateTime(anchor.year, anchor.month + 1); // exclusive
@@ -27,7 +26,7 @@ final selfTrendProvider =
 final savingsRateProvider = Provider<int?>((ref) {
   final s = ref.watch(monthlySummaryProvider).value;
   if (s == null) return null;
-  final usecase = locator<TransactionUsecase>();
+  final usecase = ref.watch(transactionUsecaseProvider);
   final income = usecase.effectiveIncome(
     txIncome: s.income,
     profileIncome: ref.watch(userProfileProvider).value?.monthlyIncome,

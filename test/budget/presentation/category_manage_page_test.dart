@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
-import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/category_manage.page.dart';
@@ -39,8 +36,8 @@ Future<InMemoryCategoryRepository> pumpPage(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
-  locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_Repo()));
-  final repo = registerFakeCategoryDependencies(customs);
+  final repo = InMemoryCategoryRepository(customs);
+  final container = fakeContainer(transactions: _Repo(), categories: repo);
   // 페이지의 닫기 버튼과 CDialog가 go_router의 context.pop을 쓰므로 실제 라우터 위에 띄운다.
   final router = GoRouter(
     initialLocation: '/',
@@ -51,7 +48,7 @@ Future<InMemoryCategoryRepository> pumpPage(
   );
   await tester.pumpWidget(provider.ChangeNotifierProvider(
     create: (_) => ThemeService(),
-    child: ProviderScope(child: MaterialApp.router(theme: theme, routerConfig: router)),
+    child: fakeScope(container, MaterialApp.router(theme: theme, routerConfig: router)),
   ));
   await tester.pump();
   router.push('/manage');
@@ -62,7 +59,6 @@ Future<InMemoryCategoryRepository> pumpPage(
 }
 
 void main() {
-  tearDown(() => locator.reset());
 
   testWidgets('view mode: 안내 카드 + 기본 12개 + 내 카테고리, 편집 링크로 편집 모드 전환', (tester) async {
     await pumpPage(tester);

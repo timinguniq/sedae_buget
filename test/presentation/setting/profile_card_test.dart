@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/setting/widget/logout_button.dart';
 import 'package:sedae_budget/presentation/page/setting/widget/profile_card.dart';
@@ -12,8 +11,9 @@ import 'package:sedae_budget/presentation/service/theme_service.dart';
 import '../../helper/fakes.dart';
 
 /// 설정 화면과 같은 구성: 프로필 카드 + 하단 로그아웃 버튼.
-Widget _wrap() => ProviderScope(
-      child: provider.ChangeNotifierProvider(
+Widget _wrap(ProviderContainer container) => fakeScope(
+      container,
+      provider.ChangeNotifierProvider(
         create: (_) => ThemeService(),
         child: MaterialApp(
           home: const Scaffold(body: Column(children: [ProfileCard(), LogoutButton()])),
@@ -26,15 +26,14 @@ void main() {
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized();
   });
-  tearDown(() => locator.reset());
 
   testWidgets('guest: shows 게스트 and 로그인 button, no 로그아웃', (t) async {
-    registerFakeUserDependencies();
+    final container = fakeContainer();
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
 
-    await t.pumpWidget(_wrap());
+    await t.pumpWidget(_wrap(container));
     await t.pump();
     await t.pump();
 
@@ -45,14 +44,14 @@ void main() {
   });
 
   testWidgets('logged-in: shows nickname + provider badge; logout returns to guest', (t) async {
-    registerFakeUserDependencies(
+    final container = fakeContainer(
       user: const AuthUser(provider: AuthProvider.kakao, nickname: '카카오 사용자'),
     );
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
 
-    await t.pumpWidget(_wrap());
+    await t.pumpWidget(_wrap(container));
     await t.pump();
     await t.pump();
     await t.pump();
@@ -71,7 +70,7 @@ void main() {
   });
 
   testWidgets('logged-in with profile: subtitle is the age group', (t) async {
-    registerFakeUserDependencies(
+    final container = fakeContainer(
       user: const AuthUser(provider: AuthProvider.google, nickname: '구글 사용자'),
       profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
     );
@@ -79,7 +78,7 @@ void main() {
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
 
-    await t.pumpWidget(_wrap());
+    await t.pumpWidget(_wrap(container));
     await t.pump();
     await t.pump();
     await t.pump();

@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/domain/repository/category_repository.dart';
-import 'package:sedae_budget/domain/usecase/category_usecase.dart';
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
-import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
@@ -46,25 +42,18 @@ Widget _app(
   List<CustomCategory> customs = const [],
   CategoryRepository? categoryRepository,
 ]) {
-  locator.registerSingleton<TransactionUsecase>(TransactionUsecase(_Repo(list)));
-  registerFakePeerDependencies();
-  if (categoryRepository == null) {
-    registerFakeCategoryDependencies(customs);
-  } else {
-    locator
-      ..registerSingleton<CategoryRepository>(categoryRepository)
-      ..registerSingleton<CategoryUsecase>(CategoryUsecase(categoryRepository));
-  }
+  final container = fakeContainer(
+    transactions: _Repo(list),
+    categories: categoryRepository ?? InMemoryCategoryRepository(customs),
+    peerRepository: FakePeerStatsRepository(),
+  );
   return provider.ChangeNotifierProvider(
     create: (_) => ThemeService(),
-    child: const ProviderScope(
-      child: MaterialApp(home: CategoryAnalysisPage()),
-    ),
+    child: fakeScope(container, const MaterialApp(home: CategoryAnalysisPage())),
   );
 }
 
 void main() {
-  tearDown(() => locator.reset());
 
   testWidgets('shows donut + rows when data', (tester) async {
     await tester.pumpWidget(_app([
