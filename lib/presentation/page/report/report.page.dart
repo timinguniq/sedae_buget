@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
-import 'package:sedae_budget/presentation/page/report/report.view_model.dart';
 import 'package:sedae_budget/presentation/page/report/widget/generation_avg_chart.dart';
 import 'package:sedae_budget/presentation/page/report/widget/monthly_insight_card.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
@@ -24,33 +23,28 @@ class ReportPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncPeer = ref.watch(peerStatsProvider);
-    final asyncTxs = ref.watch(monthlyTransactionsProvider);
-    final summary = ref.watch(monthlySummaryProvider);
+    final overview = ref.watch(monthOverviewProvider);
     final asyncProfile = ref.watch(userProfileProvider);
     final selfTrend = ref.watch(selfTrendProvider);
     final generationAvg = ref.watch(generationAvgProvider);
-    final savingsRate = ref.watch(savingsRateProvider);
     final month = ref.watch(selectedMonthProvider);
 
     final ageGroup = asyncProfile.value?.ageGroup ?? AgeGroup.thirties;
 
     return DefaultLayout(
-      child: asyncPeer.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('또래 통계 실패: $e')),
-        data: (peer) => asyncTxs.when(
+      child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
-        data: (txs) {
-          final s = summary.requireValue;
+        data: (o) {
+          // 리포트는 또래 비교가 중심이라, 또래 통계를 못 읽으면 화면 전체를 안내로 바꾼다.
+          final peer = o.peer;
+          if (peer == null) return const Center(child: Text(MonthOverview.peerUnavailable));
           final won = NumberFormat.decimalPattern('ko');
-          final totalExpense = s.expense;
-          final peerTop = peer.topPercent(totalExpense); // 또래 상위 N%
-          // 소득 대비 지출(%) = 100 − 저축률. 소득(프로필 월소득 또는 이달 수입)이 없으면 표시 안 함.
-          final hasIncome = (asyncProfile.value?.monthlyIncome ?? 0) > 0 || s.income > 0;
-          final incomeRatio = (hasIncome && savingsRate != null) ? 100 - savingsRate : null;
-          final insight = peer.largestCategoryGap(s.byCategory);
+          final peerTop = peer.topPercent(o.expense); // 또래 상위 N%
+          // 소득 대비 지출(%) = 100 − 저축률. 소득이 없으면 저축률과 함께 표시 안 함.
+          final savingsRate = o.savingsRate;
+          final incomeRatio = savingsRate == null ? null : 100 - savingsRate;
+          final insight = peer.largestCategoryGap(o.byCategory);
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -76,7 +70,8 @@ class ReportPage extends ConsumerWidget {
               Row(children: [
                 Expanded(child: _StatTile(label: '또래 상위', value: '$peerTop%', accent: true)),
                 const SizedBox(width: 9),
-                Expanded(child: _StatTile(label: '저축률', value: '${savingsRate ?? 0}%')),
+                Expanded(child: _StatTile(
+                    label: '저축률', value: savingsRate == null ? '—' : '$savingsRate%')),
                 const SizedBox(width: 9),
                 Expanded(child: _StatTile(
                     label: '소득 대비', value: incomeRatio == null ? '—' : '$incomeRatio%')),
@@ -138,7 +133,6 @@ class ReportPage extends ConsumerWidget {
             ],
           );
         },
-        ),
       ),
     );
   }

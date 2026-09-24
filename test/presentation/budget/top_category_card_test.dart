@@ -10,19 +10,19 @@ Widget _wrap(Widget child) => provider.ChangeNotifierProvider(
       child: MaterialApp(home: Scaffold(body: child), theme: ThemeService().lightThemeData()));
 
 void main() {
-  testWidgets('shows top 3 categories by amount with peer badges and fires onTap', (t) async {
+  // 어떤 분류를 몇 개 고를지는 MonthOverview.topCategories가 정한다. 카드는 받은 순서대로 그린다.
+  testWidgets('draws the given categories with peer badges and fires onTap', (t) async {
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.resetPhysicalSize);
 
     var taps = 0;
     await t.pumpWidget(_wrap(TopCategoryCard(
-      summary: {
-        BudgetCategory.fromId(1): 540000,
-        BudgetCategory.fromId(7): 90000,
-        BudgetCategory.fromId(11): 320000,
-        BudgetCategory.fromId(3): 180000,
-      },
+      top: [
+        MapEntry(BudgetCategory.fromId(1), 540000),
+        MapEntry(BudgetCategory.fromId(11), 320000),
+        MapEntry(BudgetCategory.fromId(3), 180000),
+      ],
       peerByCategory: {BudgetCategory.fromId(1): 470000, BudgetCategory.fromId(3): 120000},
       onTap: () => taps++,
     )));
@@ -32,7 +32,6 @@ void main() {
     expect(find.text(BudgetCategory.fromId(1).label), findsOneWidget);
     expect(find.text(BudgetCategory.fromId(11).label), findsOneWidget);
     expect(find.text(BudgetCategory.fromId(3).label), findsOneWidget);
-    expect(find.text(BudgetCategory.fromId(7).label), findsNothing); // 4위는 생략
     expect(find.text('또래▲15%'), findsOneWidget);
     expect(find.text('또래▲50%'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsNWidgets(3));
@@ -42,7 +41,7 @@ void main() {
   });
 
   testWidgets('empty summary shows placeholder', (t) async {
-    await t.pumpWidget(_wrap(const TopCategoryCard(summary: {})));
+    await t.pumpWidget(_wrap(const TopCategoryCard(top: [])));
     await t.pump();
     expect(find.text('아직 지출이 없어요'), findsOneWidget);
   });

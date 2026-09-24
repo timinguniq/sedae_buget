@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:sedae_budget/core/ads/index.dart';
+import 'package:sedae_budget/core/app_config/remote_config.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
+import 'package:sedae_budget/presentation/page/initial/app_status.view_model.dart';
 import 'package:sedae_budget/presentation/service/ad_provider.dart';
 import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,6 +33,17 @@ class InMemoryAuthRepository implements AuthRepository {
   Future<Result<void>> signOut() async {
     user = null;
     return const Result.success(null);
+  }
+
+  final _expired = StreamController<void>.broadcast();
+
+  @override
+  Stream<void> get sessionExpired => _expired.stream;
+
+  /// 쓰는 중에 서버가 세션을 끝낸 상황(401). 서버 세션을 지우고 알린다.
+  void expireSession() {
+    user = null;
+    _expired.add(null);
   }
 }
 
@@ -80,6 +95,45 @@ class InMemoryCategoryRepository implements CategoryRepository {
   }
 }
 
+/// 장부 테스트용 로그인 사용자. 장부(거래·카테고리)는 로그인 세션에 묶여 있어 로그인 전에는 비어 있다.
+const testUser = AuthUser(provider: AuthProvider.kakao, nickname: '카카오 사용자');
+
+/// 인메모리 거래 저장소. 월 조회와 기간 조회가 같은 데이터를 최신순으로 본다(서버 계약과 동일).
+class InMemoryTransactionRepository implements TransactionRepository {
+  InMemoryTransactionRepository([List<Transaction> seed = const []]) {
+    for (final t in seed) {
+      items[t.id] = t;
+    }
+  }
+
+  final Map<String, Transaction> items = {};
+
+  /// [getMonth] 호출 횟수(다시 읽었는지 확인용).
+  int monthReads = 0;
+
+  @override
+  Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(items[tx.id] = tx);
+
+  @override
+  Future<Result<Transaction>> delete(Transaction tx) async {
+    items.remove(tx.id);
+    return Result.success(tx);
+  }
+
+  @override
+  Future<Result<List<Transaction>>> getMonth(int year, int month) {
+    monthReads++;
+    return getRange(DateTime(year, month), DateTime(year, month + 1));
+  }
+
+  @override
+  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
+      Result.success(items.values
+          .where((t) => !t.date.isBefore(start) && t.date.isBefore(end))
+          .toList()
+        ..sort((a, b) => b.date.compareTo(a.date)));
+}
+
 /// Stub 서버와 같은 결정적 수치를 돌려주는 또래 통계 fake.
 class FakePeerStatsRepository implements PeerStatsRepository {
   @override
@@ -89,6 +143,18 @@ class FakePeerStatsRepository implements PeerStatsRepository {
   @override
   Future<Result<Map<AgeGroup, int>>> generationAverages() async => Result.success(
       {for (final g in AgeGroup.values) g: StubPeerData.forGroup(g).avgMonthlyExpense});
+}
+
+/// 또래 통계 서버가 내려간 상황. 모든 조회가 실패한다.
+class FailingPeerStatsRepository implements PeerStatsRepository {
+  static const _down =
+      ErrorResult(reason: FailureReason.server, message: '또래 통계를 불러올 수 없습니다.');
+
+  @override
+  Future<Result<PeerStats>> forGroup(AgeGroup g) async => const Result.failure(_down);
+
+  @override
+  Future<Result<Map<AgeGroup, int>>> generationAverages() async => const Result.failure(_down);
 }
 
 /// 광고 SDK 없이 호출 횟수만 기록하는 fake. 배너는 항상 실패(null), 전면은 [interstitial]의 결과를 따른다.
@@ -115,6 +181,24 @@ class FakeAdService implements AdService {
   Future<void> showInterstitial() async => showInterstitialCalls++;
 }
 
+/// 점검·업데이트 판정 재료 fake. 기본은 원격 정보 없음(= 쓸 수 있음).
+class FakeAppStatusSource implements AppStatusSource {
+  FakeAppStatusSource({this.info, this.build = 1});
+
+  final AppInitialInfo? info;
+  final int? build;
+  final updates = StreamController<AppInitialInfo>.broadcast();
+
+  @override
+  Future<AppInitialInfo?> fetchInitialInfo() async => info;
+
+  @override
+  Stream<AppInitialInfo> get initialInfoUpdates => updates.stream;
+
+  @override
+  Future<int?> currentBuild() async => build;
+}
+
 /// 앱 실행 카운트(SharedPreferences mock)를 0에서 시작시키고 광고 정책을 만든다.
 Future<LaunchInterstitial> fakeLaunchInterstitial(FakeAdService ads) async {
   SharedPreferences.setMockInitialValues({});
@@ -137,6 +221,8 @@ ProviderContainer fakeContainer({
   PeerStats? peerStats,
   AdService? adService,
   LaunchInterstitial? launchInterstitial,
+  AppStatusSource? appStatusSource,
+  void Function()? exitApp,
 }) {
   final auth = authRepository ?? InMemoryAuthRepository(user);
   final container = ProviderContainer(
@@ -159,6 +245,9 @@ ProviderContainer fakeContainer({
       if (adService != null) adServiceProvider.overrideWithValue(adService),
       if (launchInterstitial != null)
         launchInterstitialProvider.overrideWithValue(launchInterstitial),
+      appStatusSourceProvider.overrideWithValue(appStatusSource ?? FakeAppStatusSource()),
+      // 테스트가 점검 안내를 확인해도 테스트 프로세스가 끝나지 않게 한다.
+      appExitProvider.overrideWithValue(exitApp ?? () {}),
     ],
   );
   addTearDown(container.dispose);

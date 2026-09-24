@@ -13,7 +13,8 @@ typedef _Json = Map<String, dynamic>;
 /// 서버 없이 계약(API 계약 v1)대로 응답하는 인프로세스 Stub. 네트워크로 나가지 않는다.
 ///
 /// - 인증은 무상태: 토큰 `stub.<provider>`에서 사용자를 복원한다.
-/// - 프로필·거래·사용자 카테고리는 [StubApiState]에 보관하고 [StubStateStore]가 있으면 영속화한다.
+/// - 프로필·거래·사용자 카테고리는 [StubApiState]에 사용자별로 보관하고 [StubStateStore]가 있으면 영속화한다.
+/// - 실제 서버 응답처럼 뒤따르는 응답·오류 인터셉터를 거친다(토큰 인터셉터가 401을 본다).
 /// - 또래 통계는 [StubPeerData](결정적).
 class StubApiInterceptor extends Interceptor {
   StubApiInterceptor({StubStateStore? store}) : _store = store;
@@ -29,7 +30,7 @@ class StubApiInterceptor extends Interceptor {
     await _ensureLoaded();
     try {
       final (status, body) = await _route(options);
-      handler.resolve(Response(requestOptions: options, statusCode: status, data: body));
+      handler.resolve(Response(requestOptions: options, statusCode: status, data: body), true);
     } on _StubError catch (e) {
       handler.reject(
         DioException(
@@ -41,6 +42,7 @@ class StubApiInterceptor extends Interceptor {
             data: {'code': e.code, 'message': e.message},
           ),
         ),
+        true,
       );
     }
   }
@@ -50,15 +52,16 @@ class StubApiInterceptor extends Interceptor {
     if (m == 'POST' && p == ApiPath.login) return (200, _login(o.data as _Json));
 
     final provider = _authed(o); // 이하 전부 Bearer 필수
+    final db = _state.of(provider.name); // 로그인한 사용자의 데이터만 본다
     if (m == 'POST' && p == ApiPath.logout) return (204, null);
     if (m == 'GET' && p == ApiPath.me) return (200, _user(provider));
-    if (p == ApiPath.profile) return _profile(m, o.data);
-    if (m == 'GET' && p == ApiPath.transactions) return (200, _listTx(o.queryParameters));
+    if (p == ApiPath.profile) return _profile(db, m, o.data);
+    if (m == 'GET' && p == ApiPath.transactions) return (200, _listTx(db, o.queryParameters));
     final txId = _idAfter(ApiPath.transactions, p);
-    if (txId != null) return _tx(m, txId, o.data);
-    if (m == 'GET' && p == ApiPath.categories) return (200, _listCategories());
+    if (txId != null) return _tx(db, m, txId, o.data);
+    if (m == 'GET' && p == ApiPath.categories) return (200, _listCategories(db));
     final catId = _idAfter(ApiPath.categories, p);
-    if (catId != null) return _category(m, catId, o.data);
+    if (catId != null) return _category(db, m, catId, o.data);
     if (m == 'GET' && p == ApiPath.peerStats) {
       final g = AgeGroup.values.byName(o.queryParameters['ageGroup'] as String);
       return (200, PeerStatsDto.fromEntity(StubPeerData.forGroup(g)).toJson());
@@ -114,19 +117,19 @@ class StubApiInterceptor extends Interceptor {
 
   // profile --------------------//
 
-  Future<(int, Object?)> _profile(String method, Object? body) async {
+  Future<(int, Object?)> _profile(StubUserData db, String method, Object? body) async {
     switch (method) {
       case 'GET':
-        final p = _state.profile;
+        final p = db.profile;
         if (p == null) throw _StubError(404, 'PROFILE_NOT_FOUND', '프로필이 없습니다.');
         return (200, Map<String, dynamic>.of(p));
       case 'PUT':
         final b = body as _Json;
-        _state.profile = {'ageGroup': b['ageGroup'], 'monthlyIncome': b['monthlyIncome']};
+        db.profile = {'ageGroup': b['ageGroup'], 'monthlyIncome': b['monthlyIncome']};
         await _persist();
-        return (200, Map<String, dynamic>.of(_state.profile!));
+        return (200, Map<String, dynamic>.of(db.profile!));
       case 'DELETE':
-        _state.profile = null;
+        db.profile = null;
         await _persist();
         return (204, null);
     }
@@ -143,10 +146,10 @@ class StubApiInterceptor extends Interceptor {
     return id.isEmpty ? null : id;
   }
 
-  List<_Json> _listTx(Map<String, dynamic> query) {
+  List<_Json> _listTx(StubUserData db, Map<String, dynamic> query) {
     final from = DateTime.parse(query['from'] as String);
     final to = DateTime.parse(query['to'] as String);
-    final rows = _state.transactions.values.where((r) {
+    final rows = db.transactions.values.where((r) {
       final d = DateTime.parse(r['date'] as String);
       return !d.isBefore(from) && d.isBefore(to);
     }).toList()
@@ -154,20 +157,22 @@ class StubApiInterceptor extends Interceptor {
     return [for (final r in rows) Map<String, dynamic>.of(r)];
   }
 
-  Future<(int, Object?)> _tx(String method, String id, Object? body) async {
+  Future<(int, Object?)> _tx(StubUserData db, String method, String id, Object? body) async {
     switch (method) {
       case 'PUT':
         final b = body as _Json;
-        final existing = _state.transactions[id];
+        final existing = db.transactions[id];
         final now = DateTime.now().toUtc().toIso8601String();
         final customId = b['customCategoryId'] as String?;
-        if (customId != null && !_state.customCategories.containsKey(customId)) {
+        final custom = customId == null ? null : db.customCategories[customId];
+        if (customId != null && custom == null) {
           throw _StubError(400, 'VALIDATION', '없는 카테고리입니다: $customId');
         }
         final row = <String, dynamic>{
           'id': id,
           'amount': b['amount'],
-          'categoryId': b['categoryId'],
+          // 사용자 카테고리 거래의 기본 분류는 그 카테고리의 상위 분류다(또래 비교 집계 기준).
+          'categoryId': custom?['baseCategoryId'] ?? b['categoryId'],
           'date': b['date'],
           'type': b['type'],
           'memo': b['memo'],
@@ -175,11 +180,11 @@ class StubApiInterceptor extends Interceptor {
           'createdAt': existing?['createdAt'] ?? now,
           'updatedAt': now,
         };
-        _state.transactions[id] = row;
+        db.transactions[id] = row;
         await _persist();
         return (existing == null ? 201 : 200, Map<String, dynamic>.of(row));
       case 'DELETE':
-        if (_state.transactions.remove(id) == null) {
+        if (db.transactions.remove(id) == null) {
           throw _StubError(404, 'NOT_FOUND', '거래가 없습니다: $id');
         }
         await _persist();
@@ -190,10 +195,10 @@ class StubApiInterceptor extends Interceptor {
 
   // categories --------------------//
 
-  List<_Json> _listCategories() =>
-      [for (final r in _state.customCategories.values) Map<String, dynamic>.of(r)];
+  List<_Json> _listCategories(StubUserData db) =>
+      [for (final r in db.customCategories.values) Map<String, dynamic>.of(r)];
 
-  Future<(int, Object?)> _category(String method, String id, Object? body) async {
+  Future<(int, Object?)> _category(StubUserData db, String method, String id, Object? body) async {
     // 기본 분류(1~12)는 계약 상수 — 사용자 카테고리 경로로 만들거나 지울 수 없다.
     if (int.tryParse(id) != null) {
       throw _StubError(403, 'CATEGORY_IMMUTABLE', '기본 카테고리는 수정하거나 삭제할 수 없습니다.');
@@ -210,21 +215,25 @@ class StubApiInterceptor extends Interceptor {
         if (baseId == null || baseId < 1 || baseId > 12) {
           throw _StubError(400, 'VALIDATION', '상위 카테고리가 잘못되었습니다.');
         }
-        final duplicated = _state.customCategories.entries.any(
+        final duplicated = db.customCategories.entries.any(
           (e) => e.key != id && (e.value['name'] as String).toLowerCase() == name.toLowerCase(),
         );
         if (duplicated) throw _StubError(409, 'CATEGORY_DUPLICATE', '이미 있는 이름입니다: $name');
-        final existing = _state.customCategories[id];
+        final existing = db.customCategories[id];
         final row = <String, dynamic>{'id': id, 'name': name, 'baseCategoryId': baseId};
-        _state.customCategories[id] = row;
+        db.customCategories[id] = row;
+        // 상위 분류를 바꾸면 이 카테고리로 기록한 거래도 새 분류로 옮긴다.
+        for (final tx in db.transactions.values) {
+          if (tx['customCategoryId'] == id) tx['categoryId'] = baseId;
+        }
         await _persist();
         return (existing == null ? 201 : 200, Map<String, dynamic>.of(row));
       case 'DELETE':
-        if (_state.customCategories.remove(id) == null) {
+        if (db.customCategories.remove(id) == null) {
           throw _StubError(404, 'NOT_FOUND', '카테고리가 없습니다: $id');
         }
         // 참조하던 거래는 상위 기본 분류로 되돌린다.
-        for (final tx in _state.transactions.values) {
+        for (final tx in db.transactions.values) {
           if (tx['customCategoryId'] == id) tx['customCategoryId'] = null;
         }
         await _persist();

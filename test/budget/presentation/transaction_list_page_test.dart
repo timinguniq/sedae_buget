@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/domain/repository/transaction_repository.dart';
+import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart';
@@ -38,12 +38,16 @@ void main() {
   setUp(() => repo = _FakeRepo());
 
   /// 내역 화면의 공통 의존성: 거래·카테고리·또래·광고 fake.
-  Future<ProviderContainer> container() async {
+  Future<ProviderContainer> container({
+    PeerStatsRepository? peer,
+    List<CustomCategory> customs = const [],
+  }) async {
     final ads = FakeAdService();
     return fakeContainer(
+      user: testUser,
       transactions: repo,
-      categories: InMemoryCategoryRepository(),
-      peerRepository: FakePeerStatsRepository(),
+      categories: InMemoryCategoryRepository(customs),
+      peerRepository: peer ?? FakePeerStatsRepository(),
       adService: ads,
       launchInterstitial: await fakeLaunchInterstitial(ads),
     );
@@ -56,6 +60,58 @@ void main() {
     ));
     // DefaultLayout mounts a perpetual Lottie, so pumpAndSettle never settles.
     await tester.pump();
+    await tester.pump();
+    expect(find.byType(TransactionTile), findsOneWidget);
+  });
+
+  // 또래 통계가 실패해도 내 내역은 보인다. 또래 초과 배지만 빠진다.
+  testWidgets('또래 통계를 못 읽어도 내역이 보인다', (tester) async {
+    await tester.pumpWidget(provider.ChangeNotifierProvider(
+      create: (_) => ThemeService(),
+      child: fakeScope(await container(peer: FailingPeerStatsRepository()),
+          const MaterialApp(home: TransactionListPage())),
+    ));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(TransactionTile), findsOneWidget);
+    expect(find.text('또래보다 잦음'), findsNothing);
+  });
+
+  testWidgets('이달 지출이 또래 평균을 넘는 분류의 거래에는 배지가 붙는다', (tester) async {
+    repo.txs = [
+      Transaction.create(amount: 50000000, categoryId: 1, date: DateTime(2026, 6, 5), type: TransactionType.expense),
+    ];
+    await tester.pumpWidget(provider.ChangeNotifierProvider(
+      create: (_) => ThemeService(),
+      child: fakeScope(await container(), const MaterialApp(home: TransactionListPage())),
+    ));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('또래보다 잦음'), findsOneWidget);
+  });
+
+  // 자기계발(현재 오락·문화)로 기록했지만 거래에는 옛 분류(기타)가 적혀 있는 경우.
+  testWidgets('카테고리 칩은 사용자 카테고리의 현재 상위 분류로 거른다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    repo.txs = [
+      Transaction.create(amount: 5000, categoryId: BudgetCategory.etc.id, date: DateTime(2026, 6, 5),
+          type: TransactionType.expense, customCategoryId: 'c2'),
+    ];
+    await tester.pumpWidget(provider.ChangeNotifierProvider(
+      create: (_) => ThemeService(),
+      child: fakeScope(
+          await container(customs: const [CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 9)]),
+          const MaterialApp(home: TransactionListPage())),
+    ));
+    await tester.pump();
+    await tester.pump();
+
+    await tester.tap(find.widgetWithText(DesignChip, BudgetCategory.recreation.label));
     await tester.pump();
     expect(find.byType(TransactionTile), findsOneWidget);
   });

@@ -1,20 +1,12 @@
-import 'package:dio/dio.dart';
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/core/core.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
+import '../../../../helper/stub_server.dart';
 import '../../../../helper/test_api_client.dart';
-
-class _Tokens implements AuthTokenStore {
-  String? t;
-  @override
-  Future<String?> read() async => t;
-  @override
-  Future<void> write(String token) async => t = token;
-  @override
-  Future<void> clear() async => t = null;
-}
 
 class _MemStore implements StubStateStore {
   String? saved;
@@ -26,17 +18,18 @@ class _MemStore implements StubStateStore {
 
 const _range = {'from': '2026-09-01T00:00:00.000Z', 'to': '2026-10-01T00:00:00.000Z'};
 
-TestApiClient _client(_Tokens tokens, {StubStateStore? store}) => TestApiClient(Dio()
-  ..interceptors.add(AuthTokenInterceptor(tokens))
-  ..interceptors.add(StubApiInterceptor(store: store)));
+/// [user]로 로그인한 Stub 서버의 API. 같은 [store]를 주면 앱 재시작을 흉내 낸다.
+TestApiClient _client(String user, {StubStateStore? store}) =>
+    (StubServer(store: store)..tokens.token = 'stub.$user').api;
 
 void main() {
-  late _Tokens tokens;
+  late MemoryAuthTokenStore tokens;
   late TestApiClient api;
 
   setUp(() {
-    tokens = _Tokens();
-    api = _client(tokens);
+    final server = StubServer();
+    tokens = server.tokens;
+    api = server.api;
   });
 
   Future<void> putTx(String id, String date) => api.put<Map<String, dynamic>>(
@@ -53,7 +46,7 @@ void main() {
       ApiPath.login,
       body: {'provider': 'kakao', 'idToken': 'x'},
     );
-    tokens.t = res['accessToken'] as String;
+    tokens.token = res['accessToken'] as String;
     expect((res['user'] as Map)['nickname'], '카카오 사용자');
 
     final me = await api.get<Map<String, dynamic>>(ApiPath.me);
@@ -70,7 +63,7 @@ void main() {
   });
 
   test('garbage token → 401 AUTH_004', () async {
-    tokens.t = 'garbage';
+    tokens.token = 'garbage';
     expect(
       () => api.get<Map<String, dynamic>>(ApiPath.me),
       throwsA(isA<ApiException>().having((e) => e.code, 'code', 'AUTH_004')),
@@ -78,12 +71,12 @@ void main() {
   });
 
   test('logout → 204', () async {
-    tokens.t = 'stub.kakao';
+    tokens.token = 'stub.kakao';
     await api.post<dynamic>(ApiPath.logout);
   });
 
   test('profile 404 → put → get → delete → 404', () async {
-    tokens.t = 'stub.kakao';
+    tokens.token = 'stub.kakao';
     expect(
       () => api.get<Map<String, dynamic>>(ApiPath.profile),
       throwsA(isA<ApiException>().having((e) => e.code, 'code', 'PROFILE_NOT_FOUND')),
@@ -103,7 +96,7 @@ void main() {
   });
 
   test('transactions: put → list in range, desc → delete → empty', () async {
-    tokens.t = 'stub.kakao';
+    tokens.token = 'stub.kakao';
     await putTx('a', '2026-09-01T00:00:00.000Z');
     await putTx('b', '2026-09-10T00:00:00.000Z');
     await putTx('c', '2026-10-01T00:00:00.000Z'); // to는 배타 → 범위 밖
@@ -119,7 +112,7 @@ void main() {
   });
 
   test('put keeps createdAt on update; delete unknown → 404', () async {
-    tokens.t = 'stub.kakao';
+    tokens.token = 'stub.kakao';
     await putTx('a', '2026-09-01T00:00:00.000Z');
     final first = (await api.get<List<dynamic>>(ApiPath.transactions, query: _range)).single;
     await putTx('a', '2026-09-02T00:00:00.000Z');
@@ -133,7 +126,7 @@ void main() {
   });
 
   test('peer stats matches StubPeerData; generations has 5 groups', () async {
-    tokens.t = 'stub.kakao';
+    tokens.token = 'stub.kakao';
     final json = await api.get<Map<String, dynamic>>(
       ApiPath.peerStats,
       query: {'ageGroup': 'thirties'},
@@ -154,7 +147,7 @@ void main() {
           body: {'name': name, 'baseCategoryId': baseId},
         );
 
-    setUp(() => tokens.t = 'stub.kakao');
+    setUp(() => tokens.token = 'stub.kakao');
 
     test('empty → put(201) → list in creation order → put(200) updates', () async {
       expect(await api.get<List<dynamic>>(ApiPath.categories), isEmpty);
@@ -239,20 +232,51 @@ void main() {
       );
     });
 
+    test('거래를 저장하면 기본 분류를 사용자 카테고리의 상위 분류에 맞춘다', () async {
+      await putCat('c1', '반려동물', 12);
+      final saved = await api.put<Map<String, dynamic>>(ApiPath.transaction('t1'), body: {
+        'amount': 1000, 'categoryId': 1, 'date': '2026-09-02T00:00:00.000Z',
+        'type': 'expense', 'memo': null, 'customCategoryId': 'c1',
+      });
+      expect(saved['categoryId'], 12);
+      final listed = (await api.get<List<dynamic>>(ApiPath.transactions, query: _range)).single;
+      expect(listed['categoryId'], 12);
+    });
+
+    test('상위 분류를 바꾸면 그 카테고리의 거래도 새 분류로 옮겨진다', () async {
+      await putCat('c1', '반려동물', 12);
+      await api.put<Map<String, dynamic>>(ApiPath.transaction('t1'), body: {
+        'amount': 1000, 'categoryId': 12, 'date': '2026-09-02T00:00:00.000Z',
+        'type': 'expense', 'memo': null, 'customCategoryId': 'c1',
+      });
+      await api.put<Map<String, dynamic>>(ApiPath.transaction('t2'), body: {
+        'amount': 2000, 'categoryId': 12, 'date': '2026-09-03T00:00:00.000Z',
+        'type': 'expense', 'memo': null,
+      });
+
+      await putCat('c1', '반려동물', 9);
+
+      final txs = await api.get<List<dynamic>>(ApiPath.transactions, query: _range);
+      final byId = {for (final t in txs) t['id']: t};
+      expect(byId['t1']['categoryId'], 9);
+      expect(byId['t1']['customCategoryId'], 'c1');
+      expect(byId['t2']['categoryId'], 12); // 사용자 카테고리가 아닌 거래는 그대로
+    });
+
     test('카테고리도 StubStateStore로 영속화된다', () async {
       final store = _MemStore();
-      final api1 = _client(tokens, store: store);
+      final api1 = _client('kakao', store: store);
       await api1.put<Map<String, dynamic>>(
         ApiPath.category('c1'),
         body: {'name': '반려동물', 'baseCategoryId': 12},
       );
-      final api2 = _client(tokens, store: store); // 앱 재시작 시뮬레이션
+      final api2 = _client('kakao', store: store); // 앱 재시작 시뮬레이션
       expect((await api2.get<List<dynamic>>(ApiPath.categories)).single['name'], '반려동물');
     });
   });
 
   test('unknown path → 404 NOT_FOUND', () async {
-    tokens.t = 'stub.kakao';
+    tokens.token = 'stub.kakao';
     expect(
       () => api.get<dynamic>('/v1/nope'),
       throwsA(isA<ApiException>().having((e) => e.code, 'code', 'NOT_FOUND')),
@@ -261,8 +285,7 @@ void main() {
 
   test('state persists through StubStateStore across interceptor instances', () async {
     final store = _MemStore();
-    tokens.t = 'stub.kakao';
-    final api1 = _client(tokens, store: store);
+    final api1 = _client('kakao', store: store);
     await api1.put<Map<String, dynamic>>(
       ApiPath.profile,
       body: {'ageGroup': 'forties', 'monthlyIncome': 1},
@@ -273,9 +296,49 @@ void main() {
     );
     expect(store.saved, isNotNull);
 
-    final api2 = _client(tokens, store: store); // 앱 재시작 시뮬레이션
+    final api2 = _client('kakao', store: store); // 앱 재시작 시뮬레이션
     expect((await api2.get<Map<String, dynamic>>(ApiPath.profile))['ageGroup'], 'forties');
     final list = await api2.get<List<dynamic>>(ApiPath.transactions, query: _range);
     expect(list.single['memo'], 'm');
+  });
+
+  // 계약: 프로필·거래·사용자 카테고리는 로그인한 사용자 것이다. 이름 중복도 사용자 안에서만 본다.
+  test('사용자마다 데이터가 따로다', () async {
+    final store = _MemStore();
+    final kakao = _client('kakao', store: store);
+    final google = _client('google', store: store);
+    await kakao.put<Map<String, dynamic>>(
+        ApiPath.profile, body: {'ageGroup': 'thirties', 'monthlyIncome': 1});
+    await kakao.put<Map<String, dynamic>>(
+        ApiPath.category('c1'), body: {'name': '반려동물', 'baseCategoryId': 12});
+    await kakao.put<Map<String, dynamic>>(ApiPath.transaction('t1'), body: {
+      'amount': 1000, 'categoryId': 1, 'date': '2026-09-02T00:00:00.000Z',
+      'type': 'expense', 'memo': null,
+    });
+
+    expect(
+      () => google.get<Map<String, dynamic>>(ApiPath.profile),
+      throwsA(isA<ApiException>().having((e) => e.isNotFound, 'notFound', isTrue)),
+    );
+    expect(await google.get<List<dynamic>>(ApiPath.categories), isEmpty);
+    expect(await google.get<List<dynamic>>(ApiPath.transactions, query: _range), isEmpty);
+    // 다른 사용자의 카테고리 이름과 겹쳐도 된다.
+    await google.put<Map<String, dynamic>>(
+        ApiPath.category('c2'), body: {'name': '반려동물', 'baseCategoryId': 9});
+
+    expect((await kakao.get<List<dynamic>>(ApiPath.categories)).single['id'], 'c1');
+  });
+
+  test('사용자별로 나누기 전 형식으로 저장된 상태는 버린다', () async {
+    final store = _MemStore()
+      ..saved = jsonEncode({
+        'profile': {'ageGroup': 'forties', 'monthlyIncome': 1},
+        'transactions': <String, dynamic>{},
+        'customCategories': <String, dynamic>{},
+      });
+    expect(
+      () => _client('kakao', store: store).get<Map<String, dynamic>>(ApiPath.profile),
+      throwsA(isA<ApiException>().having((e) => e.isNotFound, 'notFound', isTrue)),
+    );
   });
 }

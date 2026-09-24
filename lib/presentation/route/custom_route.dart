@@ -21,19 +21,10 @@ part 'auth_gate.dart';
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
-abstract class CRoute {
-  CRoute._();
-
-  static bool canPop() => (rootNavigatorKey.currentContext!).canPop();
-
-  static void pop<T>([T? result]) => canPop() ? (rootNavigatorKey.currentContext!).pop<T?>(result) : null;
-}
-
-/// authProvider/userProfileProvider 변동 시 go_router redirect를 재평가시키는 브리지.
+/// 세션 상태([sessionGateProvider])가 바뀌면 go_router redirect를 재평가시키는 브리지.
 class RouterRefreshNotifier extends ChangeNotifier {
   RouterRefreshNotifier(Ref ref) {
-    ref.listen(authProvider, (_, _) => notifyListeners());
-    ref.listen(userProfileProvider, (_, _) => notifyListeners());
+    ref.listen(sessionGateProvider, (_, _) => notifyListeners());
   }
 }
 
@@ -44,11 +35,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     navigatorKey: rootNavigatorKey,
     initialLocation: RoutePath.splash.path,
     refreshListenable: refresh,
-    redirect: (context, state) => authGateRedirect(
-      auth: ref.read(authProvider),
-      profile: ref.read(userProfileProvider),
-      location: state.matchedLocation,
-    ),
+    redirect: (context, state) => sessionRedirect(ref.read(sessionGateProvider), state.matchedLocation),
     routes: [
       GoRoute(path: RoutePath.splash.path, builder: (_, _) => const SplashPage()),
       GoRoute(path: RoutePath.onboarding.path, builder: (_, _) => const OnboardingFlowPage()),
@@ -68,6 +55,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           CategoryManagePage(initialEditing: state.extra as bool? ?? false)),
       GoRoute(path: RoutePath.setting.path, builder: (_, _) => const SettingPage()),
       GoRoute(path: RoutePath.login.path, builder: (_, _) => const LoginPage()),
+      GoRoute(path: RoutePath.unreachable.path, builder: (_, _) => const UnreachablePage()),
     ],
     debugLogDiagnostics: true,
     observers: [

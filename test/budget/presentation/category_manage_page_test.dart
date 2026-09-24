@@ -12,12 +12,14 @@ import 'package:sedae_budget/theme/theme.dart';
 import '../../helper/fakes.dart';
 
 class _Repo implements TransactionRepository {
+  _Repo([this._month = const []]);
+  final List<Transaction> _month;
   @override
   Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
   @override
   Future<Result<Transaction>> delete(Transaction tx) async => Result.success(tx);
   @override
-  Future<Result<List<Transaction>>> getMonth(int y, int m) async => const Result.success([]);
+  Future<Result<List<Transaction>>> getMonth(int y, int m) async => Result.success(_month);
   @override
   Future<Result<List<Transaction>>> getRange(DateTime s, DateTime e) async =>
       const Result.success([]);
@@ -29,6 +31,7 @@ Future<InMemoryCategoryRepository> pumpPage(
   WidgetTester tester, {
   bool editing = false,
   List<CustomCategory> customs = const [_pet],
+  List<Transaction> month = const [],
   ThemeData? theme,
 }) async {
   tester.view.physicalSize = const Size(390, 1400);
@@ -37,7 +40,7 @@ Future<InMemoryCategoryRepository> pumpPage(
   addTearDown(tester.view.resetDevicePixelRatio);
 
   final repo = InMemoryCategoryRepository(customs);
-  final container = fakeContainer(transactions: _Repo(), categories: repo);
+  final container = fakeContainer(user: testUser, transactions: _Repo(month), categories: repo);
   // 페이지의 닫기 버튼과 CDialog가 go_router의 context.pop을 쓰므로 실제 라우터 위에 띄운다.
   final router = GoRouter(
     initialLocation: '/',
@@ -75,6 +78,20 @@ void main() {
     await tester.pump();
     expect(find.text('카테고리 편집'), findsOneWidget);
     expect(find.text('수정 · 삭제 불가'), findsOneWidget);
+  });
+
+  // 분석 화면과 같은 기준: 사용자 카테고리로 분리된 거래만 빼고, 지워진 카테고리를 가리키는 거래는 기본 분류로 센다.
+  testWidgets('기본 카테고리 건수는 사용자 카테고리 거래를 빼고 센다', (tester) async {
+    Transaction tx({String? customCategoryId}) => Transaction.create(
+          amount: 1000, categoryId: BudgetCategory.etc.id, date: DateTime(2026, 6, 5),
+          type: TransactionType.expense, customCategoryId: customCategoryId);
+    await pumpPage(tester, month: [
+      tx(),
+      tx(customCategoryId: 'c1'), // 반려동물 → 따로 센다
+      tx(customCategoryId: 'gone'), // 지워진 카테고리 → 기타로 센다
+    ]);
+
+    expect(find.text('2건'), findsOneWidget);
   });
 
   testWidgets('편집 모드: 내 카테고리만 삭제 버튼을 갖는다', (tester) async {

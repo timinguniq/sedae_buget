@@ -5,15 +5,7 @@ import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-class _Tokens implements AuthTokenStore {
-  String? t;
-  @override
-  Future<String?> read() async => t;
-  @override
-  Future<void> write(String token) async => t = token;
-  @override
-  Future<void> clear() async => t = null;
-}
+import '../../helper/stub_server.dart';
 
 /// 모든 요청을 500으로 떨어뜨린다(서버 장애 시뮬레이션).
 class _ServerDown extends Interceptor {
@@ -28,15 +20,13 @@ class _ServerDown extends Interceptor {
 }
 
 void main() {
-  late _Tokens tokens;
+  late MemoryAuthTokenStore tokens;
   late AuthRepository repo;
 
   setUp(() {
-    tokens = _Tokens();
-    final dio = Dio()
-      ..interceptors.add(AuthTokenInterceptor(tokens))
-      ..interceptors.add(StubApiInterceptor());
-    repo = AuthRepositoryImpl(AuthApi(dio), tokens);
+    final server = StubServer();
+    tokens = server.tokens;
+    repo = server.auth;
   });
 
   test('no token → currentUser null', () async {
@@ -47,34 +37,43 @@ void main() {
     final u = (await repo.signIn(AuthProvider.naver, 'id-token')).unwrap();
     expect(u.nickname, '네이버 사용자');
     expect(u.provider, AuthProvider.naver);
-    expect(tokens.t, isNotEmpty);
+    expect(tokens.token, isNotEmpty);
     expect((await repo.currentUser()).unwrap()?.provider, AuthProvider.naver);
   });
 
   test('invalid token → 401 → token cleared, 미로그인으로 성공', () async {
-    tokens.t = 'garbage';
+    tokens.token = 'garbage';
     final res = await repo.currentUser();
     expect(res.failureOrNull, isNull, reason: '무효 세션은 실패가 아니라 미로그인이다');
     expect(res.unwrap(), isNull);
-    expect(tokens.t, isNull);
+    expect(tokens.token, isNull);
+  });
+
+  test('서버가 저장된 토큰을 거부하면 sessionExpired로 알린다', () async {
+    await repo.signIn(AuthProvider.kakao, 'x');
+    final expired = expectLater(repo.sessionExpired, emits(null));
+    tokens.token = 'garbage';
+    await repo.currentUser();
+    await expired;
   });
 
   test('signOut clears token', () async {
     await repo.signIn(AuthProvider.google, 'x');
     await repo.signOut();
-    expect(tokens.t, isNull);
+    expect(tokens.token, isNull);
   });
 
   test('server error on /me → server 실패; signOut은 실패를 알리고도 토큰을 지운다', () async {
-    final dio = Dio()
-      ..interceptors.add(AuthTokenInterceptor(tokens))
-      ..interceptors.add(_ServerDown());
-    final down = AuthRepositoryImpl(AuthApi(dio), tokens);
-    tokens.t = 'stub.kakao';
+    final expiry = SessionExpiry();
+    final dio = ApiClient.create(
+      baseUrl: '', tokenStore: tokens, sessionExpiry: expiry, extra: [_ServerDown()],
+    ).dio;
+    final down = AuthRepositoryImpl(AuthApi(dio), tokens, expiry);
+    tokens.token = 'stub.kakao';
     expect((await down.currentUser()).failureOrNull?.reason, FailureReason.server);
-    expect(tokens.t, 'stub.kakao'); // 500은 토큰을 지우지 않는다
+    expect(tokens.token, 'stub.kakao'); // 500은 토큰을 지우지 않는다
     // 로그아웃은 서버가 죽어도 로컬 세션을 끝내지만, 실패를 삼키지는 않는다.
     expect((await down.signOut()).failureOrNull?.reason, FailureReason.server);
-    expect(tokens.t, isNull);
+    expect(tokens.token, isNull);
   });
 }

@@ -50,6 +50,7 @@ void main() {
     WidgetTester tester, {
     List<CustomCategory> customs = const [],
     TransactionRepository? repository,
+    Transaction? existing,
   }) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
@@ -58,6 +59,7 @@ void main() {
 
     final repo = _CapturingRepo();
     final container = fakeContainer(
+      user: testUser,
       transactions: repository ?? repo,
       categories: InMemoryCategoryRepository(customs),
     );
@@ -65,7 +67,7 @@ void main() {
       initialLocation: '/',
       routes: [
         GoRoute(path: '/', builder: (_, _) => const Scaffold(body: SizedBox.shrink())),
-        GoRoute(path: '/edit', builder: (_, _) => const TransactionEditPage()),
+        GoRoute(path: '/edit', builder: (_, _) => TransactionEditPage(existing: existing)),
       ],
     );
     await tester.pumpWidget(

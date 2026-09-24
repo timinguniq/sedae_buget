@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
@@ -35,15 +34,13 @@ class _OnboardingFlowPageState extends ConsumerState<OnboardingFlowPage> {
     final res = await ref.read(userProfileProvider.notifier).save(
       UserProfile(ageGroup: _ageGroup!, monthlyIncome: _income.round()));
     if (!mounted) return;
-    // 저장이 안 됐는데 홈으로 보내면 가드가 다시 온보딩으로 되돌린다. 이유를 보여주고 머문다.
+    // 저장되면 전역 가드가 홈으로 옮긴다. 실패하면 이유를 보여주고 머문다.
     final error = res.failureOrNull;
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(error.message.isEmpty ? '프로필을 저장하지 못했어요' : error.message),
       ));
-      return;
     }
-    context.go(RoutePath.budgetHome.path);
   }
 
   @override

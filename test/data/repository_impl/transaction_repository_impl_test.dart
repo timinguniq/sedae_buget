@@ -1,33 +1,22 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sedae_budget/core/core.dart';
-import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-class _Tokens implements AuthTokenStore {
-  String? t = 'stub.kakao';
-  @override
-  Future<String?> read() async => t;
-  @override
-  Future<void> write(String token) async => t = token;
-  @override
-  Future<void> clear() async => t = null;
-}
+import '../../helper/stub_server.dart';
 
 Transaction _tx(DateTime date, {int amount = 1000}) => Transaction.create(
       amount: amount, categoryId: 7, date: date, type: TransactionType.expense, memo: 'm',
     );
 
 void main() {
-  late _Tokens tokens;
+  late MemoryAuthTokenStore tokens;
   late TransactionRepository repo;
 
-  setUp(() {
-    tokens = _Tokens();
-    repo = TransactionRepositoryImpl(TransactionApi(Dio()
-      ..interceptors.add(AuthTokenInterceptor(tokens))
-      ..interceptors.add(StubApiInterceptor())));
+  setUp(() async {
+    final server = StubServer();
+    await server.signIn(AuthProvider.kakao);
+    tokens = server.tokens;
+    repo = server.transactions;
   });
 
   test('upsert returns Success with server-stamped local timestamps', () async {
@@ -78,7 +67,7 @@ void main() {
   });
 
   test('without token → Result.failure with server code', () async {
-    tokens.t = null;
+    tokens.token = null;
     final res = await repo.getMonth(2026, 9);
     expect(res, isA<Error<List<Transaction>>>());
     expect(res.failureOrNull?.code, 'AUTH_002');

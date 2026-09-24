@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sedae_budget/core/app_config/remote_config.dart';
 import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
 import 'package:sedae_budget/domain/domain.dart';
 
@@ -20,3 +21,6 @@ final userProfileRepositoryProvider =
 
 final peerStatsRepositoryProvider =
     Provider<PeerStatsRepository>((_) => locator<PeerStatsRepository>());
+
+/// 점검·업데이트 판정 재료(원격 설정·빌드 번호).
+final appStatusSourceProvider = Provider<AppStatusSource>((_) => locator<AppStatusSource>());

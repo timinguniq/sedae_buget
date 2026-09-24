@@ -42,18 +42,9 @@ void main() {
     usecase = TransactionUsecase(repo);
   });
 
-  test('add builds a transaction and upserts it', () async {
-    await usecase.add(
-      amount: 9000, categoryId: 7, date: DateTime(2026, 6, 2),
-      type: TransactionType.expense,
-    );
-    expect(repo.lastUpserted!.amount, 9000);
-    expect(repo.lastUpserted!.categoryId, 7);
-  });
-
-  test('update upserts the given transaction unchanged', () async {
+  test('save upserts the given transaction unchanged', () async {
     final tx = expense(1, 1);
-    await usecase.update(tx);
+    await usecase.save(tx);
     expect(repo.lastUpserted, tx);
   });
 
@@ -69,9 +60,21 @@ void main() {
       expense(1000, 7),
       expense(500, 7),
       expense(2000, 11),
-    ]);
+    ], const CategoryCatalog());
     expect(summary[BudgetCategory.transport], 1500);
     expect(summary[BudgetCategory.diningOut], 2000);
+  });
+
+  // 거래에 적힌 기본 분류가 낡아도 또래 비교는 사용자 카테고리의 현재 상위 분류로 집계한다.
+  test('categorySummary rolls custom spend up to the category\'s current base', () {
+    const study = CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 9);
+    final stale = Transaction.create(
+      amount: 3000, categoryId: 12, date: DateTime(2026, 6, 1),
+      type: TransactionType.expense, customCategoryId: 'c2',
+    );
+    final summary = usecase.categorySummary([stale], const CategoryCatalog([study]));
+    expect(summary[BudgetCategory.recreation], 3000);
+    expect(summary[BudgetCategory.etc], isNull);
   });
 
   test('totalExpense ignores income', () {
@@ -100,7 +103,7 @@ void main() {
         expense(5000, 12), // 기타 (커스텀 아님)
         custom(9000, 'c1', 12), // 반려동물
         custom(1000, 'c2', 9), // 자기계발
-      ], const [pet, study]);
+      ], const CategoryCatalog([pet, study]));
 
       expect(rows.map((r) => r.custom?.name ?? r.base.label),
           ['반려동물', BudgetCategory.etc.label, '자기계발']);
@@ -111,8 +114,8 @@ void main() {
 
     test('base totals stay whole — categorySummary keeps rolling custom spend up', () {
       final txs = [expense(5000, 12), custom(9000, 'c1', 12)];
-      expect(usecase.categorySummary(txs)[BudgetCategory.etc], 14000);
-      final rows = usecase.categoryBreakdown(txs, const [pet]);
+      expect(usecase.categorySummary(txs, const CategoryCatalog([pet]))[BudgetCategory.etc], 14000);
+      final rows = usecase.categoryBreakdown(txs, const CategoryCatalog([pet]));
       expect(rows.fold<int>(0, (s, r) => s + r.amount), 14000);
     });
 
@@ -122,13 +125,13 @@ void main() {
         Transaction.create(
             amount: 5000, categoryId: 1, date: DateTime(2026, 6, 1),
             type: TransactionType.income),
-      ], const [pet, study]);
+      ], const CategoryCatalog([pet, study]));
       expect(rows.length, 1);
       expect(rows.single.base, BudgetCategory.transport);
     });
 
     test('unknown custom id falls back to the base category', () {
-      final rows = usecase.categoryBreakdown([custom(3000, 'gone', 12)], const []);
+      final rows = usecase.categoryBreakdown([custom(3000, 'gone', 12)], const CategoryCatalog());
       expect(rows.single.custom, isNull);
       expect(rows.single.base, BudgetCategory.etc);
     });
@@ -141,9 +144,10 @@ void main() {
       expect(usecase.effectiveIncome(txIncome: 1000000), 1000000);
     });
 
-    test('savingsRatePercent rounds and guards zero income', () {
+    // 소득이 없으면 저축률은 0%가 아니라 계산할 수 없는 값(null)이다.
+    test('savingsRatePercent rounds and is null without income', () {
       expect(usecase.savingsRatePercent(income: 3000000, expense: 2100000), 30);
-      expect(usecase.savingsRatePercent(income: 0, expense: 500000), 0);
+      expect(usecase.savingsRatePercent(income: 0, expense: 500000), isNull);
       expect(usecase.savingsRatePercent(income: 1000000, expense: 1200000), -20);
     });
   });

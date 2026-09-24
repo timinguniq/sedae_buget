@@ -16,26 +16,18 @@ class TransactionEditPage extends ConsumerStatefulWidget {
 }
 
 class _State extends ConsumerState<TransactionEditPage> {
-  late KeypadInput _amount;
-  late TransactionType _type;
-  late BudgetCategory _category;
-
-  /// 선택한 사용자 카테고리. null이면 [_category] 기본 분류 그대로.
-  String? _customCategoryId;
-  late DateTime _date;
+  /// 입력 규칙은 draft가 가진다. 화면은 탭·입력을 draft 연산으로 옮기기만 한다.
+  late TransactionDraft _draft;
   late final TextEditingController _memo;
-  bool get _isEdit => widget.existing != null;
 
   @override
   void initState() {
     super.initState();
     final e = widget.existing;
-    _amount = KeypadInput(e?.amount ?? 0);
-    _type = e?.type ?? TransactionType.expense;
-    _category = e == null ? BudgetCategory.food : BudgetCategory.fromId(e.categoryId);
-    _customCategoryId = e?.customCategoryId;
-    _date = e?.date ?? DateTime.now();
-    _memo = TextEditingController(text: e?.memo ?? '');
+    _draft = e == null
+        ? TransactionDraft.create(DateTime.now())
+        : TransactionDraft.edit(e, CategoryCatalog(ref.read(customCategoriesProvider).value ?? const []));
+    _memo = TextEditingController(text: _draft.memo);
   }
 
   @override
@@ -45,15 +37,9 @@ class _State extends ConsumerState<TransactionEditPage> {
   }
 
   Future<void> _save() async {
-    if (_amount.amount <= 0) return;
-    final notifier = ref.read(monthlyTransactionsProvider.notifier);
-    final memo = _memo.text.trim().isEmpty ? null : _memo.text.trim();
-    final res = _isEdit
-        ? await notifier.edit(widget.existing!.copyWith(
-            amount: _amount.amount, categoryId: _category.id, date: _date, type: _type,
-            memo: memo, customCategoryId: _customCategoryId))
-        : await notifier.add(amount: _amount.amount, categoryId: _category.id, date: _date,
-            type: _type, memo: memo, customCategoryId: _customCategoryId);
+    final draft = _draft.withMemo(_memo.text);
+    if (!draft.canSave) return;
+    final res = await ref.read(monthlyTransactionsProvider.notifier).save(draft);
     _closeOr(res, '저장하지 못했어요');
   }
 
@@ -79,27 +65,20 @@ class _State extends ConsumerState<TransactionEditPage> {
   Future<void> _addCategory() async {
     final created = await CategoryEditSheet.show(context);
     if (created == null || !mounted) return;
-    setState(() {
-      _category = created.base;
-      _customCategoryId = created.id;
-    });
+    setState(() => _draft = _draft.pickCustom(created));
   }
 
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
-      context: context, initialDate: _date,
+      context: context, initialDate: _draft.date,
       firstDate: DateTime(2020), lastDate: DateTime(2100));
-    if (picked != null) setState(() => _date = picked);
+    if (picked != null) setState(() => _draft = _draft.withDate(picked));
   }
 
   @override
   Widget build(BuildContext context) {
     final won = NumberFormat.decimalPattern('ko');
     final customs = ref.watch(customCategoriesProvider).value ?? const <CustomCategory>[];
-    // 방금 만든 카테고리는 목록 갱신 전일 수 있어 없으면 기본 분류 이름으로.
-    final custom = customs.cast<CustomCategory?>().firstWhere(
-        (c) => c!.id == _customCategoryId, orElse: () => null);
-    final selectedLabel = custom?.name ?? _category.label;
     return DefaultLayout(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(22, 6, 22, 22),
@@ -107,8 +86,8 @@ class _State extends ConsumerState<TransactionEditPage> {
           Row(children: [
             RoundIconButton(icon: Icons.close, onTap: () => context.pop()),
             const Spacer(),
-            TypeSegmented(value: _type, onChanged: (t) => setState(() => _type = t)),
-            if (_isEdit) ...[
+            TypeSegmented(value: _draft.type, onChanged: (t) => setState(() => _draft = _draft.withType(t))),
+            if (_draft.isEdit) ...[
               const SizedBox(width: 10),
               RoundIconButton(key: const Key('delete-button'), icon: Icons.delete_outline, onTap: _delete),
             ],
@@ -117,9 +96,9 @@ class _State extends ConsumerState<TransactionEditPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 22),
-              Center(child: _CategoryPill(label: selectedLabel)),
+              Center(child: _CategoryPill(label: _draft.label(CategoryCatalog(customs)))),
               const SizedBox(height: 14),
-              Text('₩${won.format(_amount.amount)}',
+              Text('₩${won.format(_draft.amount)}',
                   textAlign: TextAlign.center,
                   style: context.typo.amountHero.copyWith(color: context.color.label.normal)),
               const SizedBox(height: 5),
@@ -143,30 +122,27 @@ class _State extends ConsumerState<TransactionEditPage> {
                   child: Row(mainAxisSize: MainAxisSize.min, children: [
                     Icon(Icons.calendar_today_outlined, size: 14, color: context.color.label.assistive),
                     const SizedBox(width: 6),
-                    Text(DateFormat('yyyy.M.d', 'ko').format(_date),
+                    Text(DateFormat('yyyy.M.d', 'ko').format(_draft.date),
                         style: context.typo.caption1W600.copyWith(color: context.color.label.alternative)),
                   ]),
                 ),
               )),
               const SizedBox(height: 14),
               _CategoryChips(
-                selected: _category,
-                selectedCustomId: _customCategoryId,
+                selected: _draft.base,
+                selectedCustomId: _draft.customCategoryId,
                 customs: customs,
-                onPickBase: (c) => setState(() {
-                  _category = c;
-                  _customCategoryId = null;
-                }),
-                onPickCustom: (c) => setState(() {
-                  _category = c.base;
-                  _customCategoryId = c.id;
-                }),
+                onPickBase: (c) => setState(() => _draft = _draft.pickBase(c)),
+                onPickCustom: (c) => setState(() => _draft = _draft.pickCustom(c)),
                 onAdd: _addCategory,
               ),
             ],
           ))),
           const SizedBox(height: 12),
-          AmountKeypad(value: _amount, onChanged: (v) => setState(() => _amount = v)),
+          AmountKeypad(
+            value: KeypadInput(_draft.amount),
+            onChanged: (v) => setState(() => _draft = _draft.withAmount(v.amount)),
+          ),
           const SizedBox(height: 12),
           SizedBox(width: double.infinity, child: FilledButton(
             key: const Key('save-button'),

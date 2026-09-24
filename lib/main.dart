@@ -15,7 +15,6 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'core/app_config/remote_config.dart';
 import 'core/util/logger/custom_logger.dart';
 import 'package:provider/provider.dart' as provider;
 
@@ -34,6 +33,7 @@ Future<void> main() async {
       configurePeerDependencies();
       configureUserDependencies();
       configureAdDependencies(await SharedPreferences.getInstance());
+      configureAppStatusDependencies();
       unawaited(locator<AdService>().initialize()); // 부팅을 막지 않고 미리 워밍업
 
       //await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -42,10 +42,8 @@ Future<void> main() async {
         FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
         await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
         await FirebaseAnalytics.instance.setAnalyticsCollectionEnabled(!kDebugMode);
-
-        await RemoteConfig.initialize();
       } catch (e, s) {
-        _logger.w('Firebase/RemoteConfig unavailable (local boot): $e', stackTrace: s);
+        _logger.w('Firebase unavailable (local boot): $e', stackTrace: s);
       }
 
       await SystemChrome.setPreferredOrientations([
@@ -80,6 +78,14 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 쓰는 중에 점검·업데이트가 걸리면 지금 화면 위에 안내한다(앱을 켤 때는 스플래시가 안내한다).
+    ref.listen(appStatusUpdatesProvider, (_, next) {
+      final navigator = rootNavigatorKey.currentContext;
+      final status = next.value;
+      if (navigator != null && status != null) {
+        unawaited(showAppStatusDialog(navigator, status, exitApp: ref.read(appExitProvider)));
+      }
+    });
     return MaterialApp.router(
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),

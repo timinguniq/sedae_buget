@@ -1,7 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:sedae_budget/entity/budget/budget_category.dart';
-import 'package:sedae_budget/entity/budget/transaction.dart';
 
 part 'custom_category.freezed.dart';
 part 'custom_category.g.dart';
@@ -34,19 +33,4 @@ abstract class CustomCategory with _$CustomCategory {
   static const maxNameLength = 10;
 
   BudgetCategory get base => BudgetCategory.fromId(baseCategoryId);
-}
-
-extension CustomCategoryListX on List<CustomCategory> {
-  /// id로 찾기. [id]가 null이거나 없는 id면 null.
-  CustomCategory? byId(String? id) {
-    if (id == null) return null;
-    for (final c in this) {
-      if (c.id == id) return c;
-    }
-    return null;
-  }
-
-  /// 거래에 표시할 카테고리 이름. 커스텀 카테고리가 지정돼 있으면 그 이름, 아니면 기본 분류 이름.
-  String labelFor(Transaction tx) =>
-      byId(tx.customCategoryId)?.name ?? BudgetCategory.fromId(tx.categoryId).label;
 }

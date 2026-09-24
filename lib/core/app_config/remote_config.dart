@@ -1,155 +1,81 @@
-
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:firebase_remote_config/firebase_remote_config.dart';
-import 'package:flutter/material.dart';
-import 'package:sedae_budget/core/core.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sedae_budget/core/util/logger/custom_logger.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
-import 'package:sedae_budget/theme/theme.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-final _logger = CustomLogger.create(tag: (RemoteConfig).toString());
+final _logger = CustomLogger.create(tag: 'RemoteConfig');
 
-abstract class RemoteConfig {
-  RemoteConfig._();
+/// 앱 이용 가능 여부(점검·업데이트)를 판정할 재료: 원격 시작 정보와 설치된 빌드 번호.
+/// 판정([AppStatus.of])과 안내 화면은 이 파일 밖에 있다.
+abstract class AppStatusSource {
+  /// 원격 시작 정보. 원격 설정을 쓸 수 없거나(Firebase 미초기화 등) 값이 없으면 null.
+  Future<AppInitialInfo?> fetchInitialInfo();
 
-  static final _instance = FirebaseRemoteConfig.instance;
+  /// 앱을 쓰는 중에 원격 시작 정보가 바뀌면 알린다.
+  Stream<AppInitialInfo> get initialInfoUpdates;
 
-  static AppInitialInfo _initialInfo = AppInitialInfo.empty(currentBuild: CPackageInfo.buildNumber);
+  /// 설치된 앱의 빌드 번호. 읽을 수 없으면 null.
+  Future<int?> currentBuild();
+}
 
-  static Future<void> initialize() async {
-    _logger.i('initialize() : start.');
-    await _instance.setConfigSettings(
-      RemoteConfigSettings(
-        fetchTimeout: const Duration(minutes: 2),
-        minimumFetchInterval: const Duration(hours: 1),
-      ),
-    );
+/// Firebase Remote Config의 `initialInfo`(JSON) 값을 읽는다.
+class FirebaseAppStatusSource implements AppStatusSource {
+  static const _key = 'initialInfo';
 
-    /// Set event listener
-    _instance.onConfigUpdated.listen((event) async {
-      _logger.i('onConfigUpdated.listen($event) : start.');
-      await _instance.activate();
-      await checkServiceAvailable();
-    });
-
-    await _instance.fetch();
-    final isActive = await _instance.activate();
-    _logger.d('initialize() : isActive=$isActive');
-
-    await _retryFetchUntilSuccess(3, 500);
-
-    await _loadAppInitialInfo();
-  }
-
-  static Future<bool?> checkServiceAvailable() async {
-    _logger.d('checkServiceAvailable() : start.');
-    if (const String.fromEnvironment('env').isNotEmpty) {
-      return true;
-    }
-
-    if (!_initialInfo.serviceStatus.available) {
-      await _serviceUnavailableDialog();
-      return false;
-    }
-
-    final appVersion = Platform.isIOS ? _initialInfo.ios : _initialInfo.android;
-    if (CPackageInfo.buildNumber < appVersion.releaseVersion) {
-      await _appUpdateDialog(appVersion);
-    }
-
-    return true;
-  }
-
-  static AppEnvironment getAppEnvironment() {
-    final appVersion = Platform.isIOS ? _initialInfo.ios : _initialInfo.android;
-    return CPackageInfo.buildNumber > appVersion.releaseVersion ? AppEnvironment.staging : AppEnvironment.prod;
-  }
-
-  static Future<void> _retryFetchUntilSuccess(int maxAttempts, int milliseconds) async {
-    for (var attempt = 0; attempt < maxAttempts; attempt++) {
-      if (_instance.lastFetchStatus == RemoteConfigFetchStatus.success) {
-        _logger.d('Fetching remote config Success.');
-        return;
-      }
-
-      await Future.delayed(Duration(milliseconds: milliseconds));
-    }
-    _logger.w('Fetching remote config failed. lastFetchStatus=${_instance.lastFetchStatus}');
-  }
-
-  static Future<void> _loadAppInitialInfo() async {
+  @override
+  Future<AppInitialInfo?> fetchInitialInfo() async {
     try {
-      _initialInfo = AppInitialInfo.fromJson(jsonDecode(_instance.getString('initialInfo')));
-      _logger.d('Successfully loaded initialInfo=$_initialInfo');
-    } catch (e, st) {
-      _logger.e('Failed to load initialInfo=${_instance.getString('initialInfo')}', error: e, stackTrace: st);
+      final config = FirebaseRemoteConfig.instance;
+      await config.setConfigSettings(
+        RemoteConfigSettings(
+          fetchTimeout: const Duration(minutes: 2),
+          minimumFetchInterval: const Duration(hours: 1),
+        ),
+      );
+      await config.fetchAndActivate();
+      return _parse(config.getString(_key));
+    } catch (e, s) {
+      _logger.w('fetchInitialInfo() : 원격 설정을 쓸 수 없음 — 판정하지 않는다. $e', stackTrace: s);
+      return null;
     }
   }
 
-  static Future<void> _appUpdateDialog(AppVersion appVersion) async {
-    _logger.i('_appUpdateDialog($appVersion) : current=${CPackageInfo.version}(${CPackageInfo.buildNumber})');
-    final isAvailableVersion = CPackageInfo.buildNumber >= appVersion.minimumAvailableVersion;
-    final isUpdate = await showDialog<bool>(
-      context: rootNavigatorKey.currentContext!,
-      barrierColor: Palette.materialScrim13,
-      barrierDismissible: false,
-      builder: (context) {
-        return CDialog(
-          title: 'App update required',
-          description: 'Get the latest app update for an even better experience!',
-          buttons: [
-            if (isAvailableVersion)
-              CDialogButton(label: 'Close', result: false, color: Palette.fillGrey, labelColor: Palette.labelNeutral),
-            CDialogButton(label: 'Update', result: true),
-          ],
-        );
-      },
-    );
-    if (isAvailableVersion && isUpdate != true) {
-      CRoute.pop();
-      return;
+  @override
+  Stream<AppInitialInfo> get initialInfoUpdates {
+    final FirebaseRemoteConfig config;
+    try {
+      config = FirebaseRemoteConfig.instance;
+    } catch (e) {
+      _logger.w('initialInfoUpdates : 원격 설정을 쓸 수 없음 — 갱신을 듣지 않는다. $e');
+      return const Stream.empty();
     }
-
-    unawaited(_moveToUpdate(appVersion.link));
-    Future.delayed(const Duration(seconds: 1), () => exit(0));
+    return config.onConfigUpdated.asyncExpand((_) async* {
+      await config.activate();
+      final info = _parse(config.getString(_key));
+      if (info != null) yield info;
+    });
   }
 
-  static Future<void> _serviceUnavailableDialog() async {
-    _logger.i('_serviceUnavailableDialog(): current=${CPackageInfo.version}(${CPackageInfo.buildNumber})');
-    await showDialog<bool>(
-      context: rootNavigatorKey.currentContext!,
-      barrierColor: Palette.materialScrim13,
-      barrierDismissible: false,
-      builder: (context) => CDialog(
-        title: _initialInfo.serviceStatus.noticeTitle,
-        description: _initialInfo.serviceStatus.noticeContent,
-        buttons: [
-          CDialogButton(
-            label: 'Check Back Soon',
-            result: true,
-            color: Palette.primaryStrong,
-            labelColor: Palette.labelWhite,
-          ),
-        ],
-      ),
-    );
-    Future.delayed(const Duration(seconds: 1), () => exit(0));
+  @override
+  Future<int?> currentBuild() async {
+    try {
+      return int.tryParse((await PackageInfo.fromPlatform()).buildNumber);
+    } catch (e) {
+      _logger.w('currentBuild() : 빌드 번호를 읽지 못함. $e');
+      return null;
+    }
   }
 
-  static Future<bool> _moveToUpdate(String url) async {
-    if (!await canLaunchUrl(
-      Uri.parse(url),
-    )) {
-      _logger.e('Failed to launch url: $url');
-      return false;
+  AppInitialInfo? _parse(String raw) {
+    if (raw.isEmpty) return null;
+    try {
+      return AppInitialInfo.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+    } catch (e, s) {
+      _logger.e('_parse() : initialInfo 형식이 잘못됨: $raw', error: e, stackTrace: s);
+      return null;
     }
-    return launchUrl(
-      Uri.parse(url),
-      mode: LaunchMode.externalApplication,
-    );
   }
 }
