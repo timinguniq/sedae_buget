@@ -50,6 +50,7 @@ void main() {
     WidgetTester tester, {
     List<CustomCategory> customs = const [],
     TransactionRepository? repository,
+    Transaction? existing,
   }) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
@@ -58,6 +59,7 @@ void main() {
 
     final repo = _CapturingRepo();
     final container = fakeContainer(
+      user: testUser,
       transactions: repository ?? repo,
       categories: InMemoryCategoryRepository(customs),
     );
@@ -65,7 +67,7 @@ void main() {
       initialLocation: '/',
       routes: [
         GoRoute(path: '/', builder: (_, _) => const Scaffold(body: SizedBox.shrink())),
-        GoRoute(path: '/edit', builder: (_, _) => const TransactionEditPage()),
+        GoRoute(path: '/edit', builder: (_, _) => TransactionEditPage(existing: existing)),
       ],
     );
     await tester.pumpWidget(
@@ -136,6 +138,24 @@ void main() {
 
     expect(repo.saved?.customCategoryId, 'c1');
     expect(repo.saved?.categoryId, BudgetCategory.etc.id);
+  });
+
+  // 자기계발을 오락·문화로 옮기기 전에 기타로 적힌 거래를 다시 저장해도 옛 분류가 되살아나지 않는다.
+  testWidgets('기존 거래를 저장하면 사용자 카테고리의 현재 상위 분류를 따른다', (tester) async {
+    final stale = Transaction.create(
+      amount: 1000, categoryId: BudgetCategory.etc.id, date: DateTime(2026, 6, 5),
+      type: TransactionType.expense, customCategoryId: 'c2',
+    );
+    final repo = await pumpEditPage(tester,
+        customs: const [CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 9)],
+        existing: stale);
+
+    await tester.tap(find.byKey(const Key('save-button')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(repo.saved?.customCategoryId, 'c2');
+    expect(repo.saved?.categoryId, BudgetCategory.recreation.id);
   });
 
   // 추가 칩 → 시트에서 만든 카테고리가 곧바로 이 거래에 선택돼야 한다.

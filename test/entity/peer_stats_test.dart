@@ -16,6 +16,16 @@ void main() {
     samples: List.generate(99, (i) => 1000000 + i * 20000), // 1.0M ~ 2.96M
   );
 
+  // 홈 저축률 카드와 비교 화면 막대가 같은 반올림 규칙을 쓴다.
+  test('avgSavingsRatePercent는 비율을 반올림한 %', () {
+    expect(stats.avgSavingsRatePercent, 20);
+    PeerStats withRate(double r) => PeerStats(
+        ageGroup: AgeGroup.thirties, avgMonthlyExpense: 0, avgSavingsRate: r,
+        avgByCategory: const {}, samples: const []);
+    expect(withRate(0.235).avgSavingsRatePercent, 24);
+    expect(withRate(0.234).avgSavingsRatePercent, 23);
+  });
+
   test('diffPercent sign', () {
     expect(stats.diffPercent(1800000), lessThan(0));
     expect(stats.diffPercent(2200000), greaterThan(0));

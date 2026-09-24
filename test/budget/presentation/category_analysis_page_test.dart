@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/domain/repository/category_repository.dart';
-import 'package:sedae_budget/domain/repository/transaction_repository.dart';
+import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
@@ -41,11 +40,13 @@ Widget _app(
   List<Transaction> list, [
   List<CustomCategory> customs = const [],
   CategoryRepository? categoryRepository,
+  PeerStatsRepository? peerRepository,
 ]) {
   final container = fakeContainer(
+    user: testUser,
     transactions: _Repo(list),
     categories: categoryRepository ?? InMemoryCategoryRepository(customs),
-    peerRepository: FakePeerStatsRepository(),
+    peerRepository: peerRepository ?? FakePeerStatsRepository(),
   );
   return provider.ChangeNotifierProvider(
     create: (_) => ThemeService(),
@@ -84,6 +85,19 @@ void main() {
     await tester.pump();
     await tester.pump();
     expect(find.text(label(DateTime(now.year, now.month + 1))), findsOneWidget);
+  });
+
+  // 또래 통계가 실패해도 내 분석은 보인다. 또래 비교 토글만 빠진다.
+  testWidgets('또래 통계를 못 읽어도 분석이 보이고 또래 토글은 없다', (tester) async {
+    await tester.pumpWidget(_app([
+      Transaction.create(amount: 10000, categoryId: 7, date: DateTime(2026, 6, 5), type: TransactionType.expense),
+    ], const [], null, FailingPeerStatsRepository()));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.byType(CategoryDonut), findsOneWidget);
+    expect(find.byType(CategoryRow), findsOneWidget);
+    expect(find.byType(Switch), findsNothing);
   });
 
   testWidgets('shows empty state when no expenses', (tester) async {

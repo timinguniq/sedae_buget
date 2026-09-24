@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
-import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 class CategoryAnalysisPage extends ConsumerStatefulWidget {
@@ -20,8 +19,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
   @override
   Widget build(BuildContext context) {
     final month = ref.watch(selectedMonthProvider);
-    final asyncBreakdown = ref.watch(categoryBreakdownProvider);
-    final asyncPeer = ref.watch(peerStatsProvider);
+    final overview = ref.watch(monthOverviewProvider);
     return DefaultLayout(
       child: Column(children: [
         _Header(
@@ -29,13 +27,12 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
           onPrev: () => ref.read(selectedMonthProvider.notifier).prev(),
           onNext: () => ref.read(selectedMonthProvider.notifier).next(),
         ),
-        Expanded(child: asyncPeer.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('또래 통계 실패: $e')),
-        data: (peer) => asyncBreakdown.when(
+        Expanded(child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('불러오기 실패: $e')),
-        data: (breakdown) {
+        data: (o) {
+          final breakdown = o.breakdown;
+          final peer = o.peer;
           if (breakdown.isEmpty) {
             return Center(child: Text('지출이 없어요',
                 style: context.typo.body2W400.copyWith(color: context.color.label.alternative)));
@@ -71,15 +68,17 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
               ]),
             )),
             const SizedBox(height: 16),
-            // 또래 비교 토글 (디자인 42×24 코랄 토글 — 테마 Switch를 축소)
-            Row(children: [
-              Text('또래 평균과 비교',
-                  style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.normal)),
-              const Spacer(),
-              SizedBox(height: 24, child: FittedBox(
-                child: Switch(value: _showPeer, onChanged: (v) => setState(() => _showPeer = v)))),
-            ]),
-            const SizedBox(height: 13),
+            // 또래 비교 토글 (디자인 42×24 코랄 토글 — 테마 Switch를 축소). 또래 통계가 없으면 뺀다.
+            if (peer != null) ...[
+              Row(children: [
+                Text('또래 평균과 비교',
+                    style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.normal)),
+                const Spacer(),
+                SizedBox(height: 24, child: FittedBox(
+                  child: Switch(value: _showPeer, onChanged: (v) => setState(() => _showPeer = v)))),
+              ]),
+              const SizedBox(height: 13),
+            ],
             // 카테고리 개수 + 편집 진입(디자인: 분석 화면 → 카테고리 편집)
             Row(children: [
               Text('카테고리 ${breakdown.length}개',
@@ -95,7 +94,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
             const SizedBox(height: 1),
             ...List.generate(labels.length, (i) {
               final cat = cats[i];
-              final peerAmt = (_showPeer && cat != null) ? peer.avgByCategory[cat] : null;
+              final peerAmt = (_showPeer && cat != null) ? peer?.avgByCategory[cat] : null;
               return CategoryRow(
                   label: labels[i], amount: values[i],
                   color: colors[i], percent: values[i] / total,
@@ -103,7 +102,6 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
             }),
           ]);
         },
-        ),
         )),
       ]),
     );

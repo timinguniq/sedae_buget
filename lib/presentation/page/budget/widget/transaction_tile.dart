@@ -10,27 +10,26 @@ class TransactionTile extends StatelessWidget {
   const TransactionTile({
     super.key,
     required this.tx,
+    required this.label,
     this.onTap,
     this.overPeer = false,
-    this.label,
   });
   final Transaction tx;
   final VoidCallback? onTap;
   // 또래 평균 초과 배지(빈도 데이터 부재 → 카테고리 지출 초과로 근사).
   final bool overPeer;
 
-  /// 표시할 카테고리 이름. null이면 기본 분류 이름(사용자 카테고리 이름을 넘길 때 쓴다).
-  final String? label;
+  /// 표시할 카테고리 이름. [CategoryCatalog.of]로 판정한 이름을 넘긴다(사용자 카테고리면 그 이름).
+  final String label;
 
   @override
   Widget build(BuildContext context) {
     final won = NumberFormat.decimalPattern('ko');
-    final catLabel = label ?? BudgetCategory.fromId(tx.categoryId).label;
     final isExpense = tx.type == TransactionType.expense;
     final memo = tx.memo?.trim() ?? '';
-    final title = memo.isEmpty ? catLabel : memo;
+    final title = memo.isEmpty ? label : memo;
     final hasTime = tx.date.hour != 0 || tx.date.minute != 0;
-    final subtitle = hasTime ? '$catLabel · ${DateFormat('HH:mm').format(tx.date)}' : catLabel;
+    final subtitle = hasTime ? '$label · ${DateFormat('HH:mm').format(tx.date)}' : label;
     return InkWell(
       onTap: onTap,
       child: Padding(
@@ -43,7 +42,7 @@ class TransactionTile extends StatelessWidget {
               color: context.color.background.alternative,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(catLabel.isEmpty ? '' : catLabel.substring(0, 1),
+            child: Text(label.isEmpty ? '' : label.substring(0, 1),
                 style: context.typo.label2W600.copyWith(
                     fontWeight: context.typo.bold, color: context.color.label.alternative)),
           ),

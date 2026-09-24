@@ -6,7 +6,6 @@ import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_feed.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/day_ad_banner.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/transaction_tile.dart';
-import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/compare_format.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
@@ -27,28 +26,17 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
     // 달이 바뀌면 필터 칩 목록도 바뀌므로 필터를 '전체'로 되돌린다.
     ref.listen(selectedMonthProvider, (_, _) => setState(() => _filter = null));
     final month = ref.watch(selectedMonthProvider);
-    final asyncTxs = ref.watch(monthlyTransactionsProvider);
-    final asyncPeer = ref.watch(peerStatsProvider);
-    final summary = ref.watch(monthlySummaryProvider);
-    final customs = ref.watch(customCategoriesProvider).value ?? const <CustomCategory>[];
+    final overview = ref.watch(monthOverviewProvider);
     return DefaultLayout(
-      child: asyncPeer.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('또래 통계 실패: $e')),
-        data: (peer) => asyncTxs.when(
+      child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('불러오기 실패: $e')),
-        data: (txs) {
-          final s = summary.requireValue;
-          final mySummary = s.byCategory;
-          final topCats = (mySummary.entries.where((e) => e.value > 0).toList()
-                ..sort((a, b) => b.value.compareTo(a.value)))
-              .take(4)
-              .map((e) => e.key)
-              .toList();
+        data: (o) {
+          final txs = o.transactions;
+          final topCats = o.topCategories(4).map((e) => e.key).toList();
           final filtered = _filter == null
               ? txs
-              : txs.where((t) => BudgetCategory.fromId(t.categoryId) == _filter).toList();
+              : txs.where((t) => o.catalog.of(t).base == _filter).toList();
           return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
@@ -58,7 +46,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                   _MonthChip(month: month),
                 ]),
                 const SizedBox(height: 4),
-                Text('이번 달 ${manWon(s.expense)}원 · ${txs.length}건',
+                Text('이번 달 ${manWon(o.expense)}원 · ${txs.length}건',
                     style: context.typo.caption1W500.copyWith(color: context.color.label.assistive)),
                 const SizedBox(height: 13),
                 SingleChildScrollView(
@@ -101,14 +89,10 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                             FeedAdSlot(:final day) => DayAdBanner(key: ValueKey(day)),
                             FeedTransaction(:final transaction) => TransactionTile(
                                 tx: transaction,
-                                label: customs.labelFor(transaction),
+                                label: o.catalog.of(transaction).label,
                                 onTap: () => context.push(RoutePath.transactionEdit.path,
                                     extra: transaction),
-                                overPeer: transaction.type == TransactionType.expense &&
-                                    (mySummary[BudgetCategory.fromId(transaction.categoryId)] ?? 0) >
-                                        (peer.avgByCategory[
-                                                BudgetCategory.fromId(transaction.categoryId)] ??
-                                            0),
+                                overPeer: o.overPeer(transaction),
                               ),
                           },
                       ],
@@ -116,7 +100,6 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
             ),
           ]);
         },
-        ),
       ),
     );
   }

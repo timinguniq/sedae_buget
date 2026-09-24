@@ -26,7 +26,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
 
-    await tester.pumpWidget(_wrap(SizedBox(width: 390, child: TransactionTile(tx: tx, overPeer: true))));
+    await tester.pumpWidget(_wrap(SizedBox(width: 390, child: TransactionTile(tx: tx, label: BudgetCategory.food.label, overPeer: true))));
     await tester.pump();
 
     expect(find.text('또래보다 잦음'), findsOneWidget);
@@ -37,7 +37,7 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
 
-    await tester.pumpWidget(_wrap(SizedBox(width: 390, child: TransactionTile(tx: tx))));
+    await tester.pumpWidget(_wrap(SizedBox(width: 390, child: TransactionTile(tx: tx, label: BudgetCategory.food.label))));
     await tester.pump();
 
     expect(find.text('또래보다 잦음'), findsNothing);
@@ -58,7 +58,7 @@ void main() {
       memo: '오늘 마트에서 장 봤어요 그리고 또 다른 것도 많이 샀습니다 정말로',
     );
 
-    await tester.pumpWidget(_wrap(SizedBox(width: 390, child: TransactionTile(tx: longTx, overPeer: true))));
+    await tester.pumpWidget(_wrap(SizedBox(width: 390, child: TransactionTile(tx: longTx, label: BudgetCategory.food.label, overPeer: true))));
     await tester.pump();
 
     expect(find.text('또래보다 잦음'), findsOneWidget);

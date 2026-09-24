@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
-import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/category_battle_row.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/compare_format.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/distribution_histogram.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/insight_banner.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/rank_headline.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/versus_bar_card.dart';
-import 'package:sedae_budget/presentation/page/report/report.view_model.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 세대 비교 화면. 상단 시안 A(등수·분포·나 vs 또래·저축률) + 하단 시안 B(항목별 차이·인사이트).
@@ -19,21 +17,17 @@ class ComparePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final asyncPeer = ref.watch(peerStatsProvider);
-    final asyncTxs = ref.watch(monthlyTransactionsProvider);
-    final summary = ref.watch(monthlySummaryProvider);
-    final savingsRate = ref.watch(savingsRateProvider) ?? 0;
+    final overview = ref.watch(monthOverviewProvider);
 
     return DefaultLayout(
-      child: asyncPeer.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('또래 통계 실패: $e')),
-        data: (peer) => asyncTxs.when(
+      child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('$e')),
-        data: (txs) {
-          final s = summary.requireValue;
-          final myExpense = s.expense;
+        data: (o) {
+          // 또래 통계가 이 화면의 본질이라, 못 읽으면 화면 전체를 안내로 바꾼다.
+          final peer = o.peer;
+          if (peer == null) return const Center(child: Text(MonthOverview.peerUnavailable));
+          final myExpense = o.expense;
           if (myExpense == 0) {
             return Center(
               child: Padding(
@@ -48,16 +42,14 @@ class ComparePage extends ConsumerWidget {
               ),
             );
           }
-          final mySummary = s.byCategory;
-          final top6 = (mySummary.entries.toList()
-                ..sort((a, b) => b.value.compareTo(a.value)))
-              .take(6)
-              .toList();
+          final top6 = o.topCategories(6);
           final peerAvg = peer.avgMonthlyExpense;
           final expenseMax = (myExpense > peerAvg ? myExpense : peerAvg).clamp(1, 1 << 62);
           final diffWon = myExpense - peerAvg;
-          final peerSavings = (peer.avgSavingsRate * 100).round();
-          final savingsMax = [savingsRate, peerSavings, 1].reduce((a, b) => a > b ? a : b);
+          // 소득이 없으면 내 저축률은 계산할 수 없다: 막대는 0, 값은 '—'.
+          final savingsRate = o.savingsRate;
+          final peerSavings = peer.avgSavingsRatePercent;
+          final savingsMax = [savingsRate ?? 0, peerSavings, 1].reduce((a, b) => a > b ? a : b);
           // 또래 평균을 가장 끌어올리는 항목(또래 평균 지출 최대 카테고리).
           MapEntry<BudgetCategory, int>? peerTop;
           for (final e in peer.avgByCategory.entries) {
@@ -97,9 +89,9 @@ class ComparePage extends ConsumerWidget {
                 title: '소득 대비 저축률',
                 barHeight: 16,
                 // 큰 쪽이 폭의 70%가 되도록 스케일(디자인 비율).
-                mineFraction: savingsRate / (savingsMax / 0.7),
+                mineFraction: (savingsRate ?? 0) / (savingsMax / 0.7),
                 peerFraction: peerSavings / (savingsMax / 0.7),
-                mineText: '$savingsRate%',
+                mineText: savingsRate == null ? '—' : '$savingsRate%',
                 peerText: '$peerSavings%',
               ),
               const SizedBox(height: 18),
@@ -122,7 +114,6 @@ class ComparePage extends ConsumerWidget {
             ],
           );
         },
-        ),
       ),
     );
   }

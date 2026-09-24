@@ -40,6 +40,9 @@ extension PeerStatsX on PeerStats {
     return (rank: higher + 1, total: samples.length + 1);
   }
 
+  /// 또래 평균 저축률(%, 반올림). 화면의 저축률 비교는 모두 이 값을 쓴다.
+  int get avgSavingsRatePercent => (avgSavingsRate * 100).round();
+
   /// 또래 평균 대비 증감률(%). 음수면 또래보다 덜 씀.
   int diffPercent(int userExpense) =>
       peerDeltaPercent(mine: userExpense, peer: avgMonthlyExpense);

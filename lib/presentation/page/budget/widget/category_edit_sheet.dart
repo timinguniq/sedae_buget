@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/category_manage.view_model.dart';
+import 'package:sedae_budget/presentation/page/budget/ledger.view_model.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 카테고리 추가·수정 바텀시트. [existing]이 null이면 추가.

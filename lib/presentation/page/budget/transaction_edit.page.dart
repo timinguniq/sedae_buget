@@ -32,7 +32,9 @@ class _State extends ConsumerState<TransactionEditPage> {
     final e = widget.existing;
     _amount = KeypadInput(e?.amount ?? 0);
     _type = e?.type ?? TransactionType.expense;
-    _category = e == null ? BudgetCategory.food : BudgetCategory.fromId(e.categoryId);
+    _category = e == null
+        ? BudgetCategory.food
+        : CategoryCatalog(ref.read(customCategoriesProvider).value ?? const []).of(e).base;
     _customCategoryId = e?.customCategoryId;
     _date = e?.date ?? DateTime.now();
     _memo = TextEditingController(text: e?.memo ?? '');
@@ -48,11 +50,16 @@ class _State extends ConsumerState<TransactionEditPage> {
     if (_amount.amount <= 0) return;
     final notifier = ref.read(monthlyTransactionsProvider.notifier);
     final memo = _memo.text.trim().isEmpty ? null : _memo.text.trim();
+    // 사용자 카테고리를 골랐으면 그 카테고리의 현재 상위 분류로 저장한다(거래에 적힌 분류가 낡았을 수 있다).
+    final base = CategoryCatalog(ref.read(customCategoriesProvider).value ?? const [])
+            .byId(_customCategoryId)
+            ?.base ??
+        _category;
     final res = _isEdit
         ? await notifier.edit(widget.existing!.copyWith(
-            amount: _amount.amount, categoryId: _category.id, date: _date, type: _type,
+            amount: _amount.amount, categoryId: base.id, date: _date, type: _type,
             memo: memo, customCategoryId: _customCategoryId))
-        : await notifier.add(amount: _amount.amount, categoryId: _category.id, date: _date,
+        : await notifier.add(amount: _amount.amount, categoryId: base.id, date: _date,
             type: _type, memo: memo, customCategoryId: _customCategoryId);
     _closeOr(res, '저장하지 못했어요');
   }
@@ -97,9 +104,7 @@ class _State extends ConsumerState<TransactionEditPage> {
     final won = NumberFormat.decimalPattern('ko');
     final customs = ref.watch(customCategoriesProvider).value ?? const <CustomCategory>[];
     // 방금 만든 카테고리는 목록 갱신 전일 수 있어 없으면 기본 분류 이름으로.
-    final custom = customs.cast<CustomCategory?>().firstWhere(
-        (c) => c!.id == _customCategoryId, orElse: () => null);
-    final selectedLabel = custom?.name ?? _category.label;
+    final selectedLabel = CategoryCatalog(customs).byId(_customCategoryId)?.name ?? _category.label;
     return DefaultLayout(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(22, 6, 22, 22),

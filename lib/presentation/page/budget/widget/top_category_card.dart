@@ -4,28 +4,23 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_delta_badge.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-/// 홈 "많이 쓴 카테고리" 카드: 상위 [count]개 진행바(7px, 코랄) + 또래 배지. 탭 시 [onTap].
+/// 홈 "많이 쓴 카테고리" 카드: [top] 진행바(7px, 코랄) + 또래 배지. 탭 시 [onTap].
 class TopCategoryCard extends StatelessWidget {
   const TopCategoryCard({
     super.key,
-    required this.summary,
+    required this.top,
     this.peerByCategory = const {},
     this.onTap,
-    this.count = 3,
   });
 
-  final Map<BudgetCategory, int> summary;
+  /// 많이 쓴 기본 분류(금액 내림차순). 고르는 규칙은 `MonthOverview.topCategories`에 있다.
+  final List<MapEntry<BudgetCategory, int>> top;
   /// 또래 평균 카테고리 지출. 값이 없거나 0이면 배지 생략.
   final Map<BudgetCategory, int> peerByCategory;
   final VoidCallback? onTap;
-  final int count;
 
   @override
   Widget build(BuildContext context) {
-    final top = (summary.entries.where((e) => e.value > 0).toList()
-          ..sort((a, b) => b.value.compareTo(a.value)))
-        .take(count)
-        .toList();
     final maxAmount = top.isEmpty ? 1 : top.first.value;
     return SurfaceCard(
       onTap: onTap,

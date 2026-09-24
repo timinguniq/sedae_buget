@@ -80,6 +80,45 @@ class InMemoryCategoryRepository implements CategoryRepository {
   }
 }
 
+/// 장부 테스트용 로그인 사용자. 장부(거래·카테고리)는 로그인 세션에 묶여 있어 로그인 전에는 비어 있다.
+const testUser = AuthUser(provider: AuthProvider.kakao, nickname: '카카오 사용자');
+
+/// 인메모리 거래 저장소. 월 조회와 기간 조회가 같은 데이터를 최신순으로 본다(서버 계약과 동일).
+class InMemoryTransactionRepository implements TransactionRepository {
+  InMemoryTransactionRepository([List<Transaction> seed = const []]) {
+    for (final t in seed) {
+      items[t.id] = t;
+    }
+  }
+
+  final Map<String, Transaction> items = {};
+
+  /// [getMonth] 호출 횟수(다시 읽었는지 확인용).
+  int monthReads = 0;
+
+  @override
+  Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(items[tx.id] = tx);
+
+  @override
+  Future<Result<Transaction>> delete(Transaction tx) async {
+    items.remove(tx.id);
+    return Result.success(tx);
+  }
+
+  @override
+  Future<Result<List<Transaction>>> getMonth(int year, int month) {
+    monthReads++;
+    return getRange(DateTime(year, month), DateTime(year, month + 1));
+  }
+
+  @override
+  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
+      Result.success(items.values
+          .where((t) => !t.date.isBefore(start) && t.date.isBefore(end))
+          .toList()
+        ..sort((a, b) => b.date.compareTo(a.date)));
+}
+
 /// Stub 서버와 같은 결정적 수치를 돌려주는 또래 통계 fake.
 class FakePeerStatsRepository implements PeerStatsRepository {
   @override
@@ -89,6 +128,18 @@ class FakePeerStatsRepository implements PeerStatsRepository {
   @override
   Future<Result<Map<AgeGroup, int>>> generationAverages() async => Result.success(
       {for (final g in AgeGroup.values) g: StubPeerData.forGroup(g).avgMonthlyExpense});
+}
+
+/// 또래 통계 서버가 내려간 상황. 모든 조회가 실패한다.
+class FailingPeerStatsRepository implements PeerStatsRepository {
+  static const _down =
+      ErrorResult(reason: FailureReason.server, message: '또래 통계를 불러올 수 없습니다.');
+
+  @override
+  Future<Result<PeerStats>> forGroup(AgeGroup g) async => const Result.failure(_down);
+
+  @override
+  Future<Result<Map<AgeGroup, int>>> generationAverages() async => const Result.failure(_down);
 }
 
 /// 광고 SDK 없이 호출 횟수만 기록하는 fake. 배너는 항상 실패(null), 전면은 [interstitial]의 결과를 따른다.

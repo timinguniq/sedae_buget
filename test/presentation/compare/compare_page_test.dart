@@ -40,6 +40,7 @@ void main() {
 
     // 저축률 카드가 프로필 소득을 읽으므로 사용자 fake도 함께 끼운다.
     final container = fakeContainer(
+      user: testUser,
       transactions: _FakeRepo(),
       peerStats: StubPeerData.forGroup(AgeGroup.thirties),
     );
@@ -62,6 +63,47 @@ void main() {
     expect(find.text('또래 통계는 예시 데이터예요'), findsNothing);
   });
 
+  // 프로필 월소득도 이달 수입도 없으면 저축률을 계산할 수 없다(0%가 아니다).
+  testWidgets('소득이 없으면 내 저축률은 — 로 보인다', (tester) async {
+    tester.view.physicalSize = const Size(390, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final container = fakeContainer(
+      user: testUser,
+      transactions: _FakeRepo(),
+      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
+    );
+    await tester.pumpWidget(provider.ChangeNotifierProvider(
+      create: (_) => ThemeService(),
+      child: fakeScope(container, const MaterialApp(home: ComparePage())),
+    ));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('소득 대비 저축률'), findsOneWidget);
+    expect(find.text('—'), findsOneWidget);
+  });
+
+  // 비교 화면은 또래 통계가 본질이라 실패하면 화면 전체가 안내로 바뀐다.
+  testWidgets('또래 통계를 못 읽으면 안내 문구를 보여준다', (tester) async {
+    final container = fakeContainer(
+      user: testUser,
+      transactions: _FakeRepo(),
+      peerRepository: FailingPeerStatsRepository(),
+    );
+    await tester.pumpWidget(provider.ChangeNotifierProvider(
+      create: (_) => ThemeService(),
+      child: fakeScope(container, const MaterialApp(home: ComparePage())),
+    ));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('또래 통계를 불러오지 못했어요'), findsOneWidget);
+    expect(find.text('항목별 차이'), findsNothing);
+  });
+
   // 또래 비교는 기본 분류(통계청 12분류)로만 이뤄진다. 커스텀 카테고리는 상위 분류에
   // 합산될 뿐 별도 항목으로 나오지 않는다.
   testWidgets('항목별 비교는 기본 카테고리 이름만 쓴다', (tester) async {
@@ -71,6 +113,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final container = fakeContainer(
+      user: testUser,
       transactions: _CustomRepo(),
       peerStats: StubPeerData.forGroup(AgeGroup.thirties),
     );

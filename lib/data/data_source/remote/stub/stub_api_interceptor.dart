@@ -161,13 +161,15 @@ class StubApiInterceptor extends Interceptor {
         final existing = _state.transactions[id];
         final now = DateTime.now().toUtc().toIso8601String();
         final customId = b['customCategoryId'] as String?;
-        if (customId != null && !_state.customCategories.containsKey(customId)) {
+        final custom = customId == null ? null : _state.customCategories[customId];
+        if (customId != null && custom == null) {
           throw _StubError(400, 'VALIDATION', '없는 카테고리입니다: $customId');
         }
         final row = <String, dynamic>{
           'id': id,
           'amount': b['amount'],
-          'categoryId': b['categoryId'],
+          // 사용자 카테고리 거래의 기본 분류는 그 카테고리의 상위 분류다(또래 비교 집계 기준).
+          'categoryId': custom?['baseCategoryId'] ?? b['categoryId'],
           'date': b['date'],
           'type': b['type'],
           'memo': b['memo'],
@@ -217,6 +219,10 @@ class StubApiInterceptor extends Interceptor {
         final existing = _state.customCategories[id];
         final row = <String, dynamic>{'id': id, 'name': name, 'baseCategoryId': baseId};
         _state.customCategories[id] = row;
+        // 상위 분류를 바꾸면 이 카테고리로 기록한 거래도 새 분류로 옮긴다.
+        for (final tx in _state.transactions.values) {
+          if (tx['customCategoryId'] == id) tx['categoryId'] = baseId;
+        }
         await _persist();
         return (existing == null ? 201 : 200, Map<String, dynamic>.of(row));
       case 'DELETE':

@@ -45,10 +45,7 @@ class _CategoryManagePageState extends ConsumerState<CategoryManagePage> {
     if (!mounted) return;
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
-      return;
     }
-    // 서버가 이 카테고리를 쓰던 거래를 상위 기본 분류로 되돌렸으므로 목록을 다시 읽는다.
-    ref.invalidate(monthlyTransactionsProvider);
   }
 
   @override
@@ -66,7 +63,9 @@ class _CategoryManagePageState extends ConsumerState<CategoryManagePage> {
           child: asyncCustoms.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('카테고리를 불러오지 못했어요: $e')),
-            data: (customs) => ListView(
+            data: (customs) {
+              final catalog = CategoryCatalog(customs);
+              return ListView(
               padding: const EdgeInsets.fromLTRB(22, 0, 22, 22),
               children: [
                 if (!_editing) ...[const _GuideCard(), const SizedBox(height: 20)],
@@ -82,9 +81,10 @@ class _CategoryManagePageState extends ConsumerState<CategoryManagePage> {
                     _BaseRow(
                       category: c,
                       // 커스텀 카테고리로 분리된 거래는 빼고 센다(분석 화면 집계와 같은 기준).
-                      count: asyncTxs.value
-                          ?.where((t) => t.customCategoryId == null && t.categoryId == c.id)
-                          .length,
+                      count: asyncTxs.value?.where((t) {
+                        final of = catalog.of(t);
+                        return of.custom == null && of.base == c;
+                      }).length,
                     ),
                 ]),
                 const SizedBox(height: 18),
@@ -116,7 +116,8 @@ class _CategoryManagePageState extends ConsumerState<CategoryManagePage> {
                   onTap: () => CategoryEditSheet.show(context),
                 ),
               ],
-            ),
+            );
+            },
           ),
         ),
       ]),

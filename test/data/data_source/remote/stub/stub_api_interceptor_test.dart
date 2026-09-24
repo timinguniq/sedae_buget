@@ -239,6 +239,37 @@ void main() {
       );
     });
 
+    test('거래를 저장하면 기본 분류를 사용자 카테고리의 상위 분류에 맞춘다', () async {
+      await putCat('c1', '반려동물', 12);
+      final saved = await api.put<Map<String, dynamic>>(ApiPath.transaction('t1'), body: {
+        'amount': 1000, 'categoryId': 1, 'date': '2026-09-02T00:00:00.000Z',
+        'type': 'expense', 'memo': null, 'customCategoryId': 'c1',
+      });
+      expect(saved['categoryId'], 12);
+      final listed = (await api.get<List<dynamic>>(ApiPath.transactions, query: _range)).single;
+      expect(listed['categoryId'], 12);
+    });
+
+    test('상위 분류를 바꾸면 그 카테고리의 거래도 새 분류로 옮겨진다', () async {
+      await putCat('c1', '반려동물', 12);
+      await api.put<Map<String, dynamic>>(ApiPath.transaction('t1'), body: {
+        'amount': 1000, 'categoryId': 12, 'date': '2026-09-02T00:00:00.000Z',
+        'type': 'expense', 'memo': null, 'customCategoryId': 'c1',
+      });
+      await api.put<Map<String, dynamic>>(ApiPath.transaction('t2'), body: {
+        'amount': 2000, 'categoryId': 12, 'date': '2026-09-03T00:00:00.000Z',
+        'type': 'expense', 'memo': null,
+      });
+
+      await putCat('c1', '반려동물', 9);
+
+      final txs = await api.get<List<dynamic>>(ApiPath.transactions, query: _range);
+      final byId = {for (final t in txs) t['id']: t};
+      expect(byId['t1']['categoryId'], 9);
+      expect(byId['t1']['customCategoryId'], 'c1');
+      expect(byId['t2']['categoryId'], 12); // 사용자 카테고리가 아닌 거래는 그대로
+    });
+
     test('카테고리도 StubStateStore로 영속화된다', () async {
       final store = _MemStore();
       final api1 = _client(tokens, store: store);
