@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
@@ -64,16 +63,21 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     // 실행 횟수를 세고, N번째면 스플래시 동안 전면 광고를 미리 로드한다.
     final launchAd = ref.read(launchInterstitialProvider);
     await launchAd.onAppLaunched();
+    final appStatus = ref.read(appStatusProvider.future); // 브랜딩과 함께 점검·업데이트 판정
     await Future.delayed(const Duration(milliseconds: _animationTime));
-    UserProfile? profile;
+    // 점검·강제 업데이트면 안내하고 끝낸다(선택 업데이트는 닫고 계속).
+    final status = await appStatus;
+    if (!mounted) return;
+    if (!await showAppStatusDialog(context, status, exitApp: ref.read(appExitProvider))) return;
+    // 세션 확인(인증 → 프로필)이 끝날 때까지 기다린다. 실패해도 확인은 끝난 것이다.
     try {
-      profile = await ref.read(userProfileProvider.future);
+      await ref.read(userProfileProvider.future);
     } catch (_) {
-      // 프로필 조회 실패(네트워크 등)여도 스플래시에 머물지 않는다.
-      // 이동 후에는 전역 가드(authGateRedirect)가 로그인/온보딩으로 보낸다.
+      // 실패도 행선지가 있다(연결 안 됨 화면).
     }
     if (!mounted) return;
-    context.go(profile == null ? RoutePath.onboarding.path : RoutePath.budgetHome.path);
+    // 어디로 갈지(로그인·온보딩·연결 안 됨·홈)는 전역 가드(sessionRedirect)가 정한다.
+    context.go(RoutePath.budgetHome.path);
     await launchAd.showIfDue();
   }
 }

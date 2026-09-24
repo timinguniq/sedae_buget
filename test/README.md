@@ -22,8 +22,9 @@ flutter test test/architecture                  # 레이어 의존성 규칙만
 
 - 모킹 라이브러리를 쓰지 않는다. `test/helper/fakes.dart`의 **인메모리 fake**(리포지토리 인터페이스 구현)를 쓴다.
 - 장부(거래·사용자 카테고리)는 로그인 세션에 묶여 있어 로그인 전에는 비어 있다. 장부를 읽는 테스트는 `fakeContainer(user: testUser, …)`로 로그인한다.
-- presentation 테스트는 fake를 `get_it`에 등록한 뒤 위젯·provider를 검증한다.
+- presentation 테스트는 `fakeContainer`로 의존성 seam(`service/*_provider.dart`)을 fake로 바꾼 뒤 위젯·provider를 검증한다. 전역 `get_it`은 쓰지 않는다.
 - HTTP 계층은 실제 서버 대신 Dio `Interceptor`로 검증한다: `StubApiInterceptor`(`lib/data/data_source/remote/stub/`)나 테스트 파일 안의 작은 인터셉터(응답 고정·오류·타임아웃).
+- 저장소 구현·Stub 계약 테스트는 `test/helper/stub_server.dart`의 `StubServer`를 쓴다. 운영과 같은 배선(`ApiClient.create`: 토큰 인터셉터 → Stub)으로 조립해 실제 저장소 구현을 내준다. Stub은 사용자마다 데이터를 따로 둔다.
 
 ## 종류
 

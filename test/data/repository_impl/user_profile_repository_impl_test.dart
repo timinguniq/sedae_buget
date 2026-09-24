@@ -1,29 +1,18 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sedae_budget/core/core.dart';
-import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-class _Tokens implements AuthTokenStore {
-  String? t = 'stub.kakao';
-  @override
-  Future<String?> read() async => t;
-  @override
-  Future<void> write(String token) async => t = token;
-  @override
-  Future<void> clear() async => t = null;
-}
+import '../../helper/stub_server.dart';
 
 void main() {
-  late _Tokens tokens;
+  late MemoryAuthTokenStore tokens;
   late UserProfileRepository repo;
 
-  setUp(() {
-    tokens = _Tokens();
-    repo = UserProfileRepositoryImpl(UserProfileApi(Dio()
-      ..interceptors.add(AuthTokenInterceptor(tokens))
-      ..interceptors.add(StubApiInterceptor())));
+  setUp(() async {
+    final server = StubServer();
+    await server.signIn(AuthProvider.kakao);
+    tokens = server.tokens;
+    repo = server.profiles;
   });
 
   test('save → current → clear round-trip (404 → null)', () async {
@@ -37,7 +26,7 @@ void main() {
   });
 
   test('without token → 401이 unauthorized 실패로 온다', () async {
-    tokens.t = null;
+    tokens.token = null;
     expect((await repo.current()).failureOrNull?.reason, FailureReason.unauthorized);
   });
 }

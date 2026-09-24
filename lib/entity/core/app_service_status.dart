@@ -15,16 +15,9 @@ abstract class AppServiceStatus with _$AppServiceStatus {
   }) = _AppServiceStatus;
 
   factory AppServiceStatus.fromJson(Map<String, dynamic> json) => _$AppServiceStatusFromJson(json);
-
-  factory AppServiceStatus.empty() => AppServiceStatus(
-    available: true,
-    noticeTitle: 'Under Maintenance',
-    noticeContent: 'Maintenance in progress.\nThank for your patience!\nWe’ll be back in 13:52 tomorrow!(KST)',
-    expectedTimeToBeAvailable: DateTime.now(),
-  );
 }
 
-const String _DATE_TIME_FORMAT = 'yyyy-MM-dd hh:mm:ss'; // 2024-04-22 23:59:59
+const String _DATE_TIME_FORMAT = 'yyyy-MM-dd HH:mm:ss'; // 2024-04-22 23:59:59 (24시간제)
 
 DateTime _formatStringToDateTime(String date) {
   return DateFormat(_DATE_TIME_FORMAT, 'ko-KR').parse(date);

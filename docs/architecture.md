@@ -22,6 +22,10 @@
   - 장부: 로그인 세션에 묶인 가계부 데이터(이달 거래·최근 6개월 추이·사용자 카테고리)는 `page/budget/ledger.view_model.dart`에 둔다. 세션이 바뀌면 다시 읽고 로그인 전에는 비어 있다. 변경 뒤 무엇을 다시 읽을지도 여기서만 정한다(화면은 `ref.invalidate`하지 않는다).
   - 이달 개요: 이달 요약을 쓰는 화면(홈·비교·내역·리포트·분석)은 `budget_home.view_model.dart`의 `monthOverviewProvider` 하나를 읽는다. 합계·상위 카테고리·저축률·또래 초과 판정과, 또래 통계를 못 읽었을 때 무엇을 뺄지를 여기서 정한다.
   - 거래의 카테고리(표시 이름·기본 분류)는 `entity/budget/category_catalog.dart`의 `CategoryCatalog`로만 판정한다.
+  - 거래 입력: 입력 화면의 규칙(카테고리 선택·저장 가능 여부·저장할 거래)은 `entity/budget/transaction_draft.dart`의 `TransactionDraft`가 가진다. 장부의 `save(draft)`가 추가·수정을 정하고, 다 불러온 사용자 카테고리 목록으로 카테고리를 맞춘다(지워진 사용자 카테고리는 기본 분류로).
+  - 세션 게이트: 앱이 어디로 갈지는 `route/auth_gate.dart`의 `SessionGate`(확인 중·연결 안 됨·로그아웃·프로필 필요·준비됨)와 순수 함수 `sessionRedirect`만 정한다. 인증·프로필 확인에 실패하면 로그아웃·프로필 없음이 아니라 '연결 안 됨'(`/unreachable`, 다시 시도)이다. 스플래시·온보딩·로그인 화면은 행선지를 고르지 않는다(`context.go`로 게이트 화면을 고르지 않는다).
+  - 세션 만료: 서버가 저장된 토큰을 거부하면(401) `core/http_client/auth_token_interceptor.dart`가 토큰을 지우고 `SessionExpiry`로 알린다. 이 신호는 `AuthRepository.sessionExpired`로 domain에 드러나고, `AuthNotifier`가 로그아웃 상태로 바꾼 뒤 로그인 화면이 안내한다.
+  - 앱 이용 가능 여부(점검·업데이트): 판정은 `entity/core/app_status.dart`의 `AppStatus.of`, 재료(원격 설정·빌드 번호)는 `core/app_config/remote_config.dart`의 `AppStatusSource`, 안내는 `page/initial/app_status_dialog.dart`가 한다. 앱을 켤 때는 스플래시가, 쓰는 중 원격 설정이 바뀌면 `MyApp`이 안내한다.
 - DI: `get_it`. 등록은 composition root인 `lib/core/dependency_injection/`에서만 한다. 화면이 의존성을 얻는 **seam은 `presentation/service/*_provider.dart`** 하나다(`dependency_provider.dart`·`ad_provider.dart`). viewmodel·페이지는 `ref.watch/read(…Provider)`로만 얻고 locator를 직접 부르지 않는다. 테스트는 전역 locator를 등록하는 대신 이 provider를 `overrideWithValue`로 바꾼다.
 - 라우팅: `go_router` (`lib/presentation/route/`).
 - 코드 생성: `freezed`, `json_serializable`, `retrofit_generator`. 생성 파일(`*.g.dart`, `*.freezed.dart`)은 커밋하며, 의존성 검사에서는 제외한다.
@@ -33,7 +37,7 @@
 | `entity` | `core`, `domain`, `data`, `presentation`, `theme`, `package:flutter/` |
 | `domain` | `data`, `presentation`, `core`, `theme`, `package:flutter/` |
 | `data` | `presentation`, `theme`, `package:flutter/`, 로컬 저장 기술(`drift`, `shared_preferences`, `flutter_secure_storage`) — 단 `lib/data/data_source/local/`은 허용 |
-| `core` | `domain`, `data` — 단 `lib/core/dependency_injection/`(composition root)는 허용 |
+| `core` | `presentation`, `theme`. `domain`, `data` — 단 `lib/core/dependency_injection/`(composition root)는 허용 |
 | `presentation` | `data` 구현체. DI(`core/dependency_injection`, `core/core.dart`)는 `service/*_provider.dart`에서만 접근 |
 | `presentation/page` | `shared_preferences` 직접 사용 |
 | `theme` | `presentation`, `domain`, `data` |

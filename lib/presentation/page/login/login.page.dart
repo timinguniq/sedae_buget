@@ -12,17 +12,17 @@ class LoginPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     Future<void> signIn(AuthProvider p) async {
-      await ref.read(authProvider.notifier).signIn(p);
+      final res = await ref.read(authProvider.notifier).signIn(p);
       // 전역 가드(refreshListenable)가 로그인 성공 후 온보딩/홈으로 라우팅한다.
-      // 실패하면 가드가 로그인 화면을 유지하므로, 이유만 알려준다.
-      final error = ref.read(authProvider).error;
+      // 실패하면 로그인 화면에 머무므로, 이유만 알려준다.
+      final error = res.failureOrNull;
       if (error != null && context.mounted) {
-        final message = error is ResultFailure ? error.error.message : '$error';
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(message.isEmpty ? '로그인하지 못했어요' : message),
+          content: Text(error.message.isEmpty ? '로그인하지 못했어요' : error.message),
         ));
       }
     }
+    final expired = ref.watch(sessionExpiredProvider);
     return DefaultLayout(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(26, 0, 26, 32),
@@ -45,6 +45,12 @@ class LoginPage extends ConsumerWidget {
                   fontSize: 12.5, height: 1.55, color: context.color.label.assistive)),
             ]),
           ),
+          if (expired) ...[
+            Text('로그인이 만료됐어요. 다시 로그인해 주세요',
+              textAlign: TextAlign.center,
+              style: context.typo.caption1W600.copyWith(color: context.color.primary.normal)),
+            const SizedBox(height: 12),
+          ],
           for (final p in AuthProvider.values)
             SocialLoginButton(provider: p, onTap: () => signIn(p)),
           const SizedBox(height: 7),

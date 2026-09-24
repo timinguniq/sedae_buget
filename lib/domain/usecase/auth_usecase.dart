@@ -19,4 +19,7 @@ class AuthUsecase {
   }
 
   Future<Result<void>> signOut() => _repo.signOut();
+
+  /// 쓰는 중에 서버가 세션을 끝냈다. 로컬 토큰은 이미 지워졌다.
+  Stream<void> get sessionExpired => _repo.sessionExpired;
 }

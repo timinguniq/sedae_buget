@@ -22,6 +22,9 @@ class _FailingAuthRepo implements AuthRepository {
       Result.failure(ErrorResult(reason: FailureReason.server, message: message));
   @override
   Future<Result<void>> signOut() async => const Result.success(null);
+
+  @override
+  Stream<void> get sessionExpired => const Stream.empty();
 }
 
 void main() {

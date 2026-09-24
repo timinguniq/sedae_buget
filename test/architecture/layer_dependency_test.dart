@@ -153,6 +153,14 @@ void main() {
     );
   });
 
+  // core는 기술 기반이다. 화면(대화상자 등)은 presentation이 띄운다.
+  test('core는 presentation/theme를 import하지 않는다', () {
+    expect(
+      violations('core', ['sedae_budget/presentation', 'sedae_budget/theme']),
+      isEmpty,
+    );
+  });
+
   test('HTTP(dio)는 core/data에만 있다', () {
     for (final layer in ['domain', 'entity', 'presentation', 'theme']) {
       expect(violations(layer, ['dio/']), isEmpty, reason: layer);

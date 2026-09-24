@@ -16,12 +16,15 @@ void configureApiDependencies(AuthTokenStore tokenStore) {
   if (!isStub && env.endpoint.server.isEmpty) {
     _logger.w('env=${env.name}인데 서버 주소가 비어 있음 — environment_config.dart에 기입 필요');
   }
+  final sessionExpiry = SessionExpiry();
   locator
     ..registerSingleton<AuthTokenStore>(tokenStore)
+    ..registerSingleton<SessionExpiry>(sessionExpiry)
     ..registerSingleton<ApiClient>(
       ApiClient.create(
         baseUrl: env.endpoint.server,
         tokenStore: tokenStore,
+        sessionExpiry: sessionExpiry,
         extra: [if (isStub) StubApiInterceptor(store: SharedPrefsStubStateStore())],
       ),
     );
@@ -59,7 +62,11 @@ void configureUserDependencies() {
   if (locator.isRegistered<AuthUsecase>()) return;
   locator
     ..registerSingleton<AuthRepository>(
-      AuthRepositoryImpl(AuthApi(locator<ApiClient>().dio), locator<AuthTokenStore>()),
+      AuthRepositoryImpl(
+        AuthApi(locator<ApiClient>().dio),
+        locator<AuthTokenStore>(),
+        locator<SessionExpiry>(),
+      ),
     )
     ..registerSingleton<SocialIdTokenProvider>(StubSocialIdTokenProvider())
     ..registerSingleton<AuthUsecase>(
@@ -68,6 +75,12 @@ void configureUserDependencies() {
     ..registerSingleton<UserProfileRepository>(
       UserProfileRepositoryImpl(UserProfileApi(locator<ApiClient>().dio)),
     );
+}
+
+/// 앱 이용 가능 여부(점검·업데이트) 판정 재료. Firebase가 초기화되지 않았으면 재료가 없어 판정하지 않는다.
+void configureAppStatusDependencies() {
+  if (locator.isRegistered<AppStatusSource>()) return;
+  locator.registerSingleton<AppStatusSource>(FirebaseAppStatusSource());
 }
 
 /// 광고 의존성. web은 google_mobile_ads가 지원하지 않으므로 Null Object([NoAdService])를 끼운다.

@@ -5,6 +5,7 @@ import 'package:sedae_budget/presentation/page/budget/ledger.view_model.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 
 import '../../helper/fakes.dart';
+import '../../helper/stub_server.dart';
 
 const _pet = CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12);
 
@@ -14,60 +15,75 @@ final _thisMonth = DateTime(_now.year, _now.month, 1);
 Transaction _expense(int amount) => Transaction.create(
     amount: amount, categoryId: 1, date: _thisMonth, type: TransactionType.expense);
 
-/// 로그인한 사용자마다 다른 데이터를 돌려주는 서버 흉내.
-class _PerUserTransactions implements TransactionRepository {
-  _PerUserTransactions(this._auth, this._byUser);
-  final InMemoryAuthRepository _auth;
-  final Map<AuthProvider, List<Transaction>> _byUser;
-
-  InMemoryTransactionRepository get _current =>
-      InMemoryTransactionRepository(_byUser[_auth.user?.provider] ?? const []);
-
-  @override
-  Future<Result<Transaction>> upsert(Transaction tx) => _current.upsert(tx);
-  @override
-  Future<Result<Transaction>> delete(Transaction tx) => _current.delete(tx);
-  @override
-  Future<Result<List<Transaction>>> getMonth(int y, int m) => _current.getMonth(y, m);
-  @override
-  Future<Result<List<Transaction>>> getRange(DateTime s, DateTime e) => _current.getRange(s, e);
-}
-
-class _PerUserCategories implements CategoryRepository {
-  _PerUserCategories(this._auth, this._byUser);
-  final InMemoryAuthRepository _auth;
-  final Map<AuthProvider, List<CustomCategory>> _byUser;
-
-  InMemoryCategoryRepository get _current =>
-      InMemoryCategoryRepository(_byUser[_auth.user?.provider] ?? const []);
-
-  @override
-  Future<Result<List<CustomCategory>>> getAll() => _current.getAll();
-  @override
-  Future<Result<CustomCategory>> upsert(CustomCategory c) => _current.upsert(c);
-  @override
-  Future<Result<CustomCategory>> delete(CustomCategory c) => _current.delete(c);
-}
-
 void main() {
   test('거래를 추가하면 최근 6개월 추이에도 반영된다', () async {
-    final c = fakeContainer(user: testUser, transactions: InMemoryTransactionRepository());
+    final c = fakeContainer(
+        user: testUser, transactions: InMemoryTransactionRepository(),
+        categories: InMemoryCategoryRepository());
     expect((await c.read(selfTrendProvider.future)).last.expense, 0);
 
-    final res = await c.read(monthlyTransactionsProvider.notifier).add(
-        amount: 7000, categoryId: 1, date: _thisMonth, type: TransactionType.expense);
+    final res = await c.read(monthlyTransactionsProvider.notifier)
+        .save(TransactionDraft.create(_thisMonth).withAmount(7000));
     expect(res.failureOrNull, isNull);
 
     expect((await c.read(monthlyTransactionsProvider.future)).single.amount, 7000);
     expect((await c.read(selfTrendProvider.future)).last.expense, 7000);
   });
 
-  test('다른 사용자로 다시 로그인하면 이전 사용자의 장부가 남지 않는다', () async {
-    final auth = InMemoryAuthRepository(testUser);
+  // 거래를 저장할 때 사용자 카테고리 목록을 아직 읽지 않았어도, 다 읽은 목록으로 판정한다.
+  test('저장은 불러온 사용자 카테고리 목록으로 카테고리를 맞춘다', () async {
+    final repo = InMemoryTransactionRepository();
     final c = fakeContainer(
-      authRepository: auth,
-      transactions: _PerUserTransactions(auth, {AuthProvider.kakao: [_expense(1111)]}),
-      categories: _PerUserCategories(auth, {AuthProvider.kakao: const [_pet]}),
+        user: testUser, transactions: repo, categories: InMemoryCategoryRepository(const [_pet]));
+
+    await c.read(monthlyTransactionsProvider.notifier)
+        .save(TransactionDraft.create(_thisMonth).withAmount(1000).pickCustom(_pet));
+
+    expect(repo.items.values.single.customCategoryId, _pet.id);
+    expect(repo.items.values.single.categoryId, BudgetCategory.etc.id);
+  });
+
+  // 목록을 못 읽었다고 거래 저장까지 막지 않는다. 지워졌는지 판정할 수 없으니 고른 그대로 둔다.
+  test('사용자 카테고리 목록을 못 읽어도 고른 그대로 저장한다', () async {
+    final repo = InMemoryTransactionRepository();
+    final c = fakeContainer(user: testUser, transactions: repo, categories: _UnreadableCategories());
+
+    final res = await c.read(monthlyTransactionsProvider.notifier)
+        .save(TransactionDraft.create(_thisMonth).withAmount(1000).pickCustom(_pet));
+
+    expect(res.failureOrNull, isNull);
+    expect(repo.items.values.single.customCategoryId, _pet.id);
+  });
+
+  test('지워진 사용자 카테고리를 가리키는 거래를 저장하면 기본 분류로 되돌린다', () async {
+    final orphan = Transaction.create(
+        amount: 1000, categoryId: BudgetCategory.etc.id, date: _thisMonth,
+        type: TransactionType.expense, customCategoryId: 'gone');
+    final repo = InMemoryTransactionRepository([orphan]);
+    final c = fakeContainer(
+        user: testUser, transactions: repo, categories: InMemoryCategoryRepository(const [_pet]));
+    final catalog = CategoryCatalog(await c.read(customCategoriesProvider.future));
+
+    await c.read(monthlyTransactionsProvider.notifier)
+        .save(TransactionDraft.edit(orphan, catalog).withAmount(2000));
+
+    final saved = repo.items[orphan.id]!;
+    expect(saved.amount, 2000);
+    expect(saved.customCategoryId, isNull);
+    expect(saved.categoryId, BudgetCategory.etc.id);
+  });
+
+  // Stub 서버가 사용자마다 데이터를 따로 둔다(계약). 장부는 세션이 바뀌면 새 사용자로 다시 읽어야 한다.
+  test('다른 사용자로 다시 로그인하면 이전 사용자의 장부가 남지 않는다', () async {
+    final server = StubServer();
+    await server.signIn(AuthProvider.kakao);
+    (await server.transactions.upsert(_expense(1111))).unwrap();
+    (await server.categories.upsert(_pet)).unwrap();
+    final c = fakeContainer(
+      authRepository: server.auth,
+      profileRepository: server.profiles,
+      transactions: server.transactions,
+      categories: server.categories,
     );
     expect((await c.read(monthlyTransactionsProvider.future)).single.amount, 1111);
     expect((await c.read(selfTrendProvider.future)).last.expense, 1111);
@@ -140,6 +156,17 @@ class _FailingCategories implements CategoryRepository {
   static const _offline = ErrorResult(reason: FailureReason.offline, message: '오프라인');
   @override
   Future<Result<List<CustomCategory>>> getAll() async => const Result.success([_pet]);
+  @override
+  Future<Result<CustomCategory>> upsert(CustomCategory c) async => const Result.failure(_offline);
+  @override
+  Future<Result<CustomCategory>> delete(CustomCategory c) async => const Result.failure(_offline);
+}
+
+/// 목록을 읽지 못하는 서버(오프라인).
+class _UnreadableCategories implements CategoryRepository {
+  static const _offline = ErrorResult(reason: FailureReason.offline, message: '오프라인');
+  @override
+  Future<Result<List<CustomCategory>>> getAll() async => const Result.failure(_offline);
   @override
   Future<Result<CustomCategory>> upsert(CustomCategory c) async => const Result.failure(_offline);
   @override

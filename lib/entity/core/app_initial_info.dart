@@ -13,10 +13,4 @@ abstract class AppInitialInfo with _$AppInitialInfo {
   }) = _AppInitialInfo;
 
   factory AppInitialInfo.fromJson(Map<String, dynamic> json) => _$AppInitialInfoFromJson(json);
-
-  factory AppInitialInfo.empty({required int currentBuild}) => AppInitialInfo(
-    android: AppVersion.empty(releaseVersion: currentBuild),
-    ios: AppVersion.empty(releaseVersion: currentBuild),
-    serviceStatus: AppServiceStatus.empty(),
-  );
 }

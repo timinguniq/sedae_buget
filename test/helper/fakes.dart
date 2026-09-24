@@ -1,12 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:sedae_budget/core/ads/index.dart';
+import 'package:sedae_budget/core/app_config/remote_config.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
+import 'package:sedae_budget/presentation/page/initial/app_status.view_model.dart';
 import 'package:sedae_budget/presentation/service/ad_provider.dart';
 import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -29,6 +33,17 @@ class InMemoryAuthRepository implements AuthRepository {
   Future<Result<void>> signOut() async {
     user = null;
     return const Result.success(null);
+  }
+
+  final _expired = StreamController<void>.broadcast();
+
+  @override
+  Stream<void> get sessionExpired => _expired.stream;
+
+  /// 쓰는 중에 서버가 세션을 끝낸 상황(401). 서버 세션을 지우고 알린다.
+  void expireSession() {
+    user = null;
+    _expired.add(null);
   }
 }
 
@@ -166,6 +181,24 @@ class FakeAdService implements AdService {
   Future<void> showInterstitial() async => showInterstitialCalls++;
 }
 
+/// 점검·업데이트 판정 재료 fake. 기본은 원격 정보 없음(= 쓸 수 있음).
+class FakeAppStatusSource implements AppStatusSource {
+  FakeAppStatusSource({this.info, this.build = 1});
+
+  final AppInitialInfo? info;
+  final int? build;
+  final updates = StreamController<AppInitialInfo>.broadcast();
+
+  @override
+  Future<AppInitialInfo?> fetchInitialInfo() async => info;
+
+  @override
+  Stream<AppInitialInfo> get initialInfoUpdates => updates.stream;
+
+  @override
+  Future<int?> currentBuild() async => build;
+}
+
 /// 앱 실행 카운트(SharedPreferences mock)를 0에서 시작시키고 광고 정책을 만든다.
 Future<LaunchInterstitial> fakeLaunchInterstitial(FakeAdService ads) async {
   SharedPreferences.setMockInitialValues({});
@@ -188,6 +221,8 @@ ProviderContainer fakeContainer({
   PeerStats? peerStats,
   AdService? adService,
   LaunchInterstitial? launchInterstitial,
+  AppStatusSource? appStatusSource,
+  void Function()? exitApp,
 }) {
   final auth = authRepository ?? InMemoryAuthRepository(user);
   final container = ProviderContainer(
@@ -210,6 +245,9 @@ ProviderContainer fakeContainer({
       if (adService != null) adServiceProvider.overrideWithValue(adService),
       if (launchInterstitial != null)
         launchInterstitialProvider.overrideWithValue(launchInterstitial),
+      appStatusSourceProvider.overrideWithValue(appStatusSource ?? FakeAppStatusSource()),
+      // 테스트가 점검 안내를 확인해도 테스트 프로세스가 끝나지 않게 한다.
+      appExitProvider.overrideWithValue(exitApp ?? () {}),
     ],
   );
   addTearDown(container.dispose);

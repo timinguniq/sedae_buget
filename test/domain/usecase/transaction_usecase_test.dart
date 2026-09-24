@@ -42,18 +42,9 @@ void main() {
     usecase = TransactionUsecase(repo);
   });
 
-  test('add builds a transaction and upserts it', () async {
-    await usecase.add(
-      amount: 9000, categoryId: 7, date: DateTime(2026, 6, 2),
-      type: TransactionType.expense,
-    );
-    expect(repo.lastUpserted!.amount, 9000);
-    expect(repo.lastUpserted!.categoryId, 7);
-  });
-
-  test('update upserts the given transaction unchanged', () async {
+  test('save upserts the given transaction unchanged', () async {
     final tx = expense(1, 1);
-    await usecase.update(tx);
+    await usecase.save(tx);
     expect(repo.lastUpserted, tx);
   });
 

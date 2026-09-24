@@ -20,6 +20,9 @@ class _MemAuthRepo implements AuthRepository {
     _u = null;
     return const Result.success(null);
   }
+
+  @override
+  Stream<void> get sessionExpired => const Stream.empty();
 }
 
 class _FixedToken implements SocialIdTokenProvider {

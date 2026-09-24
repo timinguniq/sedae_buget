@@ -40,24 +40,19 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   }
 
   /// 변경 메서드는 서버 결과를 그대로 돌려준다. 실패를 호출부가 보고 문구를 띄운다.
-  Future<Result<Transaction>> add({
-    required int amount,
-    required int categoryId,
-    required DateTime date,
-    required TransactionType type,
-    String? memo,
-    String? customCategoryId,
-  }) =>
-      _apply(() => _usecase.add(
-            amount: amount,
-            categoryId: categoryId,
-            date: date,
-            type: type,
-            memo: memo,
-            customCategoryId: customCategoryId,
-          ));
-
-  Future<Result<Transaction>> edit(Transaction tx) => _apply(() => _usecase.update(tx));
+  ///
+  /// 입력한 거래를 저장한다(새 거래면 추가, 아니면 수정). 사용자 카테고리는 다 불러온 목록으로
+  /// 판정한다 — 방금 만든 카테고리는 그대로, 지워진 카테고리는 기본 분류로.
+  /// 목록을 읽지 못하면 저장을 막지 않고 고른 그대로 저장한다.
+  Future<Result<Transaction>> save(TransactionDraft draft) async {
+    CategoryCatalog? catalog;
+    try {
+      catalog = CategoryCatalog(await ref.read(customCategoriesProvider.future));
+    } catch (_) {
+      // catalog == null: 지워졌는지 판정하지 않는다.
+    }
+    return _apply(() => _usecase.save(draft.toTransaction(catalog)));
+  }
 
   Future<Result<Transaction>> delete(Transaction tx) => _apply(() => _usecase.delete(tx));
 

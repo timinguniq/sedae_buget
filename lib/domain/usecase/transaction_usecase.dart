@@ -9,25 +9,8 @@ class TransactionUsecase {
 
   final TransactionRepository _repo;
 
-  Future<Result<Transaction>> add({
-    required int amount,
-    required int categoryId,
-    required DateTime date,
-    required TransactionType type,
-    String? memo,
-    String? customCategoryId,
-  }) {
-    return _repo.upsert(Transaction.create(
-      amount: amount,
-      categoryId: categoryId,
-      date: date,
-      type: type,
-      memo: memo,
-      customCategoryId: customCategoryId,
-    ));
-  }
-
-  Future<Result<Transaction>> update(Transaction tx) => _repo.upsert(tx);
+  /// 새 거래든 고친 거래든 id로 저장한다(서버 upsert).
+  Future<Result<Transaction>> save(Transaction tx) => _repo.upsert(tx);
 
   Future<Result<Transaction>> delete(Transaction tx) => _repo.delete(tx);
 

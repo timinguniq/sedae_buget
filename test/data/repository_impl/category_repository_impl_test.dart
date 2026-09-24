@@ -1,27 +1,16 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sedae_budget/core/core.dart';
-import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-class _Tokens implements AuthTokenStore {
-  String? t = 'stub.kakao';
-  @override
-  Future<String?> read() async => t;
-  @override
-  Future<void> write(String token) async => t = token;
-  @override
-  Future<void> clear() async => t = null;
-}
+import '../../helper/stub_server.dart';
 
 void main() {
   late CategoryRepository repo;
 
-  setUp(() {
-    repo = CategoryRepositoryImpl(CategoryApi(Dio()
-      ..interceptors.add(AuthTokenInterceptor(_Tokens()))
-      ..interceptors.add(StubApiInterceptor())));
+  setUp(() async {
+    final server = StubServer();
+    await server.signIn(AuthProvider.kakao);
+    repo = server.categories;
   });
 
   List<CustomCategory> unwrap(Result<List<CustomCategory>> r) =>

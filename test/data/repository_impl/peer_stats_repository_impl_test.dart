@@ -1,26 +1,17 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sedae_budget/core/core.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-class _Tokens implements AuthTokenStore {
-  @override
-  Future<String?> read() async => 'stub.kakao';
-  @override
-  Future<void> write(String token) async {}
-  @override
-  Future<void> clear() async {}
-}
+import '../../helper/stub_server.dart';
 
 void main() {
   late PeerStatsRepository repo;
 
-  setUp(() {
-    repo = PeerStatsRepositoryImpl(PeerStatsApi(Dio()
-      ..interceptors.add(AuthTokenInterceptor(_Tokens()))
-      ..interceptors.add(StubApiInterceptor())));
+  setUp(() async {
+    final server = StubServer();
+    await server.signIn(AuthProvider.kakao);
+    repo = server.peerStats;
   });
 
   test('forGroup parses server JSON into PeerStats equal to StubPeerData', () async {
