@@ -45,7 +45,8 @@ class ComparePage extends ConsumerWidget {
           final top6 = o.topCategories(6);
           final peerAvg = peer.avgMonthlyExpense;
           final expenseMax = (myExpense > peerAvg ? myExpense : peerAvg).clamp(1, 1 << 62);
-          final diffWon = myExpense - peerAvg;
+          final total = peer.compareTotal(myExpense);
+          final rank = peer.rankOf(myExpense);
           // 소득이 없으면 내 저축률은 계산할 수 없다: 막대는 0, 값은 '—'.
           final savingsRate = o.savingsRate;
           final peerSavings = peer.avgSavingsRatePercent;
@@ -65,8 +66,10 @@ class ComparePage extends ConsumerWidget {
                 _AgeChip(label: peer.ageGroup.label),
               ]),
               const SizedBox(height: 18),
-              RankHeadline(stats: peer, myExpense: myExpense),
-              const SizedBox(height: 22),
+              if (rank != null) ...[
+                RankHeadline(rank: rank),
+                const SizedBox(height: 22),
+              ],
               DistributionHistogram(stats: peer, myExpense: myExpense),
               const SizedBox(height: 18),
               VersusBarCard(
@@ -75,14 +78,20 @@ class ComparePage extends ConsumerWidget {
                 peerFraction: peerAvg / expenseMax,
                 mineText: manWon(myExpense),
                 peerText: manWon(peerAvg),
-                footer: Text(
-                  diffWon >= 0
-                      ? '또래보다 약 ${manWon(diffWon)}원 더 ▲'
-                      : '또래보다 약 ${manWon(-diffWon)}원 덜 ▼',
-                  style: context.typo.caption2W600.copyWith(
-                    fontSize: 11,
-                    color: diffWon >= 0 ? context.color.primary.normal : context.color.label.alternative),
-                ),
+                footer: total == null
+                    ? null
+                    : Text(
+                        switch (total.direction) {
+                          PeerDirection.more => '또래보다 약 ${manWon(total.mine - total.peer)}원 더 ▲',
+                          PeerDirection.less => '또래보다 약 ${manWon(total.peer - total.mine)}원 덜 ▼',
+                          PeerDirection.similar => '또래와 비슷해요',
+                        },
+                        style: context.typo.caption2W600.copyWith(
+                          fontSize: 11,
+                          color: total.direction == PeerDirection.more
+                              ? context.color.primary.normal
+                              : context.color.label.alternative),
+                      ),
               ),
               const SizedBox(height: 13),
               VersusBarCard(
@@ -102,7 +111,8 @@ class ComparePage extends ConsumerWidget {
               ]),
               const SizedBox(height: 13),
               for (final e in top6)
-                CategoryBattleRow(category: e.key, mine: e.value, peer: peer.avgByCategory[e.key] ?? 0),
+                if (peer.compareCategory(e.key, e.value) case final comparison?)
+                  CategoryBattleRow(category: e.key, comparison: comparison),
               if (peerTop != null) ...[
                 const SizedBox(height: 2),
                 InsightBanner(

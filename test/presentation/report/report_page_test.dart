@@ -107,6 +107,60 @@ void main() {
   });
 
   // 소득이 없으면 저축률도 소득 대비 지출도 계산할 수 없다. 두 칸이 같은 규칙을 따른다.
+  // 식료품 지출 60만 원을 또래 식료품 평균 [food]와 견준다.
+  group('이달의 발견', () {
+    Future<void> pumpWithPeerFood(WidgetTester tester, int food) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final stub = StubPeerData.forGroup(AgeGroup.thirties);
+      final container = fakeContainer(
+        user: testUser,
+        transactions: _FakeRepo(),
+        peerRepository: FakePeerStatsRepository(),
+        peerStats: PeerStats(
+          ageGroup: stub.ageGroup,
+          avgMonthlyExpense: stub.avgMonthlyExpense,
+          avgSavingsRate: stub.avgSavingsRate,
+          avgByCategory: {BudgetCategory.food: food},
+          samples: stub.samples,
+        ),
+      );
+      await tester.pumpWidget(provider.ChangeNotifierProvider(
+        create: (_) => ThemeService(),
+        child: fakeScope(container,
+            MaterialApp(theme: ThemeService().lightThemeData(), home: const ReportPage())),
+      ));
+      for (var i = 0; i < 4; i++) {
+        await tester.pump();
+      }
+    }
+
+    testWidgets('50% 이상 더 쓰면 배율로 말한다', (tester) async {
+      await pumpWithPeerFood(tester, 400000); // +50%
+      expect(find.textContaining('1.5배 더 썼어요'), findsOneWidget);
+    });
+
+    // 이전에는 +4%가 '1.0배 더 썼어요'로 보였다.
+    testWidgets('50% 미만으로 더 쓰면 %로 말한다', (tester) async {
+      await pumpWithPeerFood(tester, 577000); // +4%
+      expect(find.textContaining('4% 더 썼어요'), findsOneWidget);
+    });
+
+    // 이전에는 +0.3%가 '0% 덜 썼어요'로, 방향이 반대로 보였다.
+    testWidgets('차이가 반올림해 0%면 비슷하다고 말한다', (tester) async {
+      await pumpWithPeerFood(tester, 598200); // +0.3%
+      expect(find.textContaining('비슷하게 썼어요'), findsOneWidget);
+      expect(find.textContaining('덜 썼어요'), findsNothing);
+    });
+
+    testWidgets('덜 쓰면 %로 말한다', (tester) async {
+      await pumpWithPeerFood(tester, 800000); // -25%
+      expect(find.textContaining('25% 덜 썼어요'), findsOneWidget);
+    });
+  });
+
   testWidgets('소득이 없으면 저축률과 소득 대비가 모두 — 다', (tester) async {
     final now = DateTime.now();
     await _pumpReport(tester, fakeContainer(

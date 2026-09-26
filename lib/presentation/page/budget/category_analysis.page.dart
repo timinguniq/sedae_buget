@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
 import 'package:sedae_budget/theme/theme.dart';
@@ -94,11 +95,12 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
             const SizedBox(height: 1),
             ...List.generate(labels.length, (i) {
               final cat = cats[i];
-              final peerAmt = (_showPeer && cat != null) ? peer?.avgByCategory[cat] : null;
+              final comparison =
+                  (_showPeer && cat != null) ? peer?.compareCategory(cat, values[i]) : null;
               return CategoryRow(
                   label: labels[i], amount: values[i],
                   color: colors[i], percent: values[i] / total,
-                  peerAmount: peerAmt);
+                  peer: comparison);
             }),
           ]);
         },

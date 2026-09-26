@@ -75,7 +75,7 @@ void main() {
     await tester.pump();
 
     expect(find.byType(TransactionTile), findsOneWidget);
-    expect(find.text('또래보다 잦음'), findsNothing);
+    expect(find.text('또래보다 많이'), findsNothing);
   });
 
   testWidgets('이달 지출이 또래 평균을 넘는 분류의 거래에는 배지가 붙는다', (tester) async {
@@ -89,7 +89,7 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    expect(find.text('또래보다 잦음'), findsOneWidget);
+    expect(find.text('또래보다 많이'), findsOneWidget);
   });
 
   // 자기계발(현재 오락·문화)로 기록했지만 거래에는 옛 분류(기타)가 적혀 있는 경우.

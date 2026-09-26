@@ -4,15 +4,16 @@ import 'package:sedae_budget/theme/theme.dart';
 
 /// 시안 A 대형 등수 블록: "또래 N명 중 내 지출은" / `N등`(800·46 코랄) / 잉크 배지 `상위 N% · 많이 쓰는 편`.
 class RankHeadline extends StatelessWidget {
-  const RankHeadline({super.key, required this.stats, required this.myExpense});
-  final PeerStats stats;
-  final int myExpense;
+  const RankHeadline({super.key, required this.rank});
+
+  /// 또래 중 내 지출 순위. 표본이 없으면 헤드라인을 그리지 않는다(부르는 쪽이 판단).
+  final PeerRank rank;
 
   @override
   Widget build(BuildContext context) {
-    final r = stats.rankOf(myExpense);
-    final below = stats.percentBelow(myExpense); // 또래 중 나보다 적게 쓴 %
-    final top = stats.topPercent(myExpense);      // 상위 N% (많이 쓰는 순)
+    final r = rank;
+    final below = r.percentBelow; // 또래 중 나보다 적게 쓴 %
+    final top = r.topPercent;     // 상위 N% (많이 쓰는 순)
     final heavy = below >= 50;
     final coral = context.color.primary.normal;
     return Column(children: [

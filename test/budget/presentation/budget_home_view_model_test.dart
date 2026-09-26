@@ -181,6 +181,23 @@ void main() {
       expect((await _overview(c)).overPeer(same), isFalse);
     });
 
+    // 이전에는 또래 평균이 0인(집계 없음) 분류의 모든 지출에 배지가 붙었다.
+    test('또래 평균이 없는 분류는 초과가 아니다', () async {
+      final stub = StubPeerData.forGroup(AgeGroup.thirties);
+      final tx = _expense(1000, BudgetCategory.education);
+      final c = fakeContainer(
+          user: testUser,
+          transactions: InMemoryTransactionRepository([tx]),
+          peerStats: PeerStats(
+            ageGroup: stub.ageGroup,
+            avgMonthlyExpense: stub.avgMonthlyExpense,
+            avgSavingsRate: stub.avgSavingsRate,
+            avgByCategory: {...stub.avgByCategory}..remove(BudgetCategory.education),
+            samples: stub.samples,
+          ));
+      expect((await _overview(c)).overPeer(tx), isFalse);
+    });
+
     test('수입 거래나 또래 통계가 없으면 false', () async {
       // 지출이 또래를 넘는 분류에 적힌 수입이라도 배지는 지출에만 붙는다.
       final income = Transaction.create(amount: lots, categoryId: BudgetCategory.food.id,

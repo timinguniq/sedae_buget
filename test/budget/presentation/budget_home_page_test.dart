@@ -106,6 +106,27 @@ void main() {
     expect(find.textContaining('또래 평균'), findsNothing);
   });
 
+  // 이전에는 표본이 없어도 '1명 중 1등 · 상위 100%'로 보였다.
+  testWidgets('또래 표본이 없으면 순위 카드를 보이지 않는다', (tester) async {
+    final stub = StubPeerData.forGroup(AgeGroup.thirties);
+    await _pumpHome(tester, fakeContainer(
+      user: testUser,
+      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+      transactions: _FakeRepo(),
+      peerStats: PeerStats(
+        ageGroup: stub.ageGroup,
+        avgMonthlyExpense: stub.avgMonthlyExpense,
+        avgSavingsRate: stub.avgSavingsRate,
+        avgByCategory: stub.avgByCategory,
+        samples: const [],
+      ),
+    ));
+
+    expect(find.text('또래 중 내 지출 순위'), findsNothing);
+    expect(find.text('또래 통계를 불러오지 못했어요'), findsNothing);
+    expect(find.text('많이 쓴 카테고리'), findsOneWidget);
+  });
+
   // 이전에는 '불러오기 실패: <예외 문자열>'만 보이고 다시 읽을 방법이 없었다.
   testWidgets('이달 거래를 못 읽으면 이유와 다시 시도를 보여주고, 다시 시도하면 읽는다', (tester) async {
     await _pumpHome(tester, fakeContainer(

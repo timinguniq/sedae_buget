@@ -42,16 +42,17 @@ class BudgetHomePage extends ConsumerWidget {
               final savingsRate = o.savingsRate;
               final txs = o.transactions;
               return ListView(children: [
-                SummaryHeroCard(expense: o.expense, income: o.income, peerAvgExpense: peer?.avgMonthlyExpense),
-                const SizedBox(height: 13),
-                if (peer != null)
-                  PeerRankCard(stats: peer, myExpense: o.expense,
-                    onDetail: () => context.go(RoutePath.compare.path))
-                else
+                SummaryHeroCard(expense: o.expense, income: o.income, peer: peer),
+                if (peer == null) ...[
+                  const SizedBox(height: 13),
                   SurfaceCard(child: Text(MonthOverview.peerUnavailable,
                     style: context.typo.caption1W500.copyWith(color: context.color.label.assistive))),
+                ] else if (peer.rankOf(o.expense) case final rank?) ...[
+                  const SizedBox(height: 13),
+                  PeerRankCard(rank: rank, onDetail: () => context.go(RoutePath.compare.path)),
+                ],
                 const SizedBox(height: 13),
-                TopCategoryCard(top: o.topCategories(3), peerByCategory: peer?.avgByCategory ?? const {},
+                TopCategoryCard(top: o.topCategories(3), peer: peer,
                   onTap: () => context.push(RoutePath.categoryAnalysis.path)),
                 if (savingsRate != null) ...[
                   const SizedBox(height: 13),

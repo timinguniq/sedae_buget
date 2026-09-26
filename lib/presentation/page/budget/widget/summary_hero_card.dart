@@ -6,12 +6,12 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 코랄 히어로 카드: 이번 달 총지출 + 또래 비교 pill + 수입/잔액 보조 + 우하단 마스코트 워터마크.
-/// [peerAvgExpense] 지정 시 또래 비교 pill 표시(null이면 생략).
+/// [peer]가 있으면 또래 비교 pill을 그린다(또래 통계를 못 읽었으면 null — pill 생략).
 class SummaryHeroCard extends StatelessWidget {
-  const SummaryHeroCard({super.key, required this.expense, required this.income, this.peerAvgExpense});
+  const SummaryHeroCard({super.key, required this.expense, required this.income, this.peer});
   final int expense;
   final int income;
-  final int? peerAvgExpense;
+  final PeerStats? peer;
 
   @override
   Widget build(BuildContext context) {
@@ -41,9 +41,9 @@ class SummaryHeroCard extends StatelessWidget {
                 style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: white.withValues(alpha: 0.92))),
             const SizedBox(height: 3),
             Text('₩${won.format(expense)}', style: context.typo.amountDisplay.copyWith(color: white)),
-            if (peerAvgExpense != null) ...[
+            if (peer case final peer?) ...[
               const SizedBox(height: 11),
-              _PeerPill(expense: expense, peer: peerAvgExpense!),
+              _PeerPill(comparison: peer.compareTotal(expense)),
             ],
             const SizedBox(height: 10),
             Text('수입 ₩${won.format(income)} · 잔액 ₩${won.format(income - expense)}',
@@ -57,14 +57,15 @@ class SummaryHeroCard extends StatelessWidget {
 
 /// `▲ 또래 평균보다 N% 더 썼어요` pill (흰색 22% 배경). 또래 값은 서버(PeerStatsRepository) 기반.
 class _PeerPill extends StatelessWidget {
-  const _PeerPill({required this.expense, required this.peer});
-  final int expense;
-  final int peer;
+  const _PeerPill({required this.comparison});
+
+  /// 또래 월평균이 없으면 null(집계 중).
+  final PeerComparison? comparison;
 
   @override
   Widget build(BuildContext context) {
     final white = context.color.static.white;
-    final (arrow, label) = _peerLabel(expense, peer);
+    final (arrow, label) = _peerLabel(comparison);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
@@ -81,9 +82,9 @@ class _PeerPill extends StatelessWidget {
   }
 }
 
-(String?, String) _peerLabel(int me, int peer) {
-  if (peer == 0) return (null, '또래 평균 집계 중');
-  final d = peerDeltaPercent(mine: me, peer: peer);
-  if (d == 0) return (null, '또래 평균과 비슷해요');
-  return d < 0 ? ('▼', '또래 평균보다 ${-d}% 덜 썼어요') : ('▲', '또래 평균보다 $d% 더 썼어요');
-}
+(String?, String) _peerLabel(PeerComparison? c) => switch (c?.direction) {
+      null => (null, '또래 평균 집계 중'),
+      PeerDirection.similar => (null, '또래 평균과 비슷해요'),
+      PeerDirection.less => ('▼', '또래 평균보다 ${-c!.percent}% 덜 썼어요'),
+      PeerDirection.more => ('▲', '또래 평균보다 ${c!.percent}% 더 썼어요'),
+    };

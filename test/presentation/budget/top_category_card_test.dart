@@ -23,7 +23,13 @@ void main() {
         MapEntry(BudgetCategory.fromId(11), 320000),
         MapEntry(BudgetCategory.fromId(3), 180000),
       ],
-      peerByCategory: {BudgetCategory.fromId(1): 470000, BudgetCategory.fromId(3): 120000},
+      peer: PeerStats(
+        ageGroup: AgeGroup.thirties,
+        avgMonthlyExpense: 2000000,
+        avgSavingsRate: 0.2,
+        avgByCategory: {BudgetCategory.fromId(1): 470000, BudgetCategory.fromId(3): 120000},
+        samples: const [],
+      ),
       onTap: () => taps++,
     )));
     await t.pump();

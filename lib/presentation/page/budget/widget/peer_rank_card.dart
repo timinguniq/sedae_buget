@@ -5,18 +5,19 @@ import 'package:sedae_budget/theme/theme.dart';
 /// 또래 순위 카드. 통계 값은 서버(PeerStatsRepository).
 /// 디자인: `상위 N%`(800·25 코랄) + `100명 중 N등` / 트랙 6px + 코랄 원형 마커 17px / "적게 씀"·"많이 씀" / `자세히 ›`.
 class PeerRankCard extends StatelessWidget {
-  const PeerRankCard({super.key, required this.stats, required this.myExpense, this.onDetail});
-  final PeerStats stats;
-  final int myExpense;
+  const PeerRankCard({super.key, required this.rank, this.onDetail});
+
+  /// 또래 중 내 지출 순위. 표본이 없으면 카드를 그리지 않는다(부르는 쪽이 판단).
+  final PeerRank rank;
   final VoidCallback? onDetail;
 
   static const double _marker = 17;
 
   @override
   Widget build(BuildContext context) {
-    final r = stats.rankOf(myExpense);
-    final below = stats.percentBelow(myExpense); // 또래 중 나보다 적게 쓴 %
-    final topPercent = stats.topPercent(myExpense); // 지출 상위 %
+    final r = rank;
+    final below = r.percentBelow; // 또래 중 나보다 적게 쓴 %
+    final topPercent = r.topPercent; // 지출 상위 %
     return SurfaceCard(
       onTap: onDetail,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

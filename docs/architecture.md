@@ -23,6 +23,7 @@
   - 장부: 로그인 세션에 묶인 가계부 데이터(이달 거래·최근 6개월 추이·사용자 카테고리)는 `page/budget/ledger.view_model.dart`에 둔다. 세션이 바뀌면 다시 읽고 로그인 전에는 비어 있다. 변경 뒤 무엇을 다시 읽을지도 여기서만 정한다(화면은 `ref.invalidate`하지 않는다).
   - 이달 개요: 이달 요약을 쓰는 화면(홈·비교·내역·리포트·분석)은 `budget_home.view_model.dart`의 `monthOverviewProvider` 하나를 읽는다. 합계·상위 카테고리·저축률·또래 초과 판정과, 또래 통계를 못 읽었을 때 무엇을 뺄지를 여기서 정한다.
   - 거래의 카테고리(표시 이름·기본 분류)는 `entity/budget/category_catalog.dart`의 `CategoryCatalog`로만 판정한다.
+  - 또래 비교: 내 금액과 또래 평균의 비교(더·덜·비슷, %, 배율, 크게 넘음)는 `entity/peer/peer_comparison.dart`의 `PeerComparison`이 정하고, `PeerStats`가 월 합계·분류별·가장 큰 차이를 이 값으로 내준다. 또래 값이 없으면(평균 0·빠짐) 비교는 null이고, 표본이 없으면 순위(`PeerStats.rankOf`)도 null이다. 위젯은 받은 값을 그리기만 한다.
   - 거래 입력: 입력 화면의 규칙(카테고리 선택·저장 가능 여부·저장할 거래)은 `entity/budget/transaction_draft.dart`의 `TransactionDraft`가 가진다. 장부의 `save(draft)`가 추가·수정을 정하고, 다 불러온 사용자 카테고리 목록으로 카테고리를 맞춘다(지워진 사용자 카테고리는 기본 분류로).
   - 세션 게이트: 앱이 어디로 갈지는 `route/auth_gate.dart`의 `SessionGate`(확인 중·연결 안 됨·로그아웃·프로필 필요·준비됨)와 순수 함수 `sessionRedirect`만 정한다. 인증·프로필 확인에 실패하면 로그아웃·프로필 없음이 아니라 '연결 안 됨'(`/unreachable`, 다시 시도)이다. 스플래시·온보딩·로그인 화면은 행선지를 고르지 않는다(`context.go`로 게이트 화면을 고르지 않는다).
   - 세션 만료: 서버가 저장된 토큰을 거부하면(401) `core/http_client/auth_token_interceptor.dart`가 토큰을 지우고 `SessionExpiry`로 알린다. 이 신호는 `AuthRepository.sessionExpired`로 domain에 드러나고, `AuthNotifier`가 로그아웃 상태로 바꾼 뒤 로그인 화면이 안내한다.
@@ -69,3 +70,4 @@ import 규칙은 문자열 검사라 의미적 위반은 잡지 못한다. 아�
 - `data`의 JSON·API 세부(DTO 포함)가 `domain` 인터페이스 시그니처로 새지 않는가
 - `data_source/remote` 명세에 호출 로직·엔티티 변환이 들어가지 않는가(명세는 선언만)
 - 화면·집계가 거래의 카테고리를 `CategoryCatalog` 밖에서 판정하지 않는가(`BudgetCategory.fromId(tx.categoryId)`를 직접 쓰지 않는다)
+- 화면이 또래 비교를 `PeerComparison` 밖에서 판정하지 않는가(`mine > peer`·`avgByCategory[c]`를 직접 견주지 않는다)

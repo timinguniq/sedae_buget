@@ -52,12 +52,12 @@ class MonthOverview {
           .toList();
 
   /// [tx]가 속한 기본 분류에서 이달 내 지출이 또래 평균보다 많은가.
-  /// 지출이 아니거나 또래 통계가 없으면 false.
+  /// 지출이 아니거나 또래 통계·그 분류의 또래 값이 없으면 false.
   bool overPeer(Transaction tx) {
     final peer = this.peer;
     if (peer == null || tx.type != TransactionType.expense) return false;
     final base = catalog.of(tx).base;
-    return (byCategory[base] ?? 0) > (peer.avgByCategory[base] ?? 0);
+    return peer.compareCategory(base, byCategory[base] ?? 0)?.direction == PeerDirection.more;
   }
 }
 
