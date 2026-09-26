@@ -3,9 +3,6 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/ledger.view_model.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 
-/// 또래 통계를 못 읽었을 때 보여줄 문구.
-const peerUnavailableText = '또래 통계를 불러오지 못했어요';
-
 /// 이달 개요([MonthOverview]). 홈·비교·내역·리포트·분석이 모두 이 값을 읽는다.
 /// 이달 거래를 못 읽으면 오류, 또래 통계는 처음 한 번만 기다리고 실패하면 빼고 낸다.
 final monthOverviewProvider = Provider<AsyncValue<MonthOverview>>((ref) {

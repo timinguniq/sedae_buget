@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/widget/common/peer_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 히어로의 또래 비교 pill에 그릴 것: 빈 달인가, 이달 총지출과 또래 월평균의 비교(또래 값이 없으면 null).
@@ -82,7 +83,12 @@ class _PeerPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final white = context.color.static.white;
-    final (arrow, label) = peer.emptyMonth ? (null, '내역을 추가하면 비교가 시작돼요') : _peerLabel(peer.total);
+    final total = peer.total;
+    final (arrow, label) = peer.emptyMonth
+        ? (null, emptyMonthText)
+        : total == null
+            ? (null, peerPendingText)
+            : (total.arrow, total.heroSentence);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
@@ -98,10 +104,3 @@ class _PeerPill extends StatelessWidget {
     );
   }
 }
-
-(String?, String) _peerLabel(PeerComparison? c) => switch (c?.direction) {
-      null => (null, '또래 평균 집계 중'),
-      PeerDirection.similar => (null, '또래 평균과 비슷해요'),
-      PeerDirection.less => ('▼', '또래 평균보다 ${-c!.percent}% 덜 썼어요'),
-      PeerDirection.more => ('▲', '또래 평균보다 ${c!.percent}% 더 썼어요'),
-    };

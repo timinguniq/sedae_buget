@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/widget/common/peer_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 홈 저축률 카드: 44px 도넛 + "{달} 저축률 N% / 또래 평균 M% · …".
@@ -37,7 +38,7 @@ class SavingsRateCard extends StatelessWidget {
           Text('$label 저축률 $rate%', style: context.typo.sectionTitle.copyWith(color: context.color.label.normal)),
           if (peer != null) ...[
             const SizedBox(height: 2),
-            Text('또래 평균 ${peer.peer}% · ${peer.atLeastPeer ? '잘 모으고 있어요' : '조금 더 모아볼까요?'}',
+            Text('또래 평균 ${peer.peer}% · ${peer.verdict}',
                 style: context.typo.caption1W500.copyWith(fontSize: 11.5, color: context.color.label.assistive)),
           ],
         ])),

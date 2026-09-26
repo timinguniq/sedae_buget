@@ -145,18 +145,10 @@ class ReportPage extends ConsumerWidget {
   ) {
     if (i == null) return const TextSpan(text: '아직 분석할 지출이\n충분치 않아요');
     final c = i.comparison;
-    final ratio = c.ratio;
-    final ratioText = ratio == ratio.roundToDouble() ? '${ratio.round()}' : ratio.toStringAsFixed(1);
-    final (lead, how) = switch (c.direction) {
-      PeerDirection.more when c.strong => ('또래보다 ', '$ratioText배 더'),
-      PeerDirection.more => ('또래보다 ', '${c.percent}% 더'),
-      PeerDirection.less => ('또래보다 ', '${-c.percent}% 덜'),
-      PeerDirection.similar => ('또래와 ', '비슷하게'),
-    };
     return TextSpan(children: [
-      TextSpan(text: lead),
+      TextSpan(text: c.insightLead),
       TextSpan(text: i.category.label, style: MonthlyInsightCard.highlightStyle(context)),
-      TextSpan(text: '에\n$how 썼어요'),
+      TextSpan(text: '에\n${c.insightHow} 썼어요'),
     ]);
   }
 }

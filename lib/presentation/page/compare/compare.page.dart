@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/category_battle_row.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/compare_format.dart';
@@ -36,7 +35,7 @@ class ComparePage extends ConsumerWidget {
                 child: Column(mainAxisSize: MainAxisSize.min, children: [
                   const MascotDongle(size: 64),
                   const SizedBox(height: 16),
-                  Text('내역을 추가하면 비교가 시작돼요',
+                  Text(emptyMonthText,
                     textAlign: TextAlign.center,
                     style: context.typo.body1W500.copyWith(color: context.color.label.alternative)),
                 ]),
@@ -76,16 +75,8 @@ class ComparePage extends ConsumerWidget {
                   mineText: manWon(total.mine),
                   peerText: manWon(total.peer),
                   footer: Text(
-                    switch (total.direction) {
-                      PeerDirection.more => '또래보다 약 ${manWon(total.mine - total.peer)}원 더 ▲',
-                      PeerDirection.less => '또래보다 약 ${manWon(total.peer - total.mine)}원 덜 ▼',
-                      PeerDirection.similar => '또래와 비슷해요',
-                    },
-                    style: context.typo.caption2W600.copyWith(
-                      fontSize: 11,
-                      color: total.direction == PeerDirection.more
-                          ? context.color.primary.normal
-                          : context.color.label.alternative),
+                    total.totalFooter(manWon),
+                    style: context.typo.caption2W600.copyWith(fontSize: 11, color: total.tone(context)),
                   ),
                 ),
                 const SizedBox(height: 13),

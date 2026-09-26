@@ -61,6 +61,13 @@ void main() {
       expect(find.textContaining('1.5배 더 썼어요'), findsOneWidget);
     });
 
+    // 이전에는 1.96배가 '2.0배 더 썼어요'로 보였다(반올림 전에 정수인지 봤다).
+    testWidgets('배율은 반올림한 뒤 정수면 정수로 말한다', (tester) async {
+      await pumpWithPeerFood(tester, 306122); // 60만 / 30.6만 ≈ 1.96배
+      expect(find.textContaining('2배 더 썼어요'), findsOneWidget);
+      expect(find.textContaining('2.0배'), findsNothing);
+    });
+
     // 이전에는 +4%가 '1.0배 더 썼어요'로 보였다.
     testWidgets('50% 미만으로 더 쓰면 %로 말한다', (tester) async {
       await pumpWithPeerFood(tester, 577000); // +4%
