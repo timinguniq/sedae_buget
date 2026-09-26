@@ -128,10 +128,6 @@ class StubApiInterceptor extends Interceptor {
         db.profile = {'ageGroup': b['ageGroup'], 'monthlyIncome': b['monthlyIncome']};
         await _persist();
         return (200, Map<String, dynamic>.of(db.profile!));
-      case 'DELETE':
-        db.profile = null;
-        await _persist();
-        return (204, null);
     }
     throw _StubError(404, 'NOT_FOUND', '경로가 없습니다: $method ${ApiPath.profile}');
   }

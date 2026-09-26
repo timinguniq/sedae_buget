@@ -32,13 +32,4 @@ void main() {
     expect(server.single.path, '/v1/me/profile');
     expect(server.single.data, _json);
   });
-
-  test('delete → DELETE /v1/me/profile', () async {
-    final server = RecordingInterceptor(status: 204);
-
-    await _api(server).delete();
-
-    expect(server.single.method, 'DELETE');
-    expect(server.single.path, '/v1/me/profile');
-  });
 }

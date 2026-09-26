@@ -18,8 +18,6 @@ class _FailingSaveRepo implements UserProfileRepository {
   Future<Result<void>> save(UserProfile profile) async => const Result.failure(
         ErrorResult(reason: FailureReason.offline, message: '네트워크에 연결할 수 없습니다.'),
       );
-  @override
-  Future<Result<void>> clear() async => const Result.success(null);
 }
 
 void main() {

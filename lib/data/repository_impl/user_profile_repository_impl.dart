@@ -20,7 +20,4 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   @override
   Future<Result<void>> save(UserProfile profile) =>
       guardApi(() => _api.put(UserProfileDto.fromEntity(profile)));
-
-  @override
-  Future<Result<void>> clear() => guardApi(_api.delete);
 }

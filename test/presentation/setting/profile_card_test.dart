@@ -7,6 +7,7 @@ import 'package:sedae_budget/presentation/page/setting/widget/logout_button.dart
 import 'package:sedae_budget/presentation/page/setting/widget/profile_card.dart';
 import 'package:sedae_budget/presentation/page/setting/widget/provider_badge.dart';
 import 'package:sedae_budget/presentation/service/theme_service.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
@@ -27,7 +28,8 @@ void main() {
     TestWidgetsFlutterBinding.ensureInitialized();
   });
 
-  testWidgets('guest: shows 게스트 and 로그인 button, no 로그아웃', (t) async {
+  // 세션 게이트가 로그아웃 상태에선 설정을 보여주지 않는다. 로그아웃 직후 한 프레임은 아무것도 그리지 않는다.
+  testWidgets('signed out: draws neither the card nor 로그아웃', (t) async {
     final container = fakeContainer();
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
@@ -37,13 +39,12 @@ void main() {
     await t.pump();
     await t.pump();
 
-    expect(find.text('게스트'), findsOneWidget);
-    expect(find.text('로그인'), findsOneWidget);
+    expect(find.byType(MascotDongle), findsNothing);
     expect(find.text('로그아웃'), findsNothing);
     expect(find.byType(ProviderBadge), findsNothing);
   });
 
-  testWidgets('logged-in: shows nickname + provider badge; logout returns to guest', (t) async {
+  testWidgets('logged-in: shows nickname + provider badge; logout clears both', (t) async {
     final container = fakeContainer(
       user: const AuthUser(provider: AuthProvider.kakao, nickname: '카카오 사용자'),
     );
@@ -65,7 +66,7 @@ void main() {
     await t.tap(find.text('로그아웃'));
     await t.pump();
 
-    expect(find.text('게스트'), findsOneWidget);
+    expect(find.text('카카오 사용자'), findsNothing);
     expect(find.text('로그아웃'), findsNothing);
   });
 

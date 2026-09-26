@@ -3,7 +3,6 @@ import 'package:uuid/uuid.dart';
 import 'package:sedae_budget/entity/budget/transaction_type.dart';
 
 part 'transaction.freezed.dart';
-part 'transaction.g.dart';
 
 @freezed
 abstract class Transaction with _$Transaction {
@@ -45,7 +44,4 @@ abstract class Transaction with _$Transaction {
       updatedAt: now,
     );
   }
-
-  factory Transaction.fromJson(Map<String, dynamic> json) =>
-      _$TransactionFromJson(json);
 }

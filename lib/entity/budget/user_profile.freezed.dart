@@ -11,7 +11,6 @@ part of 'user_profile.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$UserProfile {
 
@@ -22,8 +21,6 @@ mixin _$UserProfile {
 @pragma('vm:prefer-inline')
 $UserProfileCopyWith<UserProfile> get copyWith => _$UserProfileCopyWithImpl<UserProfile>(this as UserProfile, _$identity);
 
-  /// Serializes this UserProfile to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -31,7 +28,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is UserProfile&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&(identical(other.monthlyIncome, monthlyIncome) || other.monthlyIncome == monthlyIncome));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,ageGroup,monthlyIncome);
 
@@ -207,11 +204,11 @@ return $default(_that.ageGroup,_that.monthlyIncome);case _:
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _UserProfile implements UserProfile {
   const _UserProfile({required this.ageGroup, required this.monthlyIncome});
-  factory _UserProfile.fromJson(Map<String, dynamic> json) => _$UserProfileFromJson(json);
+  
 
 @override final  AgeGroup ageGroup;
 @override final  int monthlyIncome;
@@ -222,17 +219,14 @@ class _UserProfile implements UserProfile {
 @pragma('vm:prefer-inline')
 _$UserProfileCopyWith<_UserProfile> get copyWith => __$UserProfileCopyWithImpl<_UserProfile>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$UserProfileToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _UserProfile&&(identical(other.ageGroup, ageGroup) || other.ageGroup == ageGroup)&&(identical(other.monthlyIncome, monthlyIncome) || other.monthlyIncome == monthlyIncome));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,ageGroup,monthlyIncome);
 

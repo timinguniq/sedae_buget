@@ -1,1 +1,1 @@
-export 'custom_icon.dart';
+export 'custom_icon_size.dart';

@@ -15,12 +15,4 @@ void main() {
     expect(tx.amount, 12000);
     expect(tx.createdAt, tx.updatedAt);
   });
-
-  test('json round-trips', () {
-    final tx = Transaction.create(
-      amount: 500, categoryId: 2, date: DateTime(2026, 3, 4),
-      type: TransactionType.income,
-    );
-    expect(Transaction.fromJson(tx.toJson()), tx);
-  });
 }

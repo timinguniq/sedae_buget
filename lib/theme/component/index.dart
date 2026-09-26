@@ -2,7 +2,6 @@ export 'button/index.dart';
 export 'card/index.dart';
 export 'chip/index.dart';
 export 'icon/index.dart';
-export 'image/index.dart';
 export 'indicator/index.dart';
 export 'lottie/index.dart';
 export 'mascot/index.dart';

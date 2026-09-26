@@ -1,23 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-/// 로그인 상태 인지 프로필 카드. 디자인: 46px 마스코트 + 이름 700·15 + 나이대 500·11.5 + 우측 provider 배지.
-/// 게스트는 "게스트" + 로그인 액션. 로그아웃은 화면 하단 [LogoutButton]에서.
+/// 프로필 카드. 디자인: 46px 마스코트 + 이름 700·15 + 나이대 500·11.5 + 우측 provider 배지.
+/// 세션 게이트가 로그아웃 상태에선 설정을 보여주지 않으므로, 로그아웃 직후 한 프레임은 그리지 않는다.
+/// 로그아웃은 화면 하단 [LogoutButton]에서.
 class ProfileCard extends ConsumerWidget {
   const ProfileCard({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).value;
+    if (user == null) return const SizedBox.shrink();
     final ageGroup = ref.watch(userProfileProvider).value?.ageGroup;
-    final subtitle = user == null
-        ? '로그인하고 또래 비교를 시작하세요'
-        : (ageGroup?.label ?? '${user.provider.label} 로그인');
+    final subtitle = ageGroup?.label ?? '${user.provider.label} 로그인';
     return SurfaceCard(
       padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
       child: Row(children: [
@@ -27,16 +26,13 @@ class ProfileCard extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(user?.nickname ?? '게스트',
+            Text(user.nickname,
               style: context.typo.body2W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.normal)),
             const SizedBox(height: 2),
             Text(subtitle,
               style: context.typo.caption1W500.copyWith(fontSize: 11.5, color: context.color.label.assistive)),
           ])),
-        if (user == null)
-          TextButton(onPressed: () => context.push(RoutePath.login.path), child: const Text('로그인'))
-        else
-          ProviderBadge(provider: user.provider),
+        ProviderBadge(provider: user.provider),
       ]),
     );
   }

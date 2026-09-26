@@ -11,7 +11,6 @@ part of 'auth_user.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$AuthUser {
 
@@ -22,8 +21,6 @@ mixin _$AuthUser {
 @pragma('vm:prefer-inline')
 $AuthUserCopyWith<AuthUser> get copyWith => _$AuthUserCopyWithImpl<AuthUser>(this as AuthUser, _$identity);
 
-  /// Serializes this AuthUser to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -31,7 +28,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is AuthUser&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.nickname, nickname) || other.nickname == nickname));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,provider,nickname);
 
@@ -207,11 +204,11 @@ return $default(_that.provider,_that.nickname);case _:
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _AuthUser implements AuthUser {
   const _AuthUser({required this.provider, required this.nickname});
-  factory _AuthUser.fromJson(Map<String, dynamic> json) => _$AuthUserFromJson(json);
+  
 
 @override final  AuthProvider provider;
 @override final  String nickname;
@@ -222,17 +219,14 @@ class _AuthUser implements AuthUser {
 @pragma('vm:prefer-inline')
 _$AuthUserCopyWith<_AuthUser> get copyWith => __$AuthUserCopyWithImpl<_AuthUser>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$AuthUserToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _AuthUser&&(identical(other.provider, provider) || other.provider == provider)&&(identical(other.nickname, nickname) || other.nickname == nickname));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,provider,nickname);
 

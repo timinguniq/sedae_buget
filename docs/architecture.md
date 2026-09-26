@@ -29,7 +29,7 @@
   - 세션 게이트: 앱이 어디로 갈지는 `route/auth_gate.dart`의 `SessionGate`(확인 중·연결 안 됨·로그아웃·프로필 필요·준비됨)와 순수 함수 `sessionRedirect`만 정한다. 인증·프로필 확인에 실패하면 로그아웃·프로필 없음이 아니라 '연결 안 됨'(`/unreachable`, 다시 시도)이다. 스플래시·온보딩·로그인 화면은 행선지를 고르지 않는다(`context.go`로 게이트 화면을 고르지 않는다).
   - 세션 만료: 서버가 저장된 토큰을 거부하면(401) `core/http_client/auth_token_interceptor.dart`가 토큰을 지우고 `SessionExpiry`로 알린다. 이 신호는 `AuthRepository.sessionExpired`로 domain에 드러나고, `AuthNotifier`가 로그아웃 상태로 바꾼 뒤 로그인 화면이 안내한다.
   - 앱 이용 가능 여부(점검·업데이트): 판정은 `entity/core/app_status.dart`의 `AppStatus.of`, 재료(원격 설정·빌드 번호)는 `core/app_config/remote_config.dart`의 `AppStatusSource`, 안내는 `page/initial/app_status_dialog.dart`가 한다. 앱을 켤 때는 스플래시가, 쓰는 중 원격 설정이 바뀌면 `MyApp`이 안내한다.
-- DI: `get_it`. 등록은 composition root인 `lib/core/dependency_injection/`에서만 한다. 화면이 의존성을 얻는 **seam은 `presentation/service/*_provider.dart`** 하나다(`dependency_provider.dart`·`ad_provider.dart`). viewmodel·페이지는 `ref.watch/read(…Provider)`로만 얻고 locator를 직접 부르지 않는다. 테스트는 전역 locator를 등록하는 대신 이 provider를 `overrideWithValue`로 바꾼다.
+- DI: `get_it`. 등록은 composition root인 `lib/core/dependency_injection/`에서만 한다. composition root는 data·domain 구현을 모두 알기 때문에 `main.dart`와 `presentation/service/*_provider.dart`만 import하고, `core/core.dart` 배럴도 다시 내보내지 않는다(배럴을 import한 파일이 전이로 data·domain에 묶이지 않게). 화면이 의존성을 얻는 **seam은 `presentation/service/*_provider.dart`** 하나다(`dependency_provider.dart`·`ad_provider.dart`). viewmodel·페이지는 `ref.watch/read(…Provider)`로만 얻고 locator를 직접 부르지 않는다. 테스트는 전역 locator를 등록하는 대신 이 provider를 `overrideWithValue`로 바꾼다.
 - 라우팅: `go_router` (`lib/presentation/route/`).
 - 코드 생성: `freezed`, `json_serializable`, `retrofit_generator`. 생성 파일(`*.g.dart`, `*.freezed.dart`)은 커밋하며, 의존성 검사에서는 제외한다.
 
@@ -42,6 +42,7 @@
 | `data` | `presentation`, `theme`, `package:flutter/`, 로컬 저장 기술(`drift`, `shared_preferences`, `flutter_secure_storage`) — 단 `lib/data/data_source/local/`은 허용 |
 | `core` | `presentation`, `theme`. `domain`, `data` — 단 `lib/core/dependency_injection/`(composition root)는 허용 |
 | `presentation` | `data` 구현체. DI(`core/dependency_injection`, `core/core.dart`)는 `service/*_provider.dart`에서만 접근 |
+| 모든 레이어 | `core/dependency_injection` — 단 composition root 자신과 `presentation/service/*_provider.dart`는 허용(`main.dart`는 레이어 밖) |
 | `presentation/page` | `shared_preferences` 직접 사용 |
 | `theme` | `presentation`, `domain`, `data` |
 | `domain`·`entity`·`presentation`·`theme` | `package:dio/` (HTTP는 `core`·`data`에만) |

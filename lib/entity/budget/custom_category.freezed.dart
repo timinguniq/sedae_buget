@@ -11,7 +11,6 @@ part of 'custom_category.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$CustomCategory {
 
@@ -23,8 +22,6 @@ mixin _$CustomCategory {
 @pragma('vm:prefer-inline')
 $CustomCategoryCopyWith<CustomCategory> get copyWith => _$CustomCategoryCopyWithImpl<CustomCategory>(this as CustomCategory, _$identity);
 
-  /// Serializes this CustomCategory to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -32,7 +29,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomCategory&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.baseCategoryId, baseCategoryId) || other.baseCategoryId == baseCategoryId));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,id,name,baseCategoryId);
 
@@ -209,11 +206,11 @@ return $default(_that.id,_that.name,_that.baseCategoryId);case _:
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _CustomCategory extends CustomCategory {
   const _CustomCategory({required this.id, required this.name, required this.baseCategoryId}): super._();
-  factory _CustomCategory.fromJson(Map<String, dynamic> json) => _$CustomCategoryFromJson(json);
+  
 
 @override final  String id;
 @override final  String name;
@@ -226,17 +223,14 @@ class _CustomCategory extends CustomCategory {
 @pragma('vm:prefer-inline')
 _$CustomCategoryCopyWith<_CustomCategory> get copyWith => __$CustomCategoryCopyWithImpl<_CustomCategory>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$CustomCategoryToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomCategory&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.baseCategoryId, baseCategoryId) || other.baseCategoryId == baseCategoryId));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,id,name,baseCategoryId);
 

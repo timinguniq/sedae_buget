@@ -60,12 +60,6 @@ class InMemoryUserProfileRepository implements UserProfileRepository {
     profile = p;
     return const Result.success(null);
   }
-
-  @override
-  Future<Result<void>> clear() async {
-    profile = null;
-    return const Result.success(null);
-  }
 }
 
 /// 인메모리 사용자 카테고리 저장소. 생성 순서를 유지한다(서버 계약과 동일).

@@ -1,5 +1,3 @@
-part of 'custom_icon.dart';
-
 enum IconSize {
   xxs,
   xs,

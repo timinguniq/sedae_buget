@@ -38,7 +38,7 @@ void main() {
     expect(find.text('화면'), findsOneWidget);
     expect(find.text('일반'), findsOneWidget);
     expect(find.byKey(const Key('category-manage-tile')), findsOneWidget);
-    expect(find.text('로그아웃'), findsNothing); // 게스트
+    expect(find.text('로그아웃'), findsNothing); // 로그아웃 상태
 
     await tester.tap(find.text('다크'));
     await tester.pump();

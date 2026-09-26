@@ -74,7 +74,7 @@ void main() {
     await api.post<dynamic>(ApiPath.logout);
   });
 
-  test('profile 404 → put → get → delete → 404', () async {
+  test('profile 404 → put → get', () async {
     tokens.token = 'stub.kakao';
     expect(
       () => api.get<Map<String, dynamic>>(ApiPath.profile),
@@ -87,11 +87,6 @@ void main() {
     final got = await api.get<Map<String, dynamic>>(ApiPath.profile);
     expect(got['monthlyIncome'], 3000000);
     expect(got['ageGroup'], 'thirties');
-    await api.delete(ApiPath.profile);
-    expect(
-      () => api.get<Map<String, dynamic>>(ApiPath.profile),
-      throwsA(isA<HttpFailure>().having((e) => e.isNotFound, 'notFound', isTrue)),
-    );
   });
 
   test('transactions: put → list in range, desc → delete → empty', () async {
