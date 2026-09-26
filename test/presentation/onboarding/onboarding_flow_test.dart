@@ -64,5 +64,8 @@ void main() {
     await t.pump(const Duration(milliseconds: 300)); // advance through 250ms animation
     await t.pump(); // rebuild after onPageChanged setState
     expect(find.text('시작하기'), findsOneWidget);
+    // 소득은 서버에 저장된다. 이전 문구는 '기기에 안전하게 보관'이라고 했다.
+    expect(find.text('소득 정보는 저축률 계산과 또래 비교에만 쓰이고, 비교는 익명 통계로만 이뤄져요.'), findsOneWidget);
+    expect(find.textContaining('기기에'), findsNothing);
   });
 }
