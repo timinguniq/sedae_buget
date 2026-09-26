@@ -3,7 +3,6 @@ import 'package:uuid/uuid.dart';
 import 'package:sedae_budget/entity/budget/budget_category.dart';
 
 part 'custom_category.freezed.dart';
-part 'custom_category.g.dart';
 
 /// 사용자가 직접 만든 카테고리. 기본 분류([BudgetCategory])는 또래 비교의 전제라
 /// 수정·삭제할 수 없고, 이 엔티티만 추가·수정·삭제할 수 있다.
@@ -25,9 +24,6 @@ abstract class CustomCategory with _$CustomCategory {
     required int baseCategoryId,
   }) =>
       CustomCategory(id: const Uuid().v4(), name: name, baseCategoryId: baseCategoryId);
-
-  factory CustomCategory.fromJson(Map<String, dynamic> json) =>
-      _$CustomCategoryFromJson(json);
 
   /// 이름 최대 길이. 클라이언트 입력 제한과 서버 검증이 같은 값을 쓴다.
   static const maxNameLength = 10;

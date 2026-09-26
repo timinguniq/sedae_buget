@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/widget/common/peer_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 또래 평균 대비 배지 `또래▲15%` / `또래▼10%` / `또래와 비슷`.
@@ -15,8 +16,7 @@ class PeerDeltaBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final over = comparison.direction == PeerDirection.more;
     final strong = comparison.strong;
-    final pct = comparison.percent.abs();
-    final accent = over ? context.color.primary.normal : context.color.label.alternative;
+    final accent = comparison.tone(context);
     final fg = strong ? context.color.static.white : accent;
     final Color? bg = strong
         ? context.color.primary.normal
@@ -26,11 +26,7 @@ class PeerDeltaBadge extends StatelessWidget {
       padding: pill ? const EdgeInsets.symmetric(horizontal: 6, vertical: 2) : EdgeInsets.zero,
       decoration: bg == null ? null : BoxDecoration(color: bg, borderRadius: BorderRadius.circular(9)),
       child: Text(
-        switch (comparison.direction) {
-          PeerDirection.more => '또래▲$pct%',
-          PeerDirection.less => '또래▼$pct%',
-          PeerDirection.similar => '또래와 비슷',
-        },
+        comparison.badge,
         style: context.typo.caption2W600.copyWith(
           fontSize: tinted ? 9.5 : 9, height: 1.2, fontWeight: context.typo.bold, color: fg,
         ),

@@ -6,6 +6,4 @@ abstract class UserProfileRepository {
   Future<Result<UserProfile?>> current();
 
   Future<Result<void>> save(UserProfile profile);
-
-  Future<Result<void>> clear();
 }

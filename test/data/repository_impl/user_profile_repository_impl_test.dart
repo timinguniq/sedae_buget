@@ -17,14 +17,12 @@ void main() {
     repo = server.profiles;
   });
 
-  test('save → current → clear round-trip (404 → null)', () async {
+  test('save → current round-trip (404 → null first)', () async {
     expect((await repo.current()).unwrap(), isNull);
     await repo.save(const UserProfile(ageGroup: AgeGroup.twenties, monthlyIncome: 2500000));
     final got = (await repo.current()).unwrap();
     expect(got?.ageGroup, AgeGroup.twenties);
     expect(got?.monthlyIncome, 2500000);
-    await repo.clear();
-    expect((await repo.current()).unwrap(), isNull);
   });
 
   test('without token → 401이 unauthorized 실패로 온다', () async {

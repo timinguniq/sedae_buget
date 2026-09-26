@@ -11,7 +11,6 @@ part of 'transaction.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$Transaction {
 
@@ -26,8 +25,6 @@ mixin _$Transaction {
 @pragma('vm:prefer-inline')
 $TransactionCopyWith<Transaction> get copyWith => _$TransactionCopyWithImpl<Transaction>(this as Transaction, _$identity);
 
-  /// Serializes this Transaction to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -35,7 +32,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.type, type) || other.type == type)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.customCategoryId, customCategoryId) || other.customCategoryId == customCategoryId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,id,amount,categoryId,date,type,memo,customCategoryId,createdAt,updatedAt);
 
@@ -218,11 +215,11 @@ return $default(_that.id,_that.amount,_that.categoryId,_that.date,_that.type,_th
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _Transaction implements Transaction {
   const _Transaction({required this.id, required this.amount, required this.categoryId, required this.date, required this.type, this.memo, this.customCategoryId, required this.createdAt, required this.updatedAt});
-  factory _Transaction.fromJson(Map<String, dynamic> json) => _$TransactionFromJson(json);
+  
 
 @override final  String id;
 @override final  int amount;
@@ -244,17 +241,14 @@ class _Transaction implements Transaction {
 @pragma('vm:prefer-inline')
 _$TransactionCopyWith<_Transaction> get copyWith => __$TransactionCopyWithImpl<_Transaction>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$TransactionToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _Transaction&&(identical(other.id, id) || other.id == id)&&(identical(other.amount, amount) || other.amount == amount)&&(identical(other.categoryId, categoryId) || other.categoryId == categoryId)&&(identical(other.date, date) || other.date == date)&&(identical(other.type, type) || other.type == type)&&(identical(other.memo, memo) || other.memo == memo)&&(identical(other.customCategoryId, customCategoryId) || other.customCategoryId == customCategoryId)&&(identical(other.createdAt, createdAt) || other.createdAt == createdAt)&&(identical(other.updatedAt, updatedAt) || other.updatedAt == updatedAt));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,id,amount,categoryId,date,type,memo,customCategoryId,createdAt,updatedAt);
 

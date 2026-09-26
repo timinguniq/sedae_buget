@@ -36,20 +36,19 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
         error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
         data: (o) {
           final breakdown = o.month.breakdown;
-          final peer = o.peer;
           if (breakdown.isEmpty) {
             return Center(child: Text('지출이 없어요',
                 style: context.typo.body2W400.copyWith(color: context.color.label.alternative)));
           }
           final (:top, rest: restSum) = o.month.slices(6);
           final labels = [
-            ...top.map((e) => e.custom?.name ?? e.base.label),
+            ...top.map((e) => e.label),
             if (restSum > 0) '기타',
           ];
           final values = [...top.map((e) => e.amount), if (restSum > 0) restSum];
-          // 또래 평균이 붙는 행은 기본 분류 행뿐이다('기타' 롤업·커스텀 카테고리는 null).
-          final cats = [
-            ...top.map((e) => e.custom == null ? e.base : null),
+          // 또래 비교가 붙는 행은 기본 분류 행뿐이다('기타' 롤업·커스텀 카테고리는 null — MonthOverview.row).
+          final peers = [
+            ...top.map(o.row),
             if (restSum > 0) null,
           ];
           // 첫 조각은 코랄, 나머지는 밝기별 램프(다크는 darkRamp).
@@ -63,7 +62,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
               child: Stack(alignment: Alignment.center, children: [
                 CategoryDonut(values: values, colors: colors, size: 170, stroke: 36),
                 Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text('${month.month}월 총지출',
+                  Text('${ref.watch(viewedMonthNameProvider)} 총지출',
                       style: context.typo.caption2W600.copyWith(fontSize: 11, color: context.color.label.assistive)),
                   Text(_compactWon(total),
                       style: context.typo.amountDisplaySmall.copyWith(fontSize: 23, color: context.color.label.normal)),
@@ -72,7 +71,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
             )),
             const SizedBox(height: 16),
             // 또래 비교 토글 (디자인 42×24 코랄 토글 — 테마 Switch를 축소). 또래 통계가 없으면 뺀다.
-            if (peer != null) ...[
+            if (o.hasPeer) ...[
               Row(children: [
                 Text('또래 평균과 비교',
                     style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.normal)),
@@ -95,15 +94,10 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
               ),
             ]),
             const SizedBox(height: 1),
-            ...List.generate(labels.length, (i) {
-              final cat = cats[i];
-              final comparison =
-                  (_showPeer && cat != null) ? peer?.compareCategory(cat, values[i]) : null;
-              return CategoryRow(
-                  label: labels[i], amount: values[i],
-                  color: colors[i], percent: values[i] / total,
-                  peer: comparison);
-            }),
+            ...List.generate(labels.length, (i) => CategoryRow(
+                label: labels[i], amount: values[i],
+                color: colors[i], percent: values[i] / total,
+                peer: _showPeer ? peers[i] : null)),
           ]);
         },
         )),
@@ -115,7 +109,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
 /// ‹ 원형 버튼 + "카테고리 분석" + `‹ YYYY.MM ›` 월 네비게이터.
 class _Header extends StatelessWidget {
   const _Header({required this.month, required this.onPrev, required this.onNext});
-  final DateTime month;
+  final YearMonth month;
   final VoidCallback onPrev;
   /// 다음 달로 갈 수 없으면(보고 있는 달이 이번 달) null.
   final VoidCallback? onNext;
@@ -132,7 +126,7 @@ class _Header extends StatelessWidget {
         Row(mainAxisSize: MainAxisSize.min, children: [
           GestureDetector(key: const Key('month-prev'), onTap: onPrev, behavior: HitTestBehavior.opaque,
               child: Padding(padding: const EdgeInsets.all(4), child: Text('‹', style: arrow))),
-          Text(DateFormat('yyyy.MM').format(month),
+          Text(DateFormat('yyyy.MM').format(month.start),
               style: context.typo.caption1W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.normal)),
           GestureDetector(key: const Key('month-next'), onTap: onNext, behavior: HitTestBehavior.opaque,
               child: Padding(padding: const EdgeInsets.all(4), child: Text('›', style: arrow))),

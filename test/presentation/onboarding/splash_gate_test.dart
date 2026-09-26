@@ -2,17 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/core/ads/index.dart';
 import 'package:sedae_budget/core/app_config/remote_config.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/initial/splash.page.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
-const _user = AuthUser(provider: AuthProvider.kakao, nickname: '카카오 사용자');
 const _profile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000);
 
 void main() {
@@ -20,17 +18,15 @@ void main() {
 
   setUp(() => ads = FakeAdService());
 
-  /// 스플래시 광고 테스트의 공통 의존성: 광고 fake + 준 사용자·프로필.
+  /// 스플래시 광고 테스트의 공통 의존성: 광고 fake + 프로필까지 마친 kakao 사용자의 서버.
   /// 어디로 갈지는 전역 가드가 정한다 — 이동은 auth_gate_widget_test(실제 라우터)가 검증한다.
-  Future<ProviderContainer> container({
-    AuthUser? user,
-    UserProfile? profile,
+  Future<ProviderContainer> container(
+    WidgetTester t, {
     AppStatusSource? appStatusSource,
     void Function()? exitApp,
   }) async =>
       fakeContainer(
-        user: user,
-        profile: profile,
+        server: await t.seedServer(profile: _profile),
         appStatusSource: appStatusSource,
         exitApp: exitApp,
         adService: ads,
@@ -39,13 +35,10 @@ void main() {
 
   Widget buildApp(ProviderContainer c, GoRouter router) => fakeScope(
         c,
-        provider.ChangeNotifierProvider(
-          create: (_) => ThemeService(),
-          child: MaterialApp.router(
+        MaterialApp.router(
             routerConfig: router,
-            theme: ThemeService().lightThemeData(),
+            theme: materialTheme(LightTheme()),
           ),
-        ),
       );
 
   GoRouter buildRouter() => GoRouter(
@@ -69,7 +62,7 @@ void main() {
   }
 
   testWidgets('4번 켠 뒤(5번째 실행) → 홈 진입 후 전면 광고를 띄우고 카운트를 0으로', (t) async {
-    final c = await container(user: _user, profile: _profile);
+    final c = await container(t);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(LaunchInterstitial.prefsKey, 4);
     await boot(t, c);
@@ -79,7 +72,7 @@ void main() {
   });
 
   testWidgets('5번째가 아니면 전면 광고를 띄우지 않는다', (t) async {
-    await boot(t, await container(user: _user, profile: _profile));
+    await boot(t, await container(t));
     expect(find.text('HOME'), findsOneWidget);
     expect(ads.loadInterstitialCalls, 0);
     expect(ads.showInterstitialCalls, 0);
@@ -100,8 +93,7 @@ void main() {
       ),
     );
     await boot(t, await container(
-      user: _user,
-      profile: _profile,
+      t,
       appStatusSource: FakeAppStatusSource(info: maintenance),
       exitApp: () => exited++,
     ));

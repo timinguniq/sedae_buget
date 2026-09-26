@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/top_category_card.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
-Widget _wrap(Widget child) => provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: MaterialApp(home: Scaffold(body: child), theme: ThemeService().lightThemeData()));
+Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child), theme: materialTheme(LightTheme()));
 
 void main() {
   // 어떤 분류를 몇 개 고를지는 MonthOverview.topCategories가 정한다. 카드는 받은 순서대로 그린다.
@@ -19,17 +16,10 @@ void main() {
     var taps = 0;
     await t.pumpWidget(_wrap(TopCategoryCard(
       top: [
-        MapEntry(BudgetCategory.fromId(1), 540000),
-        MapEntry(BudgetCategory.fromId(11), 320000),
-        MapEntry(BudgetCategory.fromId(3), 180000),
+        (category: BudgetCategory.fromId(1), amount: 540000, peer: PeerComparison.of(mine: 540000, peer: 470000)),
+        (category: BudgetCategory.fromId(11), amount: 320000, peer: null),
+        (category: BudgetCategory.fromId(3), amount: 180000, peer: PeerComparison.of(mine: 180000, peer: 120000)),
       ],
-      peer: PeerStats(
-        ageGroup: AgeGroup.thirties,
-        avgMonthlyExpense: 2000000,
-        avgSavingsRate: 0.2,
-        avgByCategory: {BudgetCategory.fromId(1): 470000, BudgetCategory.fromId(3): 120000},
-        samples: const [],
-      ),
       onTap: () => taps++,
     )));
     await t.pump();

@@ -1,4 +1,4 @@
-import 'package:sedae_budget/core/core.dart';
+import 'package:intl/intl.dart';
 import 'package:logger/logger.dart';
 
 class CustomLogger extends Logger {
@@ -38,7 +38,7 @@ class _CustomPrettyPrinter extends PrettyPrinter {
 
   @override
   List<String> log(LogEvent event) {
-    final time = event.time.format('HH:mm:ss.SSS');
+    final time = DateFormat('HH:mm:ss.SSS').format(event.time);
     final prefix = (tag == null) ? time : '$time | $tag';
     return super.log(event.copyWith(message: '$prefix | ${event.message}'));
   }

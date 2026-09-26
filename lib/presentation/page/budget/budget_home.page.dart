@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
-import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_rank_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/savings_rate_card.dart';
@@ -26,7 +24,7 @@ class BudgetHomePage extends ConsumerWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(DateFormat('yyyy년 M월', 'ko').format(month),
+              Text(month.fullName,
                   style: context.typo.caption1W600.copyWith(color: context.color.label.assistive)),
               Text('$name 요약', style: context.typo.pageTitle.copyWith(color: context.color.label.normal)),
             ]),
@@ -39,27 +37,27 @@ class BudgetHomePage extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
             data: (o) {
-              final peer = o.peer;
               final m = o.month;
               final savingsRate = m.savingsRate;
               final txs = m.transactions;
               return ListView(children: [
                 SummaryHeroCard(
-                    label: name, expense: m.expense, income: m.income, balance: m.balance, peer: peer),
-                if (peer == null) ...[
+                    label: name, expense: m.expense, income: m.income, balance: m.balance,
+                    peer: o.hasPeer ? (emptyMonth: o.isEmpty, total: o.total) : null),
+                if (!o.hasPeer) ...[
                   const SizedBox(height: 13),
-                  SurfaceCard(child: Text(MonthOverview.peerUnavailable,
+                  SurfaceCard(child: Text(peerUnavailableText,
                     style: context.typo.caption1W500.copyWith(color: context.color.label.assistive))),
-                ] else if (peer.rankOf(m.expense) case final rank?) ...[
+                ] else if (o.rank case final rank?) ...[
                   const SizedBox(height: 13),
                   PeerRankCard(rank: rank, onDetail: () => context.go(RoutePath.compare.path)),
                 ],
                 const SizedBox(height: 13),
-                TopCategoryCard(top: m.topCategories(3), peer: peer,
+                TopCategoryCard(top: o.topCategories(3),
                   onTap: () => context.push(RoutePath.categoryAnalysis.path)),
                 if (savingsRate != null) ...[
                   const SizedBox(height: 13),
-                  SavingsRateCard(label: name, rate: savingsRate, peerRate: peer?.avgSavingsRatePercent),
+                  SavingsRateCard(label: name, rate: savingsRate, peer: o.savings),
                 ],
                 const SizedBox(height: 13),
                 Text('최근 내역', style: context.typo.sectionTitle.copyWith(color: context.color.label.normal)),

@@ -1,99 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/data/data.dart';
-import 'package:sedae_budget/domain/repository/transaction_repository.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/report/report.page.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
-class _FakeRepo implements TransactionRepository {
-  @override
-  Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
+final _now = DateTime.now();
 
-  @override
-  Future<Result<Transaction>> delete(Transaction tx) async => Result.success(tx);
+DateTime _monthsAgo(int months, int day) => DateTime(_now.year, _now.month - months, day);
 
-  @override
-  Future<Result<List<Transaction>>> getMonth(int y, int m) async =>
-      Result.success([
-        Transaction.create(
-          amount: 600000,
-          categoryId: 1,
-          date: DateTime(2026, 6, 10),
-          type: TransactionType.expense,
-          memo: '식료품',
-        ),
-        Transaction.create(
-          amount: 3000000,
-          categoryId: 1,
-          date: DateTime(2026, 6, 5),
-          type: TransactionType.income,
-        ),
-      ]);
-
-  @override
-  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
-      Result.success([
-        Transaction.create(
-          amount: 500000,
-          categoryId: 1,
-          date: DateTime(2026, 6, 10),
-          type: TransactionType.expense,
-        ),
-        Transaction.create(
-          amount: 450000,
-          categoryId: 7,
-          date: DateTime(2026, 5, 15),
-          type: TransactionType.expense,
-        ),
-        Transaction.create(
-          amount: 300000,
-          categoryId: 11,
-          date: DateTime(2026, 4, 20),
-          type: TransactionType.expense,
-        ),
-      ]);
-}
+/// 이달 식료품 지출 60만·수입 300만과, 지난 두 달의 지출(최근 6개월 추이용).
+List<Transaction> _ledger() => [
+      Transaction.create(amount: 600000, categoryId: 1, date: _monthsAgo(0, 1),
+          type: TransactionType.expense, memo: '식료품'),
+      Transaction.create(amount: 3000000, categoryId: 1, date: _monthsAgo(0, 1), type: TransactionType.income),
+      Transaction.create(amount: 450000, categoryId: 7, date: _monthsAgo(1, 15), type: TransactionType.expense),
+      Transaction.create(amount: 300000, categoryId: 11, date: _monthsAgo(2, 20), type: TransactionType.expense),
+    ];
 
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
 
   testWidgets('report page renders insight, stats, and section headers',
       (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    final container = fakeContainer(
-      user: testUser,
-      transactions: _FakeRepo(),
-      peerRepository: FakePeerStatsRepository(),
-      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
-    );
-    await tester.pumpWidget(
-      provider.ChangeNotifierProvider(
-        create: (_) => ThemeService(),
-        child: fakeScope(
-          container,
-          MaterialApp(
-            theme: ThemeService().lightThemeData(),
-            home: const ReportPage(),
-          ),
-        ),
-      ),
-    );
-
-    // Pump several frames to allow FutureProviders to resolve.
-    await tester.pump();
-    await tester.pump();
-    await tester.pump();
-    await tester.pump();
+    await _pumpReport(tester);
 
     expect(find.text('이달의 발견'), findsOneWidget);
     expect(find.text('월간 리포트'), findsOneWidget);
@@ -110,16 +43,10 @@ void main() {
   // 식료품 지출 60만 원을 또래 식료품 평균 [food]와 견준다.
   group('이달의 발견', () {
     Future<void> pumpWithPeerFood(WidgetTester tester, int food) async {
-      tester.view.physicalSize = const Size(390, 844);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
       final stub = StubPeerData.forGroup(AgeGroup.thirties);
-      final container = fakeContainer(
-        user: testUser,
-        transactions: _FakeRepo(),
-        peerRepository: FakePeerStatsRepository(),
-        peerStats: PeerStats(
+      await _pumpReport(
+        tester,
+        peer: PeerStats(
           ageGroup: stub.ageGroup,
           avgMonthlyExpense: stub.avgMonthlyExpense,
           avgSavingsRate: stub.avgSavingsRate,
@@ -127,19 +54,18 @@ void main() {
           samples: stub.samples,
         ),
       );
-      await tester.pumpWidget(provider.ChangeNotifierProvider(
-        create: (_) => ThemeService(),
-        child: fakeScope(container,
-            MaterialApp(theme: ThemeService().lightThemeData(), home: const ReportPage())),
-      ));
-      for (var i = 0; i < 4; i++) {
-        await tester.pump();
-      }
     }
 
     testWidgets('50% 이상 더 쓰면 배율로 말한다', (tester) async {
       await pumpWithPeerFood(tester, 400000); // +50%
       expect(find.textContaining('1.5배 더 썼어요'), findsOneWidget);
+    });
+
+    // 이전에는 1.96배가 '2.0배 더 썼어요'로 보였다(반올림 전에 정수인지 봤다).
+    testWidgets('배율은 반올림한 뒤 정수면 정수로 말한다', (tester) async {
+      await pumpWithPeerFood(tester, 306122); // 60만 / 30.6만 ≈ 1.96배
+      expect(find.textContaining('2배 더 썼어요'), findsOneWidget);
+      expect(find.textContaining('2.0배'), findsNothing);
     });
 
     // 이전에는 +4%가 '1.0배 더 썼어요'로 보였다.
@@ -162,44 +88,49 @@ void main() {
   });
 
   testWidgets('소득이 없으면 저축률과 소득 대비가 모두 — 다', (tester) async {
-    final now = DateTime.now();
-    await _pumpReport(tester, fakeContainer(
-      user: testUser,
-      transactions: InMemoryTransactionRepository([
-        Transaction.create(amount: 600000, categoryId: 1, date: DateTime(now.year, now.month, 1),
-            type: TransactionType.expense),
-      ]),
-      peerRepository: FakePeerStatsRepository(),
-      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
-    ));
+    await _pumpReport(tester, transactions: [
+      Transaction.create(amount: 600000, categoryId: 1, date: _monthsAgo(0, 1), type: TransactionType.expense),
+    ]);
 
     expect(find.text('저축률'), findsOneWidget);
     expect(find.text('—'), findsNWidgets(2));
   });
 
+  // 이전에는 지출 0원인 달을 '또래 상위 100%'로 보였다.
+  testWidgets('빈 달(지출 0원)은 또래 순위를 매기지 않는다', (tester) async {
+    await _pumpReport(tester, transactions: [
+      Transaction.create(amount: 3000000, categoryId: 1, date: _monthsAgo(0, 1), type: TransactionType.income),
+    ]);
+
+    // 또래 상위 칸만 '—'다(저축률 100%·소득 대비 0%는 내 값이라 남는다).
+    expect(find.text('—'), findsOneWidget);
+    expect(find.textContaining('아직 분석할 지출이'), findsOneWidget);
+  });
+
   testWidgets('또래 통계를 못 읽으면 안내 문구를 보여준다', (tester) async {
-    await _pumpReport(tester, fakeContainer(
-      user: testUser,
-      transactions: _FakeRepo(),
-      peerRepository: FailingPeerStatsRepository(),
-    ));
+    await _pumpReport(tester, faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server));
 
     expect(find.text('또래 통계를 불러오지 못했어요'), findsOneWidget);
   });
 }
 
-Future<void> _pumpReport(WidgetTester tester, ProviderContainer container) async {
+/// 리포트 화면을 띄운다. 서버는 [transactions](기본은 [_ledger])를 심고 또래 통계는 [peer]로 답한다.
+Future<void> _pumpReport(
+  WidgetTester tester, {
+  PeerStats? peer,
+  List<Transaction>? transactions,
+  void Function(ServerFaults faults)? faults,
+}) async {
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  await tester.pumpWidget(provider.ChangeNotifierProvider(
-    create: (_) => ThemeService(),
-    child: fakeScope(container,
-        MaterialApp(theme: ThemeService().lightThemeData(), home: const ReportPage())),
-  ));
-  await tester.pump();
-  await tester.pump();
-  await tester.pump();
-  await tester.pump();
+  final server = await tester.seedServer(
+    transactions: transactions ?? _ledger(),
+    peerStats: peer == null ? null : (_) => peer,
+  );
+  faults?.call(server.faults);
+  await tester.pumpWidget(fakeScope(fakeContainer(server: server),
+        MaterialApp(theme: materialTheme(LightTheme()), home: const ReportPage())));
+  await tester.settle();
 }

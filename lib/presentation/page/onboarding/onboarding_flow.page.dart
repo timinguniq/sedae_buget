@@ -252,7 +252,7 @@ class _IncomeStep extends StatelessWidget {
             padding: const EdgeInsets.only(top: 1),
             child: Icon(Icons.lock_outline, size: 15, color: c.label.disable)),
           const SizedBox(width: 9),
-          Expanded(child: Text('소득 정보는 기기에 안전하게 보관되고, 비교는 익명 통계로만 이뤄져요.',
+          Expanded(child: Text('소득 정보는 저축률 계산과 또래 비교에만 쓰이고, 비교는 익명 통계로만 이뤄져요.',
             style: context.typo.caption1W500.copyWith(fontSize: 11.5, height: 1.5, color: c.label.assistive))),
         ]),
       ]),

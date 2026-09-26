@@ -109,6 +109,29 @@ void main() {
     );
   });
 
+  // composition root(DI)는 data·domain 구현을 모두 안다. 배럴이 다시 내보내면
+  // 배럴을 import한 모든 파일(로거 → data 등)이 전이로 data·domain에 묶인다.
+  test('core/core.dart는 composition root를 export하지 않는다', () {
+    final exports = File('lib/core/core.dart')
+        .readAsLinesSync()
+        .where((l) => l.startsWith('export ') && l.contains('dependency_injection'));
+    expect(exports, isEmpty);
+  });
+
+  test('composition root는 main·service provider만 import한다', () {
+    final offenders = <String>[];
+    for (final layer in ['core', 'data', 'domain', 'entity', 'presentation', 'theme']) {
+      offenders.addAll(violations(
+        layer,
+        ['sedae_budget/core/dependency_injection'],
+        skip: (p) =>
+            p.startsWith('lib/core/dependency_injection/') ||
+            (p.startsWith('lib/presentation/service/') && p.endsWith('_provider.dart')),
+      ));
+    }
+    expect(offenders, isEmpty);
+  });
+
   test('presentation은 data 구현체를 직접 import하지 않는다', () {
     expect(violations('presentation', ['sedae_budget/data']), isEmpty);
   });

@@ -21,7 +21,7 @@ ViewedMonth _month(
   DateTime? month,
 }) =>
     ViewedMonth(
-      month: month ?? DateTime(2026, 9),
+      month: YearMonth.of(month ?? DateTime(2026, 9)),
       transactions: txs,
       catalog: CategoryCatalog(customs),
       profileIncome: profileIncome,

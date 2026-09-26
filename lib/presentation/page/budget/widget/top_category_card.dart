@@ -9,19 +9,17 @@ class TopCategoryCard extends StatelessWidget {
   const TopCategoryCard({
     super.key,
     required this.top,
-    this.peer,
     this.onTap,
   });
 
-  /// 많이 쓴 기본 분류(금액 내림차순). 고르는 규칙은 `MonthOverview.topCategories`에 있다.
-  final List<MapEntry<BudgetCategory, int>> top;
-  /// 또래 통계. 없거나 그 분류의 또래 값이 없으면 배지를 그리지 않는다.
-  final PeerStats? peer;
+  /// 많이 쓴 기본 분류(금액 내림차순)와 그 또래 비교. 고르는 규칙은 `MonthOverview.topCategories`에 있다.
+  /// 또래 비교가 없으면(또래 통계·그 분류의 또래 값 없음) 배지를 그리지 않는다.
+  final List<({BudgetCategory category, int amount, PeerComparison? peer})> top;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    final maxAmount = top.isEmpty ? 1 : top.first.value;
+    final maxAmount = top.isEmpty ? 1 : top.first.amount;
     return SurfaceCard(
       onTap: onTap,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -32,15 +30,14 @@ class TopCategoryCard extends StatelessWidget {
         else
           for (var i = 0; i < top.length; i++) ...[
             if (i > 0) const SizedBox(height: 13),
-            _row(context, top[i].key, top[i].value, top[i].value / maxAmount),
+            _row(context, top[i].category, top[i].amount, top[i].amount / maxAmount, top[i].peer),
           ],
       ]),
     );
   }
 
-  Widget _row(BuildContext context, BudgetCategory cat, int amount, double fraction) {
+  Widget _row(BuildContext context, BudgetCategory cat, int amount, double fraction, PeerComparison? comparison) {
     final won = NumberFormat.decimalPattern('ko');
-    final comparison = peer?.compareCategory(cat, amount);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text(cat.label, style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.normal)),

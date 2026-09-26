@@ -37,14 +37,13 @@ class ReportPage extends ConsumerWidget {
         error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
         data: (o) {
           // 리포트는 또래 비교가 중심이라, 또래 통계를 못 읽으면 화면 전체를 안내로 바꾼다.
-          final peer = o.peer;
-          if (peer == null) return const Center(child: Text(MonthOverview.peerUnavailable));
+          if (!o.hasPeer) return const Center(child: Text(peerUnavailableText));
           final won = NumberFormat.decimalPattern('ko');
-          final peerTop = peer.rankOf(o.month.expense)?.topPercent; // 또래 상위 N%. 표본이 없으면 null
+          final peerTop = o.rank?.topPercent; // 또래 상위 N%. 빈 달이거나 표본이 없으면 null
           // 소득이 없으면 저축률·소득 대비 지출 모두 '—'.
           final savingsRate = o.month.savingsRate;
           final incomeRatio = o.month.expenseRatio;
-          final insight = peer.largestCategoryGap(o.month.byCategory);
+          final insight = o.largestGap;
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -52,7 +51,7 @@ class ReportPage extends ConsumerWidget {
               // ── 헤더 ─────────────────────────────────────────────
               Text('월간 리포트',
                   style: context.typo.caption1W600.copyWith(color: context.color.label.assistive)),
-              Text('${month.year}년 ${month.month}월',
+              Text(month.fullName,
                   style: context.typo.pageTitle.copyWith(color: context.color.label.normal)),
               const SizedBox(height: 14),
 
@@ -146,18 +145,10 @@ class ReportPage extends ConsumerWidget {
   ) {
     if (i == null) return const TextSpan(text: '아직 분석할 지출이\n충분치 않아요');
     final c = i.comparison;
-    final ratio = c.ratio;
-    final ratioText = ratio == ratio.roundToDouble() ? '${ratio.round()}' : ratio.toStringAsFixed(1);
-    final (lead, how) = switch (c.direction) {
-      PeerDirection.more when c.strong => ('또래보다 ', '$ratioText배 더'),
-      PeerDirection.more => ('또래보다 ', '${c.percent}% 더'),
-      PeerDirection.less => ('또래보다 ', '${-c.percent}% 덜'),
-      PeerDirection.similar => ('또래와 ', '비슷하게'),
-    };
     return TextSpan(children: [
-      TextSpan(text: lead),
+      TextSpan(text: c.insightLead),
       TextSpan(text: i.category.label, style: MonthlyInsightCard.highlightStyle(context)),
-      TextSpan(text: '에\n$how 썼어요'),
+      TextSpan(text: '에\n${c.insightHow} 썼어요'),
     ]);
   }
 }
@@ -199,7 +190,7 @@ class _StatTile extends StatelessWidget {
 class _SelfTrendBars extends StatelessWidget {
   const _SelfTrendBars({required this.trend});
 
-  final List<({DateTime month, int expense})> trend;
+  final List<({YearMonth month, int expense})> trend;
 
   @override
   Widget build(BuildContext context) {

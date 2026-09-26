@@ -2,25 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart' as provider;
-import 'package:sedae_budget/domain/domain.dart';
-import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
-
-/// 프로필 저장이 항상 실패하는 저장소(네트워크 오류 시나리오).
-class _FailingSaveRepo implements UserProfileRepository {
-  @override
-  Future<Result<UserProfile?>> current() async => const Result.success(null);
-  @override
-  Future<Result<void>> save(UserProfile profile) async => const Result.failure(
-        ErrorResult(reason: FailureReason.offline, message: '네트워크에 연결할 수 없습니다.'),
-      );
-  @override
-  Future<Result<void>> clear() async => const Result.success(null);
-}
 
 void main() {
 
@@ -34,10 +19,8 @@ void main() {
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingFlowPage()),
       GoRoute(path: '/budget', builder: (_, _) => const Scaffold(body: Text('HOME'))),
     ]);
-    await t.pumpWidget(fakeScope(container, provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: MaterialApp.router(routerConfig: router,
-        theme: ThemeService().lightThemeData()))));
+    await t.pumpWidget(fakeScope(container, MaterialApp.router(routerConfig: router,
+        theme: materialTheme(LightTheme()))));
     await t.pump();
     await t.tap(find.text('20대'));
     await t.pump();
@@ -49,11 +32,12 @@ void main() {
 
   // 이전에는 저장 실패를 버리고 홈으로 보냈고, 가드가 말없이 온보딩으로 되돌렸다.
   testWidgets('프로필 저장이 실패하면 홈으로 가지 않고 이유를 보여준다', (t) async {
-    await pumpToIncomeStep(t, fakeContainer(profileRepository: _FailingSaveRepo()));
+    final server = await t.seedServer();
+    server.faults.fail('PUT', '/v1/me/profile');
+    await pumpToIncomeStep(t, fakeContainer(server: server));
 
     await t.tap(find.text('시작하기'));
-    await t.pump();
-    await t.pump(const Duration(milliseconds: 400)); // SnackBar 등장
+    await t.settle(); // 저장 실패 → SnackBar 등장
 
     expect(find.text('HOME'), findsNothing);
     expect(find.text('저장하지 못했어요. 인터넷에 연결되어 있지 않아요'), findsOneWidget);
@@ -68,10 +52,8 @@ void main() {
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingFlowPage()),
       GoRoute(path: '/budget', builder: (_, _) => const Scaffold(body: Text('HOME'))),
     ]);
-    await t.pumpWidget(fakeScope(fakeContainer(), provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: MaterialApp.router(routerConfig: router,
-        theme: ThemeService().lightThemeData()))));
+    await t.pumpWidget(fakeScope(fakeContainer(), MaterialApp.router(routerConfig: router,
+        theme: materialTheme(LightTheme()))));
     await t.pump();
 
     expect(find.text('다음'), findsOneWidget);
@@ -82,5 +64,8 @@ void main() {
     await t.pump(const Duration(milliseconds: 300)); // advance through 250ms animation
     await t.pump(); // rebuild after onPageChanged setState
     expect(find.text('시작하기'), findsOneWidget);
+    // 소득은 서버에 저장된다. 이전 문구는 '기기에 안전하게 보관'이라고 했다.
+    expect(find.text('소득 정보는 저축률 계산과 또래 비교에만 쓰이고, 비교는 익명 통계로만 이뤄져요.'), findsOneWidget);
+    expect(find.textContaining('기기에'), findsNothing);
   });
 }

@@ -41,16 +41,8 @@ class LocalStorage {
     return _storage.read(key: key);
   }
 
-  Future<bool> containsKey(String key) {
-    return _storage.containsKey(key: key);
-  }
-
   Future<void> delete(String key) {
     return _storage.delete(key: key);
-  }
-
-  Future<Map<String, String>> readAll() {
-    return _storage.readAll();
   }
 
   Future<void> deleteAll() {

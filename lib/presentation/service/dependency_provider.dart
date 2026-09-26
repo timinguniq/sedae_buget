@@ -7,7 +7,7 @@ import 'package:sedae_budget/domain/domain.dart';
 ///
 /// 구현체는 composition root(`core/dependency_injection`, get_it)가 채우고,
 /// 테스트는 이 provider를 `overrideWithValue`로 바꾼다. 그래서 화면 코드도 테스트도
-/// 전역 locator를 직접 만지지 않는다 — locator를 아는 파일은 여기와 `ad_provider.dart`뿐이다.
+/// 전역 locator를 직접 만지지 않는다 — locator를 아는 파일은 여기와 `ad_provider.dart`·`theme_mode_provider.dart`뿐이다.
 final transactionUsecaseProvider =
     Provider<TransactionUsecase>((_) => locator<TransactionUsecase>());
 

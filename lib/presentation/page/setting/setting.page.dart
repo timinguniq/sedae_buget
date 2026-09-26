@@ -6,13 +6,13 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-class SettingPage extends StatefulWidget {
+class SettingPage extends ConsumerStatefulWidget {
   const SettingPage({super.key});
   @override
-  State<SettingPage> createState() => _SettingPageState();
+  ConsumerState<SettingPage> createState() => _SettingPageState();
 }
 
-class _SettingPageState extends State<SettingPage> {
+class _SettingPageState extends ConsumerState<SettingPage> {
   String _version = '';
   @override
   void initState() {
@@ -24,7 +24,6 @@ class _SettingPageState extends State<SettingPage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeService = context.themeService;
     return DefaultLayout(
       child: Column(children: [
         // 헤더: ‹ 원형 버튼 + "설정" 800·20
@@ -41,8 +40,8 @@ class _SettingPageState extends State<SettingPage> {
             const ProfileCard(),
             _sectionLabel(context, '화면', top: 22),
             ThemeModeSelector(
-              value: themeService.themeMode,
-              onChanged: (m) => themeService.setMode(m)),
+              value: ref.watch(themeModeProvider),
+              onChanged: (m) => ref.read(themeModeProvider.notifier).select(m)),
             _sectionLabel(context, '일반', top: 20),
             SurfaceCard(
               padding: EdgeInsets.zero,

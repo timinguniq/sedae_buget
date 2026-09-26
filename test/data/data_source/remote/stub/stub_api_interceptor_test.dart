@@ -1,331 +1,62 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-import '../../../../helper/stub_server.dart';
-import '../../../../helper/test_api_client.dart';
+import '../../../../contract/contract_target.dart';
 
+/// 계약(경로·상태코드·검증)은 `test/contract/`가 본다. 여기서는 Stub만의 성질을 본다:
+/// 기기 저장(재시작), 옛 저장 형식, 저장 실패, 첫 읽기 경쟁, 테스트용 또래 통계.
 class _MemStore implements StubStateStore {
   String? saved;
+  Completer<void>? loadGate;
+  bool failSave = false;
+
+  /// 다음 저장 한 번만 이것을 먼저 기다린다(던지면 그 저장은 실패).
+  Future<void> Function()? beforeNextSave;
+
   @override
-  Future<String?> load() async => saved;
+  Future<String?> load() async {
+    await loadGate?.future;
+    return saved;
+  }
+
   @override
-  Future<void> save(String json) async => saved = json;
+  Future<void> save(String json) async {
+    final hook = beforeNextSave;
+    beforeNextSave = null;
+    await hook?.call();
+    if (failSave) throw StateError('disk full');
+    saved = json;
+  }
 }
 
-const _range = {'from': '2026-09-01T00:00:00.000Z', 'to': '2026-10-01T00:00:00.000Z'};
+/// [stub]을 서버로 쓰는 계약 클라이언트.
+ContractClient _client(StubApiInterceptor stub) =>
+    ContractClient(ContractTarget(dio: Dio(BaseOptions(contentType: 'application/json'))..interceptors.add(stub)));
 
-/// [user]로 로그인한 Stub 서버의 API. 같은 [store]를 주면 앱 재시작을 흉내 낸다.
-TestApiClient _client(String user, {StubStateStore? store}) =>
-    (StubServer(store: store)..tokens.token = 'stub.$user').api;
+const _september = {'from': '2026-09-01T00:00:00.000Z', 'to': '2026-10-01T00:00:00.000Z'};
+
+const _tx = {
+  'amount': 5, 'categoryId': 2, 'date': '2026-09-03T00:00:00.000Z', 'type': 'income', 'memo': 'm',
+};
 
 void main() {
-  late MemoryAuthTokenStore tokens;
-  late TestApiClient api;
-
-  setUp(() {
-    final server = StubServer();
-    tokens = server.tokens;
-    api = server.api;
-  });
-
-  Future<void> putTx(String id, String date) => api.put<Map<String, dynamic>>(
-        ApiPath.transaction(id),
-        body: {'amount': 1000, 'categoryId': 1, 'date': date, 'type': 'expense', 'memo': null},
-      );
-
-  test('login → token, me → same user; me without token → 401', () async {
-    expect(
-      () => api.get<Map<String, dynamic>>(ApiPath.me),
-      throwsA(isA<HttpFailure>().having((e) => e.statusCode, 'status', 401)),
-    );
-    final res = await api.post<Map<String, dynamic>>(
-      ApiPath.login,
-      body: {'provider': 'kakao', 'idToken': 'x'},
-    );
-    tokens.token = res['accessToken'] as String;
-    expect((res['user'] as Map)['nickname'], '카카오 사용자');
-
-    final me = await api.get<Map<String, dynamic>>(ApiPath.me);
-    expect(me['provider'], 'kakao');
-    expect(me['nickname'], '카카오 사용자');
-    expect(me['id'], isNotEmpty);
-  });
-
-  test('login without idToken → 400 VALIDATION', () async {
-    expect(
-      () => api.post<Map<String, dynamic>>(ApiPath.login, body: {'provider': 'kakao'}),
-      throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'VALIDATION')),
-    );
-  });
-
-  test('garbage token → 401 AUTH_004', () async {
-    tokens.token = 'garbage';
-    expect(
-      () => api.get<Map<String, dynamic>>(ApiPath.me),
-      throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'AUTH_004')),
-    );
-  });
-
-  test('logout → 204', () async {
-    tokens.token = 'stub.kakao';
-    await api.post<dynamic>(ApiPath.logout);
-  });
-
-  test('profile 404 → put → get → delete → 404', () async {
-    tokens.token = 'stub.kakao';
-    expect(
-      () => api.get<Map<String, dynamic>>(ApiPath.profile),
-      throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'PROFILE_NOT_FOUND')),
-    );
-    await api.put<Map<String, dynamic>>(
-      ApiPath.profile,
-      body: {'ageGroup': 'thirties', 'monthlyIncome': 3000000},
-    );
-    final got = await api.get<Map<String, dynamic>>(ApiPath.profile);
-    expect(got['monthlyIncome'], 3000000);
-    expect(got['ageGroup'], 'thirties');
-    await api.delete(ApiPath.profile);
-    expect(
-      () => api.get<Map<String, dynamic>>(ApiPath.profile),
-      throwsA(isA<HttpFailure>().having((e) => e.isNotFound, 'notFound', isTrue)),
-    );
-  });
-
-  test('transactions: put → list in range, desc → delete → empty', () async {
-    tokens.token = 'stub.kakao';
-    await putTx('a', '2026-09-01T00:00:00.000Z');
-    await putTx('b', '2026-09-10T00:00:00.000Z');
-    await putTx('c', '2026-10-01T00:00:00.000Z'); // to는 배타 → 범위 밖
-
-    final list = await api.get<List<dynamic>>(ApiPath.transactions, query: _range);
-    expect(list.map((e) => e['id']), ['b', 'a']);
-    expect(list.first['createdAt'], isNotNull);
-    expect(list.first['updatedAt'], isNotNull);
-
-    await api.delete(ApiPath.transaction('a'));
-    await api.delete(ApiPath.transaction('b'));
-    expect(await api.get<List<dynamic>>(ApiPath.transactions, query: _range), isEmpty);
-  });
-
-  test('put keeps createdAt on update; delete unknown → 404', () async {
-    tokens.token = 'stub.kakao';
-    await putTx('a', '2026-09-01T00:00:00.000Z');
-    final first = (await api.get<List<dynamic>>(ApiPath.transactions, query: _range)).single;
-    await putTx('a', '2026-09-02T00:00:00.000Z');
-    final second = (await api.get<List<dynamic>>(ApiPath.transactions, query: _range)).single;
-    expect(second['createdAt'], first['createdAt']);
-    expect(second['date'], '2026-09-02T00:00:00.000Z');
-    expect(
-      () => api.delete(ApiPath.transaction('nope')),
-      throwsA(isA<HttpFailure>().having((e) => e.isNotFound, 'notFound', isTrue)),
-    );
-  });
-
-  test('peer stats matches StubPeerData; generations has 5 groups', () async {
-    tokens.token = 'stub.kakao';
-    final json = await api.get<Map<String, dynamic>>(
-      ApiPath.peerStats,
-      query: {'ageGroup': 'thirties'},
-    );
-    final expected = StubPeerData.forGroup(AgeGroup.thirties);
-    expect(json['avgMonthlyExpense'], expected.avgMonthlyExpense);
-    expect((json['samples'] as List).length, expected.samples.length);
-
-    final gens = await api.get<List<dynamic>>(ApiPath.peerGenerations);
-    expect(gens.length, AgeGroup.values.length);
-    expect(gens.first['ageGroup'], 'teens');
-  });
-
-  group('categories', () {
-    Future<Map<String, dynamic>> putCat(String id, String name, int baseId) =>
-        api.put<Map<String, dynamic>>(
-          ApiPath.category(id),
-          body: {'name': name, 'baseCategoryId': baseId},
-        );
-
-    setUp(() => tokens.token = 'stub.kakao');
-
-    test('empty → put(201) → list in creation order → put(200) updates', () async {
-      expect(await api.get<List<dynamic>>(ApiPath.categories), isEmpty);
-      await putCat('c1', '반려동물', 12);
-      await putCat('c2', '자기계발', 9);
-      final list = await api.get<List<dynamic>>(ApiPath.categories);
-      expect(list.map((e) => e['name']), ['반려동물', '자기계발']);
-      expect(list.first['baseCategoryId'], 12);
-
-      await putCat('c1', '댕댕이', 12);
-      final after = await api.get<List<dynamic>>(ApiPath.categories);
-      expect(after.map((e) => e['name']), ['댕댕이', '자기계발']);
-    });
-
-    test('기본 카테고리 id는 수정·삭제 불가 → 403 CATEGORY_IMMUTABLE', () async {
-      expect(
-        () => putCat('12', '기타 바꾸기', 12),
-        throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'CATEGORY_IMMUTABLE')),
-      );
-      expect(
-        () => api.delete(ApiPath.category('1')),
-        throwsA(isA<HttpFailure>()
-            .having((e) => e.code, 'code', 'CATEGORY_IMMUTABLE')
-            .having((e) => e.statusCode, 'status', 403)),
-      );
-    });
-
-    test('name/baseCategoryId validation → 400 VALIDATION', () async {
-      expect(
-        () => putCat('c1', '   ', 12),
-        throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'VALIDATION')),
-      );
-      expect(
-        () => putCat('c1', 'a' * (CustomCategory.maxNameLength + 1), 12),
-        throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'VALIDATION')),
-      );
-      expect(
-        () => putCat('c1', '반려동물', 13),
-        throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'VALIDATION')),
-      );
-    });
-
-    test('duplicate name → 409 CATEGORY_DUPLICATE (같은 id 갱신은 허용)', () async {
-      await putCat('c1', '반려동물', 12);
-      expect(
-        () => putCat('c2', '반려동물', 9),
-        throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'CATEGORY_DUPLICATE')),
-      );
-      await putCat('c1', '반려동물', 9); // 자기 자신은 중복이 아니다
-    });
-
-    test('transaction with unknown customCategoryId → 400', () async {
-      expect(
-        () => api.put<Map<String, dynamic>>(ApiPath.transaction('t1'), body: {
-          'amount': 1000, 'categoryId': 12, 'date': '2026-09-02T00:00:00.000Z',
-          'type': 'expense', 'memo': null, 'customCategoryId': 'nope',
-        }),
-        throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'VALIDATION')),
-      );
-    });
-
-    test('delete → 204, 참조하던 거래는 상위 기본 분류로 되돌아간다', () async {
-      await putCat('c1', '반려동물', 12);
-      await api.put<Map<String, dynamic>>(ApiPath.transaction('t1'), body: {
-        'amount': 1000, 'categoryId': 12, 'date': '2026-09-02T00:00:00.000Z',
-        'type': 'expense', 'memo': null, 'customCategoryId': 'c1',
-      });
-      expect(
-        (await api.get<List<dynamic>>(ApiPath.transactions, query: _range))
-            .single['customCategoryId'],
-        'c1',
-      );
-
-      await api.delete(ApiPath.category('c1'));
-      expect(await api.get<List<dynamic>>(ApiPath.categories), isEmpty);
-      final tx = (await api.get<List<dynamic>>(ApiPath.transactions, query: _range)).single;
-      expect(tx['customCategoryId'], isNull);
-      expect(tx['categoryId'], 12); // 상위 기본 분류는 그대로 → 또래 비교 집계 유지
-      expect(
-        () => api.delete(ApiPath.category('c1')),
-        throwsA(isA<HttpFailure>().having((e) => e.isNotFound, 'notFound', isTrue)),
-      );
-    });
-
-    test('거래를 저장하면 기본 분류를 사용자 카테고리의 상위 분류에 맞춘다', () async {
-      await putCat('c1', '반려동물', 12);
-      final saved = await api.put<Map<String, dynamic>>(ApiPath.transaction('t1'), body: {
-        'amount': 1000, 'categoryId': 1, 'date': '2026-09-02T00:00:00.000Z',
-        'type': 'expense', 'memo': null, 'customCategoryId': 'c1',
-      });
-      expect(saved['categoryId'], 12);
-      final listed = (await api.get<List<dynamic>>(ApiPath.transactions, query: _range)).single;
-      expect(listed['categoryId'], 12);
-    });
-
-    test('상위 분류를 바꾸면 그 카테고리의 거래도 새 분류로 옮겨진다', () async {
-      await putCat('c1', '반려동물', 12);
-      await api.put<Map<String, dynamic>>(ApiPath.transaction('t1'), body: {
-        'amount': 1000, 'categoryId': 12, 'date': '2026-09-02T00:00:00.000Z',
-        'type': 'expense', 'memo': null, 'customCategoryId': 'c1',
-      });
-      await api.put<Map<String, dynamic>>(ApiPath.transaction('t2'), body: {
-        'amount': 2000, 'categoryId': 12, 'date': '2026-09-03T00:00:00.000Z',
-        'type': 'expense', 'memo': null,
-      });
-
-      await putCat('c1', '반려동물', 9);
-
-      final txs = await api.get<List<dynamic>>(ApiPath.transactions, query: _range);
-      final byId = {for (final t in txs) t['id']: t};
-      expect(byId['t1']['categoryId'], 9);
-      expect(byId['t1']['customCategoryId'], 'c1');
-      expect(byId['t2']['categoryId'], 12); // 사용자 카테고리가 아닌 거래는 그대로
-    });
-
-    test('카테고리도 StubStateStore로 영속화된다', () async {
-      final store = _MemStore();
-      final api1 = _client('kakao', store: store);
-      await api1.put<Map<String, dynamic>>(
-        ApiPath.category('c1'),
-        body: {'name': '반려동물', 'baseCategoryId': 12},
-      );
-      final api2 = _client('kakao', store: store); // 앱 재시작 시뮬레이션
-      expect((await api2.get<List<dynamic>>(ApiPath.categories)).single['name'], '반려동물');
-    });
-  });
-
-  test('unknown path → 404 NOT_FOUND', () async {
-    tokens.token = 'stub.kakao';
-    expect(
-      () => api.get<dynamic>('/v1/nope'),
-      throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'NOT_FOUND')),
-    );
-  });
-
-  test('state persists through StubStateStore across interceptor instances', () async {
+  test('다시 켜도(같은 저장소로 새 Stub) 프로필·거래·사용자 카테고리가 남아 있다', () async {
     final store = _MemStore();
-    final api1 = _client('kakao', store: store);
-    await api1.put<Map<String, dynamic>>(
-      ApiPath.profile,
-      body: {'ageGroup': 'forties', 'monthlyIncome': 1},
-    );
-    await api1.put<Map<String, dynamic>>(
-      ApiPath.transaction('z'),
-      body: {'amount': 5, 'categoryId': 2, 'date': '2026-09-03T00:00:00.000Z', 'type': 'income', 'memo': 'm'},
-    );
-    expect(store.saved, isNotNull);
+    final before = _client(StubApiInterceptor(store: store));
+    final token = await before.login('kakao');
+    await before.send('PUT', '/v1/me/profile', body: {'ageGroup': 'forties', 'monthlyIncome': 1}, token: token);
+    await before.send('PUT', '/v1/transactions/z', body: _tx, token: token);
+    await before.send('PUT', '/v1/categories/c1', body: {'name': '반려동물', 'baseCategoryId': 12}, token: token);
 
-    final api2 = _client('kakao', store: store); // 앱 재시작 시뮬레이션
-    expect((await api2.get<Map<String, dynamic>>(ApiPath.profile))['ageGroup'], 'forties');
-    final list = await api2.get<List<dynamic>>(ApiPath.transactions, query: _range);
-    expect(list.single['memo'], 'm');
-  });
-
-  // 계약: 프로필·거래·사용자 카테고리는 로그인한 사용자 것이다. 이름 중복도 사용자 안에서만 본다.
-  test('사용자마다 데이터가 따로다', () async {
-    final store = _MemStore();
-    final kakao = _client('kakao', store: store);
-    final google = _client('google', store: store);
-    await kakao.put<Map<String, dynamic>>(
-        ApiPath.profile, body: {'ageGroup': 'thirties', 'monthlyIncome': 1});
-    await kakao.put<Map<String, dynamic>>(
-        ApiPath.category('c1'), body: {'name': '반려동물', 'baseCategoryId': 12});
-    await kakao.put<Map<String, dynamic>>(ApiPath.transaction('t1'), body: {
-      'amount': 1000, 'categoryId': 1, 'date': '2026-09-02T00:00:00.000Z',
-      'type': 'expense', 'memo': null,
-    });
-
-    expect(
-      () => google.get<Map<String, dynamic>>(ApiPath.profile),
-      throwsA(isA<HttpFailure>().having((e) => e.isNotFound, 'notFound', isTrue)),
-    );
-    expect(await google.get<List<dynamic>>(ApiPath.categories), isEmpty);
-    expect(await google.get<List<dynamic>>(ApiPath.transactions, query: _range), isEmpty);
-    // 다른 사용자의 카테고리 이름과 겹쳐도 된다.
-    await google.put<Map<String, dynamic>>(
-        ApiPath.category('c2'), body: {'name': '반려동물', 'baseCategoryId': 9});
-
-    expect((await kakao.get<List<dynamic>>(ApiPath.categories)).single['id'], 'c1');
+    final after = _client(StubApiInterceptor(store: store));
+    expect((await after.send('GET', '/v1/me/profile', token: token)).json['ageGroup'], 'forties');
+    expect((await after.send('GET', '/v1/transactions', query: _september, token: token)).list.single['memo'], 'm');
+    expect((await after.send('GET', '/v1/categories', token: token)).list.single['name'], '반려동물');
   });
 
   test('사용자별로 나누기 전 형식으로 저장된 상태는 버린다', () async {
@@ -335,9 +66,98 @@ void main() {
         'transactions': <String, dynamic>{},
         'customCategories': <String, dynamic>{},
       });
-    expect(
-      () => _client('kakao', store: store).get<Map<String, dynamic>>(ApiPath.profile),
-      throwsA(isA<HttpFailure>().having((e) => e.isNotFound, 'notFound', isTrue)),
-    );
+    final api = _client(StubApiInterceptor(store: store));
+    final token = await api.login('kakao');
+    expect((await api.send('GET', '/v1/me/profile', token: token)).status, 404);
+  });
+
+  // 저장에 실패했는데 목록에 남으면, 앱을 다시 켰을 때 사라지는 거래를 보여주게 된다.
+  test('기기에 저장하지 못하면 500이고 바뀐 것이 없다', () async {
+    final store = _MemStore();
+    final api = _client(StubApiInterceptor(store: store));
+    final token = await api.login('kakao');
+    await api.send('PUT', '/v1/categories/c1', body: {'name': '반려동물', 'baseCategoryId': 12}, token: token);
+    await api.send('PUT', '/v1/transactions/t1',
+        body: {..._tx, 'type': 'expense', 'categoryId': 12, 'customCategoryId': 'c1'}, token: token);
+
+    store.failSave = true;
+    final put = await api.send('PUT', '/v1/transactions/t2', body: _tx, token: token);
+    final delete = await api.send('DELETE', '/v1/categories/c1', token: token);
+
+    expect(put.status, 500);
+    expect(put.code, isNotNull);
+    expect(delete.status, 500);
+    final txs = (await api.send('GET', '/v1/transactions', query: _september, token: token)).list;
+    expect(txs.map((t) => t['id']), ['t1']);
+    expect(txs.single['customCategoryId'], 'c1'); // 삭제의 연쇄(거래에서 떼기)도 되돌린다
+    expect((await api.send('GET', '/v1/categories', token: token)).list, hasLength(1));
+  });
+
+  // 쓰기 둘이 겹치면, 먼저 온 쓰기의 저장 실패가 되돌리면서 나중 쓰기의 성공까지 지우거나,
+  // 늦게 끝난 저장이 더 오래된 상태로 덮어쓸 수 있었다. 요청은 하나씩 처리한다.
+  test('겹친 쓰기는 하나씩 처리한다: 한 쓰기의 실패가 다른 쓰기를 지우지 않는다', () async {
+    final store = _MemStore();
+    final api = _client(StubApiInterceptor(store: store));
+    final token = await api.login('kakao');
+    final gate = Completer<void>();
+    store.beforeNextSave = () async {
+      await gate.future;
+      throw StateError('disk full');
+    };
+
+    final first = api.send('PUT', '/v1/transactions/a', body: _tx, token: token);
+    final second = api.send('PUT', '/v1/transactions/b', body: _tx, token: token);
+    await Future<void>.delayed(const Duration(milliseconds: 20)); // 둘 다 Stub에 닿을 때까지
+    gate.complete();
+
+    expect((await first).status, 500);
+    expect((await second).status, 201);
+    final listed = await api.send('GET', '/v1/transactions', query: _september, token: token);
+    expect(listed.list.map((t) => t['id']), ['b']);
+    final reopened = _client(StubApiInterceptor(store: store));
+    final persisted = await reopened.send('GET', '/v1/transactions', query: _september, token: token);
+    expect(persisted.list.map((t) => t['id']), ['b']);
+  });
+
+  // 콜드 스타트에 요청 둘이 겹치면, 두 번째가 빈 상태를 보고 '프로필 없음'이 되거나
+  // 첫 쓰기가 읽어 들인 상태에 덮여 사라졌다.
+  test('기기 저장소를 읽는 중에 온 요청도 읽은 상태를 본다', () async {
+    final seeded = _MemStore();
+    final seed = _client(StubApiInterceptor(store: seeded));
+    final token = await seed.login('kakao');
+    await seed.send('PUT', '/v1/me/profile', body: {'ageGroup': 'forties', 'monthlyIncome': 1}, token: token);
+
+    final store = _MemStore()
+      ..saved = seeded.saved
+      ..loadGate = Completer<void>();
+    final api = _client(StubApiInterceptor(store: store));
+    final first = api.send('GET', '/v1/me/profile', token: token);
+    final write = api.send('PUT', '/v1/transactions/z', body: _tx, token: token);
+    final second = api.send('GET', '/v1/me/profile', token: token);
+    await Future<void>.delayed(const Duration(milliseconds: 20)); // 세 요청이 모두 Stub에 닿을 때까지
+    store.loadGate!.complete();
+
+    expect((await first).status, 200);
+    expect((await second).status, 200);
+    expect((await write).status, 201);
+    final reopened = _client(StubApiInterceptor(store: store));
+    expect((await reopened.send('GET', '/v1/transactions', query: _september, token: token)).list, hasLength(1));
+    expect((await reopened.send('GET', '/v1/me/profile', token: token)).status, 200);
+  });
+
+  test('또래 통계는 기본이 고정표이고, 테스트는 나이대별 값을 줄 수 있다', () async {
+    final fixed = _client(StubApiInterceptor());
+    final token = await fixed.login('kakao');
+    final res = await fixed.send('GET', '/v1/peer/stats', query: {'ageGroup': 'thirties'}, token: token);
+    expect(res.json['avgMonthlyExpense'], StubPeerData.forGroup(AgeGroup.thirties).avgMonthlyExpense);
+
+    PeerStats flat(AgeGroup g) => PeerStats(
+        ageGroup: g, avgMonthlyExpense: 0, avgSavingsRate: 0, avgByCategory: const {}, samples: const []);
+    final custom = _client(StubApiInterceptor(peerStats: flat));
+    final stats = await custom.send('GET', '/v1/peer/stats', query: {'ageGroup': 'thirties'}, token: token);
+    expect(stats.json['avgMonthlyExpense'], 0);
+    expect(stats.json['samples'], isEmpty);
+    final generations = await custom.send('GET', '/v1/peer/generations', token: token);
+    expect(generations.list.every((g) => g['avgMonthlyExpense'] == 0), isTrue);
   });
 }

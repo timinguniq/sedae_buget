@@ -1,15 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/main.dart';
 import 'package:sedae_budget/presentation/page/main/main_shell.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
 
 import '../../helper/fakes.dart';
 
-const _user = AuthUser(provider: AuthProvider.kakao, nickname: '카카오 사용자');
 const _profile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000);
 
 void main() {
@@ -24,23 +21,21 @@ void main() {
     final ads = FakeAdService();
     final source = FakeAppStatusSource();
     final container = fakeContainer(
-      user: _user,
-      profile: _profile,
-      transactions: InMemoryTransactionRepository(),
-      categories: InMemoryCategoryRepository(),
-      peerRepository: FakePeerStatsRepository(),
+      server: await t.seedServer(profile: _profile),
       adService: ads,
+      themeModeStore: await fakeThemeModeStore(),
       launchInterstitial: await fakeLaunchInterstitial(ads),
       appStatusSource: source,
     );
     await t.pumpWidget(fakeScope(
       container,
-      provider.ChangeNotifierProvider(create: (_) => ThemeService(), child: const MyApp()),
+      const MyApp(),
     ));
     await t.pump(); // splash + postFrameCallback
     await t.pump(const Duration(milliseconds: 2100)); // splash 2초 경과
     await t.pump(); // 가드 → 홈
     await t.pump(const Duration(milliseconds: 300));
+    await t.settle();
     expect(find.byType(MainShell), findsOneWidget);
 
     source.updates.add(AppInitialInfo(

@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
-Widget _wrap(Widget child) => provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: MaterialApp(
-          home: Scaffold(body: child), theme: ThemeService().lightThemeData()));
+Widget _wrap(Widget child) => MaterialApp(
+          home: Scaffold(body: child), theme: materialTheme(LightTheme()));
 
 void main() {
   testWidgets('CategoryRow with a peer comparison shows ▲ badge when over peer', (tester) async {

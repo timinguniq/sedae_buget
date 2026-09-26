@@ -15,7 +15,4 @@ abstract class UserProfileApi {
 
   @PUT(ApiPath.profile)
   Future<void> put(@Body() UserProfileDto body);
-
-  @DELETE(ApiPath.profile)
-  Future<void> delete();
 }

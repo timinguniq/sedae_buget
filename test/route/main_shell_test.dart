@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/presentation/presentation.dart';
 
 void main() {
@@ -20,10 +19,7 @@ void main() {
         ),
       ],
     );
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: MaterialApp.router(routerConfig: router),
-    ));
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     await tester.pump();
     expect(find.text('BRANCH_A'), findsOneWidget);
     await tester.tap(find.text('비교'));

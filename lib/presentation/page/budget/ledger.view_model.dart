@@ -16,32 +16,24 @@ import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 /// 로그인 중이면 true. 이것을 부른 provider는 세션이 바뀌면 다시 만들어진다.
 Future<bool> _signedIn(Ref ref) async => await ref.watch(authProvider.future) != null;
 
-/// 보고 있는 달. 모든 탭이 함께 본다. 이번 달보다 뒤로는 가지 않는다.
-class SelectedMonthNotifier extends Notifier<DateTime> {
+/// 보고 있는 달. 모든 탭이 함께 본다. 이번 달보다 뒤로는 가지 않는다(규칙은 [YearMonth]).
+class SelectedMonthNotifier extends Notifier<YearMonth> {
   @override
-  DateTime build() => _thisMonth();
-
-  static DateTime _thisMonth() {
-    final now = DateTime.now();
-    return DateTime(now.year, now.month);
-  }
-
-  /// 보고 있는 달이 이번 달인가.
-  bool get isThisMonth => state == _thisMonth();
+  YearMonth build() => YearMonth.of(DateTime.now());
 
   /// 다음 달로 갈 수 있는가(보고 있는 달이 이번 달보다 앞이다).
-  bool get canGoNext => state.isBefore(_thisMonth());
+  bool get canGoNext => state.canGoNext(DateTime.now());
 
-  void prev() => state = DateTime(state.year, state.month - 1);
+  void prev() => state = state.previous;
 
   void next() {
-    if (canGoNext) state = DateTime(state.year, state.month + 1);
+    if (canGoNext) state = state.next;
   }
 }
 
 /// 장부가 보여줄 달.
 final selectedMonthProvider =
-    NotifierProvider<SelectedMonthNotifier, DateTime>(SelectedMonthNotifier.new);
+    NotifierProvider<SelectedMonthNotifier, YearMonth>(SelectedMonthNotifier.new);
 
 class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   TransactionUsecase get _usecase => ref.read(transactionUsecaseProvider);
@@ -97,22 +89,18 @@ final monthlyTransactionsProvider =
 
 /// 최근 6개월 자기 지출 추이 (oldest → newest).
 final selfTrendProvider =
-    FutureProvider<List<({DateTime month, int expense})>>((ref) async {
+    FutureProvider<List<({YearMonth month, int expense})>>((ref) async {
   final anchor = ref.watch(selectedMonthProvider);
   final usecase = ref.watch(transactionUsecaseProvider);
   const n = 6;
-  final start = DateTime(anchor.year, anchor.month - (n - 1));
-  final end = DateTime(anchor.year, anchor.month + 1); // exclusive
+  final months = [for (var m = anchor, i = 0; i < n; m = m.previous, i++) m].reversed.toList();
   // 실패를 빈 목록으로 감추면 "지출 0"인 평탄한 추이로 보인다. 그대로 드러낸다.
   final txs = await _signedIn(ref)
-      ? (await usecase.getRange(start, end)).unwrap()
+      ? (await usecase.getRange(months.first.start, anchor.end)).unwrap()
       : const <Transaction>[];
-  return List.generate(n, (i) {
-    final m = DateTime(anchor.year, anchor.month - (n - 1) + i);
-    final expense = ViewedMonth.expenseOf(
-        txs.where((t) => t.date.year == m.year && t.date.month == m.month));
-    return (month: m, expense: expense);
-  });
+  return [
+    for (final m in months) (month: m, expense: ViewedMonth.expenseOf(txs.where((t) => m.contains(t.date)))),
+  ];
 });
 
 /// 보고 있는 달의 장부(합계·분류·소득·저축률). 이달 거래를 못 읽으면 오류고,
@@ -130,11 +118,9 @@ final viewedMonthProvider = Provider<AsyncValue<ViewedMonth>>((ref) {
       ));
 });
 
-/// 보고 있는 달을 화면에서 부르는 이름: 이번 달이면 '이번 달', 아니면 'M월'.
-final viewedMonthNameProvider = Provider<String>((ref) {
-  final month = ref.watch(selectedMonthProvider);
-  return ref.read(selectedMonthProvider.notifier).isThisMonth ? '이번 달' : '${month.month}월';
-});
+/// 보고 있는 달을 화면에서 부르는 이름([YearMonth.name]). 오늘을 여기서만 정해 화면이 시계를 모르게 한다.
+final viewedMonthNameProvider =
+    Provider<String>((ref) => ref.watch(selectedMonthProvider).name(DateTime.now()));
 
 /// 사용자가 만든 카테고리 목록(서버). 기본 분류([BudgetCategory])는 계약 상수라 여기 없다.
 ///
