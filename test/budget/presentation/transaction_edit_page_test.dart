@@ -155,6 +155,20 @@ void main() {
     expect(find.byType(TransactionEditPage), findsNothing);
   });
 
+  // 이전에는 수입에도 지출 카테고리 칩을 보여 월급이 '식료품'으로 저장됐다.
+  testWidgets('수입을 고르면 카테고리를 고르지 않는다', (tester) async {
+    await pumpEditPage(tester,
+        customs: const [CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12)]);
+    expect(find.byKey(const Key('category-add-chip')), findsOneWidget);
+
+    await tester.tap(find.text('수입'));
+    await tester.pump();
+
+    expect(find.byKey(const Key('category-add-chip')), findsNothing);
+    expect(find.text('반려동물'), findsNothing);
+    expect(find.text(BudgetCategory.transport.label), findsNothing);
+  });
+
   testWidgets('zero amount is blocked', (tester) async {
     final repo = await pumpEditPage(tester);
     await tester.tap(find.byKey(const Key('save-button')));

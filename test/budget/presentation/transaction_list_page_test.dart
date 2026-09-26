@@ -64,6 +64,34 @@ void main() {
     expect(find.byType(TransactionTile), findsOneWidget);
   });
 
+  // 수입은 카테고리가 없다. 이전에는 월급이 '식료품' 이름·식료품 필터로 보이고 머리글 건수에도 섞였다.
+  testWidgets('수입은 이름이 수입이고 분류 필터·건수에 들지 않는다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    repo.txs = [
+      Transaction.create(amount: 5000, categoryId: BudgetCategory.food.id, date: DateTime(2026, 6, 5),
+          type: TransactionType.expense, memo: '장보기'),
+      Transaction.create(amount: 3000000, categoryId: BudgetCategory.food.id, date: DateTime(2026, 6, 1),
+          type: TransactionType.income),
+    ];
+    await tester.pumpWidget(provider.ChangeNotifierProvider(
+      create: (_) => ThemeService(),
+      child: fakeScope(await container(), const MaterialApp(home: TransactionListPage())),
+    ));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('이번 달 5,000원 · 1건'), findsOneWidget);
+    expect(find.text('수입'), findsWidgets);
+
+    await tester.tap(find.widgetWithText(DesignChip, BudgetCategory.food.label));
+    await tester.pump();
+    expect(find.byType(TransactionTile), findsOneWidget);
+    expect(find.text('장보기'), findsOneWidget);
+  });
+
   // 또래 통계가 실패해도 내 내역은 보인다. 또래 초과 배지만 빠진다.
   testWidgets('또래 통계를 못 읽어도 내역이 보인다', (tester) async {
     await tester.pumpWidget(provider.ChangeNotifierProvider(

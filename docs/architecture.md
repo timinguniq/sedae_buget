@@ -9,7 +9,7 @@
 | 경로 | 책임 |
 |---|---|
 | `lib/entity/` | 순수 도메인 모델·값 객체·결과 타입(`Result`). Flutter와 다른 레이어를 모른다 |
-| `lib/domain/` | `repository/`(리포지토리 등 **인터페이스**), `usecase/`(유스케이스), `manager/`(앱 전역 상태를 쥐는 도메인 객체 — 아직 없음). `entity`에만 의존 |
+| `lib/domain/` | `repository/`(리포지토리 등 **인터페이스**), `usecase/`(유스케이스 — 저장소를 부르는 흐름. 계산 규칙은 `entity`에 둔다), `manager/`(앱 전역 상태를 쥐는 도메인 객체 — 아직 없음). `entity`에만 의존 |
 | `lib/data/` | `data_source/remote/`(retrofit **명세**와 Stub API), `data_source/local/`(로컬 저장), `dto/`(서버 JSON 형식과 엔티티 변환), `repository_impl/`(실제 통신: 명세 호출·DTO↔엔티티 변환·오류 변환) |
 | `lib/core/` | 기술 기반: HTTP 클라이언트, 로컬 저장소, 설정, 광고, 분석, 로깅, DI |
 | `lib/presentation/` | 화면(`page/`), 라우팅(`route/`), 공용 위젯(`widget/`), 앱 서비스(`service/`) |
@@ -20,8 +20,9 @@
 - 서버 연결: 어느 서버로 보낼지(환경·주소), 인터셉터 순서, 빌드별 요청 로그는 `core/http_client/server_connection.dart`의 `connectToServer`만 정한다. local 환경이면 Stub이 서버 대신 답하고, local이 아닌데 주소가 비었으면 시작할 때 멈춘다. release 빌드는 요청 로그를 남기지 않는다.
 - 오류 규약: `domain/repository`의 모든 메서드는 `Result<T>`를 돌려준다(`test/architecture/layer_dependency_test.dart`가 강제). 실패 이유는 `FailureReason` 도메인 enum이고, HTTP 상태코드·전송 오류 코드는 `repository_impl/api_call.dart`에서 번역돼 domain으로 넘어가지 않는다. 서버가 준 도메인 코드(`CATEGORY_DUPLICATE` 등)만 `ErrorResult.code`로, 서버가 쓴 문구만 `ErrorResult.message`로 남는다. 저장소는 던지지 않는다 — 해석할 수 없는 응답도 `guardApi`가 server 실패로 바꾸고, 실패가 값인 경우(프로필 없음 `PROFILE_NOT_FOUND`, `/me` 401 = 로그아웃)도 `guardApi`의 `recover`로만 정한다. 화면은 provider 안에서 `Result.unwrap()`으로 `AsyncValue` 오류로 바꾸거나, 변경 작업이면 `Result`를 그대로 받아 문구를 띄운다. 사용자에게 보이는 실패 문구는 `presentation/widget/common/failure_message.dart`의 `failureMessage`(하던 일 + 이유)만 정하고, 서버 문구는 conflict·invalid일 때만 이유로 쓴다. 불러오기 실패 화면은 `LoadErrorView`를 쓰고, 다시 시도는 장부의 `reload`가 한다.
 - 상태 관리: Riverpod. 통신이 필요한 화면은 `page/<기능>/<화면>.view_model.dart`에 Notifier·provider를 둔다. 여러 화면이 같은 서버 상태를 볼 때는 그 상태를 가진 화면의 viewmodel을 함께 쓴다(예: 세션 `login.view_model.dart`).
-  - 장부: 로그인 세션에 묶인 가계부 데이터(이달 거래·최근 6개월 추이·사용자 카테고리)는 `page/budget/ledger.view_model.dart`에 둔다. 세션이 바뀌면 다시 읽고 로그인 전에는 비어 있다. 변경 뒤 무엇을 다시 읽을지도 여기서만 정한다(화면은 `ref.invalidate`하지 않는다).
-  - 이달 개요: 이달 요약을 쓰는 화면(홈·비교·내역·리포트·분석)은 `budget_home.view_model.dart`의 `monthOverviewProvider` 하나를 읽는다. 합계·상위 카테고리·저축률·또래 초과 판정과, 또래 통계를 못 읽었을 때 무엇을 뺄지를 여기서 정한다.
+  - 장부: 로그인 세션에 묶인 가계부 데이터(이달 거래·최근 6개월 추이·사용자 카테고리)는 `page/budget/ledger.view_model.dart`에 둔다. 세션이 바뀌면 다시 읽고 로그인 전에는 비어 있다. 변경 뒤 무엇을 다시 읽을지도 여기서만 정한다(화면은 `ref.invalidate`하지 않는다). 보고 있는 달(`selectedMonthProvider`)은 모든 탭이 함께 보고 이번 달보다 뒤로 가지 않으며, 화면은 그 이름을 `viewedMonthNameProvider`('이번 달'·'M월')로 부른다.
+  - 보고 있는 달: 달의 합계·건수·분류별 지출·필터·분석 조각·소득·잔액·저축률과 거래 이름은 `entity/budget/viewed_month.dart`의 `ViewedMonth`가 정한다. 수입은 카테고리가 없어 분류별 집계·건수·필터에 들지 않는다. 소득은 프로필 월소득(없으면 이달 수입 합계)이고 잔액·저축률의 기준이다. 장부의 `viewedMonthProvider`가 이 값을 만든다.
+  - 이달 개요: 달을 보여주는 화면(홈·비교·내역·리포트·분석)은 `budget_home.view_model.dart`의 `monthOverviewProvider` 하나를 읽는다. 보고 있는 달(`ViewedMonth`)에 또래 통계를 붙이고, 또래 초과 판정과 또래 통계를 못 읽었을 때 무엇을 뺄지를 여기서 정한다.
   - 거래의 카테고리(표시 이름·기본 분류)는 `entity/budget/category_catalog.dart`의 `CategoryCatalog`로만 판정한다.
   - 또래 비교: 내 금액과 또래 평균의 비교(더·덜·비슷, %, 배율, 크게 넘음)는 `entity/peer/peer_comparison.dart`의 `PeerComparison`이 정하고, `PeerStats`가 월 합계·분류별·가장 큰 차이를 이 값으로 내준다. 또래 값이 없으면(평균 0·빠짐) 비교는 null이고, 표본이 없으면 순위(`PeerStats.rankOf`)도 null이다. 위젯은 받은 값을 그리기만 한다.
   - 거래 입력: 입력 화면의 규칙(카테고리 선택·저장 가능 여부·저장할 거래)은 `entity/budget/transaction_draft.dart`의 `TransactionDraft`가 가진다. 장부의 `save(draft)`가 추가·수정을 정하고, 다 불러온 사용자 카테고리 목록으로 카테고리를 맞춘다(지워진 사용자 카테고리는 기본 분류로).

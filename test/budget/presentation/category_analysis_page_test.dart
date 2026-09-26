@@ -81,10 +81,15 @@ void main() {
     final now = DateTime.now();
     String label(DateTime m) => '${m.year}.${m.month.toString().padLeft(2, '0')}';
     expect(find.text(label(DateTime(now.year, now.month))), findsOneWidget);
+    // 이전에는 다음 달로 끝없이 넘어가 아직 오지 않은 달을 볼 수 있었다.
     await tester.tap(find.byKey(const Key('month-next')));
     await tester.pump();
     await tester.pump();
-    expect(find.text(label(DateTime(now.year, now.month + 1))), findsOneWidget);
+    expect(find.text(label(DateTime(now.year, now.month))), findsOneWidget);
+    await tester.tap(find.byKey(const Key('month-prev')));
+    await tester.pump();
+    await tester.pump();
+    expect(find.text(label(DateTime(now.year, now.month - 1))), findsOneWidget);
   });
 
   // 또래 통계가 실패해도 내 분석은 보인다. 또래 비교 토글만 빠진다.

@@ -106,6 +106,37 @@ void main() {
     expect(find.textContaining('또래 평균'), findsNothing);
   });
 
+  // 이전에는 지난 달을 봐도 '이번 달 요약·이번 달 총지출·이번 달 저축률'로 보였다.
+  testWidgets('지난 달을 보면 그 달 이름으로 보인다', (tester) async {
+    final container = fakeContainer(
+      user: testUser,
+      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+      transactions: _FakeRepo(),
+      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
+    );
+    container.read(selectedMonthProvider.notifier).prev();
+    await _pumpHome(tester, container);
+
+    final now = DateTime.now();
+    final m = DateTime(now.year, now.month - 1).month;
+    expect(find.text('$m월 요약'), findsOneWidget);
+    expect(find.text('$m월 총지출'), findsOneWidget);
+    expect(find.textContaining('$m월 저축률'), findsOneWidget);
+    expect(find.textContaining('이번 달'), findsNothing);
+  });
+
+  // 이전에는 히어로가 거래 수입(₩0)을, 같은 화면의 저축률은 프로필 소득을 기준으로 했다.
+  testWidgets('히어로의 소득·잔액은 저축률과 같은 소득을 쓴다', (tester) async {
+    await _pumpHome(tester, fakeContainer(
+      user: testUser,
+      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+      transactions: _FakeRepo(),
+      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
+    ));
+
+    expect(find.text('소득 ₩3,000,000 · 잔액 ₩2,988,000'), findsOneWidget);
+  });
+
   // 이전에는 표본이 없어도 '1명 중 1등 · 상위 100%'로 보였다.
   testWidgets('또래 표본이 없으면 순위 카드를 보이지 않는다', (tester) async {
     final stub = StubPeerData.forGroup(AgeGroup.thirties);

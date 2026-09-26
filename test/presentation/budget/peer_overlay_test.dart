@@ -17,21 +17,21 @@ Widget _wrap(Widget child) => provider.ChangeNotifierProvider(
 
 void main() {
   testWidgets('hero pill shows peer comparison', (t) async {
-    await t.pumpWidget(_wrap(SummaryHeroCard(expense: 1800000, income: 0, peer: _peer())));
+    await t.pumpWidget(_wrap(SummaryHeroCard(label: '이번 달', expense: 1800000, peer: _peer())));
     await t.pump();
     expect(find.text('또래 평균보다 10% 덜 썼어요'), findsOneWidget);
     expect(find.text('▼'), findsOneWidget);
   });
 
   testWidgets('hero pill shows ▲ when over peer', (t) async {
-    await t.pumpWidget(_wrap(SummaryHeroCard(expense: 2220000, income: 0, peer: _peer())));
+    await t.pumpWidget(_wrap(SummaryHeroCard(label: '이번 달', expense: 2220000, peer: _peer())));
     await t.pump();
     expect(find.text('또래 평균보다 11% 더 썼어요'), findsOneWidget);
     expect(find.text('▲'), findsOneWidget);
   });
 
   testWidgets('또래 평균이 없으면 집계 중이라고 보인다', (t) async {
-    await t.pumpWidget(_wrap(SummaryHeroCard(expense: 1800000, income: 0, peer: _peer(avg: 0))));
+    await t.pumpWidget(_wrap(SummaryHeroCard(label: '이번 달', expense: 1800000, peer: _peer(avg: 0))));
     await t.pump();
     expect(find.text('또래 평균 집계 중'), findsOneWidget);
     expect(find.text('▲'), findsNothing);

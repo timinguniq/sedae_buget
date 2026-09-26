@@ -18,6 +18,7 @@ class ComparePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final overview = ref.watch(monthOverviewProvider);
+    final name = ref.watch(viewedMonthNameProvider);
 
     return DefaultLayout(
       child: overview.when(
@@ -27,7 +28,7 @@ class ComparePage extends ConsumerWidget {
           // 또래 통계가 이 화면의 본질이라, 못 읽으면 화면 전체를 안내로 바꾼다.
           final peer = o.peer;
           if (peer == null) return const Center(child: Text(MonthOverview.peerUnavailable));
-          final myExpense = o.expense;
+          final myExpense = o.month.expense;
           if (myExpense == 0) {
             return Center(
               child: Padding(
@@ -42,13 +43,13 @@ class ComparePage extends ConsumerWidget {
               ),
             );
           }
-          final top6 = o.topCategories(6);
+          final top6 = o.month.topCategories(6);
           final peerAvg = peer.avgMonthlyExpense;
           final expenseMax = (myExpense > peerAvg ? myExpense : peerAvg).clamp(1, 1 << 62);
           final total = peer.compareTotal(myExpense);
           final rank = peer.rankOf(myExpense);
           // 소득이 없으면 내 저축률은 계산할 수 없다: 막대는 0, 값은 '—'.
-          final savingsRate = o.savingsRate;
+          final savingsRate = o.month.savingsRate;
           final peerSavings = peer.avgSavingsRatePercent;
           final savingsMax = [savingsRate ?? 0, peerSavings, 1].reduce((a, b) => a > b ? a : b);
           // 또래 평균을 가장 끌어올리는 항목(또래 평균 지출 최대 카테고리).
@@ -73,7 +74,7 @@ class ComparePage extends ConsumerWidget {
               DistributionHistogram(stats: peer, myExpense: myExpense),
               const SizedBox(height: 18),
               VersusBarCard(
-                title: '이번 달 지출 비교',
+                title: '$name 지출 비교',
                 mineFraction: myExpense / expenseMax,
                 peerFraction: peerAvg / expenseMax,
                 mineText: manWon(myExpense),

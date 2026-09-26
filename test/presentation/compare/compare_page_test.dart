@@ -40,12 +40,13 @@ PeerStats _peer({int avg = 1000000, List<int> samples = const [700000, 900000, 1
       samples: samples,
     );
 
-Future<void> _pumpCompare(WidgetTester tester, PeerStats peer) async {
+Future<void> _pumpCompare(WidgetTester tester, PeerStats peer, {bool lastMonth = false}) async {
   tester.view.physicalSize = const Size(390, 1600);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   final container = fakeContainer(user: testUser, transactions: _FakeRepo(), peerStats: peer);
+  if (lastMonth) container.read(selectedMonthProvider.notifier).prev();
   await tester.pumpWidget(provider.ChangeNotifierProvider(
     create: (_) => ThemeService(),
     child: fakeScope(container, const MaterialApp(home: ComparePage())),
@@ -69,6 +70,14 @@ void main() {
     expect(find.text(BudgetCategory.fromId(1).label), findsOneWidget);
     expect(find.text(BudgetCategory.fromId(7).label), findsOneWidget);
     expect(find.text(BudgetCategory.fromId(11).label), findsNothing);
+  });
+
+  // 이전에는 지난 달 값을 보면서도 제목이 '이번 달 지출 비교'였다.
+  testWidgets('지난 달을 보면 지출 비교 제목에 그 달 이름을 쓴다', (tester) async {
+    await _pumpCompare(tester, _peer(), lastMonth: true);
+    final now = DateTime.now();
+    expect(find.text('${DateTime(now.year, now.month - 1).month}월 지출 비교'), findsOneWidget);
+    expect(find.text('이번 달 지출 비교'), findsNothing);
   });
 
   // 이전에는 표본이 없어도 '또래 1명 중 내 지출은 1등 · 상위 100%'로 보였다.

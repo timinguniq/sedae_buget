@@ -103,6 +103,16 @@ void main() {
     expect(find.text('2건'), findsOneWidget);
   });
 
+  // 이전에는 수입(기본값 식료품)이 식료품 건수에 섞였다.
+  testWidgets('기본 카테고리 건수에 수입은 세지 않는다', (tester) async {
+    Transaction tx(TransactionType type) => Transaction.create(
+          amount: 1000, categoryId: BudgetCategory.food.id, date: DateTime(2026, 6, 5), type: type);
+    await pumpPage(tester, month: [tx(TransactionType.expense), tx(TransactionType.income)]);
+
+    expect(find.text('1건'), findsOneWidget);
+    expect(find.text('2건'), findsNothing);
+  });
+
   testWidgets('편집 모드: 내 카테고리만 삭제 버튼을 갖는다', (tester) async {
     await pumpPage(tester, editing: true);
 

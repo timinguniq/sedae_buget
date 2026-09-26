@@ -72,6 +72,9 @@ class TransactionDraft {
   /// 금액이 0이면 저장하지 않는다.
   bool get canSave => amount > 0;
 
+  /// 카테고리를 고르는가. 수입은 카테고리가 없다(고른 카테고리는 지출로 되돌릴 때를 위해 남겨 둔다).
+  bool get hasCategory => type == TransactionType.expense;
+
   TransactionDraft withAmount(int amount) => _copy(amount: amount);
   TransactionDraft withType(TransactionType type) => _copy(type: type);
   TransactionDraft withDate(DateTime date) => _copy(date: date);
@@ -82,15 +85,21 @@ class TransactionDraft {
   TransactionDraft pickCustom(CustomCategory category) =>
       _copy(base: category.base, customCategoryId: category.id);
 
-  /// 화면에 보일 카테고리 이름. 목록에 아직 없는 사용자 카테고리(방금 만든 것)는 상위 분류 이름으로.
-  String label(CategoryCatalog catalog) => catalog.byId(customCategoryId)?.name ?? base.label;
+  /// 화면에 보일 카테고리 이름. 수입은 '수입'. 목록에 아직 없는 사용자 카테고리(방금 만든 것)는 상위 분류 이름으로.
+  String label(CategoryCatalog catalog) =>
+      hasCategory ? catalog.byId(customCategoryId)?.name ?? base.label : '수입';
 
   /// 저장할 거래. 사용자 카테고리는 [catalog]의 현재 상위 분류를 따르고,
   /// 목록에 없으면(지워졌으면) 사용자 카테고리를 떼고 [base]로 저장한다.
   /// [catalog]가 null(목록을 읽지 못함)이면 판정하지 않고 고른 그대로 저장한다.
+  /// 수입은 사용자 카테고리 없이 저장한다(서버 계약상 기본 분류 id는 보내지만 앱은 쓰지 않는다).
   Transaction toTransaction(CategoryCatalog? catalog) {
-    final custom = catalog?.byId(customCategoryId);
-    final customId = catalog == null ? customCategoryId : custom?.id;
+    final custom = hasCategory ? catalog?.byId(customCategoryId) : null;
+    final customId = !hasCategory
+        ? null
+        : catalog == null
+            ? customCategoryId
+            : custom?.id;
     final categoryId = (custom?.base ?? base).id;
     final trimmed = memo.trim();
     final memoOrNull = trimmed.isEmpty ? null : trimmed;

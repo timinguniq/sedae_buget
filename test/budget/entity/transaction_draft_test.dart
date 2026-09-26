@@ -75,6 +75,33 @@ void main() {
     });
   });
 
+  // 수입은 카테고리가 없다. 이전에는 수입에도 지출 카테고리(기본값 식료품)가 붙어 그 분류에 섞였다.
+  group('수입', () {
+    test('지출만 카테고리를 고른다', () {
+      final d = TransactionDraft.create(_day);
+      expect(d.hasCategory, isTrue);
+      expect(d.withType(TransactionType.income).hasCategory, isFalse);
+    });
+
+    test('수입의 이름은 수입이다', () {
+      final d = TransactionDraft.create(_day).pickCustom(_pet).withType(TransactionType.income);
+      expect(d.label(const CategoryCatalog([_pet])), '수입');
+    });
+
+    test('수입은 사용자 카테고리 없이 저장한다', () {
+      final tx = TransactionDraft.create(_day).withAmount(1).pickCustom(_pet)
+          .withType(TransactionType.income).toTransaction(const CategoryCatalog([_pet]));
+      expect(tx.type, TransactionType.income);
+      expect(tx.customCategoryId, isNull);
+    });
+
+    test('지출로 되돌리면 고른 카테고리가 그대로다', () {
+      final d = TransactionDraft.create(_day).pickCustom(_pet)
+          .withType(TransactionType.income).withType(TransactionType.expense);
+      expect(d.label(const CategoryCatalog([_pet])), '반려동물');
+    });
+  });
+
   group('카테고리 고르기', () {
     test('사용자 카테고리를 고르면 그 상위 분류가 함께 정해진다', () {
       final d = TransactionDraft.create(_day).pickCustom(_pet);

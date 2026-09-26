@@ -40,11 +40,11 @@ class ReportPage extends ConsumerWidget {
           final peer = o.peer;
           if (peer == null) return const Center(child: Text(MonthOverview.peerUnavailable));
           final won = NumberFormat.decimalPattern('ko');
-          final peerTop = peer.rankOf(o.expense)?.topPercent; // 또래 상위 N%. 표본이 없으면 null
-          // 소득 대비 지출(%) = 100 − 저축률. 소득이 없으면 저축률과 함께 표시 안 함.
-          final savingsRate = o.savingsRate;
-          final incomeRatio = savingsRate == null ? null : 100 - savingsRate;
-          final insight = peer.largestCategoryGap(o.byCategory);
+          final peerTop = peer.rankOf(o.month.expense)?.topPercent; // 또래 상위 N%. 표본이 없으면 null
+          // 소득이 없으면 저축률·소득 대비 지출 모두 '—'.
+          final savingsRate = o.month.savingsRate;
+          final incomeRatio = o.month.expenseRatio;
+          final insight = peer.largestCategoryGap(o.month.byCategory);
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),

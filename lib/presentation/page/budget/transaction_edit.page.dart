@@ -135,15 +135,18 @@ class _State extends ConsumerState<TransactionEditPage> {
                   ]),
                 ),
               )),
-              const SizedBox(height: 14),
-              _CategoryChips(
-                selected: _draft.base,
-                selectedCustomId: _draft.customCategoryId,
-                customs: customs,
-                onPickBase: (c) => setState(() => _draft = _draft.pickBase(c)),
-                onPickCustom: (c) => setState(() => _draft = _draft.pickCustom(c)),
-                onAdd: _addCategory,
-              ),
+              // 수입은 카테고리가 없다.
+              if (_draft.hasCategory) ...[
+                const SizedBox(height: 14),
+                _CategoryChips(
+                  selected: _draft.base,
+                  selectedCustomId: _draft.customCategoryId,
+                  customs: customs,
+                  onPickBase: (c) => setState(() => _draft = _draft.pickBase(c)),
+                  onPickCustom: (c) => setState(() => _draft = _draft.pickCustom(c)),
+                  onAdd: _addCategory,
+                ),
+              ],
             ],
           ))),
           const SizedBox(height: 12),

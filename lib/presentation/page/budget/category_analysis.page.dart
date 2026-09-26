@@ -26,20 +26,22 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
         _Header(
           month: month,
           onPrev: () => ref.read(selectedMonthProvider.notifier).prev(),
-          onNext: () => ref.read(selectedMonthProvider.notifier).next(),
+          // 이번 달보다 뒤로는 가지 않는다.
+          onNext: ref.read(selectedMonthProvider.notifier).canGoNext
+              ? () => ref.read(selectedMonthProvider.notifier).next()
+              : null,
         ),
         Expanded(child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
         data: (o) {
-          final breakdown = o.breakdown;
+          final breakdown = o.month.breakdown;
           final peer = o.peer;
           if (breakdown.isEmpty) {
             return Center(child: Text('지출이 없어요',
                 style: context.typo.body2W400.copyWith(color: context.color.label.alternative)));
           }
-          final top = breakdown.take(6).toList();
-          final restSum = breakdown.skip(6).fold<int>(0, (s, e) => s + e.amount);
+          final (:top, rest: restSum) = o.month.slices(6);
           final labels = [
             ...top.map((e) => e.custom?.name ?? e.base.label),
             if (restSum > 0) '기타',
@@ -115,7 +117,8 @@ class _Header extends StatelessWidget {
   const _Header({required this.month, required this.onPrev, required this.onNext});
   final DateTime month;
   final VoidCallback onPrev;
-  final VoidCallback onNext;
+  /// 다음 달로 갈 수 없으면(보고 있는 달이 이번 달) null.
+  final VoidCallback? onNext;
 
   @override
   Widget build(BuildContext context) {

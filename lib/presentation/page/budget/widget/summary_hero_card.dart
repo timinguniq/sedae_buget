@@ -5,12 +5,25 @@ import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-/// 코랄 히어로 카드: 이번 달 총지출 + 또래 비교 pill + 수입/잔액 보조 + 우하단 마스코트 워터마크.
+/// 코랄 히어로 카드: 달 총지출 + 또래 비교 pill + 소득/잔액 보조 + 우하단 마스코트 워터마크.
 /// [peer]가 있으면 또래 비교 pill을 그린다(또래 통계를 못 읽었으면 null — pill 생략).
 class SummaryHeroCard extends StatelessWidget {
-  const SummaryHeroCard({super.key, required this.expense, required this.income, this.peer});
+  const SummaryHeroCard({
+    super.key,
+    required this.label,
+    required this.expense,
+    this.income,
+    this.balance,
+    this.peer,
+  });
+
+  /// 보고 있는 달의 이름('이번 달', '8월').
+  final String label;
   final int expense;
-  final int income;
+
+  /// 소득과 잔액(저축률과 같은 기준). 소득이 없으면 둘 다 null이고 그 줄을 그리지 않는다.
+  final int? income;
+  final int? balance;
   final PeerStats? peer;
 
   @override
@@ -37,7 +50,7 @@ class SummaryHeroCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 19, 20, 19),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('이번 달 총지출',
+            Text('$label 총지출',
                 style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: white.withValues(alpha: 0.92))),
             const SizedBox(height: 3),
             Text('₩${won.format(expense)}', style: context.typo.amountDisplay.copyWith(color: white)),
@@ -45,9 +58,11 @@ class SummaryHeroCard extends StatelessWidget {
               const SizedBox(height: 11),
               _PeerPill(comparison: peer.compareTotal(expense)),
             ],
-            const SizedBox(height: 10),
-            Text('수입 ₩${won.format(income)} · 잔액 ₩${won.format(income - expense)}',
-                style: context.typo.caption1W500.copyWith(color: white.withValues(alpha: 0.85))),
+            if ((income, balance) case (final income?, final balance?)) ...[
+              const SizedBox(height: 10),
+              Text('소득 ₩${won.format(income)} · 잔액 ₩${won.format(balance)}',
+                  style: context.typo.caption1W500.copyWith(color: white.withValues(alpha: 0.85))),
+            ],
           ]),
         ),
       ]),
