@@ -3,13 +3,18 @@ import 'package:sedae_budget/entity/budget/category_catalog.dart';
 import 'package:sedae_budget/entity/budget/custom_category.dart';
 import 'package:sedae_budget/entity/budget/transaction.dart';
 import 'package:sedae_budget/entity/budget/transaction_type.dart';
+import 'package:uuid/uuid.dart';
 
 /// 입력 중인 거래. 거래 입력 화면의 규칙(카테고리 선택·저장 가능 여부·저장할 거래)을 가진다.
 ///
 /// 카테고리는 기본 분류 하나이거나 사용자 카테고리 하나다. 사용자 카테고리를 고르면 그 상위 분류가
 /// 함께 정해진다. 사용자 카테고리가 아직 있는지는 저장할 때 [toTransaction]이 목록으로 판정한다.
+///
+/// 초안 하나는 거래 하나다. 저장을 몇 번 시도해도(두 번 누름·시간 초과 뒤 재시도) 같은 [id]로
+/// 보내므로, 클라이언트 id로 멱등인 서버에는 거래가 하나만 생긴다.
 class TransactionDraft {
   const TransactionDraft._({
+    required this.id,
     required this.amount,
     required this.type,
     required this.base,
@@ -19,9 +24,10 @@ class TransactionDraft {
     required this.existing,
   });
 
-  /// 새 거래. 지출·식비·금액 0으로 시작한다.
-  const TransactionDraft.create(DateTime date)
+  /// 새 거래. 지출·식비·금액 0으로 시작하고, 저장할 거래의 id를 여기서 한 번 정한다.
+  TransactionDraft.create(DateTime date)
       : this._(
+          id: const Uuid().v4(),
           amount: 0,
           type: TransactionType.expense,
           base: BudgetCategory.food,
@@ -33,6 +39,7 @@ class TransactionDraft {
 
   /// [tx]를 고친다. 카테고리는 [catalog]로 판정한다.
   factory TransactionDraft.edit(Transaction tx, CategoryCatalog catalog) => TransactionDraft._(
+        id: tx.id,
         amount: tx.amount,
         type: tx.type,
         base: catalog.of(tx).base,
@@ -42,6 +49,8 @@ class TransactionDraft {
         existing: tx,
       );
 
+  /// 저장할 거래의 id.
+  final String id;
   final int amount;
   final TransactionType type;
 
@@ -88,6 +97,7 @@ class TransactionDraft {
     final e = existing;
     if (e == null) {
       return Transaction.create(
+        id: id,
         amount: amount,
         categoryId: categoryId,
         date: date,
@@ -117,6 +127,7 @@ class TransactionDraft {
     String? memo,
   }) =>
       TransactionDraft._(
+        id: id,
         amount: amount ?? this.amount,
         type: type ?? this.type,
         base: base ?? this.base,

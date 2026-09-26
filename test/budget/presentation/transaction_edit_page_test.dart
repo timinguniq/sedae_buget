@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -32,6 +34,26 @@ class _FailingRepo implements TransactionRepository {
   Future<Result<Transaction>> upsert(Transaction tx) async => const Result.failure(_offline);
   @override
   Future<Result<Transaction>> delete(Transaction tx) async => const Result.failure(_offline);
+  @override
+  Future<Result<List<Transaction>>> getMonth(int y, int m) async => const Result.success([]);
+  @override
+  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
+      const Result.success([]);
+}
+
+/// 저장 응답을 테스트가 풀어줄 때까지 붙잡는 저장소(느린 서버).
+class _SlowRepo implements TransactionRepository {
+  final upserts = <Transaction>[];
+  final reply = Completer<Result<Transaction>>();
+
+  @override
+  Future<Result<Transaction>> upsert(Transaction tx) {
+    upserts.add(tx);
+    return reply.future;
+  }
+
+  @override
+  Future<Result<Transaction>> delete(Transaction tx) async => Result.success(tx);
   @override
   Future<Result<List<Transaction>>> getMonth(int y, int m) async => const Result.success([]);
   @override
@@ -110,6 +132,27 @@ void main() {
 
     expect(find.byType(TransactionEditPage), findsOneWidget);
     expect(find.text('네트워크에 연결할 수 없습니다.'), findsOneWidget);
+  });
+
+  // 첫 저장이 끝나기 전에 다시 누르면 거래가 두 번 저장됐다.
+  testWidgets('저장 중에 다시 눌러도 한 번만 저장한다', (tester) async {
+    final slow = _SlowRepo();
+    await pumpEditPage(tester, repository: slow);
+    for (final k in ['1', '0', '0', '0']) {
+      await tester.tap(find.text(k));
+      await tester.pump();
+    }
+    await tester.tap(find.byKey(const Key('save-button')));
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('save-button')));
+    await tester.pump();
+
+    expect(slow.upserts, hasLength(1));
+
+    slow.reply.complete(Result.success(slow.upserts.single));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(TransactionEditPage), findsNothing);
   });
 
   testWidgets('zero amount is blocked', (tester) async {

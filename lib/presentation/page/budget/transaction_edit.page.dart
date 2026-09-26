@@ -20,6 +20,9 @@ class _State extends ConsumerState<TransactionEditPage> {
   late TransactionDraft _draft;
   late final TextEditingController _memo;
 
+  /// 저장·삭제 응답을 기다리는 중이면 true. 그 사이 다시 눌러 두 번 보내지 않는다.
+  bool _busy = false;
+
   @override
   void initState() {
     super.initState();
@@ -39,13 +42,18 @@ class _State extends ConsumerState<TransactionEditPage> {
   Future<void> _save() async {
     final draft = _draft.withMemo(_memo.text);
     if (!draft.canSave) return;
-    final res = await ref.read(monthlyTransactionsProvider.notifier).save(draft);
-    _closeOr(res, '저장하지 못했어요');
+    await _send(() => ref.read(monthlyTransactionsProvider.notifier).save(draft), '저장하지 못했어요');
   }
 
-  Future<void> _delete() async {
-    final res = await ref.read(monthlyTransactionsProvider.notifier).delete(widget.existing!);
-    _closeOr(res, '삭제하지 못했어요');
+  Future<void> _delete() =>
+      _send(() => ref.read(monthlyTransactionsProvider.notifier).delete(widget.existing!), '삭제하지 못했어요');
+
+  Future<void> _send(Future<Result<Transaction>> Function() request, String fallback) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final res = await request();
+    if (mounted) setState(() => _busy = false);
+    _closeOr(res, fallback);
   }
 
   /// 성공이면 화면을 닫고, 실패면 입력을 둔 채 문구만 보여준다.
@@ -146,7 +154,7 @@ class _State extends ConsumerState<TransactionEditPage> {
           const SizedBox(height: 12),
           SizedBox(width: double.infinity, child: FilledButton(
             key: const Key('save-button'),
-            onPressed: _save,
+            onPressed: _busy ? null : _save,
             child: const Text('저장하기'))),
         ]),
       ),

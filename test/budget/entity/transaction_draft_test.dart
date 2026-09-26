@@ -57,6 +57,24 @@ void main() {
     });
   });
 
+  // 저장을 다시 시도해도(두 번 누름·시간 초과 뒤 재시도) 서버에는 거래가 하나만 생겨야 한다.
+  // 서버 계약은 클라이언트 id로 멱등인 PUT이다.
+  group('새 거래의 id', () {
+    test('같은 초안은 몇 번 저장해도 같은 id다', () {
+      final d = TransactionDraft.create(_day).withAmount(1000);
+      final first = d.toTransaction(const CategoryCatalog());
+      final again = d.withMemo('점심').pickBase(BudgetCategory.transport)
+          .toTransaction(const CategoryCatalog());
+      expect(again.id, first.id);
+    });
+
+    test('다른 초안은 다른 id다', () {
+      final a = TransactionDraft.create(_day).toTransaction(const CategoryCatalog());
+      final b = TransactionDraft.create(_day).toTransaction(const CategoryCatalog());
+      expect(a.id, isNot(b.id));
+    });
+  });
+
   group('카테고리 고르기', () {
     test('사용자 카테고리를 고르면 그 상위 분류가 함께 정해진다', () {
       final d = TransactionDraft.create(_day).pickCustom(_pet);
