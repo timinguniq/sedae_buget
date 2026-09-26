@@ -1,5 +1,5 @@
 /// 서버 경로 단일 출처. 실구현체와 Stub이 같은 상수를 쓴다.
-/// 계약: docs/superpowers/plans/2026-09-06-api-integration.md "API 계약 (v1)".
+/// 계약: `docs/api-contract.md`(설명), `test/contract/api_contract.dart`(기준 — 경로를 문자열 그대로 검증한다).
 abstract class ApiPath {
   ApiPath._();
 

@@ -4,8 +4,6 @@ import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-import 'test_api_client.dart';
-
 /// 테스트용 인메모리 토큰 저장소.
 class MemoryAuthTokenStore implements AuthTokenStore {
   MemoryAuthTokenStore([this.token]);
@@ -41,9 +39,6 @@ class StubServer {
   final Dio dio;
   final MemoryAuthTokenStore tokens;
   final SessionExpiry sessionExpiry;
-
-  /// 경로·바디 단위로 계약을 검증할 때 쓴다.
-  TestApiClient get api => TestApiClient(dio);
 
   AuthRepository get auth => AuthRepositoryImpl(AuthApi(dio), tokens, sessionExpiry);
   UserProfileRepository get profiles => UserProfileRepositoryImpl(UserProfileApi(dio));

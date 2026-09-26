@@ -25,7 +25,8 @@ flutter test test/architecture                  # 레이어 의존성 규칙만
 - presentation 테스트는 `fakeContainer`로 의존성 seam(`service/*_provider.dart`)을 fake로 바꾼 뒤 위젯·provider를 검증한다. 전역 `get_it`은 쓰지 않는다.
 - HTTP 계층은 실제 서버 대신 Dio `Interceptor`로 검증한다: `StubApiInterceptor`(`lib/data/data_source/remote/stub/`)나 테스트 파일 안의 작은 인터셉터(응답 고정·오류·타임아웃).
 - 실패 처리(오류 응답·깨진 본문·시간 초과)는 `test/helper/fake_http_adapter.dart`의 `FakeHttpAdapter`로 검증한다. 인터셉터로 만든 가짜 응답은 Dio 자체의 응답 처리(오류 문구·본문 해석)를 건너뛰어 실제와 다르다.
-- 저장소 구현·Stub 계약 테스트는 `test/helper/stub_server.dart`의 `StubServer`를 쓴다. 운영의 local 환경과 같은 배선(`connectToServer`: 토큰 인터셉터 → Stub)으로 조립해 실제 저장소 구현을 내준다. Stub은 사용자마다 데이터를 따로 둔다.
+- 서버 계약(경로·상태코드·검증)은 `test/contract/api_contract.dart` suite가 본다. 경로·바디를 문자열 그대로 적고, 지금은 Stub에 돌린다(`stub_contract_test.dart`). 설명은 `docs/api-contract.md`.
+- 저장소 구현 테스트는 `test/helper/stub_server.dart`의 `StubServer`를 쓴다. 운영의 local 환경과 같은 배선(`connectToServer`: 토큰 인터셉터 → Stub)으로 조립해 실제 저장소 구현을 내준다. Stub은 사용자마다 데이터를 따로 둔다.
 
 ## 종류
 
