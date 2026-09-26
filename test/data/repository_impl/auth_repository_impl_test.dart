@@ -65,9 +65,10 @@ void main() {
 
   test('server error on /me → server 실패; signOut은 실패를 알리고도 토큰을 지운다', () async {
     final expiry = SessionExpiry();
-    final dio = ApiClient.create(
-      baseUrl: '', tokenStore: tokens, sessionExpiry: expiry, extra: [_ServerDown()],
-    ).dio;
+    final dio = connectToServer(
+      env: AppEnvironment.local, tokenStore: tokens, sessionExpiry: expiry,
+      localServer: () => _ServerDown(),
+    );
     final down = AuthRepositoryImpl(AuthApi(dio), tokens, expiry);
     tokens.token = 'stub.kakao';
     expect((await down.currentUser()).failureOrNull?.reason, FailureReason.server);

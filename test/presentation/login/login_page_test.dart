@@ -50,11 +50,11 @@ void main() {
     await t.pump(const Duration(milliseconds: 400)); // SnackBar 등장
 
     expect(find.text('카카오로 시작하기'), findsOneWidget);
-    expect(find.text('잠시 후 다시 시도해 주세요.'), findsOneWidget);
+    expect(find.text('로그인하지 못했어요. 서버에 문제가 생겼어요. 잠시 후 다시 시도해 주세요'), findsOneWidget);
   });
 
   // 서버가 코드만 주고 문구를 안 주면 빈 SnackBar가 뜨면 안 된다.
-  testWidgets('서버 문구가 비어 있으면 기본 문구를 보여준다', (t) async {
+  testWidgets('서버 문구가 비어 있어도 이유를 보여준다', (t) async {
     final container = fakeContainer(authRepository: _FailingAuthRepo(''));
 
     t.view.physicalSize = const Size(390, 844);
@@ -73,7 +73,7 @@ void main() {
     await t.pump();
     await t.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('로그인하지 못했어요'), findsOneWidget);
+    expect(find.text('로그인하지 못했어요. 서버에 문제가 생겼어요. 잠시 후 다시 시도해 주세요'), findsOneWidget);
   });
 
   testWidgets('renders 3 social buttons and kakao tap signs in', (t) async {

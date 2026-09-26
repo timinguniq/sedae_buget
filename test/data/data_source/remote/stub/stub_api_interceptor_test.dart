@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sedae_budget/core/core.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
@@ -40,7 +39,7 @@ void main() {
   test('login → token, me → same user; me without token → 401', () async {
     expect(
       () => api.get<Map<String, dynamic>>(ApiPath.me),
-      throwsA(isA<ApiException>().having((e) => e.statusCode, 'status', 401)),
+      throwsA(isA<HttpFailure>().having((e) => e.statusCode, 'status', 401)),
     );
     final res = await api.post<Map<String, dynamic>>(
       ApiPath.login,
@@ -58,7 +57,7 @@ void main() {
   test('login without idToken → 400 VALIDATION', () async {
     expect(
       () => api.post<Map<String, dynamic>>(ApiPath.login, body: {'provider': 'kakao'}),
-      throwsA(isA<ApiException>().having((e) => e.code, 'code', 'VALIDATION')),
+      throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'VALIDATION')),
     );
   });
 
@@ -66,7 +65,7 @@ void main() {
     tokens.token = 'garbage';
     expect(
       () => api.get<Map<String, dynamic>>(ApiPath.me),
-      throwsA(isA<ApiException>().having((e) => e.code, 'code', 'AUTH_004')),
+      throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'AUTH_004')),
     );
   });
 
@@ -79,7 +78,7 @@ void main() {
     tokens.token = 'stub.kakao';
     expect(
       () => api.get<Map<String, dynamic>>(ApiPath.profile),
-      throwsA(isA<ApiException>().having((e) => e.code, 'code', 'PROFILE_NOT_FOUND')),
+      throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'PROFILE_NOT_FOUND')),
     );
     await api.put<Map<String, dynamic>>(
       ApiPath.profile,
@@ -91,7 +90,7 @@ void main() {
     await api.delete(ApiPath.profile);
     expect(
       () => api.get<Map<String, dynamic>>(ApiPath.profile),
-      throwsA(isA<ApiException>().having((e) => e.isNotFound, 'notFound', isTrue)),
+      throwsA(isA<HttpFailure>().having((e) => e.isNotFound, 'notFound', isTrue)),
     );
   });
 
@@ -121,7 +120,7 @@ void main() {
     expect(second['date'], '2026-09-02T00:00:00.000Z');
     expect(
       () => api.delete(ApiPath.transaction('nope')),
-      throwsA(isA<ApiException>().having((e) => e.isNotFound, 'notFound', isTrue)),
+      throwsA(isA<HttpFailure>().having((e) => e.isNotFound, 'notFound', isTrue)),
     );
   });
 
@@ -165,11 +164,11 @@ void main() {
     test('기본 카테고리 id는 수정·삭제 불가 → 403 CATEGORY_IMMUTABLE', () async {
       expect(
         () => putCat('12', '기타 바꾸기', 12),
-        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'CATEGORY_IMMUTABLE')),
+        throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'CATEGORY_IMMUTABLE')),
       );
       expect(
         () => api.delete(ApiPath.category('1')),
-        throwsA(isA<ApiException>()
+        throwsA(isA<HttpFailure>()
             .having((e) => e.code, 'code', 'CATEGORY_IMMUTABLE')
             .having((e) => e.statusCode, 'status', 403)),
       );
@@ -178,15 +177,15 @@ void main() {
     test('name/baseCategoryId validation → 400 VALIDATION', () async {
       expect(
         () => putCat('c1', '   ', 12),
-        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'VALIDATION')),
+        throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'VALIDATION')),
       );
       expect(
         () => putCat('c1', 'a' * (CustomCategory.maxNameLength + 1), 12),
-        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'VALIDATION')),
+        throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'VALIDATION')),
       );
       expect(
         () => putCat('c1', '반려동물', 13),
-        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'VALIDATION')),
+        throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'VALIDATION')),
       );
     });
 
@@ -194,7 +193,7 @@ void main() {
       await putCat('c1', '반려동물', 12);
       expect(
         () => putCat('c2', '반려동물', 9),
-        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'CATEGORY_DUPLICATE')),
+        throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'CATEGORY_DUPLICATE')),
       );
       await putCat('c1', '반려동물', 9); // 자기 자신은 중복이 아니다
     });
@@ -205,7 +204,7 @@ void main() {
           'amount': 1000, 'categoryId': 12, 'date': '2026-09-02T00:00:00.000Z',
           'type': 'expense', 'memo': null, 'customCategoryId': 'nope',
         }),
-        throwsA(isA<ApiException>().having((e) => e.code, 'code', 'VALIDATION')),
+        throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'VALIDATION')),
       );
     });
 
@@ -228,7 +227,7 @@ void main() {
       expect(tx['categoryId'], 12); // 상위 기본 분류는 그대로 → 또래 비교 집계 유지
       expect(
         () => api.delete(ApiPath.category('c1')),
-        throwsA(isA<ApiException>().having((e) => e.isNotFound, 'notFound', isTrue)),
+        throwsA(isA<HttpFailure>().having((e) => e.isNotFound, 'notFound', isTrue)),
       );
     });
 
@@ -279,7 +278,7 @@ void main() {
     tokens.token = 'stub.kakao';
     expect(
       () => api.get<dynamic>('/v1/nope'),
-      throwsA(isA<ApiException>().having((e) => e.code, 'code', 'NOT_FOUND')),
+      throwsA(isA<HttpFailure>().having((e) => e.code, 'code', 'NOT_FOUND')),
     );
   });
 
@@ -318,7 +317,7 @@ void main() {
 
     expect(
       () => google.get<Map<String, dynamic>>(ApiPath.profile),
-      throwsA(isA<ApiException>().having((e) => e.isNotFound, 'notFound', isTrue)),
+      throwsA(isA<HttpFailure>().having((e) => e.isNotFound, 'notFound', isTrue)),
     );
     expect(await google.get<List<dynamic>>(ApiPath.categories), isEmpty);
     expect(await google.get<List<dynamic>>(ApiPath.transactions, query: _range), isEmpty);
@@ -338,7 +337,7 @@ void main() {
       });
     expect(
       () => _client('kakao', store: store).get<Map<String, dynamic>>(ApiPath.profile),
-      throwsA(isA<ApiException>().having((e) => e.isNotFound, 'notFound', isTrue)),
+      throwsA(isA<HttpFailure>().having((e) => e.isNotFound, 'notFound', isTrue)),
     );
   });
 }

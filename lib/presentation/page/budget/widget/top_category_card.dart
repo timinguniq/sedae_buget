@@ -9,14 +9,14 @@ class TopCategoryCard extends StatelessWidget {
   const TopCategoryCard({
     super.key,
     required this.top,
-    this.peerByCategory = const {},
+    this.peer,
     this.onTap,
   });
 
   /// 많이 쓴 기본 분류(금액 내림차순). 고르는 규칙은 `MonthOverview.topCategories`에 있다.
   final List<MapEntry<BudgetCategory, int>> top;
-  /// 또래 평균 카테고리 지출. 값이 없거나 0이면 배지 생략.
-  final Map<BudgetCategory, int> peerByCategory;
+  /// 또래 통계. 없거나 그 분류의 또래 값이 없으면 배지를 그리지 않는다.
+  final PeerStats? peer;
   final VoidCallback? onTap;
 
   @override
@@ -40,14 +40,17 @@ class TopCategoryCard extends StatelessWidget {
 
   Widget _row(BuildContext context, BudgetCategory cat, int amount, double fraction) {
     final won = NumberFormat.decimalPattern('ko');
-    final peer = peerByCategory[cat] ?? 0;
+    final comparison = peer?.compareCategory(cat, amount);
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text(cat.label, style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.normal)),
         Row(mainAxisSize: MainAxisSize.min, children: [
           Text('₩${won.format(amount)}',
               style: context.typo.caption1W600.copyWith(fontSize: 12.5, fontWeight: context.typo.bold, color: context.color.label.normal)),
-          if (peer > 0) ...[const SizedBox(width: 7), PeerDeltaBadge(mine: amount, peer: peer, tinted: true)],
+          if (comparison != null) ...[
+            const SizedBox(width: 7),
+            PeerDeltaBadge(comparison: comparison, tinted: true),
+          ],
         ]),
       ]),
       const SizedBox(height: 6),

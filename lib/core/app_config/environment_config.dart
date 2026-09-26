@@ -1,71 +1,30 @@
-import 'package:flutter/foundation.dart';
-import 'package:sedae_budget/core/core.dart';
+import 'package:sedae_budget/core/util/logger/custom_logger.dart';
 
-final _logger = CustomLogger.create(tag: (EnvironmentConfig).toString());
+final _logger = CustomLogger.create(tag: 'AppEnvironment');
 
+/// 앱이 붙는 서버 환경. local은 서버 대신 앱 안의 Stub이 답한다.
 enum AppEnvironment {
-  local(
-    AppEndpoint(
-      server: '',
-    ),
-  ),
-  dev(
-    AppEndpoint(
-      server: '', // TODO: 서버 주소 확정 시 기입
-    ),
-  ),
-  staging(
-    AppEndpoint(
-      server: '', // TODO: 서버 주소 확정 시 기입
-    ),
-  ),
-  prod(
-    AppEndpoint(
-      server: '', // TODO: 서버 주소 확정 시 기입
-    ),
-  );
+  local(''),
+  dev(''), // TODO: 서버 주소 확정 시 기입
+  staging(''), // TODO: 서버 주소 확정 시 기입
+  prod(''); // TODO: 서버 주소 확정 시 기입
 
-  const AppEnvironment(this.endpoint);
+  const AppEnvironment(this.server);
 
-  final AppEndpoint endpoint;
-}
+  /// 서버 주소. local은 쓰지 않는다.
+  final String server;
 
-abstract class EnvironmentConfig {
-  EnvironmentConfig._();
+  /// 빌드할 때 지정한 환경(`--dart-define=env=dev`). 지정하지 않았으면 local이다(release 빌드도).
+  // TODO: 서버 준비 후 기본값을 prod로 변경
+  static AppEnvironment get current => parse(const String.fromEnvironment('env'));
 
-  static AppEnvironment? _env;
-
-  /// `local`이면 서버 대신 Stub API(인프로세스)를 쓴다.
-  // TODO: 서버 준비 후 기본값을 AppEnvironment.prod로 변경
-  static AppEnvironment get env => _env ?? _fromDartDefine ?? AppEnvironment.local;
-
-  /// `--dart-define=env=dev` 처럼 빌드 시 지정한 환경. 없거나 잘못된 이름이면 null.
-  static AppEnvironment? get _fromDartDefine {
-    const name = String.fromEnvironment('env');
-    if (name.isEmpty) return null;
-    try {
-      return AppEnvironment.values.byName(name);
-    } catch (_) {
-      _logger.e("Unknown env '$name'");
-      return null;
+  /// 환경 이름을 읽는다. 비었거나 모르는 이름이면 local.
+  static AppEnvironment parse(String name) {
+    if (name.isEmpty) return local;
+    for (final env in values) {
+      if (env.name == name) return env;
     }
-  }
-
-  //static String get baseWebUrl => EnvironmentConfig.env.endpoint.baseWebUrl;
-
-  static void initialize(AppEnvironment remoteSetting) {
-    if (kReleaseMode) {
-      _env = remoteSetting;
-    } else {
-      const localSetting = String.fromEnvironment('env');
-      if (localSetting.isNotEmpty) {
-        try {
-          _env = AppEnvironment.values.byName(localSetting);
-        } catch (e) {
-          _logger.e("Failed to config environment from '$localSetting'!", error: e);
-        }
-      }
-    }
-    _logger.i('initialize(${remoteSetting.name}) : by ${kReleaseMode ? 'release' : 'debug'} mode. env=${env.name}');
+    _logger.e("Unknown env '$name'");
+    return local;
   }
 }

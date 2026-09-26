@@ -29,8 +29,71 @@ class _FakeRepo implements TransactionRepository {
       const Result.success([]);
 }
 
+/// 이달 지출(식료품 50만·교통 20만·외식 10만, 합계 80만)과 견줄 또래 통계.
+PeerStats _peer({int avg = 1000000, List<int> samples = const [700000, 900000, 1200000]}) =>
+    PeerStats(
+      ageGroup: AgeGroup.thirties,
+      avgMonthlyExpense: avg,
+      avgSavingsRate: 0.2,
+      // 외식(11)은 또래 평균이 없다.
+      avgByCategory: {BudgetCategory.fromId(1): 400000, BudgetCategory.fromId(7): 250000},
+      samples: samples,
+    );
+
+Future<void> _pumpCompare(WidgetTester tester, PeerStats peer, {bool lastMonth = false}) async {
+  tester.view.physicalSize = const Size(390, 1600);
+  tester.view.devicePixelRatio = 1.0;
+  addTearDown(tester.view.resetPhysicalSize);
+  addTearDown(tester.view.resetDevicePixelRatio);
+  final container = fakeContainer(user: testUser, transactions: _FakeRepo(), peerStats: peer);
+  if (lastMonth) container.read(selectedMonthProvider.notifier).prev();
+  await tester.pumpWidget(provider.ChangeNotifierProvider(
+    create: (_) => ThemeService(),
+    child: fakeScope(container, const MaterialApp(home: ComparePage())),
+  ));
+  await tester.pump();
+  await tester.pump();
+}
+
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
+
+  // 이전에는 같은 금액이 '또래보다 약 0원 더 ▲'로 보였다.
+  testWidgets('이달 지출이 또래 평균과 같으면 비슷하다고 보인다', (tester) async {
+    await _pumpCompare(tester, _peer(avg: 800000));
+    expect(find.text('또래와 비슷해요'), findsOneWidget);
+    expect(find.textContaining('0원 더'), findsNothing);
+  });
+
+  testWidgets('또래 평균이 없는 항목은 항목별 차이에서 뺀다', (tester) async {
+    await _pumpCompare(tester, _peer());
+    expect(find.text(BudgetCategory.fromId(1).label), findsOneWidget);
+    expect(find.text(BudgetCategory.fromId(7).label), findsOneWidget);
+    expect(find.text(BudgetCategory.fromId(11).label), findsNothing);
+  });
+
+  // 또래 값이 없으면 비교하지 않는다. 이전에는 또래 막대를 0원으로 그린 비교 카드가 남았다.
+  testWidgets('또래 월평균이 없으면 지출 비교 카드를 보이지 않는다', (tester) async {
+    await _pumpCompare(tester, _peer(avg: 0));
+    expect(find.textContaining('지출 비교'), findsNothing);
+    expect(find.text('항목별 차이'), findsOneWidget);
+  });
+
+  // 이전에는 지난 달 값을 보면서도 제목이 '이번 달 지출 비교'였다.
+  testWidgets('지난 달을 보면 지출 비교 제목에 그 달 이름을 쓴다', (tester) async {
+    await _pumpCompare(tester, _peer(), lastMonth: true);
+    final now = DateTime.now();
+    expect(find.text('${DateTime(now.year, now.month - 1).month}월 지출 비교'), findsOneWidget);
+    expect(find.text('이번 달 지출 비교'), findsNothing);
+  });
+
+  // 이전에는 표본이 없어도 '또래 1명 중 내 지출은 1등 · 상위 100%'로 보였다.
+  testWidgets('또래 표본이 없으면 순위를 보이지 않는다', (tester) async {
+    await _pumpCompare(tester, _peer(samples: const []));
+    expect(find.textContaining('명 중'), findsNothing);
+    expect(find.textContaining('상위'), findsNothing);
+    expect(find.text('항목별 차이'), findsOneWidget);
+  });
 
   testWidgets('compare page renders rank headline, versus cards and battle rows', (tester) async {
     tester.view.physicalSize = const Size(390, 844);

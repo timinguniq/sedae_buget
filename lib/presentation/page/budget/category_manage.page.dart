@@ -40,18 +40,18 @@ class _CategoryManagePageState extends ConsumerState<CategoryManagePage> {
       ),
     );
     if (ok != true || !mounted) return;
-    final error = categoryErrorMessage(
-        await ref.read(customCategoriesProvider.notifier).remove(category));
+    final error = (await ref.read(customCategoriesProvider.notifier).remove(category)).failureOrNull;
     if (!mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(failureMessage(UserAction.delete, error))));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final asyncCustoms = ref.watch(customCategoriesProvider);
-    final asyncTxs = ref.watch(monthlyTransactionsProvider);
+    final month = ref.watch(viewedMonthProvider).value;
     return DefaultLayout(
       child: Column(children: [
         _Header(
@@ -62,9 +62,8 @@ class _CategoryManagePageState extends ConsumerState<CategoryManagePage> {
         Expanded(
           child: asyncCustoms.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('카테고리를 불러오지 못했어요: $e')),
+            error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
             data: (customs) {
-              final catalog = CategoryCatalog(customs);
               return ListView(
               padding: const EdgeInsets.fromLTRB(22, 0, 22, 22),
               children: [
@@ -80,11 +79,7 @@ class _CategoryManagePageState extends ConsumerState<CategoryManagePage> {
                   for (final c in BudgetCategory.values)
                     _BaseRow(
                       category: c,
-                      // 커스텀 카테고리로 분리된 거래는 빼고 센다(분석 화면 집계와 같은 기준).
-                      count: asyncTxs.value?.where((t) {
-                        final of = catalog.of(t);
-                        return of.custom == null && of.base == c;
-                      }).length,
+                      count: month?.baseOnlyCount(c),
                     ),
                 ]),
                 const SizedBox(height: 18),

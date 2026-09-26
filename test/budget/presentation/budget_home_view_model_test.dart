@@ -46,19 +46,34 @@ class _SlowPeer implements PeerStatsRepository {
 }
 
 void main() {
-  test('이달 거래에서 지출·수입·기본 분류별 합계를 낸다', () async {
+  // 합계·분류·소득 규칙 자체는 ViewedMonth 테스트가 본다. 여기서는 재료가 모이는지만 본다.
+  test('보고 있는 달을 이달 거래·사용자 카테고리·프로필 소득으로 만든다', () async {
+    const study = CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 9);
     final c = fakeContainer(
       user: testUser,
-      transactions: InMemoryTransactionRepository(
-          [_expense(1200, BudgetCategory.transport), _income(5000)]),
+      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3500000),
+      transactions: InMemoryTransactionRepository([
+        _expense(1200, BudgetCategory.transport),
+        _expense(700, BudgetCategory.etc, customCategoryId: 'c2'),
+        _income(5000),
+      ]),
+      categories: InMemoryCategoryRepository(const [study]),
       peerRepository: FakePeerStatsRepository(),
     );
     final o = await _overview(c);
-    expect(o.expense, 1200);
-    expect(o.income, 5000);
-    expect(o.byCategory, {BudgetCategory.transport: 1200});
-    expect(o.transactions, hasLength(2));
+    expect(o.month.month, c.read(selectedMonthProvider));
+    expect(o.month.transactions, hasLength(3));
+    expect(o.month.byCategory,
+        {BudgetCategory.transport: 1200, BudgetCategory.recreation: 700});
+    expect(o.month.income, 3500000);
     expect(o.peer, isNotNull);
+  });
+
+  test('보고 있는 달의 이름은 이번 달이면 이번 달, 아니면 M월', () {
+    final c = fakeContainer(user: testUser, transactions: InMemoryTransactionRepository());
+    expect(c.read(viewedMonthNameProvider), '이번 달');
+    c.read(selectedMonthProvider.notifier).prev();
+    expect(c.read(viewedMonthNameProvider), '${c.read(selectedMonthProvider).month}월');
   });
 
   test('selectedMonth prev/next shift the month', () {
@@ -67,7 +82,22 @@ void main() {
     final initial = container.read(selectedMonthProvider);
     container.read(selectedMonthProvider.notifier).prev();
     final prev = container.read(selectedMonthProvider);
-    expect(prev.month, initial.month == 1 ? 12 : initial.month - 1);
+    expect(prev, DateTime(initial.year, initial.month - 1));
+    container.read(selectedMonthProvider.notifier).next();
+    expect(container.read(selectedMonthProvider), initial);
+  });
+
+  // 이전에는 다음 달로 끝없이 넘어가 아직 오지 않은 달을 볼 수 있었다.
+  test('보고 있는 달은 이번 달보다 뒤로 가지 않는다', () {
+    final container = fakeContainer(user: testUser, transactions: InMemoryTransactionRepository());
+    final notifier = container.read(selectedMonthProvider.notifier);
+    final now = DateTime.now();
+
+    expect(notifier.canGoNext, isFalse);
+    notifier.next();
+    expect(container.read(selectedMonthProvider), DateTime(now.year, now.month));
+    notifier.prev();
+    expect(notifier.canGoNext, isTrue);
   });
 
   group('또래 통계', () {
@@ -79,7 +109,7 @@ void main() {
       );
       final o = await _overview(c);
       expect(o.peer, isNull);
-      expect(o.expense, 1200);
+      expect(o.month.expense, 1200);
     });
 
     test('처음 읽는 동안은 기다린다(또래 없는 화면이 먼저 깜박이지 않게)', () async {
@@ -97,48 +127,6 @@ void main() {
       await c.read(peerStatsProvider.future);
       expect(c.read(monthOverviewProvider).requireValue.peer, isNotNull);
     });
-  });
-
-  group('저축률', () {
-    Future<int?> rate({int? profileIncome, List<Transaction> txs = const []}) async {
-      final c = fakeContainer(
-        user: testUser,
-        profile: profileIncome == null
-            ? null
-            : UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: profileIncome),
-        transactions: InMemoryTransactionRepository(txs),
-        peerRepository: FakePeerStatsRepository(),
-      );
-      return (await _overview(c)).savingsRate;
-    }
-
-    test('소득이 없으면 null', () async {
-      expect(await rate(txs: [_expense(500000, BudgetCategory.food)]), isNull);
-      expect(await rate(profileIncome: 0, txs: [_expense(500000, BudgetCategory.food)]), isNull);
-    });
-
-    test('프로필 월소득이 있으면 그것을, 없으면 이달 수입을 기준으로 한다', () async {
-      final txs = [_expense(700000, BudgetCategory.food), _income(1000000)];
-      expect(await rate(profileIncome: 3500000, txs: txs), 80);
-      expect(await rate(profileIncome: 0, txs: txs), 30);
-    });
-  });
-
-  test('topCategories는 지출이 많은 기본 분류를 n개까지 금액 내림차순으로 낸다', () async {
-    final c = fakeContainer(
-      user: testUser,
-      transactions: InMemoryTransactionRepository([
-        _expense(90000, BudgetCategory.transport),
-        _expense(540000, BudgetCategory.food),
-        _expense(320000, BudgetCategory.diningOut),
-        _expense(180000, BudgetCategory.clothing),
-      ]),
-      peerRepository: FakePeerStatsRepository(),
-    );
-    final top = (await _overview(c)).topCategories(3);
-    expect(top.map((e) => e.key),
-        [BudgetCategory.food, BudgetCategory.diningOut, BudgetCategory.clothing]);
-    expect(top.first.value, 540000);
   });
 
   group('overPeer', () {
@@ -167,7 +155,7 @@ void main() {
           categories: InMemoryCategoryRepository(const [study]),
           peerRepository: FakePeerStatsRepository());
       final o = await _overview(c);
-      expect(o.byCategory[BudgetCategory.recreation], lots);
+      expect(o.month.byCategory[BudgetCategory.recreation], lots);
       expect(o.overPeer(stale), isTrue);
     });
 
@@ -179,6 +167,23 @@ void main() {
           transactions: InMemoryTransactionRepository([same]),
           peerRepository: FakePeerStatsRepository());
       expect((await _overview(c)).overPeer(same), isFalse);
+    });
+
+    // 이전에는 또래 평균이 0인(집계 없음) 분류의 모든 지출에 배지가 붙었다.
+    test('또래 평균이 없는 분류는 초과가 아니다', () async {
+      final stub = StubPeerData.forGroup(AgeGroup.thirties);
+      final tx = _expense(1000, BudgetCategory.education);
+      final c = fakeContainer(
+          user: testUser,
+          transactions: InMemoryTransactionRepository([tx]),
+          peerStats: PeerStats(
+            ageGroup: stub.ageGroup,
+            avgMonthlyExpense: stub.avgMonthlyExpense,
+            avgSavingsRate: stub.avgSavingsRate,
+            avgByCategory: {...stub.avgByCategory}..remove(BudgetCategory.education),
+            samples: stub.samples,
+          ));
+      expect((await _overview(c)).overPeer(tx), isFalse);
     });
 
     test('수입 거래나 또래 통계가 없으면 false', () async {

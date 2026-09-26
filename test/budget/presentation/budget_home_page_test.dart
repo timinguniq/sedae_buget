@@ -106,6 +106,76 @@ void main() {
     expect(find.textContaining('또래 평균'), findsNothing);
   });
 
+  // 이전에는 지난 달을 봐도 '이번 달 요약·이번 달 총지출·이번 달 저축률'로 보였다.
+  testWidgets('지난 달을 보면 그 달 이름으로 보인다', (tester) async {
+    final container = fakeContainer(
+      user: testUser,
+      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+      transactions: _FakeRepo(),
+      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
+    );
+    container.read(selectedMonthProvider.notifier).prev();
+    await _pumpHome(tester, container);
+
+    final now = DateTime.now();
+    final m = DateTime(now.year, now.month - 1).month;
+    expect(find.text('$m월 요약'), findsOneWidget);
+    expect(find.text('$m월 총지출'), findsOneWidget);
+    expect(find.textContaining('$m월 저축률'), findsOneWidget);
+    expect(find.textContaining('이번 달'), findsNothing);
+  });
+
+  // 이전에는 히어로가 거래 수입(₩0)을, 같은 화면의 저축률은 프로필 소득을 기준으로 했다.
+  testWidgets('히어로의 소득·잔액은 저축률과 같은 소득을 쓴다', (tester) async {
+    await _pumpHome(tester, fakeContainer(
+      user: testUser,
+      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+      transactions: _FakeRepo(),
+      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
+    ));
+
+    expect(find.text('소득 ₩3,000,000 · 잔액 ₩2,988,000'), findsOneWidget);
+  });
+
+  // 이전에는 표본이 없어도 '1명 중 1등 · 상위 100%'로 보였다.
+  testWidgets('또래 표본이 없으면 순위 카드를 보이지 않는다', (tester) async {
+    final stub = StubPeerData.forGroup(AgeGroup.thirties);
+    await _pumpHome(tester, fakeContainer(
+      user: testUser,
+      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+      transactions: _FakeRepo(),
+      peerStats: PeerStats(
+        ageGroup: stub.ageGroup,
+        avgMonthlyExpense: stub.avgMonthlyExpense,
+        avgSavingsRate: stub.avgSavingsRate,
+        avgByCategory: stub.avgByCategory,
+        samples: const [],
+      ),
+    ));
+
+    expect(find.text('또래 중 내 지출 순위'), findsNothing);
+    expect(find.text('또래 통계를 불러오지 못했어요'), findsNothing);
+    expect(find.text('많이 쓴 카테고리'), findsOneWidget);
+  });
+
+  // 이전에는 '불러오기 실패: <예외 문자열>'만 보이고 다시 읽을 방법이 없었다.
+  testWidgets('이달 거래를 못 읽으면 이유와 다시 시도를 보여주고, 다시 시도하면 읽는다', (tester) async {
+    await _pumpHome(tester, fakeContainer(
+      user: testUser,
+      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+      transactions: _OfflineOnceRepo(),
+      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
+    ));
+
+    expect(find.text('불러오지 못했어요. 인터넷에 연결되어 있지 않아요'), findsOneWidget);
+    await tester.tap(find.text('다시 시도'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('택시'), findsOneWidget);
+    expect(find.text('다시 시도'), findsNothing);
+  });
+
   // 소득(프로필 월소득·이달 수입)이 없으면 저축률을 계산할 수 없다.
   testWidgets('소득이 없으면 저축률 카드를 보이지 않는다', (tester) async {
     await _pumpHome(tester, fakeContainer(
@@ -131,6 +201,16 @@ Future<void> _pumpHome(WidgetTester tester, ProviderContainer container) async {
   ));
   await tester.pump();
   await tester.pump();
+}
+
+/// 처음 한 번은 네트워크 오류로 이달 거래를 못 읽고, 다시 읽으면 읽는 저장소.
+class _OfflineOnceRepo extends _FakeRepo {
+  var _reads = 0;
+
+  @override
+  Future<Result<List<Transaction>>> getMonth(int y, int m) async => _reads++ == 0
+      ? const Result.failure(ErrorResult(reason: FailureReason.offline, message: ''))
+      : super.getMonth(y, m);
 }
 
 /// 이달 지출 한 건이 사용자 카테고리('반려동물' → 기타)로 잡힌 달.

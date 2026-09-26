@@ -1,5 +1,6 @@
 import 'package:sedae_budget/entity/budget/age_group.dart';
 import 'package:sedae_budget/entity/budget/budget_category.dart';
+import 'package:sedae_budget/entity/peer/peer_comparison.dart';
 
 /// 또래(같은 나이대) 집계 통계. 현재는 목업 — 추후 서버 응답으로 교체.
 class PeerStats {
@@ -18,34 +19,37 @@ class PeerStats {
   final List<int> samples; // 또래 월지출 표본(분포/순위 계산용)
 }
 
-/// 또래 평균([peer]) 대비 내 지출([mine])의 증감률(%). 음수면 또래보다 덜 씀.
-/// 또래 평균이 0이면(집계 없음) 0. 또래 비교 화면의 모든 `▲N%`·`+N%` 표기가 이 규칙을 쓴다.
-int peerDeltaPercent({required int mine, required int peer}) =>
-    peer == 0 ? 0 : ((mine - peer) * 100 / peer).round();
+/// 또래 중 내 지출 순위.
+///
+/// [rank]는 많이 쓰는 순 등수(1 = 가장 많이 씀), [total]은 나를 포함한 인원,
+/// [percentBelow]는 또래 중 나보다 적게 쓴 비율(%), [topPercent]는 지출 상위 N%(그 보수).
+typedef PeerRank = ({int rank, int total, int percentBelow, int topPercent});
 
 extension PeerStatsX on PeerStats {
-  /// 또래 중 [userExpense]보다 적게 쓴 비율(%). 클수록 사용자가 많이 쓴 편.
-  int percentBelow(int userExpense) {
-    if (samples.isEmpty) return 0;
-    final below = samples.where((s) => s < userExpense).length;
-    return (below * 100 / samples.length).round();
-  }
+  /// 이달 내 지출 합계를 또래 월평균과 비교한다. 또래 값이 없으면 null.
+  PeerComparison? compareTotal(int myExpense) =>
+      PeerComparison.of(mine: myExpense, peer: avgMonthlyExpense);
 
-  /// 지출 상위 N%(많이 쓰는 순). [percentBelow]의 보수.
-  int topPercent(int userExpense) => 100 - percentBelow(userExpense);
+  /// [category]의 내 지출을 또래 평균과 비교한다. 또래 평균이 0이거나 빠졌으면 null.
+  PeerComparison? compareCategory(BudgetCategory category, int mine) =>
+      PeerComparison.of(mine: mine, peer: avgByCategory[category]);
 
-  /// 많이 쓰는 순 등수(1 = 가장 많이 씀)와 전체 인원(사용자 포함).
-  ({int rank, int total}) rankOf(int userExpense) {
-    final higher = samples.where((s) => s > userExpense).length;
-    return (rank: higher + 1, total: samples.length + 1);
+  /// 또래 중 내 지출([myExpense]) 순위. 표본이 없으면 순위를 매기지 않는다(null).
+  PeerRank? rankOf(int myExpense) {
+    if (samples.isEmpty) return null;
+    final higher = samples.where((s) => s > myExpense).length;
+    final below = samples.where((s) => s < myExpense).length;
+    final percentBelow = (below * 100 / samples.length).round();
+    return (
+      rank: higher + 1,
+      total: samples.length + 1,
+      percentBelow: percentBelow,
+      topPercent: 100 - percentBelow,
+    );
   }
 
   /// 또래 평균 저축률(%, 반올림). 화면의 저축률 비교는 모두 이 값을 쓴다.
   int get avgSavingsRatePercent => (avgSavingsRate * 100).round();
-
-  /// 또래 평균 대비 증감률(%). 음수면 또래보다 덜 씀.
-  int diffPercent(int userExpense) =>
-      peerDeltaPercent(mine: userExpense, peer: avgMonthlyExpense);
 
   /// 분포를 [bucketCount]개 구간 막대 높이(인원수)로.
   List<int> histogram(int bucketCount) {
@@ -82,30 +86,22 @@ extension PeerStatsX on PeerStats {
     return idx;
   }
 
-  /// 또래 평균과 차이(%)가 가장 큰 기본 분류. 둘 다 지출이 있는 항목만 본다.
+  /// 또래 평균과 차이(%)가 가장 큰 기본 분류와 그 비교. 내 지출과 또래 평균이 모두 있는 항목만 본다.
   /// 비교할 항목이 없으면 null.
-  ({BudgetCategory category, int deltaPercent, int mine, int peer})?
-      largestCategoryGap(Map<BudgetCategory, int> mySummary) {
-    BudgetCategory? best;
-    double bestPercent = 0;
-
+  ({BudgetCategory category, PeerComparison comparison})? largestCategoryGap(
+      Map<BudgetCategory, int> mySummary) {
+    ({BudgetCategory category, PeerComparison comparison})? best;
+    var bestGap = -1.0;
     for (final c in BudgetCategory.values) {
       final mine = mySummary[c] ?? 0;
-      final peer = avgByCategory[c] ?? 0;
-      if (mine <= 0 || peer <= 0) continue;
-      final percent = (mine - peer) * 100 / peer;
-      if (percent.abs() > bestPercent.abs()) {
-        bestPercent = percent;
-        best = c;
+      final comparison = compareCategory(c, mine);
+      if (mine <= 0 || comparison == null) continue;
+      final gap = (comparison.ratio - 1).abs();
+      if (gap > bestGap) {
+        bestGap = gap;
+        best = (category: c, comparison: comparison);
       }
     }
-
-    if (best == null) return null;
-    return (
-      category: best,
-      deltaPercent: bestPercent.round(),
-      mine: mySummary[best]!,
-      peer: avgByCategory[best]!,
-    );
+    return best;
   }
 }

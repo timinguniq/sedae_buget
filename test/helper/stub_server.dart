@@ -22,7 +22,7 @@ class MemoryAuthTokenStore implements AuthTokenStore {
   Future<void> clear() async => token = null;
 }
 
-/// 운영과 같은 배선(`ApiClient.create` = 토큰 인터셉터 → 로거 → Stub)으로 만든 가짜 서버.
+/// 운영의 local 환경과 같은 배선(`connectToServer` = 토큰 인터셉터 → 로거 → Stub)으로 만든 가짜 서버.
 ///
 /// 저장소 구현은 모두 같은 [dio]·[tokens]를 쓴다. 그래서 로그인하면 다른 저장소도 그 사용자로 부르고,
 /// 서버가 토큰을 거부하면(401) [sessionExpiry]가 알린다.
@@ -31,12 +31,12 @@ class StubServer {
       StubServer._(MemoryAuthTokenStore(), SessionExpiry(), store);
 
   StubServer._(this.tokens, this.sessionExpiry, StubStateStore? store)
-      : dio = ApiClient.create(
-          baseUrl: '',
+      : dio = connectToServer(
+          env: AppEnvironment.local,
           tokenStore: tokens,
           sessionExpiry: sessionExpiry,
-          extra: [StubApiInterceptor(store: store)],
-        ).dio;
+          localServer: () => StubApiInterceptor(store: store),
+        );
 
   final Dio dio;
   final MemoryAuthTokenStore tokens;

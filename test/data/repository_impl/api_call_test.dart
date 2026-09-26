@@ -1,121 +1,97 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sedae_budget/core/core.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-/// 지정한 상태코드·바디로 즉시 실패시키는 테스트용 인터셉터.
-class _Reject extends Interceptor {
-  _Reject(this.status, [this.body]);
-  final int status;
-  final Object? body;
-
-  @override
-  void onRequest(RequestOptions o, RequestInterceptorHandler h) => h.reject(
-        DioException(
-          requestOptions: o,
-          type: DioExceptionType.badResponse,
-          response: Response(requestOptions: o, statusCode: status, data: body),
-        ),
-      );
-}
-
-class _Resolve extends Interceptor {
-  _Resolve(this.body);
-  final Object? body;
-
-  @override
-  void onRequest(RequestOptions o, RequestInterceptorHandler h) =>
-      h.resolve(Response(requestOptions: o, statusCode: 200, data: body));
-}
-
-class _Timeout extends Interceptor {
-  @override
-  void onRequest(RequestOptions o, RequestInterceptorHandler h) => h.reject(
-        DioException(requestOptions: o, type: DioExceptionType.connectionTimeout),
-      );
-}
+import '../../helper/fake_http_adapter.dart';
 
 /// retrofit 명세를 거친 실제 호출 경로로 검증한다.
-Future<AuthUserDto> _me(Interceptor i) => callApi(AuthApi(Dio()..interceptors.add(i)).me);
+Future<Result<AuthUserDto>> _me(HttpClientAdapter server) =>
+    guardApi(() => AuthApi(fakeDio(server)).me());
+
+Future<ErrorResult> _failure(HttpClientAdapter server) async => (await _me(server)).failureOrNull!;
 
 void main() {
-  test('success → returns the parsed value', () async {
-    final user = await _me(_Resolve({'provider': 'kakao', 'nickname': 'n'}));
-    expect(user.nickname, 'n');
+  test('성공 응답은 값이다', () async {
+    final res = await _me(FakeHttpAdapter.reply(200, jsonEncode({'provider': 'kakao', 'nickname': 'n'})));
+    expect(res.unwrap().nickname, 'n');
   });
 
-  test('server error body {code,message} → ApiException with same code', () async {
-    expect(
-      () => _me(_Reject(401, {'code': 'AUTH_002', 'message': '로그인이 필요합니다.'})),
-      throwsA(isA<ApiException>()
-          .having((e) => e.code, 'code', 'AUTH_002')
-          .having((e) => e.message, 'message', '로그인이 필요합니다.')
-          .having((e) => e.isUnauthorized, 'unauthorized', isTrue)),
-    );
+  test('서버 오류 바디의 코드와 문구를 옮긴다', () async {
+    final f = await _failure(
+        FakeHttpAdapter.reply(409, errorBody('CATEGORY_DUPLICATE', '같은 이름의 카테고리가 있어요')));
+    expect(f.reason, FailureReason.conflict);
+    expect(f.code, 'CATEGORY_DUPLICATE');
+    expect(f.message, '같은 이름의 카테고리가 있어요');
   });
 
-  test('non-JSON error body → HTTP_<status>', () async {
-    expect(
-      () => _me(_Reject(500, '<html>')),
-      throwsA(isA<ApiException>().having((e) => e.code, 'code', 'HTTP_500')),
-    );
+  test('상태코드를 도메인 분류로 바꾼다', () async {
+    const table = [
+      (400, FailureReason.invalid),
+      (401, FailureReason.unauthorized),
+      (403, FailureReason.forbidden),
+      (404, FailureReason.notFound),
+      (409, FailureReason.conflict),
+      (422, FailureReason.invalid),
+      (418, FailureReason.unknown),
+      (500, FailureReason.server),
+      (503, FailureReason.server),
+    ];
+    for (final (status, reason) in table) {
+      expect((await _failure(FakeHttpAdapter.reply(status, errorBody('X')))).reason, reason,
+          reason: '$status');
+    }
   });
 
-  test('404 → isNotFound', () async {
-    expect(
-      () => _me(_Reject(404, {'code': 'NOT_FOUND', 'message': ''})),
-      throwsA(isA<ApiException>().having((e) => e.isNotFound, 'notFound', isTrue)),
-    );
+  // 이전에는 Dio의 영어 개발자 문장("This exception was thrown because ...")이 문구로 담겨 화면까지 갔다.
+  test('알아볼 수 없는 오류 본문(프록시의 HTML 502)은 문구 없는 server 실패다', () async {
+    final f = await _failure(
+        FakeHttpAdapter.reply(502, '<html>Bad Gateway</html>', contentType: 'text/html'));
+    expect(f.reason, FailureReason.server);
+    expect(f.message, isEmpty);
+    expect(f.code, isNull);
   });
 
-  test('timeout → TIMEOUT', () async {
-    expect(
-      () => _me(_Timeout()),
-      throwsA(isA<ApiException>().having((e) => e.code, 'code', 'TIMEOUT')),
-    );
+  // 이전에는 DTO 변환 오류(TypeError)가 Result 계약 밖으로 던져져, 화면이 실패를 몰랐다.
+  test('해석할 수 없는 성공 응답은 던지지 않고 server 실패다', () async {
+    final missingField = FakeHttpAdapter.reply(200, jsonEncode({'provider': 'kakao'}));
+    expect((await _failure(missingField)).reason, FailureReason.server);
+    expect((await _failure(FakeHttpAdapter.reply(200, ''))).reason, FailureReason.server);
   });
 
-  group('guardApi', () {
-    Future<ErrorResult> failureOf(Interceptor i) async =>
-        (await guardApi(() => _me(i))).failureOrNull!;
+  test('응답을 못 받으면 문구 없는 timeout·offline이다', () async {
+    final timeout = await _failure(FakeHttpAdapter.fail(DioExceptionType.receiveTimeout));
+    expect(timeout.reason, FailureReason.timeout);
+    expect(timeout.message, isEmpty);
+    final offline = await _failure(FakeHttpAdapter.fail(DioExceptionType.connectionError));
+    expect(offline.reason, FailureReason.offline);
+    expect(offline.message, isEmpty);
+  });
 
-    test('성공 → Result.success', () async {
-      final ok = await guardApi(() => _me(_Resolve({'provider': 'kakao', 'nickname': 'n'})));
-      expect((ok as Success<AuthUserDto>).data.nickname, 'n');
+  test('HTTP·전송 계층 사정은 domain seam을 넘지 않는다(서버 도메인 코드만 남는다)', () async {
+    expect((await _failure(FakeHttpAdapter.reply(500, '<html>', contentType: 'text/html'))).code,
+        isNull);
+    expect((await _failure(FakeHttpAdapter.fail(DioExceptionType.connectionTimeout))).code, isNull);
+    expect((await _failure(FakeHttpAdapter.reply(418, errorBody('TEAPOT')))).code, 'TEAPOT');
+  });
+
+  group('실패를 값으로 바꾸기', () {
+    Future<Result<String?>> profile(HttpClientAdapter server) => guardApi<String?>(
+          () async => (await fakeDio(server).get<Map<String, dynamic>>('/v1/me/profile'))
+              .data!['ageGroup'] as String,
+          recover: (f) => f.code == 'PROFILE_NOT_FOUND' ? const Result.success(null) : null,
+        );
+
+    test('고른 실패는 그 값으로 성공한다', () async {
+      expect((await profile(FakeHttpAdapter.reply(404, errorBody('PROFILE_NOT_FOUND')))).unwrap(),
+          isNull);
     });
 
-    test('서버 도메인 코드와 문구는 그대로 옮긴다', () async {
-      final error = await failureOf(_Reject(409, {'code': 'DUP', 'message': '중복'}));
-      expect(error.code, 'DUP');
-      expect(error.message, '중복');
-    });
-
-    test('상태코드를 도메인 분류로 바꾼다', () async {
-      expect((await failureOf(_Reject(401, {'code': 'AUTH_002', 'message': ''}))).reason,
-          FailureReason.unauthorized);
-      expect((await failureOf(_Reject(403, {'code': 'CATEGORY_IMMUTABLE', 'message': ''}))).reason,
-          FailureReason.forbidden);
-      expect((await failureOf(_Reject(404, {'code': 'NOT_FOUND', 'message': ''}))).reason,
+    test('고르지 않은 실패는 그대로 실패다', () async {
+      expect((await profile(FakeHttpAdapter.reply(404, errorBody('NOT_FOUND')))).failureOrNull?.reason,
           FailureReason.notFound);
-      expect((await failureOf(_Reject(409, {'code': 'DUP', 'message': ''}))).reason,
-          FailureReason.conflict);
-      expect((await failureOf(_Reject(400, {'code': 'VALIDATION', 'message': ''}))).reason,
-          FailureReason.invalid);
-      expect((await failureOf(_Reject(500, '<html>'))).reason, FailureReason.server);
-      expect((await failureOf(_Timeout())).reason, FailureReason.timeout);
-    });
-
-    test('HTTP·전송 계층 코드는 domain seam을 넘지 않는다', () async {
-      // 이전에는 resultCode에 'HTTP_500'·'TIMEOUT'이 그대로 담겨 위젯까지 갔다.
-      expect((await failureOf(_Reject(500, '<html>'))).code, isNull);
-      expect((await failureOf(_Timeout())).code, isNull);
-    });
-
-    test('모르는 상태코드는 unknown', () async {
-      final error = await failureOf(_Reject(418, {'code': 'TEAPOT', 'message': ''}));
-      expect(error.reason, FailureReason.unknown);
-      expect(error.code, 'TEAPOT');
     });
   });
 }

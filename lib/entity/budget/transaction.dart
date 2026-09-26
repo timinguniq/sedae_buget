@@ -21,8 +21,10 @@ abstract class Transaction with _$Transaction {
     required DateTime updatedAt, // 서버가 정함
   }) = _Transaction;
 
-  /// 새 거래. id는 클라이언트 UUID, 타임스탬프는 서버 응답으로 대체되는 자리표시.
+  /// 새 거래. id는 클라이언트 UUID([id]를 주지 않으면 새로 만든다),
+  /// 타임스탬프는 서버 응답으로 대체되는 자리표시.
   factory Transaction.create({
+    String? id,
     required int amount,
     required int categoryId,
     required DateTime date,
@@ -32,7 +34,7 @@ abstract class Transaction with _$Transaction {
   }) {
     final now = DateTime.now();
     return Transaction(
-      id: const Uuid().v4(),
+      id: id ?? const Uuid().v4(),
       amount: amount,
       categoryId: categoryId,
       date: date,

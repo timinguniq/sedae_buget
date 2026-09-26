@@ -18,16 +18,17 @@ class ComparePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final overview = ref.watch(monthOverviewProvider);
+    final name = ref.watch(viewedMonthNameProvider);
 
     return DefaultLayout(
       child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
         data: (o) {
           // 또래 통계가 이 화면의 본질이라, 못 읽으면 화면 전체를 안내로 바꾼다.
           final peer = o.peer;
           if (peer == null) return const Center(child: Text(MonthOverview.peerUnavailable));
-          final myExpense = o.expense;
+          final myExpense = o.month.expense;
           if (myExpense == 0) {
             return Center(
               child: Padding(
@@ -42,12 +43,13 @@ class ComparePage extends ConsumerWidget {
               ),
             );
           }
-          final top6 = o.topCategories(6);
+          final top6 = o.month.topCategories(6);
           final peerAvg = peer.avgMonthlyExpense;
           final expenseMax = (myExpense > peerAvg ? myExpense : peerAvg).clamp(1, 1 << 62);
-          final diffWon = myExpense - peerAvg;
+          final total = peer.compareTotal(myExpense);
+          final rank = peer.rankOf(myExpense);
           // 소득이 없으면 내 저축률은 계산할 수 없다: 막대는 0, 값은 '—'.
-          final savingsRate = o.savingsRate;
+          final savingsRate = o.month.savingsRate;
           final peerSavings = peer.avgSavingsRatePercent;
           final savingsMax = [savingsRate ?? 0, peerSavings, 1].reduce((a, b) => a > b ? a : b);
           // 또래 평균을 가장 끌어올리는 항목(또래 평균 지출 최대 카테고리).
@@ -65,26 +67,35 @@ class ComparePage extends ConsumerWidget {
                 _AgeChip(label: peer.ageGroup.label),
               ]),
               const SizedBox(height: 18),
-              RankHeadline(stats: peer, myExpense: myExpense),
-              const SizedBox(height: 22),
+              if (rank != null) ...[
+                RankHeadline(rank: rank),
+                const SizedBox(height: 22),
+              ],
               DistributionHistogram(stats: peer, myExpense: myExpense),
               const SizedBox(height: 18),
-              VersusBarCard(
-                title: '이번 달 지출 비교',
-                mineFraction: myExpense / expenseMax,
-                peerFraction: peerAvg / expenseMax,
-                mineText: manWon(myExpense),
-                peerText: manWon(peerAvg),
-                footer: Text(
-                  diffWon >= 0
-                      ? '또래보다 약 ${manWon(diffWon)}원 더 ▲'
-                      : '또래보다 약 ${manWon(-diffWon)}원 덜 ▼',
-                  style: context.typo.caption2W600.copyWith(
-                    fontSize: 11,
-                    color: diffWon >= 0 ? context.color.primary.normal : context.color.label.alternative),
+              // 또래 월평균이 없으면 비교하지 않는다(0원 막대를 그리지 않는다).
+              if (total != null) ...[
+                VersusBarCard(
+                  title: '$name 지출 비교',
+                  mineFraction: myExpense / expenseMax,
+                  peerFraction: peerAvg / expenseMax,
+                  mineText: manWon(myExpense),
+                  peerText: manWon(peerAvg),
+                  footer: Text(
+                    switch (total.direction) {
+                      PeerDirection.more => '또래보다 약 ${manWon(total.mine - total.peer)}원 더 ▲',
+                      PeerDirection.less => '또래보다 약 ${manWon(total.peer - total.mine)}원 덜 ▼',
+                      PeerDirection.similar => '또래와 비슷해요',
+                    },
+                    style: context.typo.caption2W600.copyWith(
+                      fontSize: 11,
+                      color: total.direction == PeerDirection.more
+                          ? context.color.primary.normal
+                          : context.color.label.alternative),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 13),
+                const SizedBox(height: 13),
+              ],
               VersusBarCard(
                 title: '소득 대비 저축률',
                 barHeight: 16,
@@ -102,7 +113,8 @@ class ComparePage extends ConsumerWidget {
               ]),
               const SizedBox(height: 13),
               for (final e in top6)
-                CategoryBattleRow(category: e.key, mine: e.value, peer: peer.avgByCategory[e.key] ?? 0),
+                if (peer.compareCategory(e.key, e.value) case final comparison?)
+                  CategoryBattleRow(category: e.key, comparison: comparison),
               if (peerTop != null) ...[
                 const SizedBox(height: 2),
                 InsightBanner(

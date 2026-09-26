@@ -4,20 +4,25 @@ import 'package:sedae_budget/theme/theme.dart';
 
 /// 시안 B "항목별 차이" 다이버징 바: 라벨(우측 정렬 58px) · 중앙 기준선 · 좌(덜 씀, 회색)/우(더 씀, 코랄) 막대 · `+50%`/`−10%`.
 class CategoryBattleRow extends StatelessWidget {
-  const CategoryBattleRow({super.key, required this.category, required this.mine, required this.peer});
+  const CategoryBattleRow({super.key, required this.category, required this.comparison});
   final BudgetCategory category;
-  final int mine;
-  final int peer;
+
+  /// 이 분류의 또래 비교. 또래 값이 없는 분류는 행을 만들지 않는다(부르는 쪽이 판단).
+  final PeerComparison comparison;
 
   @override
   Widget build(BuildContext context) {
-    final diff = peerDeltaPercent(mine: mine, peer: peer);
-    final more = diff > 0;
+    final diff = comparison.percent;
+    final more = comparison.direction == PeerDirection.more;
     // 디자인 스케일: +50% ≈ 한쪽 폭의 90%.
     final f = (diff.abs() / 55).clamp(0.0, 1.0);
     final barColor = more ? context.color.primary.normal : context.color.label.disable;
     final textColor = more ? context.color.primary.normal : context.color.label.alternative;
-    final label = diff == 0 ? '0%' : '${more ? '+' : '−'}${diff.abs()}%';
+    final label = switch (comparison.direction) {
+      PeerDirection.similar => '비슷',
+      PeerDirection.more => '+$diff%',
+      PeerDirection.less => '−${diff.abs()}%',
+    };
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(children: [

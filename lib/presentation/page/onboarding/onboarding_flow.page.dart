@@ -38,7 +38,7 @@ class _OnboardingFlowPageState extends ConsumerState<OnboardingFlowPage> {
     final error = res.failureOrNull;
     if (error != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(error.message.isEmpty ? '프로필을 저장하지 못했어요' : error.message),
+        content: Text(failureMessage(UserAction.save, error)),
       ));
     }
   }

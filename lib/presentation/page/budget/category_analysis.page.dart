@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
 import 'package:sedae_budget/theme/theme.dart';
@@ -25,20 +26,22 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
         _Header(
           month: month,
           onPrev: () => ref.read(selectedMonthProvider.notifier).prev(),
-          onNext: () => ref.read(selectedMonthProvider.notifier).next(),
+          // 이번 달보다 뒤로는 가지 않는다.
+          onNext: ref.read(selectedMonthProvider.notifier).canGoNext
+              ? () => ref.read(selectedMonthProvider.notifier).next()
+              : null,
         ),
         Expanded(child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('불러오기 실패: $e')),
+        error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
         data: (o) {
-          final breakdown = o.breakdown;
+          final breakdown = o.month.breakdown;
           final peer = o.peer;
           if (breakdown.isEmpty) {
             return Center(child: Text('지출이 없어요',
                 style: context.typo.body2W400.copyWith(color: context.color.label.alternative)));
           }
-          final top = breakdown.take(6).toList();
-          final restSum = breakdown.skip(6).fold<int>(0, (s, e) => s + e.amount);
+          final (:top, rest: restSum) = o.month.slices(6);
           final labels = [
             ...top.map((e) => e.custom?.name ?? e.base.label),
             if (restSum > 0) '기타',
@@ -94,11 +97,12 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
             const SizedBox(height: 1),
             ...List.generate(labels.length, (i) {
               final cat = cats[i];
-              final peerAmt = (_showPeer && cat != null) ? peer?.avgByCategory[cat] : null;
+              final comparison =
+                  (_showPeer && cat != null) ? peer?.compareCategory(cat, values[i]) : null;
               return CategoryRow(
                   label: labels[i], amount: values[i],
                   color: colors[i], percent: values[i] / total,
-                  peerAmount: peerAmt);
+                  peer: comparison);
             }),
           ]);
         },
@@ -113,7 +117,8 @@ class _Header extends StatelessWidget {
   const _Header({required this.month, required this.onPrev, required this.onNext});
   final DateTime month;
   final VoidCallback onPrev;
-  final VoidCallback onNext;
+  /// 다음 달로 갈 수 없으면(보고 있는 달이 이번 달) null.
+  final VoidCallback? onNext;
 
   @override
   Widget build(BuildContext context) {

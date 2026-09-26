@@ -27,19 +27,28 @@ class _Repo implements TransactionRepository {
 
 const _pet = CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12);
 
+/// 이름이 겹쳐 저장을 거절하는 서버.
+class _DuplicateNameRepo extends InMemoryCategoryRepository {
+  @override
+  Future<Result<CustomCategory>> upsert(CustomCategory category) async => const Result.failure(
+      ErrorResult(
+          reason: FailureReason.conflict, message: '같은 이름의 카테고리가 있어요', code: 'CATEGORY_DUPLICATE'));
+}
+
 Future<InMemoryCategoryRepository> pumpPage(
   WidgetTester tester, {
   bool editing = false,
   List<CustomCategory> customs = const [_pet],
   List<Transaction> month = const [],
   ThemeData? theme,
+  InMemoryCategoryRepository? repository,
 }) async {
   tester.view.physicalSize = const Size(390, 1400);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
-  final repo = InMemoryCategoryRepository(customs);
+  final repo = repository ?? InMemoryCategoryRepository(customs);
   final container = fakeContainer(user: testUser, transactions: _Repo(month), categories: repo);
   // 페이지의 닫기 버튼과 CDialog가 go_router의 context.pop을 쓰므로 실제 라우터 위에 띄운다.
   final router = GoRouter(
@@ -94,6 +103,16 @@ void main() {
     expect(find.text('2건'), findsOneWidget);
   });
 
+  // 이전에는 수입(기본값 식료품)이 식료품 건수에 섞였다.
+  testWidgets('기본 카테고리 건수에 수입은 세지 않는다', (tester) async {
+    Transaction tx(TransactionType type) => Transaction.create(
+          amount: 1000, categoryId: BudgetCategory.food.id, date: DateTime(2026, 6, 5), type: type);
+    await pumpPage(tester, month: [tx(TransactionType.expense), tx(TransactionType.income)]);
+
+    expect(find.text('1건'), findsOneWidget);
+    expect(find.text('2건'), findsNothing);
+  });
+
   testWidgets('편집 모드: 내 카테고리만 삭제 버튼을 갖는다', (tester) async {
     await pumpPage(tester, editing: true);
 
@@ -139,6 +158,23 @@ void main() {
 
     expect(repo.items.values.single.name, '반려동물');
     expect(repo.items.values.single.base, BudgetCategory.etc);
+  });
+
+  // 사용자가 고칠 수 있는 실패라 서버 문구를 이유로 보여준다.
+  testWidgets('이름이 겹치면 시트에 이유를 보여주고 닫지 않는다', (tester) async {
+    await pumpPage(tester, customs: const [], repository: _DuplicateNameRepo());
+
+    await tester.tap(find.byKey(const Key('category-add-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.enterText(find.byKey(const Key('category-name-field')), '반려동물');
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('category-submit-button')));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('저장하지 못했어요. 같은 이름의 카테고리가 있어요'), findsOneWidget);
+    expect(find.byType(CategoryEditSheet), findsOneWidget);
   });
 
   testWidgets('다크 모드에서 안내 카드 배경은 라이트용 잉크색이 아니라 sunken surface다', (tester) async {

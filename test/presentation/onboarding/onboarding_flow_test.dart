@@ -56,7 +56,7 @@ void main() {
     await t.pump(const Duration(milliseconds: 400)); // SnackBar 등장
 
     expect(find.text('HOME'), findsNothing);
-    expect(find.text('네트워크에 연결할 수 없습니다.'), findsOneWidget);
+    expect(find.text('저장하지 못했어요. 인터넷에 연결되어 있지 않아요'), findsOneWidget);
   });
 
   testWidgets('age select enables 다음, income step shows 시작하기', (t) async {

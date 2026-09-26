@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/budget/age_group.dart';
 import 'package:sedae_budget/entity/budget/budget_category.dart';
+import 'package:sedae_budget/entity/peer/peer_comparison.dart';
 import 'package:sedae_budget/entity/peer/peer_stats.dart';
 
 void main() {
@@ -26,49 +27,44 @@ void main() {
     expect(withRate(0.234).avgSavingsRatePercent, 23);
   });
 
-  test('diffPercent sign', () {
-    expect(stats.diffPercent(1800000), lessThan(0));
-    expect(stats.diffPercent(2200000), greaterThan(0));
+  group('compareTotal · compareCategory', () {
+    test('월 합계와 분류별 지출을 또래 평균과 비교한다', () {
+      expect(stats.compareTotal(2200000)?.percent, 10);
+      expect(stats.compareCategory(BudgetCategory.food, 270000)?.percent, -10);
+    });
+
+    // 또래 평균이 0이거나 빠진 분류를 '넘었다'고 읽으면 그 분류의 모든 지출에 배지가 붙었다.
+    test('또래 평균이 0이거나 빠진 분류는 비교하지 않는다', () {
+      expect(stats.compareCategory(BudgetCategory.education, 500000), isNull);
+      expect(stats.compareCategory(BudgetCategory.health, 500000), isNull);
+    });
   });
-  test('percentBelow monotonic', () {
-    expect(stats.percentBelow(1000000), lessThan(stats.percentBelow(2500000)));
+
+  group('rankOf', () {
+    test('많이 쓸수록 등수·상위 %가 작아진다', () {
+      final low = stats.rankOf(1200000)!;
+      final high = stats.rankOf(2800000)!;
+      expect(high.rank, lessThan(low.rank));
+      expect(high.topPercent, lessThan(low.topPercent));
+    });
+
+    test('전체 인원은 표본에 나를 더한 수, 상위 %는 나보다 적게 쓴 비율의 보수', () {
+      final r = stats.rankOf(1500000)!;
+      expect(r.total, 100);
+      expect(r.topPercent, 100 - r.percentBelow);
+    });
+
+    // 이전에는 표본이 없어도 '또래 1명 중 1등 · 상위 100%'로 보였다.
+    test('표본이 없으면 순위를 매기지 않는다', () {
+      final empty = PeerStats(
+        ageGroup: AgeGroup.twenties, avgMonthlyExpense: 0, avgSavingsRate: 0,
+        avgByCategory: const {}, samples: const []);
+      expect(empty.rankOf(1000000), isNull);
+    });
   });
-  test('rankOf: more spend => smaller rank', () {
-    final low = stats.rankOf(1200000).rank;
-    final high = stats.rankOf(2800000).rank;
-    expect(high, lessThan(low));
-  });
+
   test('histogram sums to sample count', () {
     expect(stats.histogram(10).reduce((a, b) => a + b), 99);
-  });
-
-  group('peerDeltaPercent', () {
-    test('또래 평균이 0이면 0', () {
-      expect(peerDeltaPercent(mine: 50000, peer: 0), 0);
-    });
-    test('더 쓰면 양수, 덜 쓰면 음수', () {
-      expect(peerDeltaPercent(mine: 600000, peer: 300000), 100);
-      expect(peerDeltaPercent(mine: 270000, peer: 300000), -10);
-    });
-    test('반올림은 0에서 먼 쪽으로 — 부호를 붙이기 전과 뒤가 같다', () {
-      expect(peerDeltaPercent(mine: 205, peer: 200), 3);
-      expect(peerDeltaPercent(mine: 195, peer: 200), -3);
-    });
-    test('diffPercent는 같은 규칙을 쓴다', () {
-      expect(
-        stats.diffPercent(2200000),
-        peerDeltaPercent(mine: 2200000, peer: stats.avgMonthlyExpense),
-      );
-    });
-  });
-
-  group('topPercent', () {
-    test('percentBelow의 보수', () {
-      expect(stats.topPercent(1500000), 100 - stats.percentBelow(1500000));
-    });
-    test('많이 쓸수록 상위 %가 작아진다', () {
-      expect(stats.topPercent(2800000), lessThan(stats.topPercent(1200000)));
-    });
   });
 
   group('bucketIndexOf', () {
@@ -106,9 +102,9 @@ void main() {
         BudgetCategory.transport: 90000, // -10%
       });
       expect(gap?.category, BudgetCategory.food);
-      expect(gap?.deltaPercent, 100);
-      expect(gap?.mine, 600000);
-      expect(gap?.peer, 300000);
+      expect(gap?.comparison.percent, 100);
+      expect(gap?.comparison.mine, 600000);
+      expect(gap?.comparison.peer, 300000);
     });
     test('덜 쓴 쪽이 더 크면 그쪽을 고른다', () {
       final gap = stats.largestCategoryGap(const {
@@ -116,7 +112,7 @@ void main() {
         BudgetCategory.transport: 20000, // -80%
       });
       expect(gap?.category, BudgetCategory.transport);
-      expect(gap?.deltaPercent, -80);
+      expect(gap?.comparison.percent, -80);
     });
     test('내 지출이나 또래 평균이 0인 항목은 후보에서 뺀다', () {
       expect(
@@ -126,6 +122,12 @@ void main() {
         }),
         isNull,
       );
+    });
+    // 차이가 없는 것도 발견이다('비슷하게 썼어요'). 비교할 항목이 없는 것과 다르다.
+    test('모든 항목이 또래와 같으면 그중 첫 항목을 비슷하다고 고른다', () {
+      final gap = stats.largestCategoryGap(const {BudgetCategory.food: 300000});
+      expect(gap?.category, BudgetCategory.food);
+      expect(gap?.comparison.direction, PeerDirection.similar);
     });
     test('비교할 항목이 없으면 null', () {
       expect(stats.largestCategoryGap(const {}), isNull);

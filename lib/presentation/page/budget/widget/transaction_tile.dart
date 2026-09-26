@@ -74,7 +74,7 @@ class TransactionTile extends StatelessWidget {
   }
 }
 
-/// `또래보다 잦음` 배지(700·8.5 코랄 / 코랄 tint 배경).
+/// `또래보다 많이` 배지(700·8.5 코랄 / 코랄 tint 배경). 이 거래의 분류에서 이달 지출이 또래 평균을 넘었다.
 class _PeerBadge extends StatelessWidget {
   const _PeerBadge();
 
@@ -86,7 +86,7 @@ class _PeerBadge extends StatelessWidget {
         color: context.color.primary.tint,
         borderRadius: BorderRadius.circular(7),
       ),
-      child: Text('또래보다 잦음',
+      child: Text('또래보다 많이',
           style: context.typo.caption2W600.copyWith(
               fontSize: 8.5, height: 1.3, fontWeight: context.typo.bold, color: context.color.primary.normal)),
     );

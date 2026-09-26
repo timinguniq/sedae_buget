@@ -17,6 +17,7 @@ class BudgetHomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final month = ref.watch(selectedMonthProvider);
+    final name = ref.watch(viewedMonthNameProvider);
     final overview = ref.watch(monthOverviewProvider);
 
     return DefaultLayout(
@@ -27,7 +28,7 @@ class BudgetHomePage extends ConsumerWidget {
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(DateFormat('yyyy년 M월', 'ko').format(month),
                   style: context.typo.caption1W600.copyWith(color: context.color.label.assistive)),
-              Text('이번 달 요약', style: context.typo.pageTitle.copyWith(color: context.color.label.normal)),
+              Text('$name 요약', style: context.typo.pageTitle.copyWith(color: context.color.label.normal)),
             ]),
             GestureDetector(
               onTap: () => context.push(RoutePath.setting.path),
@@ -36,26 +37,29 @@ class BudgetHomePage extends ConsumerWidget {
           const SizedBox(height: 16),
           Expanded(child: overview.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('불러오기 실패: $e', style: context.typo.body2W400)),
+            error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
             data: (o) {
               final peer = o.peer;
-              final savingsRate = o.savingsRate;
-              final txs = o.transactions;
+              final m = o.month;
+              final savingsRate = m.savingsRate;
+              final txs = m.transactions;
               return ListView(children: [
-                SummaryHeroCard(expense: o.expense, income: o.income, peerAvgExpense: peer?.avgMonthlyExpense),
-                const SizedBox(height: 13),
-                if (peer != null)
-                  PeerRankCard(stats: peer, myExpense: o.expense,
-                    onDetail: () => context.go(RoutePath.compare.path))
-                else
+                SummaryHeroCard(
+                    label: name, expense: m.expense, income: m.income, balance: m.balance, peer: peer),
+                if (peer == null) ...[
+                  const SizedBox(height: 13),
                   SurfaceCard(child: Text(MonthOverview.peerUnavailable,
                     style: context.typo.caption1W500.copyWith(color: context.color.label.assistive))),
+                ] else if (peer.rankOf(m.expense) case final rank?) ...[
+                  const SizedBox(height: 13),
+                  PeerRankCard(rank: rank, onDetail: () => context.go(RoutePath.compare.path)),
+                ],
                 const SizedBox(height: 13),
-                TopCategoryCard(top: o.topCategories(3), peerByCategory: peer?.avgByCategory ?? const {},
+                TopCategoryCard(top: m.topCategories(3), peer: peer,
                   onTap: () => context.push(RoutePath.categoryAnalysis.path)),
                 if (savingsRate != null) ...[
                   const SizedBox(height: 13),
-                  SavingsRateCard(rate: savingsRate, peerRate: peer?.avgSavingsRatePercent),
+                  SavingsRateCard(label: name, rate: savingsRate, peerRate: peer?.avgSavingsRatePercent),
                 ],
                 const SizedBox(height: 13),
                 Text('최근 내역', style: context.typo.sectionTitle.copyWith(color: context.color.label.normal)),
@@ -64,7 +68,7 @@ class BudgetHomePage extends ConsumerWidget {
                     child: Center(child: Text('내역이 없어요. + 로 추가하세요',
                       style: context.typo.body2W400.copyWith(color: context.color.label.alternative))))
                 else
-                  ...txs.take(5).map((t) => TransactionTile(tx: t, label: o.catalog.of(t).label,
+                  ...txs.take(5).map((t) => TransactionTile(tx: t, label: m.labelOf(t),
                     onTap: () => context.push(RoutePath.transactionEdit.path, extra: t))),
               ]);
             },

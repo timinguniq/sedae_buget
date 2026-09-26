@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/page/budget/category_manage.view_model.dart';
+import 'package:sedae_budget/presentation/widget/common/failure_message.dart';
 import 'package:sedae_budget/presentation/page/budget/ledger.view_model.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
@@ -56,10 +56,10 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
         ? await notifier.add(name: name, base: _base)
         : await notifier.edit(widget.existing!, name: name, base: _base);
     if (!mounted) return;
-    final error = categoryErrorMessage(res);
+    final error = res.failureOrNull;
     if (error != null) {
       setState(() {
-        _error = error;
+        _error = failureMessage(UserAction.save, error);
         _saving = false;
       });
       return;

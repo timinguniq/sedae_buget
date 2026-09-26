@@ -2,7 +2,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sedae_budget/domain/usecase/category_usecase.dart';
 import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
+import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
 import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 
 // 장부: 로그인 세션에 묶인 가계부 서버 데이터(이달 거래·최근 6개월 추이·사용자 카테고리)와 그 변경.
@@ -14,15 +16,27 @@ import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 /// 로그인 중이면 true. 이것을 부른 provider는 세션이 바뀌면 다시 만들어진다.
 Future<bool> _signedIn(Ref ref) async => await ref.watch(authProvider.future) != null;
 
+/// 보고 있는 달. 모든 탭이 함께 본다. 이번 달보다 뒤로는 가지 않는다.
 class SelectedMonthNotifier extends Notifier<DateTime> {
   @override
-  DateTime build() {
+  DateTime build() => _thisMonth();
+
+  static DateTime _thisMonth() {
     final now = DateTime.now();
     return DateTime(now.year, now.month);
   }
 
+  /// 보고 있는 달이 이번 달인가.
+  bool get isThisMonth => state == _thisMonth();
+
+  /// 다음 달로 갈 수 있는가(보고 있는 달이 이번 달보다 앞이다).
+  bool get canGoNext => state.isBefore(_thisMonth());
+
   void prev() => state = DateTime(state.year, state.month - 1);
-  void next() => state = DateTime(state.year, state.month + 1);
+
+  void next() {
+    if (canGoNext) state = DateTime(state.year, state.month + 1);
+  }
 }
 
 /// 장부가 보여줄 달.
@@ -56,6 +70,16 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
 
   Future<Result<Transaction>> delete(Transaction tx) => _apply(() => _usecase.delete(tx));
 
+  /// 불러오기에 실패한 화면의 '다시 시도'. 달 화면이 읽는 서버 데이터
+  /// (이달 거래·추이·사용자 카테고리·또래 통계)를 모두 다시 읽는다.
+  void reload() {
+    ref.invalidateSelf();
+    ref.invalidate(selfTrendProvider);
+    ref.invalidate(customCategoriesProvider);
+    ref.invalidate(peerStatsProvider);
+    ref.invalidate(generationAvgProvider);
+  }
+
   /// 거래가 바뀌면 이달 거래와 추이를 다시 읽는다.
   Future<Result<Transaction>> _apply(Future<Result<Transaction>> Function() run) async {
     final res = await run();
@@ -85,10 +109,31 @@ final selfTrendProvider =
       : const <Transaction>[];
   return List.generate(n, (i) {
     final m = DateTime(anchor.year, anchor.month - (n - 1) + i);
-    final expense = usecase.totalExpense(
-        txs.where((t) => t.date.year == m.year && t.date.month == m.month).toList());
+    final expense = ViewedMonth.expenseOf(
+        txs.where((t) => t.date.year == m.year && t.date.month == m.month));
     return (month: m, expense: expense);
   });
+});
+
+/// 보고 있는 달의 장부(합계·분류·소득·저축률). 이달 거래를 못 읽으면 오류고,
+/// 사용자 카테고리를 못 읽으면 기본 분류로만 판정한다(합계는 그대로).
+final viewedMonthProvider = Provider<AsyncValue<ViewedMonth>>((ref) {
+  final month = ref.watch(selectedMonthProvider);
+  final txs = ref.watch(monthlyTransactionsProvider);
+  final catalog = CategoryCatalog(ref.watch(customCategoriesProvider).value ?? const []);
+  final profileIncome = ref.watch(userProfileProvider).value?.monthlyIncome;
+  return txs.whenData((txs) => ViewedMonth(
+        month: month,
+        transactions: txs,
+        catalog: catalog,
+        profileIncome: profileIncome,
+      ));
+});
+
+/// 보고 있는 달을 화면에서 부르는 이름: 이번 달이면 '이번 달', 아니면 'M월'.
+final viewedMonthNameProvider = Provider<String>((ref) {
+  final month = ref.watch(selectedMonthProvider);
+  return ref.read(selectedMonthProvider.notifier).isThisMonth ? '이번 달' : '${month.month}월';
 });
 
 /// 사용자가 만든 카테고리 목록(서버). 기본 분류([BudgetCategory])는 계약 상수라 여기 없다.
