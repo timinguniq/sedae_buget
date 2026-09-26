@@ -133,6 +133,22 @@ void main() {
     expect(find.text('다시 시도'), findsNothing);
   });
 
+  // 이전에는 지출 0원인 달에 '또래 평균보다 100% 덜 썼어요'와 '상위 100%' 순위 카드를 보였다.
+  testWidgets('빈 달(지출 0원)은 또래와 견주지 않는다', (tester) async {
+    final now = DateTime.now();
+    final server = await tester.seedServer(profile: _profile, transactions: [
+      Transaction.create(amount: 3000000, categoryId: 1, date: DateTime(now.year, now.month, 1),
+          type: TransactionType.income),
+    ]);
+    await _pumpHome(tester, fakeContainer(server: server));
+
+    expect(find.text('내역을 추가하면 비교가 시작돼요'), findsOneWidget);
+    expect(find.textContaining('덜 썼어요'), findsNothing);
+    expect(find.text('또래 중 내 지출 순위'), findsNothing);
+    expect(find.textContaining('이번 달 저축률'), findsOneWidget); // 내 값은 남는다
+    expect(find.textContaining('또래 평균 '), findsNothing); // 저축률의 또래 비교도 뺀다
+  });
+
   // 소득(프로필 월소득·이달 수입)이 없으면 저축률을 계산할 수 없다.
   testWidgets('소득이 없으면 저축률 카드를 보이지 않는다', (tester) async {
     final server = await tester.seedServer(

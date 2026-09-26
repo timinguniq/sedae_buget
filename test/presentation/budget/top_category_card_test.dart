@@ -16,17 +16,10 @@ void main() {
     var taps = 0;
     await t.pumpWidget(_wrap(TopCategoryCard(
       top: [
-        MapEntry(BudgetCategory.fromId(1), 540000),
-        MapEntry(BudgetCategory.fromId(11), 320000),
-        MapEntry(BudgetCategory.fromId(3), 180000),
+        (category: BudgetCategory.fromId(1), amount: 540000, peer: PeerComparison.of(mine: 540000, peer: 470000)),
+        (category: BudgetCategory.fromId(11), amount: 320000, peer: null),
+        (category: BudgetCategory.fromId(3), amount: 180000, peer: PeerComparison.of(mine: 180000, peer: 120000)),
       ],
-      peer: PeerStats(
-        ageGroup: AgeGroup.thirties,
-        avgMonthlyExpense: 2000000,
-        avgSavingsRate: 0.2,
-        avgByCategory: {BudgetCategory.fromId(1): 470000, BudgetCategory.fromId(3): 120000},
-        samples: const [],
-      ),
       onTap: () => taps++,
     )));
     await t.pump();

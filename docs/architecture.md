@@ -22,7 +22,7 @@
 - 상태 관리: Riverpod. 통신이 필요한 화면은 `page/<기능>/<화면>.view_model.dart`에 Notifier·provider를 둔다. 여러 화면이 같은 서버 상태를 볼 때는 그 상태를 가진 화면의 viewmodel을 함께 쓴다(예: 세션 `login.view_model.dart`).
   - 장부: 로그인 세션에 묶인 가계부 데이터(이달 거래·최근 6개월 추이·사용자 카테고리)는 `page/budget/ledger.view_model.dart`에 둔다. 세션이 바뀌면 다시 읽고 로그인 전에는 비어 있다. 변경 뒤 무엇을 다시 읽을지도 여기서만 정한다(화면은 `ref.invalidate`하지 않는다). 보고 있는 달(`selectedMonthProvider`)은 모든 탭이 함께 보는 `YearMonth`(`entity/budget/year_month.dart`)다. 이전·다음, 이번 달인가, 이번 달보다 뒤로 가지 않음, 이름('이번 달'·'M월'·'yyyy년 M월'), 날짜가 이 달에 드는가, 새 거래의 기본 날짜는 이 값이 정한다. 오늘은 인자로 받고, 화면은 이름을 `viewedMonthNameProvider`로 읽어 시계를 모른다.
   - 보고 있는 달: 달의 합계·건수·분류별 지출·필터·분석 조각·소득·잔액·저축률과 거래 이름은 `entity/budget/viewed_month.dart`의 `ViewedMonth`가 정한다. 수입은 카테고리가 없어 분류별 집계·건수·필터에 들지 않는다. 소득은 프로필 월소득(없으면 이달 수입 합계)이고 잔액·저축률의 기준이다. 장부의 `viewedMonthProvider`가 이 값을 만든다.
-  - 이달 개요: 달을 보여주는 화면(홈·비교·내역·리포트·분석)은 `budget_home.view_model.dart`의 `monthOverviewProvider` 하나를 읽는다. 보고 있는 달(`ViewedMonth`)에 또래 통계를 붙이고, 또래 초과 판정과 또래 통계를 못 읽었을 때 무엇을 뺄지를 여기서 정한다.
+  - 이달 개요: 달을 보여주는 화면(홈·비교·내역·리포트·분석)은 `budget_home.view_model.dart`의 `monthOverviewProvider` 하나를 읽는다. 그 값인 `entity/budget/month_overview.dart`의 `MonthOverview`가 보고 있는 달(`ViewedMonth`)을 또래와 견준 결과(총지출·순위·분류별·분석 행·가장 큰 차이·저축률·또래가 가장 많이 쓰는 분류·막대 비율·또래 초과)를 내고, 또래 통계를 못 읽었을 때와 빈 달(지출 0원 — 또래와 견주지 않는다)에 무엇을 뺄지를 정한다.
   - 거래의 카테고리(표시 이름·기본 분류)는 `entity/budget/category_catalog.dart`의 `CategoryCatalog`로만 판정한다.
   - 또래 비교: 내 금액과 또래 평균의 비교(더·덜·비슷, %, 배율, 크게 넘음)는 `entity/peer/peer_comparison.dart`의 `PeerComparison`이 정하고, `PeerStats`가 월 합계·분류별·가장 큰 차이를 이 값으로 내준다. 또래 값이 없으면(평균 0·빠짐) 비교는 null이고, 표본이 없으면 순위(`PeerStats.rankOf`)도 null이다. 위젯은 받은 값을 그리기만 한다.
   - 거래 입력: 입력 화면의 규칙(카테고리 선택·저장 가능 여부·고를 수 있는 가장 늦은 날짜·저장할 거래)은 `entity/budget/transaction_draft.dart`의 `TransactionDraft`가 가진다. 장부의 `save(draft)`가 추가·수정을 정하고, 다 불러온 사용자 카테고리 목록으로 카테고리를 맞춘다(지워진 사용자 카테고리는 기본 분류로).
@@ -74,3 +74,4 @@ import 규칙은 문자열 검사라 의미적 위반은 잡지 못한다. 아�
 - `data_source/remote` 명세에 호출 로직·엔티티 변환이 들어가지 않는가(명세는 선언만)
 - 화면·집계가 거래의 카테고리를 `CategoryCatalog` 밖에서 판정하지 않는가(`BudgetCategory.fromId(tx.categoryId)`를 직접 쓰지 않는다)
 - 화면이 또래 비교를 `PeerComparison` 밖에서 판정하지 않는가(`mine > peer`·`avgByCategory[c]`를 직접 견주지 않는다)
+- 화면·위젯이 `PeerStats`의 비교 메서드(`compareTotal`·`compareCategory`·`rankOf`·`largestCategoryGap`)를 직접 부르지 않고 `MonthOverview`에서 읽는가(빈 달·또래 없음 규칙을 건너뛰게 된다)

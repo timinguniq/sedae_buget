@@ -89,6 +89,17 @@ void main() {
     expect(find.text('—'), findsNWidgets(2));
   });
 
+  // 이전에는 지출 0원인 달을 '또래 상위 100%'로 보였다.
+  testWidgets('빈 달(지출 0원)은 또래 순위를 매기지 않는다', (tester) async {
+    await _pumpReport(tester, transactions: [
+      Transaction.create(amount: 3000000, categoryId: 1, date: _monthsAgo(0, 1), type: TransactionType.income),
+    ]);
+
+    // 또래 상위 칸만 '—'다(저축률 100%·소득 대비 0%는 내 값이라 남는다).
+    expect(find.text('—'), findsOneWidget);
+    expect(find.textContaining('아직 분석할 지출이'), findsOneWidget);
+  });
+
   testWidgets('또래 통계를 못 읽으면 안내 문구를 보여준다', (tester) async {
     await _pumpReport(tester, faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server));
 

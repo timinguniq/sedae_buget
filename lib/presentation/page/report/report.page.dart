@@ -37,14 +37,13 @@ class ReportPage extends ConsumerWidget {
         error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
         data: (o) {
           // 리포트는 또래 비교가 중심이라, 또래 통계를 못 읽으면 화면 전체를 안내로 바꾼다.
-          final peer = o.peer;
-          if (peer == null) return const Center(child: Text(MonthOverview.peerUnavailable));
+          if (!o.hasPeer) return const Center(child: Text(peerUnavailableText));
           final won = NumberFormat.decimalPattern('ko');
-          final peerTop = peer.rankOf(o.month.expense)?.topPercent; // 또래 상위 N%. 표본이 없으면 null
+          final peerTop = o.rank?.topPercent; // 또래 상위 N%. 빈 달이거나 표본이 없으면 null
           // 소득이 없으면 저축률·소득 대비 지출 모두 '—'.
           final savingsRate = o.month.savingsRate;
           final incomeRatio = o.month.expenseRatio;
-          final insight = peer.largestCategoryGap(o.month.byCategory);
+          final insight = o.largestGap;
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),

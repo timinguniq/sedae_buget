@@ -27,9 +27,9 @@ class ComparePage extends ConsumerWidget {
         data: (o) {
           // 또래 통계가 이 화면의 본질이라, 못 읽으면 화면 전체를 안내로 바꾼다.
           final peer = o.peer;
-          if (peer == null) return const Center(child: Text(MonthOverview.peerUnavailable));
+          if (peer == null) return const Center(child: Text(peerUnavailableText));
           final myExpense = o.month.expense;
-          if (myExpense == 0) {
+          if (o.isEmpty) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
@@ -43,20 +43,14 @@ class ComparePage extends ConsumerWidget {
               ),
             );
           }
-          final top6 = o.month.topCategories(6);
-          final peerAvg = peer.avgMonthlyExpense;
-          final expenseMax = (myExpense > peerAvg ? myExpense : peerAvg).clamp(1, 1 << 62);
-          final total = peer.compareTotal(myExpense);
-          final rank = peer.rankOf(myExpense);
+          final top6 = o.topCategories(6);
+          final total = o.total;
+          final totalBars = o.totalBars;
+          final rank = o.rank;
           // 소득이 없으면 내 저축률은 계산할 수 없다: 막대는 0, 값은 '—'.
-          final savingsRate = o.month.savingsRate;
-          final peerSavings = peer.avgSavingsRatePercent;
-          final savingsMax = [savingsRate ?? 0, peerSavings, 1].reduce((a, b) => a > b ? a : b);
-          // 또래 평균을 가장 끌어올리는 항목(또래 평균 지출 최대 카테고리).
-          MapEntry<BudgetCategory, int>? peerTop;
-          for (final e in peer.avgByCategory.entries) {
-            if (peerTop == null || e.value > peerTop.value) peerTop = e;
-          }
+          final savings = o.savings!;
+          final savingsBars = o.savingsBars!;
+          final peerTop = o.peerTopCategory;
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -74,13 +68,13 @@ class ComparePage extends ConsumerWidget {
               DistributionHistogram(stats: peer, myExpense: myExpense),
               const SizedBox(height: 18),
               // 또래 월평균이 없으면 비교하지 않는다(0원 막대를 그리지 않는다).
-              if (total != null) ...[
+              if ((total, totalBars) case (final total?, final totalBars?)) ...[
                 VersusBarCard(
                   title: '$name 지출 비교',
-                  mineFraction: myExpense / expenseMax,
-                  peerFraction: peerAvg / expenseMax,
-                  mineText: manWon(myExpense),
-                  peerText: manWon(peerAvg),
+                  mineFraction: totalBars.mine,
+                  peerFraction: totalBars.peer,
+                  mineText: manWon(total.mine),
+                  peerText: manWon(total.peer),
                   footer: Text(
                     switch (total.direction) {
                       PeerDirection.more => '또래보다 약 ${manWon(total.mine - total.peer)}원 더 ▲',
@@ -100,10 +94,10 @@ class ComparePage extends ConsumerWidget {
                 title: '소득 대비 저축률',
                 barHeight: 16,
                 // 큰 쪽이 폭의 70%가 되도록 스케일(디자인 비율).
-                mineFraction: (savingsRate ?? 0) / (savingsMax / 0.7),
-                peerFraction: peerSavings / (savingsMax / 0.7),
-                mineText: savingsRate == null ? '—' : '$savingsRate%',
-                peerText: '$peerSavings%',
+                mineFraction: savingsBars.mine * 0.7,
+                peerFraction: savingsBars.peer * 0.7,
+                mineText: savings.mine == null ? '—' : '${savings.mine}%',
+                peerText: '${savings.peer}%',
               ),
               const SizedBox(height: 18),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
@@ -113,13 +107,13 @@ class ComparePage extends ConsumerWidget {
               ]),
               const SizedBox(height: 13),
               for (final e in top6)
-                if (peer.compareCategory(e.key, e.value) case final comparison?)
-                  CategoryBattleRow(category: e.key, comparison: comparison),
+                if (e.peer case final comparison?)
+                  CategoryBattleRow(category: e.category, comparison: comparison),
               if (peerTop != null) ...[
                 const SizedBox(height: 2),
                 InsightBanner(
                   prefix: '${peer.ageGroup.label}는 보통 ',
-                  highlight: peerTop.key.label,
+                  highlight: peerTop.label,
                   suffix: ' 지출이 또래 평균을 끌어올려요.',
                 ),
               ],
