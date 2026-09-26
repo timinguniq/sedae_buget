@@ -18,6 +18,7 @@ typedef _Json = Map<String, dynamic>;
 /// - 실제 서버 응답처럼 뒤따르는 응답·오류 인터셉터를 거친다(토큰 인터셉터가 401을 본다).
 /// - 기기에 저장하지 못했거나 Stub 자신의 결함이면 500이다(앱에 '인터넷 연결 없음'으로 보이지 않게).
 ///   저장하지 못한 변경은 메모리에도 남기지 않는다.
+/// - 요청은 온 순서대로 하나씩 처리한다. 한 요청의 변경·저장·되돌리기가 다른 요청과 섞이지 않는다.
 /// - 또래 통계는 [peerStats]가 정한다. 기본은 [StubPeerData](결정적)이고, 테스트는 나이대별 값을 줄 수 있다.
 class StubApiInterceptor extends Interceptor {
   StubApiInterceptor({StubStateStore? store, PeerStats Function(AgeGroup)? peerStats})
@@ -33,8 +34,19 @@ class StubApiInterceptor extends Interceptor {
   /// 기기 저장소 읽기. 처음 온 요청이 시작하고, 읽는 동안 온 요청도 같은 읽기를 기다린다.
   Future<void>? _loading;
 
+  /// 앞 요청의 처리. 다음 요청은 이것이 끝난 뒤에 시작한다.
+  Future<void> _previous = Future.value();
+
   @override
-  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    final turn = _previous.then((_) => _handle(options, handler));
+    // 한 요청이 어쩌다 던져도(핸들러를 두 번 부르는 결함 등) 다음 요청들이 멈추지 않게 한다.
+    _previous = turn.catchError((Object _) {});
+    return turn;
+  }
+
+  /// 요청 하나를 처리한다. 모든 실패를 응답으로 바꾸므로 던지지 않는다.
+  Future<void> _handle(RequestOptions options, RequestInterceptorHandler handler) async {
     try {
       await _ensureLoaded();
       final (status, body) = await _route(options);

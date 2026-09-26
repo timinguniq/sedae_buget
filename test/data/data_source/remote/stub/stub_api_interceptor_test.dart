@@ -15,6 +15,9 @@ class _MemStore implements StubStateStore {
   Completer<void>? loadGate;
   bool failSave = false;
 
+  /// 다음 저장 한 번만 이것을 먼저 기다린다(던지면 그 저장은 실패).
+  Future<void> Function()? beforeNextSave;
+
   @override
   Future<String?> load() async {
     await loadGate?.future;
@@ -23,6 +26,9 @@ class _MemStore implements StubStateStore {
 
   @override
   Future<void> save(String json) async {
+    final hook = beforeNextSave;
+    beforeNextSave = null;
+    await hook?.call();
     if (failSave) throw StateError('disk full');
     saved = json;
   }
@@ -85,6 +91,32 @@ void main() {
     expect(txs.map((t) => t['id']), ['t1']);
     expect(txs.single['customCategoryId'], 'c1'); // 삭제의 연쇄(거래에서 떼기)도 되돌린다
     expect((await api.send('GET', '/v1/categories', token: token)).list, hasLength(1));
+  });
+
+  // 쓰기 둘이 겹치면, 먼저 온 쓰기의 저장 실패가 되돌리면서 나중 쓰기의 성공까지 지우거나,
+  // 늦게 끝난 저장이 더 오래된 상태로 덮어쓸 수 있었다. 요청은 하나씩 처리한다.
+  test('겹친 쓰기는 하나씩 처리한다: 한 쓰기의 실패가 다른 쓰기를 지우지 않는다', () async {
+    final store = _MemStore();
+    final api = _client(StubApiInterceptor(store: store));
+    final token = await api.login('kakao');
+    final gate = Completer<void>();
+    store.beforeNextSave = () async {
+      await gate.future;
+      throw StateError('disk full');
+    };
+
+    final first = api.send('PUT', '/v1/transactions/a', body: _tx, token: token);
+    final second = api.send('PUT', '/v1/transactions/b', body: _tx, token: token);
+    await Future<void>.delayed(const Duration(milliseconds: 20)); // 둘 다 Stub에 닿을 때까지
+    gate.complete();
+
+    expect((await first).status, 500);
+    expect((await second).status, 201);
+    final listed = await api.send('GET', '/v1/transactions', query: _september, token: token);
+    expect(listed.list.map((t) => t['id']), ['b']);
+    final reopened = _client(StubApiInterceptor(store: store));
+    final persisted = await reopened.send('GET', '/v1/transactions', query: _september, token: token);
+    expect(persisted.list.map((t) => t['id']), ['b']);
   });
 
   // 콜드 스타트에 요청 둘이 겹치면, 두 번째가 빈 상태를 보고 '프로필 없음'이 되거나
