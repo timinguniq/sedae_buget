@@ -1,32 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:sedae_budget/data/data.dart';
-import 'package:sedae_budget/domain/repository/transaction_repository.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.page.dart';
 
 import '../../helper/fakes.dart';
 
-class _FakeRepo implements TransactionRepository {
-  @override
-  Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
-  @override
-  Future<Result<Transaction>> delete(Transaction tx) async => Result.success(tx);
-  @override
-  Future<Result<List<Transaction>>> getMonth(int y, int m) async => Result.success([
-        Transaction.create(amount: 500000, categoryId: 1, date: DateTime(y, m, 5),
-            type: TransactionType.expense, memo: '식료품'),
-        Transaction.create(amount: 200000, categoryId: 7, date: DateTime(y, m, 10),
-            type: TransactionType.expense, memo: '교통'),
-        Transaction.create(amount: 100000, categoryId: 11, date: DateTime(y, m, 15),
-            type: TransactionType.expense, memo: '외식'),
-      ]);
-  @override
-  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
-      const Result.success([]);
-}
+/// [month]의 지출: 식료품 50만·교통 20만·외식 10만.
+List<Transaction> _spending(DateTime month) => [
+      Transaction.create(amount: 500000, categoryId: 1, date: DateTime(month.year, month.month, 5),
+          type: TransactionType.expense, memo: '식료품'),
+      Transaction.create(amount: 200000, categoryId: 7, date: DateTime(month.year, month.month, 10),
+          type: TransactionType.expense, memo: '교통'),
+      Transaction.create(amount: 100000, categoryId: 11, date: DateTime(month.year, month.month, 15),
+          type: TransactionType.expense, memo: '외식'),
+    ];
+
+final _now = DateTime.now();
+final _thisMonth = DateTime(_now.year, _now.month);
 
 /// 이달 지출(식료품 50만·교통 20만·외식 10만, 합계 80만)과 견줄 또래 통계.
 PeerStats _peer({int avg = 1000000, List<int> samples = const [700000, 900000, 1200000]}) =>
@@ -39,16 +31,31 @@ PeerStats _peer({int avg = 1000000, List<int> samples = const [700000, 900000, 1
       samples: samples,
     );
 
-Future<void> _pumpCompare(WidgetTester tester, PeerStats peer, {bool lastMonth = false}) async {
-  tester.view.physicalSize = const Size(390, 1600);
+/// 비교 화면을 띄운다. 서버는 [transactions](기본은 이달 지출)·[customs]를 심고 또래 통계는 [peer]로 답한다.
+Future<void> _pumpCompare(
+  WidgetTester tester, {
+  PeerStats? peer,
+  bool lastMonth = false,
+  List<Transaction>? transactions,
+  List<CustomCategory> customs = const [],
+  void Function(ServerFaults faults)? faults,
+  double height = 1600,
+}) async {
+  tester.view.physicalSize = Size(390, height);
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  final container = fakeContainer(user: testUser, transactions: _FakeRepo(), peerStats: peer);
+  final month = lastMonth ? DateTime(_now.year, _now.month - 1) : _thisMonth;
+  final server = await tester.seedServer(
+    categories: customs,
+    transactions: transactions ?? _spending(month),
+    peerStats: peer == null ? null : (_) => peer,
+  );
+  faults?.call(server.faults);
+  final container = fakeContainer(server: server);
   if (lastMonth) container.read(selectedMonthProvider.notifier).prev();
   await tester.pumpWidget(fakeScope(container, const MaterialApp(home: ComparePage())));
-  await tester.pump();
-  await tester.pump();
+  await tester.settle();
 }
 
 void main() {
@@ -56,13 +63,13 @@ void main() {
 
   // 이전에는 같은 금액이 '또래보다 약 0원 더 ▲'로 보였다.
   testWidgets('이달 지출이 또래 평균과 같으면 비슷하다고 보인다', (tester) async {
-    await _pumpCompare(tester, _peer(avg: 800000));
+    await _pumpCompare(tester, peer: _peer(avg: 800000));
     expect(find.text('또래와 비슷해요'), findsOneWidget);
     expect(find.textContaining('0원 더'), findsNothing);
   });
 
   testWidgets('또래 평균이 없는 항목은 항목별 차이에서 뺀다', (tester) async {
-    await _pumpCompare(tester, _peer());
+    await _pumpCompare(tester, peer: _peer());
     expect(find.text(BudgetCategory.fromId(1).label), findsOneWidget);
     expect(find.text(BudgetCategory.fromId(7).label), findsOneWidget);
     expect(find.text(BudgetCategory.fromId(11).label), findsNothing);
@@ -70,14 +77,14 @@ void main() {
 
   // 또래 값이 없으면 비교하지 않는다. 이전에는 또래 막대를 0원으로 그린 비교 카드가 남았다.
   testWidgets('또래 월평균이 없으면 지출 비교 카드를 보이지 않는다', (tester) async {
-    await _pumpCompare(tester, _peer(avg: 0));
+    await _pumpCompare(tester, peer: _peer(avg: 0));
     expect(find.textContaining('지출 비교'), findsNothing);
     expect(find.text('항목별 차이'), findsOneWidget);
   });
 
   // 이전에는 지난 달 값을 보면서도 제목이 '이번 달 지출 비교'였다.
   testWidgets('지난 달을 보면 지출 비교 제목에 그 달 이름을 쓴다', (tester) async {
-    await _pumpCompare(tester, _peer(), lastMonth: true);
+    await _pumpCompare(tester, peer: _peer(), lastMonth: true);
     final now = DateTime.now();
     expect(find.text('${DateTime(now.year, now.month - 1).month}월 지출 비교'), findsOneWidget);
     expect(find.text('이번 달 지출 비교'), findsNothing);
@@ -85,27 +92,15 @@ void main() {
 
   // 이전에는 표본이 없어도 '또래 1명 중 내 지출은 1등 · 상위 100%'로 보였다.
   testWidgets('또래 표본이 없으면 순위를 보이지 않는다', (tester) async {
-    await _pumpCompare(tester, _peer(samples: const []));
+    await _pumpCompare(tester, peer: _peer(samples: const []));
     expect(find.textContaining('명 중'), findsNothing);
     expect(find.textContaining('상위'), findsNothing);
     expect(find.text('항목별 차이'), findsOneWidget);
   });
 
   testWidgets('compare page renders rank headline, versus cards and battle rows', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    // 저축률 카드가 프로필 소득을 읽으므로 사용자 fake도 함께 끼운다.
-    final container = fakeContainer(
-      user: testUser,
-      transactions: _FakeRepo(),
-      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
-    );
-    await tester.pumpWidget(fakeScope(container, const MaterialApp(home: ComparePage())));
-    await tester.pump();
-    await tester.pump();
+    // 프로필이 없으면 30대 또래(Stub 고정표)와 견준다.
+    await _pumpCompare(tester, height: 844);
 
     expect(find.text('또래 비교'), findsOneWidget);
     expect(find.text(AgeGroup.thirties.label), findsOneWidget); // 나이대 칩
@@ -121,19 +116,7 @@ void main() {
 
   // 프로필 월소득도 이달 수입도 없으면 저축률을 계산할 수 없다(0%가 아니다).
   testWidgets('소득이 없으면 내 저축률은 — 로 보인다', (tester) async {
-    tester.view.physicalSize = const Size(390, 1400);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    final container = fakeContainer(
-      user: testUser,
-      transactions: _FakeRepo(),
-      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
-    );
-    await tester.pumpWidget(fakeScope(container, const MaterialApp(home: ComparePage())));
-    await tester.pump();
-    await tester.pump();
+    await _pumpCompare(tester, height: 1400);
 
     expect(find.text('소득 대비 저축률'), findsOneWidget);
     expect(find.text('—'), findsOneWidget);
@@ -141,14 +124,7 @@ void main() {
 
   // 비교 화면은 또래 통계가 본질이라 실패하면 화면 전체가 안내로 바뀐다.
   testWidgets('또래 통계를 못 읽으면 안내 문구를 보여준다', (tester) async {
-    final container = fakeContainer(
-      user: testUser,
-      transactions: _FakeRepo(),
-      peerRepository: FailingPeerStatsRepository(),
-    );
-    await tester.pumpWidget(fakeScope(container, const MaterialApp(home: ComparePage())));
-    await tester.pump();
-    await tester.pump();
+    await _pumpCompare(tester, faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server));
 
     expect(find.text('또래 통계를 불러오지 못했어요'), findsOneWidget);
     expect(find.text('항목별 차이'), findsNothing);
@@ -157,38 +133,18 @@ void main() {
   // 또래 비교는 기본 분류(통계청 12분류)로만 이뤄진다. 커스텀 카테고리는 상위 분류에
   // 합산될 뿐 별도 항목으로 나오지 않는다.
   testWidgets('항목별 비교는 기본 카테고리 이름만 쓴다', (tester) async {
-    tester.view.physicalSize = const Size(390, 844);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-
-    final container = fakeContainer(
-      user: testUser,
-      transactions: _CustomRepo(),
-      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
+    // 지출 전액이 커스텀 카테고리('반려동물' → 기타)로 잡힌 달.
+    await _pumpCompare(
+      tester,
+      height: 844,
+      customs: const [CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12)],
+      transactions: [
+        Transaction.create(amount: 300000, categoryId: 12, date: DateTime(_now.year, _now.month, 5),
+            type: TransactionType.expense, customCategoryId: 'c1'),
+      ],
     );
-
-    await tester.pumpWidget(fakeScope(container, const MaterialApp(home: ComparePage())));
-    await tester.pump();
-    await tester.pump();
 
     expect(find.text('반려동물'), findsNothing);
     expect(find.text(BudgetCategory.etc.label), findsOneWidget);
   });
-}
-
-/// 지출 전액이 커스텀 카테고리('반려동물' → 기타)로 잡힌 달.
-class _CustomRepo implements TransactionRepository {
-  @override
-  Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
-  @override
-  Future<Result<Transaction>> delete(Transaction tx) async => Result.success(tx);
-  @override
-  Future<Result<List<Transaction>>> getMonth(int y, int m) async => Result.success([
-        Transaction.create(amount: 300000, categoryId: 12, date: DateTime(y, m, 5),
-            type: TransactionType.expense, customCategoryId: 'c1'),
-      ]);
-  @override
-  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
-      const Result.success([]);
 }

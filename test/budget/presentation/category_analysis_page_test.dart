@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/theme/theme.dart';
 import 'package:sedae_budget/presentation/page/budget/category_analysis.page.dart';
@@ -8,66 +7,41 @@ import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
 
 import '../../helper/fakes.dart';
 
-class _Repo implements TransactionRepository {
-  _Repo(this._list);
-  final List<Transaction> _list;
-  @override
-  Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(tx);
-  @override
-  Future<Result<Transaction>> delete(Transaction tx) async => Result.success(tx);
-  @override
-  Future<Result<List<Transaction>>> getMonth(int y, int m) async => Result.success(_list);
-  @override
-  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
-      const Result.success([]);
+const _pet = CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12);
+
+/// 이번 달 [day]일.
+DateTime _d(int day) {
+  final now = DateTime.now();
+  return DateTime(now.year, now.month, day);
 }
 
-/// 카테고리 목록 조회가 실패하는 저장소(네트워크 오류 시나리오).
-class _FailingCategoryRepo implements CategoryRepository {
-  @override
-  Future<Result<List<CustomCategory>>> getAll() async => const Result.failure(
-        ErrorResult(reason: FailureReason.offline, message: '네트워크에 연결할 수 없습니다.'),
-      );
-  @override
-  Future<Result<CustomCategory>> upsert(CustomCategory c) async => Result.success(c);
-  @override
-  Future<Result<CustomCategory>> delete(CustomCategory c) async => Result.success(c);
-}
+Transaction _expense(int amount, int categoryId, int day, {String? customCategoryId}) => Transaction.create(
+    amount: amount, categoryId: categoryId, date: _d(day), type: TransactionType.expense,
+    customCategoryId: customCategoryId);
 
-Widget _app(
-  List<Transaction> list, [
+/// [transactions]·[customs]를 심은 서버로 분석 화면을 띄운다. [faults]로 서버 장애를 건다.
+Future<void> _pump(
+  WidgetTester t,
+  List<Transaction> transactions, {
   List<CustomCategory> customs = const [],
-  CategoryRepository? categoryRepository,
-  PeerStatsRepository? peerRepository,
-]) {
-  final container = fakeContainer(
-    user: testUser,
-    transactions: _Repo(list),
-    categories: categoryRepository ?? InMemoryCategoryRepository(customs),
-    peerRepository: peerRepository ?? FakePeerStatsRepository(),
-  );
-  return fakeScope(container, const MaterialApp(home: CategoryAnalysisPage()));
+  void Function(ServerFaults faults)? faults,
+}) async {
+  final server = await t.seedServer(categories: customs, transactions: transactions);
+  faults?.call(server.faults);
+  await t.pumpWidget(fakeScope(fakeContainer(server: server), const MaterialApp(home: CategoryAnalysisPage())));
+  await t.settle();
 }
 
 void main() {
 
   testWidgets('shows donut + rows when data', (tester) async {
-    await tester.pumpWidget(_app([
-      Transaction.create(amount: 10000, categoryId: 7, date: DateTime(2026, 6, 5), type: TransactionType.expense),
-      Transaction.create(amount: 4000, categoryId: 11, date: DateTime(2026, 6, 6), type: TransactionType.expense),
-    ]));
-    await tester.pump();
-    await tester.pump();
+    await _pump(tester, [_expense(10000, 7, 5), _expense(4000, 11, 6)]);
     expect(find.byType(CategoryDonut), findsOneWidget);
     expect(find.byType(CategoryRow), findsWidgets);
   });
 
   testWidgets('custom header shows title, month total and month navigator', (tester) async {
-    await tester.pumpWidget(_app([
-      Transaction.create(amount: 1920000, categoryId: 7, date: DateTime(2026, 6, 5), type: TransactionType.expense),
-    ]));
-    await tester.pump();
-    await tester.pump();
+    await _pump(tester, [_expense(1920000, 7, 5)]);
     expect(find.text('카테고리 분석'), findsOneWidget);
     expect(find.byType(RoundIconButton), findsOneWidget);
     expect(find.textContaining('총지출'), findsOneWidget);
@@ -78,22 +52,17 @@ void main() {
     expect(find.text(label(DateTime(now.year, now.month))), findsOneWidget);
     // 이전에는 다음 달로 끝없이 넘어가 아직 오지 않은 달을 볼 수 있었다.
     await tester.tap(find.byKey(const Key('month-next')));
-    await tester.pump();
-    await tester.pump();
+    await tester.settle();
     expect(find.text(label(DateTime(now.year, now.month))), findsOneWidget);
     await tester.tap(find.byKey(const Key('month-prev')));
-    await tester.pump();
-    await tester.pump();
+    await tester.settle();
     expect(find.text(label(DateTime(now.year, now.month - 1))), findsOneWidget);
   });
 
   // 또래 통계가 실패해도 내 분석은 보인다. 또래 비교 토글만 빠진다.
   testWidgets('또래 통계를 못 읽어도 분석이 보이고 또래 토글은 없다', (tester) async {
-    await tester.pumpWidget(_app([
-      Transaction.create(amount: 10000, categoryId: 7, date: DateTime(2026, 6, 5), type: TransactionType.expense),
-    ], const [], null, FailingPeerStatsRepository()));
-    await tester.pump();
-    await tester.pump();
+    await _pump(tester, [_expense(10000, 7, 5)],
+        faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server));
 
     expect(find.byType(CategoryDonut), findsOneWidget);
     expect(find.byType(CategoryRow), findsOneWidget);
@@ -101,21 +70,14 @@ void main() {
   });
 
   testWidgets('shows empty state when no expenses', (tester) async {
-    await tester.pumpWidget(_app(const []));
-    await tester.pump();
-    await tester.pump();
+    await _pump(tester, const []);
     expect(find.text('지출이 없어요'), findsOneWidget);
   });
 
   // 카테고리 목록을 못 읽으면 커스텀 분리 없이 기본 분류로만 묶인다(합계는 그대로).
   testWidgets('카테고리 조회 실패해도 기본 분류로 분석 화면이 그려진다', (tester) async {
-    await tester.pumpWidget(_app([
-      Transaction.create(amount: 10000, categoryId: 12, date: DateTime(2026, 6, 5), type: TransactionType.expense),
-      Transaction.create(amount: 20000, categoryId: 12, date: DateTime(2026, 6, 6),
-          type: TransactionType.expense, customCategoryId: 'c1'),
-    ], const [], _FailingCategoryRepo()));
-    await tester.pump();
-    await tester.pump();
+    await _pump(tester, [_expense(10000, 12, 5), _expense(20000, 12, 6, customCategoryId: 'c1')],
+        customs: const [_pet], faults: (f) => f.fail('GET', '/v1/categories'));
 
     expect(find.byType(CategoryDonut), findsOneWidget);
     // 둘 다 기타(12)로 합쳐진 한 줄.
@@ -130,13 +92,8 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(_app([
-      Transaction.create(amount: 10000, categoryId: 12, date: DateTime(2026, 6, 5), type: TransactionType.expense),
-      Transaction.create(amount: 20000, categoryId: 12, date: DateTime(2026, 6, 6),
-          type: TransactionType.expense, customCategoryId: 'c1'),
-    ], const [CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12)]));
-    await tester.pump();
-    await tester.pump();
+    await _pump(tester, [_expense(10000, 12, 5), _expense(20000, 12, 6, customCategoryId: 'c1')],
+        customs: const [_pet]);
 
     expect(find.byType(CategoryRow), findsNWidgets(2));
     expect(find.text('반려동물'), findsOneWidget);
@@ -145,7 +102,7 @@ void main() {
 
     // 또래 비교를 켜면 기본 분류 행 하나에만 ▲/▼ 배지가 붙는다.
     await tester.tap(find.byType(Switch));
-    await tester.pump();
+    await tester.settle();
     final badges = tester.widgetList(find.textContaining('▲')).length +
         tester.widgetList(find.textContaining('▼')).length;
     expect(badges, 1);

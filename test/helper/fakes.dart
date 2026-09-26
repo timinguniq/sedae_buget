@@ -10,148 +10,15 @@ import 'package:sedae_budget/core/local_storage/theme_mode_store.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/initial/app_status.view_model.dart';
 import 'package:sedae_budget/presentation/service/ad_provider.dart';
 import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 import 'package:sedae_budget/presentation/service/theme_mode_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// presentation 테스트용 인메모리 fake. 전역 get_it을 만지는 대신
-/// `ProviderScope(overrides: ...)`로 끼운다(seam은 service/*_provider.dart).
-class InMemoryAuthRepository implements AuthRepository {
-  InMemoryAuthRepository([this.user]);
+import 'stub_server.dart';
 
-  AuthUser? user;
-
-  @override
-  Future<Result<AuthUser?>> currentUser() async => Result.success(user);
-
-  @override
-  Future<Result<AuthUser>> signIn(AuthProvider provider, String idToken) async =>
-      Result.success(user = AuthUser(provider: provider, nickname: '${provider.label} 사용자'));
-
-  @override
-  Future<Result<void>> signOut() async {
-    user = null;
-    return const Result.success(null);
-  }
-
-  final _expired = StreamController<void>.broadcast();
-
-  @override
-  Stream<void> get sessionExpired => _expired.stream;
-
-  /// 쓰는 중에 서버가 세션을 끝낸 상황(401). 서버 세션을 지우고 알린다.
-  void expireSession() {
-    user = null;
-    _expired.add(null);
-  }
-}
-
-class InMemoryUserProfileRepository implements UserProfileRepository {
-  InMemoryUserProfileRepository([this.profile]);
-
-  UserProfile? profile;
-
-  @override
-  Future<Result<UserProfile?>> current() async => Result.success(profile);
-
-  @override
-  Future<Result<void>> save(UserProfile p) async {
-    profile = p;
-    return const Result.success(null);
-  }
-}
-
-/// 인메모리 사용자 카테고리 저장소. 생성 순서를 유지한다(서버 계약과 동일).
-class InMemoryCategoryRepository implements CategoryRepository {
-  InMemoryCategoryRepository([List<CustomCategory> seed = const []]) {
-    for (final c in seed) {
-      items[c.id] = c;
-    }
-  }
-
-  final Map<String, CustomCategory> items = {};
-
-  @override
-  Future<Result<List<CustomCategory>>> getAll() async =>
-      Result.success(items.values.toList());
-
-  @override
-  Future<Result<CustomCategory>> upsert(CustomCategory category) async {
-    items[category.id] = category;
-    return Result.success(category);
-  }
-
-  @override
-  Future<Result<CustomCategory>> delete(CustomCategory category) async {
-    items.remove(category.id);
-    return Result.success(category);
-  }
-}
-
-/// 장부 테스트용 로그인 사용자. 장부(거래·카테고리)는 로그인 세션에 묶여 있어 로그인 전에는 비어 있다.
-const testUser = AuthUser(provider: AuthProvider.kakao, nickname: '카카오 사용자');
-
-/// 인메모리 거래 저장소. 월 조회와 기간 조회가 같은 데이터를 최신순으로 본다(서버 계약과 동일).
-class InMemoryTransactionRepository implements TransactionRepository {
-  InMemoryTransactionRepository([List<Transaction> seed = const []]) {
-    for (final t in seed) {
-      items[t.id] = t;
-    }
-  }
-
-  final Map<String, Transaction> items = {};
-
-  /// [getMonth] 호출 횟수(다시 읽었는지 확인용).
-  int monthReads = 0;
-
-  @override
-  Future<Result<Transaction>> upsert(Transaction tx) async => Result.success(items[tx.id] = tx);
-
-  @override
-  Future<Result<Transaction>> delete(Transaction tx) async {
-    items.remove(tx.id);
-    return Result.success(tx);
-  }
-
-  @override
-  Future<Result<List<Transaction>>> getMonth(int year, int month) {
-    monthReads++;
-    return getRange(DateTime(year, month), DateTime(year, month + 1));
-  }
-
-  @override
-  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) async =>
-      Result.success(items.values
-          .where((t) => !t.date.isBefore(start) && t.date.isBefore(end))
-          .toList()
-        ..sort((a, b) => b.date.compareTo(a.date)));
-}
-
-/// Stub 서버와 같은 결정적 수치를 돌려주는 또래 통계 fake.
-class FakePeerStatsRepository implements PeerStatsRepository {
-  @override
-  Future<Result<PeerStats>> forGroup(AgeGroup g) async =>
-      Result.success(StubPeerData.forGroup(g));
-
-  @override
-  Future<Result<Map<AgeGroup, int>>> generationAverages() async => Result.success(
-      {for (final g in AgeGroup.values) g: StubPeerData.forGroup(g).avgMonthlyExpense});
-}
-
-/// 또래 통계 서버가 내려간 상황. 모든 조회가 실패한다.
-class FailingPeerStatsRepository implements PeerStatsRepository {
-  static const _down =
-      ErrorResult(reason: FailureReason.server, message: '또래 통계를 불러올 수 없습니다.');
-
-  @override
-  Future<Result<PeerStats>> forGroup(AgeGroup g) async => const Result.failure(_down);
-
-  @override
-  Future<Result<Map<AgeGroup, int>>> generationAverages() async => const Result.failure(_down);
-}
+export 'stub_server.dart';
 
 /// 광고 SDK 없이 호출 횟수만 기록하는 fake. 배너는 항상 실패(null), 전면은 [interstitial]의 결과를 따른다.
 class FakeAdService implements AdService {
@@ -207,44 +74,29 @@ Future<ThemeModeStore> fakeThemeModeStore() async {
   return ThemeModeStore(await SharedPreferences.getInstance());
 }
 
-/// 테스트용 ProviderContainer. 준 재료만 fake로 바꾼다.
+/// 테스트용 ProviderContainer. 서버는 [server](Stub, 기본은 로그인 전의 빈 서버)이고,
+/// 서버 밖의 재료(광고·원격 설정·테마 저장소·앱 종료)만 fake로 바꾼다.
 ///
 /// 전역 get_it을 등록·reset하는 대신 의존성 seam(`service/*_provider.dart`)을 override한다.
 /// 테스트가 끝나면 스스로 dispose한다.
 ProviderContainer fakeContainer({
-  AuthUser? user,
-  UserProfile? profile,
-  AuthRepository? authRepository,
-  UserProfileRepository? profileRepository,
-  bool fakeUser = true,
-  TransactionRepository? transactions,
-  CategoryRepository? categories,
-  PeerStatsRepository? peerRepository,
-  PeerStats? peerStats,
+  StubServer? server,
   AdService? adService,
   LaunchInterstitial? launchInterstitial,
   AppStatusSource? appStatusSource,
   ThemeModeStore? themeModeStore,
   void Function()? exitApp,
 }) {
-  final auth = authRepository ?? InMemoryAuthRepository(user);
+  final s = server ?? StubServer();
   final container = ProviderContainer(
     // 실패한 provider를 자동 재시도하면 타이머가 테스트 끝까지 남는다. 테스트는 한 번만 본다.
     retry: (_, _) => null,
     overrides: [
-      if (fakeUser) ...[
-        authUsecaseProvider.overrideWithValue(AuthUsecase(auth, StubSocialIdTokenProvider())),
-        userProfileRepositoryProvider.overrideWithValue(
-          profileRepository ?? InMemoryUserProfileRepository(profile),
-        ),
-      ],
-      if (transactions != null)
-        transactionUsecaseProvider.overrideWithValue(TransactionUsecase(transactions)),
-      if (categories != null)
-        categoryUsecaseProvider.overrideWithValue(CategoryUsecase(categories)),
-      if (peerRepository != null)
-        peerStatsRepositoryProvider.overrideWithValue(peerRepository),
-      if (peerStats != null) peerStatsProvider.overrideWith((_) => peerStats),
+      authUsecaseProvider.overrideWithValue(AuthUsecase(s.auth, StubSocialIdTokenProvider())),
+      userProfileRepositoryProvider.overrideWithValue(s.profiles),
+      transactionUsecaseProvider.overrideWithValue(TransactionUsecase(s.transactions)),
+      categoryUsecaseProvider.overrideWithValue(CategoryUsecase(s.categories)),
+      peerStatsRepositoryProvider.overrideWithValue(s.peerStats),
       if (adService != null) adServiceProvider.overrideWithValue(adService),
       if (launchInterstitial != null)
         launchInterstitialProvider.overrideWithValue(launchInterstitial),

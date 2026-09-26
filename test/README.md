@@ -20,13 +20,14 @@ flutter test test/architecture                  # 레이어 의존성 규칙만
 
 ## 테스트 대역
 
-- 모킹 라이브러리를 쓰지 않는다. `test/helper/fakes.dart`의 **인메모리 fake**(리포지토리 인터페이스 구현)를 쓴다.
-- 장부(거래·사용자 카테고리)는 로그인 세션에 묶여 있어 로그인 전에는 비어 있다. 장부를 읽는 테스트는 `fakeContainer(user: testUser, …)`로 로그인한다.
-- presentation 테스트는 `fakeContainer`로 의존성 seam(`service/*_provider.dart`)을 fake로 바꾼 뒤 위젯·provider를 검증한다. 전역 `get_it`은 쓰지 않는다.
-- HTTP 계층은 실제 서버 대신 Dio `Interceptor`로 검증한다: `StubApiInterceptor`(`lib/data/data_source/remote/stub/`)나 테스트 파일 안의 작은 인터셉터(응답 고정·오류·타임아웃).
-- 실패 처리(오류 응답·깨진 본문·시간 초과)는 `test/helper/fake_http_adapter.dart`의 `FakeHttpAdapter`로 검증한다. 인터셉터로 만든 가짜 응답은 Dio 자체의 응답 처리(오류 문구·본문 해석)를 건너뛰어 실제와 다르다.
+- 모킹 라이브러리를 쓰지 않는다.
+- **서버는 Stub 하나다.** 화면·provider·저장소 테스트는 모두 `test/helper/stub_server.dart`의 `StubServer`를 거쳐 실제 저장소 구현 → 실제 retrofit 명세 → 앱이 local 환경에서 쓰는 `StubApiInterceptor`로 간다. 운영의 local 환경과 같은 배선(`connectToServer`: 토큰 인터셉터 → Stub)이다. 저장소 인터페이스를 손으로 구현한 fake는 두지 않는다(예외: domain usecase 테스트).
+- 준비는 실제 API로 한다: `server.seed(profile:, categories:, transactions:)`(kakao로 로그인한 뒤 심는다). Stub의 규칙(사용자 카테고리 검증·상위 분류 맞춤 등)을 지나므로 서버가 만들 수 없는 상태는 만들 수 없다 — 그런 상태의 규칙은 entity 테스트에서 본다.
+- 서버 장애·느린 응답은 Stub 앞의 `server.faults`(`test/helper/server_faults.dart`)로 흉내 낸다: `fail(method, pathPrefix, reason:, times:)`, `hold(...)`, 요청 수 `count(...)`. 또래 통계 값은 `StubServer(peerStats: …)`로 준다.
+- presentation 테스트는 `fakeContainer(server: …)`로 의존성 seam(`service/*_provider.dart`)을 그 서버의 저장소로 바꾼다. 서버 밖의 재료(광고·원격 설정·테마 저장소·앱 종료)만 `test/helper/fakes.dart`의 fake다. 전역 `get_it`은 쓰지 않는다.
+- 위젯 테스트(FakeAsync)에서 Dio 요청은 가짜 시간이 흘러야 끝난다. 준비는 `tester.seedServer(…)`, 위젯 밖 요청은 `tester.untilDone(future)`, 화면이 응답을 다 받아 그릴 때까지는 `tester.settle()`을 쓴다(`pumpAndSettle`은 막 그린 위젯이 보낸 요청을 기다리지 않는다). `runAsync`(진짜 시간)로 준비하면 이후 요청이 끝나지 않는다.
+- 실패 처리(오류 응답·깨진 본문·시간 초과)의 번역은 `test/helper/fake_http_adapter.dart`의 `FakeHttpAdapter`로 검증한다. 인터셉터로 만든 가짜 응답(Stub·`faults`)은 Dio 자체의 응답 처리(오류 문구·본문 해석)를 건너뛰어 실제와 다르다.
 - 서버 계약(경로·상태코드·검증)은 `test/contract/api_contract.dart` suite가 본다. 경로·바디를 문자열 그대로 적고, 지금은 Stub에 돌린다(`stub_contract_test.dart`). 설명은 `docs/api-contract.md`.
-- 저장소 구현 테스트는 `test/helper/stub_server.dart`의 `StubServer`를 쓴다. 운영의 local 환경과 같은 배선(`connectToServer`: 토큰 인터셉터 → Stub)으로 조립해 실제 저장소 구현을 내준다. Stub은 사용자마다 데이터를 따로 둔다.
 
 ## 종류
 

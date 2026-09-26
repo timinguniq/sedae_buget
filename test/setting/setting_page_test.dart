@@ -21,9 +21,9 @@ void main() {
 
   testWidgets('renders and dark chip switches theme mode', (tester) async {
     final store = await fakeThemeModeStore();
-    final container = fakeContainer(categories: InMemoryCategoryRepository(), themeModeStore: store);
+    final container = fakeContainer(themeModeStore: store);
     await tester.pumpWidget(app(container));
-    await tester.pump();
+    await tester.settle();
 
     expect(find.text('설정'), findsOneWidget);
     expect(find.byType(RoundIconButton), findsOneWidget);
@@ -34,7 +34,7 @@ void main() {
     expect(find.text('로그아웃'), findsNothing); // 로그아웃 상태
 
     await tester.tap(find.text('다크'));
-    await tester.pump();
+    await tester.settle();
     expect(container.read(themeModeProvider), ThemeMode.dark);
     expect(store.read(), ThemeMode.dark); // 다음 실행에도 다크로 시작한다
   });
@@ -44,13 +44,11 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
     final container = fakeContainer(
-      user: const AuthUser(provider: AuthProvider.naver, nickname: '네이버 사용자'),
-      categories: InMemoryCategoryRepository(),
+      server: await tester.seedServer(provider: AuthProvider.naver),
       themeModeStore: await fakeThemeModeStore(),
     );
     await tester.pumpWidget(app(container));
-    await tester.pump();
-    await tester.pump();
+    await tester.settle();
 
     expect(find.byType(LogoutButton), findsOneWidget);
     expect(find.text('로그아웃'), findsOneWidget);

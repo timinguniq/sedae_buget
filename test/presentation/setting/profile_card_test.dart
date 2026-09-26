@@ -31,8 +31,7 @@ void main() {
     addTearDown(t.view.reset);
 
     await t.pumpWidget(_wrap(container));
-    await t.pump();
-    await t.pump();
+    await t.settle();
 
     expect(find.byType(MascotDongle), findsNothing);
     expect(find.text('로그아웃'), findsNothing);
@@ -40,17 +39,13 @@ void main() {
   });
 
   testWidgets('logged-in: shows nickname + provider badge; logout clears both', (t) async {
-    final container = fakeContainer(
-      user: const AuthUser(provider: AuthProvider.kakao, nickname: '카카오 사용자'),
-    );
+    final container = fakeContainer(server: await t.seedServer());
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
 
     await t.pumpWidget(_wrap(container));
-    await t.pump();
-    await t.pump();
-    await t.pump();
+    await t.settle();
 
     expect(find.text('카카오 사용자'), findsOneWidget);
     expect(find.text('카카오 로그인'), findsOneWidget); // 프로필(나이대) 없을 때의 부제
@@ -59,7 +54,7 @@ void main() {
     expect(find.text('로그아웃'), findsOneWidget);
 
     await t.tap(find.text('로그아웃'));
-    await t.pump();
+    await t.settle();
 
     expect(find.text('카카오 사용자'), findsNothing);
     expect(find.text('로그아웃'), findsNothing);
@@ -67,17 +62,17 @@ void main() {
 
   testWidgets('logged-in with profile: subtitle is the age group', (t) async {
     final container = fakeContainer(
-      user: const AuthUser(provider: AuthProvider.google, nickname: '구글 사용자'),
-      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+      server: await t.seedServer(
+        provider: AuthProvider.google,
+        profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+      ),
     );
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
 
     await t.pumpWidget(_wrap(container));
-    await t.pump();
-    await t.pump();
-    await t.pump();
+    await t.settle();
 
     expect(find.text(AgeGroup.thirties.label), findsOneWidget);
     expect(find.text('Google'), findsOneWidget);
