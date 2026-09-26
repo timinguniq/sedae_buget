@@ -32,12 +32,13 @@ class PeerStatsDto {
 
   Map<String, dynamic> toJson() => _$PeerStatsDtoToJson(this);
 
+  /// 모르는 분류 키는 버린다(그 분류만 또래 값 없음이 된다).
   PeerStats toEntity() => PeerStats(
         ageGroup: ageGroup,
         avgMonthlyExpense: avgMonthlyExpense,
         avgSavingsRate: avgSavingsRate,
         avgByCategory: {
-          for (final e in avgByCategory.entries) BudgetCategory.fromId(int.parse(e.key)): e.value,
+          for (final e in avgByCategory.entries) ?BudgetCategory.tryFromId(int.tryParse(e.key) ?? 0): e.value,
         },
         samples: samples,
       );

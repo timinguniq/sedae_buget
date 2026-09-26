@@ -37,17 +37,21 @@ class TransactionDraft {
           existing: null,
         );
 
-  /// [tx]를 고친다. 카테고리는 [catalog]로 판정한다.
-  factory TransactionDraft.edit(Transaction tx, CategoryCatalog catalog) => TransactionDraft._(
-        id: tx.id,
-        amount: tx.amount,
-        type: tx.type,
-        base: catalog.of(tx).base,
-        customCategoryId: tx.customCategoryId,
-        date: tx.date,
-        memo: tx.memo ?? '',
-        existing: tx,
-      );
+  /// [tx]를 고친다. 카테고리는 [catalog]로 판정한다. 수입은 카테고리가 없어 판정하지 않고
+  /// 적힌 기본 분류 id를 그대로 둔다(고치지 않은 값을 바꿔 보내지 않게; 모르는 id면 식비).
+  factory TransactionDraft.edit(Transaction tx, CategoryCatalog catalog) {
+    final expense = tx.type == TransactionType.expense;
+    return TransactionDraft._(
+      id: tx.id,
+      amount: tx.amount,
+      type: tx.type,
+      base: expense ? catalog.of(tx).base : BudgetCategory.tryFromId(tx.categoryId) ?? BudgetCategory.food,
+      customCategoryId: expense ? tx.customCategoryId : null,
+      date: tx.date,
+      memo: tx.memo ?? '',
+      existing: tx,
+    );
+  }
 
   /// 저장할 거래의 id.
   final String id;

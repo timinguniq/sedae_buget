@@ -21,4 +21,14 @@ void main() {
     expect(back.avgByCategory, original.avgByCategory);
     expect(back.samples, original.samples);
   });
+
+  // 서버가 분류를 늘려도 또래 부분 전체가 실패하지 않는다. 모르는 키만 버린다.
+  test('모르는 분류 키는 버리고 아는 키는 남긴다', () {
+    final stats = PeerStatsDto.fromJson({
+      'ageGroup': 'thirties', 'avgMonthlyExpense': 1000000, 'avgSavingsRate': 0.2,
+      'avgByCategory': {'1': 300000, '13': 5000, 'x': 1, '0': 2},
+      'samples': [1, 2, 3],
+    }).toEntity();
+    expect(stats.avgByCategory, {BudgetCategory.food: 300000});
+  });
 }

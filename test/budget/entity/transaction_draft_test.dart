@@ -131,6 +131,23 @@ void main() {
   });
 
   group('기존 거래 고치기', () {
+    // 수입은 카테고리가 없다. 서버가 수입에 어떤 분류 id를 적었든 사용자 카테고리로 판정하지 않고,
+    // 모르는 id면 새 거래처럼 식비로 둔다.
+    test('수입을 고칠 때는 분류를 판정하지 않는다', () {
+      final income = _saved(categoryId: 0).copyWith(type: TransactionType.income);
+      final d = TransactionDraft.edit(income, const CategoryCatalog());
+      expect(d.hasCategory, isFalse);
+      expect(d.base, BudgetCategory.food);
+      expect(d.customCategoryId, isNull);
+    });
+
+    // 앱은 수입의 분류를 쓰지 않지만, 고치지 않은 값을 조용히 바꿔 보내지도 않는다.
+    test('수입을 다시 저장해도 적힌 분류 id는 그대로다', () {
+      final income = _saved(categoryId: BudgetCategory.clothing.id).copyWith(type: TransactionType.income);
+      final tx = TransactionDraft.edit(income, const CategoryCatalog()).toTransaction(const CategoryCatalog());
+      expect(tx.categoryId, BudgetCategory.clothing.id);
+    });
+
     test('거래의 값으로 시작한다', () {
       final d = TransactionDraft.edit(_saved(memo: '점심'), const CategoryCatalog());
       expect(d.isEdit, isTrue);

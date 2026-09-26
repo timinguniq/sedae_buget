@@ -21,4 +21,13 @@ enum BudgetCategory {
   /// Throws [StateError] if [id] is not one of the 12 defined category ids.
   static BudgetCategory fromId(int id) =>
       BudgetCategory.values.firstWhere((e) => e.id == id);
+
+  /// 12개 분류가 아니면 null. 서버에서 온 id처럼 모를 수 있는 값은 이것으로 읽고,
+  /// 모를 때 어떻게 할지는 서버 응답을 엔티티로 바꾸는 쪽(DTO)이 정한다.
+  static BudgetCategory? tryFromId(int id) {
+    for (final c in BudgetCategory.values) {
+      if (c.id == id) return c;
+    }
+    return null;
+  }
 }

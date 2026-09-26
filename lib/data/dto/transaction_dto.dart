@@ -30,11 +30,12 @@ class TransactionDto {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  /// 서버 응답(UTC) → 엔티티(로컬 시각).
+  /// 서버 응답(UTC) → 엔티티(로컬 시각). 모르는 분류 id(서버가 늘린 분류, 수입에 적힌 아무 값)는
+  /// 기타로 읽는다 — 지출은 합계에서 빠지지 않고, 수입의 분류는 앱이 쓰지 않는다.
   Transaction toEntity() => Transaction(
         id: id,
         amount: amount,
-        categoryId: categoryId,
+        categoryId: (BudgetCategory.tryFromId(categoryId) ?? BudgetCategory.etc).id,
         date: date.toLocal(),
         type: type,
         memo: memo,

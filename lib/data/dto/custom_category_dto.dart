@@ -15,7 +15,12 @@ class CustomCategoryDto {
   final String name;
   final int baseCategoryId;
 
-  CustomCategory toEntity() => CustomCategory(id: id, name: name, baseCategoryId: baseCategoryId);
+  /// 모르는 상위 분류(서버가 늘린 분류)는 기타로 읽는다.
+  CustomCategory toEntity() => CustomCategory(
+        id: id,
+        name: name,
+        baseCategoryId: (BudgetCategory.tryFromId(baseCategoryId) ?? BudgetCategory.etc).id,
+      );
 }
 
 /// PUT 바디. id는 경로에 있으므로 보내지 않는다.
