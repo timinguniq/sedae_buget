@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:sedae_budget/entity/entity.dart';
@@ -26,8 +27,9 @@ Transaction _expense(int amount, int day, {int categoryId = 7, String? memo, Str
         amount: amount, categoryId: categoryId, date: _d(day), type: TransactionType.expense,
         memo: memo, customCategoryId: customCategoryId);
 
-/// [transactions]·[customs]를 심은 서버로 지난 달 내역 화면을 띄운다. [faults]로 서버 장애를 건다.
-Future<void> _pump(
+/// [transactions]·[customs]를 심은 서버로 지난 달 내역 화면을 띄우고 그 컨테이너를 돌려준다.
+/// [faults]로 서버 장애를 건다.
+Future<ProviderContainer> _pump(
   WidgetTester tester, {
   List<Transaction>? transactions,
   List<CustomCategory> customs = const [],
@@ -49,6 +51,7 @@ Future<void> _pump(
   container.read(selectedMonthProvider.notifier).prev();
   await tester.pumpWidget(fakeScope(container, const MaterialApp(home: TransactionListPage())));
   await tester.settle();
+  return container;
 }
 
 void main() {
@@ -118,6 +121,30 @@ void main() {
     await tester.tap(find.widgetWithText(DesignChip, label));
     await tester.settle();
     expect(find.byType(TransactionTile), findsOneWidget);
+  });
+
+  // 이전에는 고른 칩이 상위 4개 밖으로 밀려 사라져도 목록은 그 분류로 걸러진 채 남고, 어느 칩도 켜져 있지 않았다.
+  testWidgets('고른 분류가 칩에서 빠지면 필터가 풀린다', (tester) async {
+    final container = await _pump(tester, transactions: [
+      _expense(5000, 5, categoryId: BudgetCategory.food.id),
+      _expense(4000, 4, categoryId: BudgetCategory.transport.id),
+      _expense(3000, 3, categoryId: BudgetCategory.clothing.id),
+      _expense(2000, 2, categoryId: BudgetCategory.health.id),
+    ]);
+    final health = find.widgetWithText(DesignChip, BudgetCategory.health.label);
+    await tester.ensureVisible(health); // 가로로 스크롤되는 칩 줄의 끝
+    await tester.tap(health);
+    await tester.settle();
+    expect(find.byType(TransactionTile), findsOneWidget);
+
+    // 더 큰 교육비가 생겨 보건이 상위 4개 밖으로 밀린다.
+    await tester.untilDone(container.read(monthlyTransactionsProvider.notifier)
+        .save(TransactionDraft.create(_d(6)).withAmount(10000).pickBase(BudgetCategory.education)));
+    await tester.settle();
+
+    expect(find.widgetWithText(DesignChip, BudgetCategory.health.label), findsNothing);
+    expect(tester.widget<DesignChip>(find.widgetWithText(DesignChip, '전체')).style, DesignChipStyle.ink);
+    expect(find.byType(TransactionTile), findsNWidgets(5));
   });
 
   testWidgets('하루 그룹마다 끝에 배너 광고 자리(DayAdBanner)가 붙는다', (tester) async {

@@ -35,6 +35,8 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
         data: (o) {
           final m = o.month;
           final topCats = m.topCategories(4).map((e) => e.key).toList();
+          // 고른 분류가 칩에서 빠지면(더 큰 지출이 생겨 상위 4개 밖으로) 필터를 푼다.
+          if (!topCats.contains(_filter)) _filter = null;
           final filter = _filter;
           final filtered = filter == null ? m.transactions : m.inCategory(filter);
           return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
