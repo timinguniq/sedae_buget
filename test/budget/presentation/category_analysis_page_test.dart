@@ -44,7 +44,8 @@ void main() {
     await _pump(tester, [_expense(1920000, 7, 5)]);
     expect(find.text('카테고리 분석'), findsOneWidget);
     expect(find.byType(RoundIconButton), findsOneWidget);
-    expect(find.textContaining('총지출'), findsOneWidget);
+    // 도넛 가운데는 보고 있는 달의 이름으로 부른다(이전에는 이번 달도 '9월 총지출'이었다).
+    expect(find.text('이번 달 총지출'), findsOneWidget);
     expect(find.text('192만'), findsOneWidget);
 
     final now = DateTime.now();
@@ -57,6 +58,7 @@ void main() {
     await tester.tap(find.byKey(const Key('month-prev')));
     await tester.settle();
     expect(find.text(label(DateTime(now.year, now.month - 1))), findsOneWidget);
+    expect(find.text('지출이 없어요'), findsOneWidget);
   });
 
   // 또래 통계가 실패해도 내 분석은 보인다. 또래 비교 토글만 빠진다.

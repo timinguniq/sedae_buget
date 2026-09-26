@@ -76,6 +76,13 @@ class TransactionDraft {
   /// 금액이 0이면 저장하지 않는다.
   bool get canSave => amount > 0;
 
+  /// 고를 수 있는 가장 늦은 날짜. 보고 있는 달은 이번 달보다 뒤로 갈 수 없어서 미래로 적은 거래는
+  /// 어느 화면에도 보이지 않으므로 오늘까지다. 이미 미래로 적힌 거래를 고칠 때는 그 날짜까지다.
+  DateTime latestDate(DateTime today) {
+    final saved = existing?.date;
+    return saved != null && saved.isAfter(today) ? saved : today;
+  }
+
   /// 카테고리를 고르는가. 수입은 카테고리가 없다(고른 카테고리는 지출로 되돌릴 때를 위해 남겨 둔다).
   bool get hasCategory => type == TransactionType.expense;
 

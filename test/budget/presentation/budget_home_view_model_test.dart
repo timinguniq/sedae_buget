@@ -82,7 +82,7 @@ void main() {
     final initial = container.read(selectedMonthProvider);
     container.read(selectedMonthProvider.notifier).prev();
     final prev = container.read(selectedMonthProvider);
-    expect(prev, DateTime(initial.year, initial.month - 1));
+    expect(prev, initial.previous);
     container.read(selectedMonthProvider.notifier).next();
     expect(container.read(selectedMonthProvider), initial);
   });
@@ -95,7 +95,7 @@ void main() {
 
     expect(notifier.canGoNext, isFalse);
     notifier.next();
-    expect(container.read(selectedMonthProvider), DateTime(now.year, now.month));
+    expect(container.read(selectedMonthProvider), YearMonth.of(now));
     notifier.prev();
     expect(notifier.canGoNext, isTrue);
   });

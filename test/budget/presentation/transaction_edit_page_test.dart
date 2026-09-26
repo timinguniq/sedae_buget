@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/page/budget/ledger.view_model.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart';
 
 import '../../helper/fakes.dart';
@@ -26,6 +27,7 @@ void main() {
     List<CustomCategory> customs = const [],
     void Function(ServerFaults faults)? faults,
     Transaction? existing,
+    bool lastMonth = false,
   }) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
@@ -35,6 +37,7 @@ void main() {
     final server = await tester.seedServer(categories: customs);
     faults?.call(server.faults);
     final container = fakeContainer(server: server);
+    if (lastMonth) container.read(selectedMonthProvider.notifier).prev();
     final router = GoRouter(
       initialLocation: '/',
       routes: [
@@ -161,6 +164,33 @@ void main() {
     final saved = (await _onServer(tester, server)).single;
     expect(saved.customCategoryId, isNotNull);
     expect(saved.categoryId, BudgetCategory.etc.id); // 시트 기본 상위 분류
+  });
+
+  // 이전에는 지난 달을 보며 추가해도 오늘 날짜로 저장돼, 보고 있는 목록에 나타나지 않았다.
+  testWidgets('지난 달을 보며 추가하면 그 달의 거래로 저장한다', (tester) async {
+    final server = await pumpEditPage(tester, lastMonth: true);
+    for (final k in ['1', '0', '0', '0']) {
+      await tester.tap(find.text(k));
+      await tester.pump();
+    }
+    await tester.tap(find.byKey(const Key('save-button')));
+    await tester.settle();
+
+    final now = DateTime.now();
+    final last = DateTime(now.year, now.month - 1);
+    final saved = (await tester.untilDone(server.transactions.getMonth(last.year, last.month))).unwrap();
+    expect(saved.single.amount, 1000);
+  });
+
+  // 이전에는 2100년까지 고를 수 있었는데, 보고 있는 달은 이번 달보다 뒤로 가지 않아
+  // 미래로 적은 거래는 어느 화면에서도 다시 볼 수 없었다.
+  testWidgets('날짜는 오늘까지만 고를 수 있다', (tester) async {
+    await pumpEditPage(tester);
+    await tester.tap(find.byIcon(Icons.calendar_today_outlined));
+    await tester.pumpAndSettle();
+
+    final picker = tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
+    expect(DateUtils.isSameDay(picker.lastDate, DateTime.now()), isTrue);
   });
 
   testWidgets('메모 필드는 전역 inputDecorationTheme의 outline 테두리를 받지 않는다', (tester) async {

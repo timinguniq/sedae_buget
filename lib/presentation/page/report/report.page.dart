@@ -52,7 +52,7 @@ class ReportPage extends ConsumerWidget {
               // ── 헤더 ─────────────────────────────────────────────
               Text('월간 리포트',
                   style: context.typo.caption1W600.copyWith(color: context.color.label.assistive)),
-              Text('${month.year}년 ${month.month}월',
+              Text(month.fullName,
                   style: context.typo.pageTitle.copyWith(color: context.color.label.normal)),
               const SizedBox(height: 14),
 
@@ -199,7 +199,7 @@ class _StatTile extends StatelessWidget {
 class _SelfTrendBars extends StatelessWidget {
   const _SelfTrendBars({required this.trend});
 
-  final List<({DateTime month, int expense})> trend;
+  final List<({YearMonth month, int expense})> trend;
 
   @override
   Widget build(BuildContext context) {

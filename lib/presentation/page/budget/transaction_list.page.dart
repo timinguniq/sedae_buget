@@ -109,12 +109,12 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
 /// 헤더 우측 월 칩 `M월 ▼` — 탭하면 이전/다음 달 선택.
 class _MonthChip extends ConsumerWidget {
   const _MonthChip({required this.month});
-  final DateTime month;
+  final YearMonth month;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final prev = DateTime(month.year, month.month - 1);
-    final next = DateTime(month.year, month.month + 1);
+    final prev = month.previous;
+    final next = month.next;
     final canGoNext = ref.read(selectedMonthProvider.notifier).canGoNext;
     return PopupMenuButton<int>(
       key: const Key('month-chip'),

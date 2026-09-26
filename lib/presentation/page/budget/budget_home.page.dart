@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_rank_card.dart';
@@ -26,7 +25,7 @@ class BudgetHomePage extends ConsumerWidget {
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(DateFormat('yyyy년 M월', 'ko').format(month),
+              Text(month.fullName,
                   style: context.typo.caption1W600.copyWith(color: context.color.label.assistive)),
               Text('$name 요약', style: context.typo.pageTitle.copyWith(color: context.color.label.normal)),
             ]),

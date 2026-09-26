@@ -63,7 +63,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
               child: Stack(alignment: Alignment.center, children: [
                 CategoryDonut(values: values, colors: colors, size: 170, stroke: 36),
                 Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text('${month.month}월 총지출',
+                  Text('${ref.watch(viewedMonthNameProvider)} 총지출',
                       style: context.typo.caption2W600.copyWith(fontSize: 11, color: context.color.label.assistive)),
                   Text(_compactWon(total),
                       style: context.typo.amountDisplaySmall.copyWith(fontSize: 23, color: context.color.label.normal)),
@@ -115,7 +115,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
 /// ‹ 원형 버튼 + "카테고리 분석" + `‹ YYYY.MM ›` 월 네비게이터.
 class _Header extends StatelessWidget {
   const _Header({required this.month, required this.onPrev, required this.onNext});
-  final DateTime month;
+  final YearMonth month;
   final VoidCallback onPrev;
   /// 다음 달로 갈 수 없으면(보고 있는 달이 이번 달) null.
   final VoidCallback? onNext;
@@ -132,7 +132,7 @@ class _Header extends StatelessWidget {
         Row(mainAxisSize: MainAxisSize.min, children: [
           GestureDetector(key: const Key('month-prev'), onTap: onPrev, behavior: HitTestBehavior.opaque,
               child: Padding(padding: const EdgeInsets.all(4), child: Text('‹', style: arrow))),
-          Text(DateFormat('yyyy.MM').format(month),
+          Text(DateFormat('yyyy.MM').format(month.start),
               style: context.typo.caption1W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.normal)),
           GestureDetector(key: const Key('month-next'), onTap: onNext, behavior: HitTestBehavior.opaque,
               child: Padding(padding: const EdgeInsets.all(4), child: Text('›', style: arrow))),

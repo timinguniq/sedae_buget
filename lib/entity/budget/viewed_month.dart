@@ -3,6 +3,7 @@ import 'package:sedae_budget/entity/budget/category_catalog.dart';
 import 'package:sedae_budget/entity/budget/custom_category.dart';
 import 'package:sedae_budget/entity/budget/transaction.dart';
 import 'package:sedae_budget/entity/budget/transaction_type.dart';
+import 'package:sedae_budget/entity/budget/year_month.dart';
 
 /// 분석 화면 한 줄. [custom]이 null이면 기본 분류 자체, 아니면 사용자 카테고리.
 typedef CategoryBreakdown = ({BudgetCategory base, CustomCategory? custom, int amount});
@@ -15,16 +16,15 @@ typedef CategoryBreakdown = ({BudgetCategory base, CustomCategory? custom, int a
 /// - 소득은 프로필 월소득이고, 없으면 이달 수입의 합계다. 잔액·저축률은 이 소득을 기준으로 한다.
 class ViewedMonth {
   ViewedMonth({
-    required DateTime month,
+    required this.month,
     required this.transactions,
     required CategoryCatalog catalog,
     int? profileIncome,
-  })  : month = DateTime(month.year, month.month),
-        _catalog = catalog,
+  })  : _catalog = catalog,
         _profileIncome = profileIncome;
 
-  /// 보고 있는 달(1일).
-  final DateTime month;
+  /// 보고 있는 달.
+  final YearMonth month;
 
   /// 이달 거래(지출·수입, 최신순).
   final List<Transaction> transactions;

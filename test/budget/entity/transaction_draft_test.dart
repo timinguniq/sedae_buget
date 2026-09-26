@@ -130,6 +130,25 @@ void main() {
     });
   });
 
+  // 보고 있는 달은 이번 달보다 뒤로 갈 수 없어서, 미래로 적힌 거래는 어느 화면에도 보이지 않는다.
+  group('고를 수 있는 가장 늦은 날짜', () {
+    final today = DateTime(2026, 9, 26, 14);
+
+    test('새 거래는 오늘까지다', () {
+      expect(TransactionDraft.create(today).latestDate(today), today);
+    });
+
+    // 이미 미래로 적힌 거래를 고칠 때 그 날짜를 고를 수 없으면 날짜 선택기가 열리지 않는다.
+    test('이미 미래로 적힌 거래를 고칠 때는 그 날짜까지다', () {
+      final future = _saved().copyWith(date: DateTime(2026, 10, 5));
+      expect(TransactionDraft.edit(future, const CategoryCatalog()).latestDate(today), DateTime(2026, 10, 5));
+    });
+
+    test('지난 날짜로 적힌 거래를 고칠 때는 오늘까지다', () {
+      expect(TransactionDraft.edit(_saved(), const CategoryCatalog()).latestDate(today), today);
+    });
+  });
+
   group('기존 거래 고치기', () {
     // 수입은 카테고리가 없다. 서버가 수입에 어떤 분류 id를 적었든 사용자 카테고리로 판정하지 않고,
     // 모르는 id면 새 거래처럼 식비로 둔다.
