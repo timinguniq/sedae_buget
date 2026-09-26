@@ -18,7 +18,7 @@ class LoginPage extends ConsumerWidget {
       final error = res.failureOrNull;
       if (error != null && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(error.message.isEmpty ? '로그인하지 못했어요' : error.message),
+          content: Text(failureMessage(UserAction.signIn, error)),
         ));
       }
     }

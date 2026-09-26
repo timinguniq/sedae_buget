@@ -1,4 +1,3 @@
-import 'package:sedae_budget/core/http_client/api_exception.dart';
 import 'package:sedae_budget/core/http_client/auth_token_store.dart';
 import 'package:sedae_budget/core/http_client/session_expiry.dart';
 import 'package:sedae_budget/data/data_source/remote/auth_api.dart';
@@ -22,38 +21,31 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Result<AuthUser?>> currentUser() async {
     if ((await _tokens.read()) == null) return const Result.success(null);
-    try {
-      return Result.success((await callApi(_api.me)).toEntity());
-    } on ApiException catch (e) {
+    return guardApi<AuthUser?>(
+      () async => (await _api.me()).toEntity(),
       // 무효한 세션은 없는 세션과 같다(토큰은 인터셉터가 이미 버렸다).
-      if (e.isUnauthorized) return const Result.success(null);
-      return Result.failure(toErrorResult(e));
-    }
+      recover: (f) => f.reason == FailureReason.unauthorized ? const Result.success(null) : null,
+    );
   }
 
   @override
   Future<Result<AuthUser>> signIn(AuthProvider provider, String idToken) async {
-    try {
-      final res = await callApi(
-        () => _api.login(LoginRequestDto(provider: provider, idToken: idToken)),
-      );
-      await _tokens.write(res.accessToken);
-      return Result.success(res.user.toEntity());
-    } on ApiException catch (e) {
-      return Result.failure(toErrorResult(e));
-    }
+    final res = await guardApi(() async {
+      final login = await _api.login(LoginRequestDto(provider: provider, idToken: idToken));
+      return (token: login.accessToken, user: login.user.toEntity());
+    });
+    final failure = res.failureOrNull;
+    if (failure != null) return Result.failure(failure);
+    final session = res.unwrap();
+    await _tokens.write(session.token);
+    return Result.success(session.user);
   }
 
   @override
   Future<Result<void>> signOut() async {
-    ErrorResult? failure;
-    try {
-      await callApi(_api.logout);
-    } on ApiException catch (e) {
-      // 서버가 응답하지 않아도 로컬 세션은 끝낸다. 다만 실패는 삼키지 않는다.
-      failure = toErrorResult(e);
-    }
+    // 서버가 응답하지 않아도 로컬 세션은 끝낸다. 다만 실패는 삼키지 않는다.
+    final res = await guardApi(_api.logout);
     await _tokens.clear();
-    return failure == null ? const Result.success(null) : Result.failure(failure);
+    return res;
   }
 }

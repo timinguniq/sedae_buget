@@ -36,7 +36,7 @@ class BudgetHomePage extends ConsumerWidget {
           const SizedBox(height: 16),
           Expanded(child: overview.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('불러오기 실패: $e', style: context.typo.body2W400)),
+            error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
             data: (o) {
               final peer = o.peer;
               final savingsRate = o.savingsRate;

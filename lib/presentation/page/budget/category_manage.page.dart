@@ -40,11 +40,11 @@ class _CategoryManagePageState extends ConsumerState<CategoryManagePage> {
       ),
     );
     if (ok != true || !mounted) return;
-    final error = categoryErrorMessage(
-        await ref.read(customCategoriesProvider.notifier).remove(category));
+    final error = (await ref.read(customCategoriesProvider.notifier).remove(category)).failureOrNull;
     if (!mounted) return;
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(failureMessage(UserAction.delete, error))));
     }
   }
 
@@ -62,7 +62,7 @@ class _CategoryManagePageState extends ConsumerState<CategoryManagePage> {
         Expanded(
           child: asyncCustoms.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('카테고리를 불러오지 못했어요: $e')),
+            error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
             data: (customs) {
               final catalog = CategoryCatalog(customs);
               return ListView(

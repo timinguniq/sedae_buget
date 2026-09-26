@@ -34,7 +34,7 @@ class ReportPage extends ConsumerWidget {
     return DefaultLayout(
       child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
+        error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
         data: (o) {
           // 리포트는 또래 비교가 중심이라, 또래 통계를 못 읽으면 화면 전체를 안내로 바꾼다.
           final peer = o.peer;
@@ -125,7 +125,7 @@ class ReportPage extends ConsumerWidget {
                   selfTrend.when(
                     loading: () =>
                         const SizedBox(height: 96, child: Center(child: CircularProgressIndicator())),
-                    error: (e, _) => Text('$e'),
+                    error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
                     data: (trend) => _SelfTrendBars(trend: trend),
                   ),
                 ]),

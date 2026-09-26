@@ -29,7 +29,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
         ),
         Expanded(child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('불러오기 실패: $e')),
+        error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
         data: (o) {
           final breakdown = o.breakdown;
           final peer = o.peer;

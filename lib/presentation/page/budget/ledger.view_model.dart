@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sedae_budget/domain/usecase/category_usecase.dart';
 import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 
@@ -55,6 +56,16 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   }
 
   Future<Result<Transaction>> delete(Transaction tx) => _apply(() => _usecase.delete(tx));
+
+  /// 불러오기에 실패한 화면의 '다시 시도'. 달 화면이 읽는 서버 데이터
+  /// (이달 거래·추이·사용자 카테고리·또래 통계)를 모두 다시 읽는다.
+  void reload() {
+    ref.invalidateSelf();
+    ref.invalidate(selfTrendProvider);
+    ref.invalidate(customCategoriesProvider);
+    ref.invalidate(peerStatsProvider);
+    ref.invalidate(generationAvgProvider);
+  }
 
   /// 거래가 바뀌면 이달 거래와 추이를 다시 읽는다.
   Future<Result<Transaction>> _apply(Future<Result<Transaction>> Function() run) async {

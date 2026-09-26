@@ -1,41 +1,53 @@
 import 'package:dio/dio.dart';
-import 'package:sedae_budget/core/http_client/api_exception.dart';
+import 'package:sedae_budget/core/util/logger/custom_logger.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-/// retrofit 호출을 실행하고 [DioException]을 [ApiException]으로 통일한다.
-/// data 레이어 안에서만 쓴다 — domain 계약은 [Result]다.
-Future<T> callApi<T>(Future<T> Function() run) async {
+final _logger = CustomLogger.create(tag: 'api');
+
+/// retrofit 호출([run])을 [Result]로 바꾼다. repository는 서버를 모두 이것으로 부른다.
+///
+/// 모든 실패가 여기서 [ErrorResult]로 끝나고 repository는 던지지 않는다.
+/// - 응답을 못 받음: 시간 초과면 timeout, 그 밖은 offline.
+/// - 오류 응답: 상태코드로 [FailureReason]을 정하고, 서버 바디 `{code, message}`의 도메인 코드와 문구만 옮긴다.
+///   HTTP 상태·전송 오류 코드와 Dio의 개발자용 문구는 여기서 버린다.
+/// - 해석할 수 없는 성공 응답(빈 바디·빠진 필드·모르는 값): server.
+///
+/// [recover]가 실패를 값으로 바꾸면(예: 프로필이 아직 없음) 그 값으로 성공한다. null이면 실패 그대로다.
+Future<Result<T>> guardApi<T>(
+  Future<T> Function() run, {
+  Result<T>? Function(ErrorResult failure)? recover,
+}) async {
   try {
-    return await run();
+    return Result.success(await run());
   } on DioException catch (e) {
-    throw ApiException.fromDio(e);
+    final failure = _failureOf(e);
+    return recover?.call(failure) ?? Result.failure(failure);
+  } catch (e, s) {
+    _logger.e('서버 응답을 해석하지 못했어요', error: e, stackTrace: s);
+    return const Result.failure(ErrorResult(reason: FailureReason.server, message: ''));
   }
 }
 
-/// [callApi]의 실패를 [Result.failure]로 바꾼다. repository는 모두 이 계약을 쓴다.
-Future<Result<T>> guardApi<T>(Future<T> Function() run) async {
-  try {
-    return Result.success(await callApi(run));
-  } on ApiException catch (e) {
-    return Result.failure(toErrorResult(e));
+ErrorResult _failureOf(DioException e) {
+  switch (e.type) {
+    case DioExceptionType.connectionTimeout:
+    case DioExceptionType.sendTimeout:
+    case DioExceptionType.receiveTimeout:
+      return const ErrorResult(reason: FailureReason.timeout, message: '');
+    case DioExceptionType.badResponse:
+      final data = e.response?.data;
+      final body = data is Map && data['code'] is String ? data : null;
+      return ErrorResult(
+        reason: _reasonOf(e.response?.statusCode),
+        message: (body?['message'] as String?) ?? '',
+        code: body?['code'] as String?,
+      );
+    default:
+      return const ErrorResult(reason: FailureReason.offline, message: '');
   }
 }
 
-/// 전송 계층 실패를 도메인 실패로 번역한다. HTTP 상태코드는 여기서 끝난다.
-ErrorResult toErrorResult(ApiException e) => ErrorResult(
-      reason: _reasonOf(e),
-      message: e.message,
-      code: _domainCode(e),
-    );
-
-FailureReason _reasonOf(ApiException e) {
-  switch (e.code) {
-    case 'TIMEOUT':
-      return FailureReason.timeout;
-    case 'NETWORK_ERROR':
-      return FailureReason.offline;
-  }
-  final status = e.statusCode;
+FailureReason _reasonOf(int? status) {
   if (status == null) return FailureReason.unknown;
   if (status >= 500) return FailureReason.server;
   return switch (status) {
@@ -46,11 +58,4 @@ FailureReason _reasonOf(ApiException e) {
     400 || 422 => FailureReason.invalid,
     _ => FailureReason.unknown,
   };
-}
-
-/// 서버가 준 도메인 코드만 남긴다. `HTTP_500`·`TIMEOUT` 같은 전송 계층 코드는 버린다.
-String? _domainCode(ApiException e) {
-  if (e.code == 'TIMEOUT' || e.code == 'NETWORK_ERROR') return null;
-  if (e.code.startsWith('HTTP_')) return null;
-  return e.code;
 }

@@ -42,22 +42,22 @@ class _State extends ConsumerState<TransactionEditPage> {
   Future<void> _save() async {
     final draft = _draft.withMemo(_memo.text);
     if (!draft.canSave) return;
-    await _send(() => ref.read(monthlyTransactionsProvider.notifier).save(draft), '저장하지 못했어요');
+    await _send(() => ref.read(monthlyTransactionsProvider.notifier).save(draft), UserAction.save);
   }
 
-  Future<void> _delete() =>
-      _send(() => ref.read(monthlyTransactionsProvider.notifier).delete(widget.existing!), '삭제하지 못했어요');
+  Future<void> _delete() => _send(
+      () => ref.read(monthlyTransactionsProvider.notifier).delete(widget.existing!), UserAction.delete);
 
-  Future<void> _send(Future<Result<Transaction>> Function() request, String fallback) async {
+  Future<void> _send(Future<Result<Transaction>> Function() request, UserAction action) async {
     if (_busy) return;
     setState(() => _busy = true);
     final res = await request();
     if (mounted) setState(() => _busy = false);
-    _closeOr(res, fallback);
+    _closeOr(res, action);
   }
 
   /// 성공이면 화면을 닫고, 실패면 입력을 둔 채 문구만 보여준다.
-  void _closeOr(Result<Transaction> res, String fallback) {
+  void _closeOr(Result<Transaction> res, UserAction action) {
     if (!mounted) return;
     final error = res.failureOrNull;
     if (error == null) {
@@ -65,7 +65,7 @@ class _State extends ConsumerState<TransactionEditPage> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(error.message.isEmpty ? fallback : error.message)),
+      SnackBar(content: Text(failureMessage(action, error))),
     );
   }
 

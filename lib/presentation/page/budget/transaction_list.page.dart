@@ -30,7 +30,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
     return DefaultLayout(
       child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('불러오기 실패: $e')),
+        error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
         data: (o) {
           final txs = o.transactions;
           final topCats = o.topCategories(4).map((e) => e.key).toList();

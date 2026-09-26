@@ -131,7 +131,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400)); // SnackBar 등장
 
     expect(find.byType(TransactionEditPage), findsOneWidget);
-    expect(find.text('네트워크에 연결할 수 없습니다.'), findsOneWidget);
+    expect(find.text('저장하지 못했어요. 인터넷에 연결되어 있지 않아요'), findsOneWidget);
   });
 
   // 첫 저장이 끝나기 전에 다시 누르면 거래가 두 번 저장됐다.

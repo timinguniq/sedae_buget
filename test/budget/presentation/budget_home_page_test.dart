@@ -106,6 +106,24 @@ void main() {
     expect(find.textContaining('또래 평균'), findsNothing);
   });
 
+  // 이전에는 '불러오기 실패: <예외 문자열>'만 보이고 다시 읽을 방법이 없었다.
+  testWidgets('이달 거래를 못 읽으면 이유와 다시 시도를 보여주고, 다시 시도하면 읽는다', (tester) async {
+    await _pumpHome(tester, fakeContainer(
+      user: testUser,
+      profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000),
+      transactions: _OfflineOnceRepo(),
+      peerStats: StubPeerData.forGroup(AgeGroup.thirties),
+    ));
+
+    expect(find.text('불러오지 못했어요. 인터넷에 연결되어 있지 않아요'), findsOneWidget);
+    await tester.tap(find.text('다시 시도'));
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('택시'), findsOneWidget);
+    expect(find.text('다시 시도'), findsNothing);
+  });
+
   // 소득(프로필 월소득·이달 수입)이 없으면 저축률을 계산할 수 없다.
   testWidgets('소득이 없으면 저축률 카드를 보이지 않는다', (tester) async {
     await _pumpHome(tester, fakeContainer(
@@ -131,6 +149,16 @@ Future<void> _pumpHome(WidgetTester tester, ProviderContainer container) async {
   ));
   await tester.pump();
   await tester.pump();
+}
+
+/// 처음 한 번은 네트워크 오류로 이달 거래를 못 읽고, 다시 읽으면 읽는 저장소.
+class _OfflineOnceRepo extends _FakeRepo {
+  var _reads = 0;
+
+  @override
+  Future<Result<List<Transaction>>> getMonth(int y, int m) async => _reads++ == 0
+      ? const Result.failure(ErrorResult(reason: FailureReason.offline, message: ''))
+      : super.getMonth(y, m);
 }
 
 /// 이달 지출 한 건이 사용자 카테고리('반려동물' → 기타)로 잡힌 달.
