@@ -73,28 +73,29 @@ class ComparePage extends ConsumerWidget {
               ],
               DistributionHistogram(stats: peer, myExpense: myExpense),
               const SizedBox(height: 18),
-              VersusBarCard(
-                title: '$name 지출 비교',
-                mineFraction: myExpense / expenseMax,
-                peerFraction: peerAvg / expenseMax,
-                mineText: manWon(myExpense),
-                peerText: manWon(peerAvg),
-                footer: total == null
-                    ? null
-                    : Text(
-                        switch (total.direction) {
-                          PeerDirection.more => '또래보다 약 ${manWon(total.mine - total.peer)}원 더 ▲',
-                          PeerDirection.less => '또래보다 약 ${manWon(total.peer - total.mine)}원 덜 ▼',
-                          PeerDirection.similar => '또래와 비슷해요',
-                        },
-                        style: context.typo.caption2W600.copyWith(
-                          fontSize: 11,
-                          color: total.direction == PeerDirection.more
-                              ? context.color.primary.normal
-                              : context.color.label.alternative),
-                      ),
-              ),
-              const SizedBox(height: 13),
+              // 또래 월평균이 없으면 비교하지 않는다(0원 막대를 그리지 않는다).
+              if (total != null) ...[
+                VersusBarCard(
+                  title: '$name 지출 비교',
+                  mineFraction: myExpense / expenseMax,
+                  peerFraction: peerAvg / expenseMax,
+                  mineText: manWon(myExpense),
+                  peerText: manWon(peerAvg),
+                  footer: Text(
+                    switch (total.direction) {
+                      PeerDirection.more => '또래보다 약 ${manWon(total.mine - total.peer)}원 더 ▲',
+                      PeerDirection.less => '또래보다 약 ${manWon(total.peer - total.mine)}원 덜 ▼',
+                      PeerDirection.similar => '또래와 비슷해요',
+                    },
+                    style: context.typo.caption2W600.copyWith(
+                      fontSize: 11,
+                      color: total.direction == PeerDirection.more
+                          ? context.color.primary.normal
+                          : context.color.label.alternative),
+                  ),
+                ),
+                const SizedBox(height: 13),
+              ],
               VersusBarCard(
                 title: '소득 대비 저축률',
                 barHeight: 16,

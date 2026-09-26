@@ -72,6 +72,13 @@ void main() {
     expect(find.text(BudgetCategory.fromId(11).label), findsNothing);
   });
 
+  // 또래 값이 없으면 비교하지 않는다. 이전에는 또래 막대를 0원으로 그린 비교 카드가 남았다.
+  testWidgets('또래 월평균이 없으면 지출 비교 카드를 보이지 않는다', (tester) async {
+    await _pumpCompare(tester, _peer(avg: 0));
+    expect(find.textContaining('지출 비교'), findsNothing);
+    expect(find.text('항목별 차이'), findsOneWidget);
+  });
+
   // 이전에는 지난 달 값을 보면서도 제목이 '이번 달 지출 비교'였다.
   testWidgets('지난 달을 보면 지출 비교 제목에 그 달 이름을 쓴다', (tester) async {
     await _pumpCompare(tester, _peer(), lastMonth: true);
