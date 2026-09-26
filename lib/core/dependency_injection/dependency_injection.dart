@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:sedae_budget/core/core.dart';
@@ -6,26 +7,20 @@ import 'package:sedae_budget/domain/domain.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final locator = GetIt.instance;
-final _logger = CustomLogger.create(tag: 'DI');
 
-/// API 인프라. 다른 configure*보다 먼저 호출한다. env가 local이면 Stub API를 끼운다.
+/// API 인프라. 다른 configure*보다 먼저 호출한다. 빌드 환경이 local이면 Stub API가 서버 대신 답한다.
 void configureApiDependencies(AuthTokenStore tokenStore) {
-  if (locator.isRegistered<ApiClient>()) return;
-  final env = EnvironmentConfig.env;
-  final isStub = env == AppEnvironment.local;
-  if (!isStub && env.endpoint.server.isEmpty) {
-    _logger.w('env=${env.name}인데 서버 주소가 비어 있음 — environment_config.dart에 기입 필요');
-  }
+  if (locator.isRegistered<Dio>()) return;
   final sessionExpiry = SessionExpiry();
   locator
     ..registerSingleton<AuthTokenStore>(tokenStore)
     ..registerSingleton<SessionExpiry>(sessionExpiry)
-    ..registerSingleton<ApiClient>(
-      ApiClient.create(
-        baseUrl: env.endpoint.server,
+    ..registerSingleton<Dio>(
+      connectToServer(
+        env: AppEnvironment.current,
         tokenStore: tokenStore,
         sessionExpiry: sessionExpiry,
-        extra: [if (isStub) StubApiInterceptor(store: SharedPrefsStubStateStore())],
+        localServer: () => StubApiInterceptor(store: SharedPrefsStubStateStore()),
       ),
     );
 }
@@ -35,13 +30,13 @@ void configureBudgetDependencies() {
   if (locator.isRegistered<TransactionUsecase>()) return;
   locator
     ..registerSingleton<TransactionRepository>(
-      TransactionRepositoryImpl(TransactionApi(locator<ApiClient>().dio)),
+      TransactionRepositoryImpl(TransactionApi(locator<Dio>())),
     )
     ..registerSingleton<TransactionUsecase>(
       TransactionUsecase(locator<TransactionRepository>()),
     )
     ..registerSingleton<CategoryRepository>(
-      CategoryRepositoryImpl(CategoryApi(locator<ApiClient>().dio)),
+      CategoryRepositoryImpl(CategoryApi(locator<Dio>())),
     )
     ..registerSingleton<CategoryUsecase>(
       CategoryUsecase(locator<CategoryRepository>()),
@@ -52,7 +47,7 @@ void configureBudgetDependencies() {
 void configurePeerDependencies() {
   if (locator.isRegistered<PeerStatsRepository>()) return;
   locator.registerSingleton<PeerStatsRepository>(
-    PeerStatsRepositoryImpl(PeerStatsApi(locator<ApiClient>().dio)),
+    PeerStatsRepositoryImpl(PeerStatsApi(locator<Dio>())),
   );
 }
 
@@ -63,7 +58,7 @@ void configureUserDependencies() {
   locator
     ..registerSingleton<AuthRepository>(
       AuthRepositoryImpl(
-        AuthApi(locator<ApiClient>().dio),
+        AuthApi(locator<Dio>()),
         locator<AuthTokenStore>(),
         locator<SessionExpiry>(),
       ),
@@ -73,7 +68,7 @@ void configureUserDependencies() {
       AuthUsecase(locator<AuthRepository>(), locator<SocialIdTokenProvider>()),
     )
     ..registerSingleton<UserProfileRepository>(
-      UserProfileRepositoryImpl(UserProfileApi(locator<ApiClient>().dio)),
+      UserProfileRepositoryImpl(UserProfileApi(locator<Dio>())),
     );
 }
 

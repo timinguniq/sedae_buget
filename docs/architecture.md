@@ -17,6 +17,7 @@
 
 - 폴더 구성: `data`는 `data_source`(`local`·`remote`)·`dto`·`repository_impl`, `domain`은 `manager`·`repository`·`usecase`로만 나눈다.
 - 원격 API: `data_source/remote/*_api.dart`는 retrofit 애너테이션으로 엔드포인트만 선언하고 DTO만 주고받는다. 호출·`DioException`→`ApiException`/`Result` 변환(`repository_impl/api_call.dart`)·엔티티 변환은 `repository_impl`이 한다. 명세나 DTO를 바꾸면 코드 생성을 다시 실행한다.
+- 서버 연결: 어느 서버로 보낼지(환경·주소), 인터셉터 순서, 빌드별 요청 로그는 `core/http_client/server_connection.dart`의 `connectToServer`만 정한다. local 환경이면 Stub이 서버 대신 답하고, local이 아닌데 주소가 비었으면 시작할 때 멈춘다. release 빌드는 요청 로그를 남기지 않는다.
 - 오류 규약: `domain/repository`의 모든 메서드는 `Result<T>`를 돌려준다(`test/architecture/layer_dependency_test.dart`가 강제). 실패 이유는 `FailureReason` 도메인 enum이고, HTTP 상태코드·전송 오류 코드는 `repository_impl/api_call.dart`에서 번역돼 domain으로 넘어가지 않는다. 서버가 준 도메인 코드(`CATEGORY_DUPLICATE` 등)만 `ErrorResult.code`로 남는다. 화면은 provider 안에서 `Result.unwrap()`으로 `AsyncValue` 오류로 바꾸거나, 변경 작업이면 `Result`를 그대로 받아 문구를 띄운다.
 - 상태 관리: Riverpod. 통신이 필요한 화면은 `page/<기능>/<화면>.view_model.dart`에 Notifier·provider를 둔다. 여러 화면이 같은 서버 상태를 볼 때는 그 상태를 가진 화면의 viewmodel을 함께 쓴다(예: 세션 `login.view_model.dart`).
   - 장부: 로그인 세션에 묶인 가계부 데이터(이달 거래·최근 6개월 추이·사용자 카테고리)는 `page/budget/ledger.view_model.dart`에 둔다. 세션이 바뀌면 다시 읽고 로그인 전에는 비어 있다. 변경 뒤 무엇을 다시 읽을지도 여기서만 정한다(화면은 `ref.invalidate`하지 않는다).
