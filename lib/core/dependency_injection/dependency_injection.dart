@@ -86,3 +86,9 @@ void configureAdDependencies(SharedPreferences prefs) {
     ..registerSingleton<AdService>(ads)
     ..registerSingleton<LaunchInterstitial>(LaunchInterstitial(prefs, ads));
 }
+
+/// 테마 모드 저장. [prefs]는 앱을 켤 때 읽어 둔 것이라 첫 화면부터 고른 테마로 그린다.
+void configureThemeDependencies(SharedPreferences prefs) {
+  if (locator.isRegistered<ThemeModeStore>()) return;
+  locator.registerSingleton<ThemeModeStore>(ThemeModeStore(prefs));
+}

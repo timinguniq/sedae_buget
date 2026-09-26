@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
 import 'package:sedae_budget/entity/entity.dart';
@@ -47,10 +46,7 @@ Future<void> _pumpCompare(WidgetTester tester, PeerStats peer, {bool lastMonth =
   addTearDown(tester.view.resetDevicePixelRatio);
   final container = fakeContainer(user: testUser, transactions: _FakeRepo(), peerStats: peer);
   if (lastMonth) container.read(selectedMonthProvider.notifier).prev();
-  await tester.pumpWidget(provider.ChangeNotifierProvider(
-    create: (_) => ThemeService(),
-    child: fakeScope(container, const MaterialApp(home: ComparePage())),
-  ));
+  await tester.pumpWidget(fakeScope(container, const MaterialApp(home: ComparePage())));
   await tester.pump();
   await tester.pump();
 }
@@ -107,10 +103,7 @@ void main() {
       transactions: _FakeRepo(),
       peerStats: StubPeerData.forGroup(AgeGroup.thirties),
     );
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(container, const MaterialApp(home: ComparePage())),
-    ));
+    await tester.pumpWidget(fakeScope(container, const MaterialApp(home: ComparePage())));
     await tester.pump();
     await tester.pump();
 
@@ -138,10 +131,7 @@ void main() {
       transactions: _FakeRepo(),
       peerStats: StubPeerData.forGroup(AgeGroup.thirties),
     );
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(container, const MaterialApp(home: ComparePage())),
-    ));
+    await tester.pumpWidget(fakeScope(container, const MaterialApp(home: ComparePage())));
     await tester.pump();
     await tester.pump();
 
@@ -156,10 +146,7 @@ void main() {
       transactions: _FakeRepo(),
       peerRepository: FailingPeerStatsRepository(),
     );
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(container, const MaterialApp(home: ComparePage())),
-    ));
+    await tester.pumpWidget(fakeScope(container, const MaterialApp(home: ComparePage())));
     await tester.pump();
     await tester.pump();
 
@@ -181,10 +168,7 @@ void main() {
       peerStats: StubPeerData.forGroup(AgeGroup.thirties),
     );
 
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(container, const MaterialApp(home: ComparePage())),
-    ));
+    await tester.pumpWidget(fakeScope(container, const MaterialApp(home: ComparePage())));
     await tester.pump();
     await tester.pump();
 

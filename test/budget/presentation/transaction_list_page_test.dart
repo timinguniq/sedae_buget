@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/day_ad_banner.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/transaction_tile.dart';
@@ -54,13 +52,8 @@ void main() {
   }
 
   testWidgets('renders a TransactionTile for each transaction', (tester) async {
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(await container(), const MaterialApp(home: TransactionListPage())),
-    ));
-    // DefaultLayout mounts a perpetual Lottie, so pumpAndSettle never settles.
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpWidget(fakeScope(await container(), const MaterialApp(home: TransactionListPage())));
+    await tester.pumpAndSettle();
     expect(find.byType(TransactionTile), findsOneWidget);
   });
 
@@ -76,10 +69,7 @@ void main() {
       Transaction.create(amount: 3000000, categoryId: BudgetCategory.food.id, date: DateTime(2026, 6, 1),
           type: TransactionType.income),
     ];
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(await container(), const MaterialApp(home: TransactionListPage())),
-    ));
+    await tester.pumpWidget(fakeScope(await container(), const MaterialApp(home: TransactionListPage())));
     await tester.pump();
     await tester.pump();
 
@@ -94,11 +84,8 @@ void main() {
 
   // 또래 통계가 실패해도 내 내역은 보인다. 또래 초과 배지만 빠진다.
   testWidgets('또래 통계를 못 읽어도 내역이 보인다', (tester) async {
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(await container(peer: FailingPeerStatsRepository()),
-          const MaterialApp(home: TransactionListPage())),
-    ));
+    await tester.pumpWidget(fakeScope(await container(peer: FailingPeerStatsRepository()),
+          const MaterialApp(home: TransactionListPage())));
     await tester.pump();
     await tester.pump();
 
@@ -110,10 +97,7 @@ void main() {
     repo.txs = [
       Transaction.create(amount: 50000000, categoryId: 1, date: DateTime(2026, 6, 5), type: TransactionType.expense),
     ];
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(await container(), const MaterialApp(home: TransactionListPage())),
-    ));
+    await tester.pumpWidget(fakeScope(await container(), const MaterialApp(home: TransactionListPage())));
     await tester.pump();
     await tester.pump();
 
@@ -130,12 +114,9 @@ void main() {
       Transaction.create(amount: 5000, categoryId: BudgetCategory.etc.id, date: DateTime(2026, 6, 5),
           type: TransactionType.expense, customCategoryId: 'c2'),
     ];
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(
+    await tester.pumpWidget(fakeScope(
           await container(customs: const [CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 9)]),
-          const MaterialApp(home: TransactionListPage())),
-    ));
+          const MaterialApp(home: TransactionListPage())));
     await tester.pump();
     await tester.pump();
 
@@ -150,10 +131,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(await container(), const MaterialApp(home: TransactionListPage())),
-    ));
+    await tester.pumpWidget(fakeScope(await container(), const MaterialApp(home: TransactionListPage())));
     await tester.pump();
     await tester.pump();
 
@@ -182,10 +160,7 @@ void main() {
       Transaction.create(amount: 2000, categoryId: 7, date: DateTime(2026, 6, 3), type: TransactionType.expense),
     ];
 
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(await container(), const MaterialApp(home: TransactionListPage())),
-    ));
+    await tester.pumpWidget(fakeScope(await container(), const MaterialApp(home: TransactionListPage())));
     await tester.pump();
     await tester.pump();
 
@@ -209,10 +184,7 @@ void main() {
         Transaction.create(amount: 1000, categoryId: 7, date: DateTime(2026, 6, d), type: TransactionType.expense),
     ];
 
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(await container(), const MaterialApp(home: TransactionListPage())),
-    ));
+    await tester.pumpWidget(fakeScope(await container(), const MaterialApp(home: TransactionListPage())));
     await tester.pump();
     await tester.pump();
 

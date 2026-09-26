@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:sedae_budget/core/ads/index.dart';
 import 'package:sedae_budget/core/app_config/remote_config.dart';
+import 'package:sedae_budget/core/local_storage/theme_mode_store.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
@@ -13,6 +14,7 @@ import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/initial/app_status.view_model.dart';
 import 'package:sedae_budget/presentation/service/ad_provider.dart';
 import 'package:sedae_budget/presentation/service/dependency_provider.dart';
+import 'package:sedae_budget/presentation/service/theme_mode_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// presentation 테스트용 인메모리 fake. 전역 get_it을 만지는 대신
@@ -199,6 +201,12 @@ Future<LaunchInterstitial> fakeLaunchInterstitial(FakeAdService ads) async {
   return LaunchInterstitial(await SharedPreferences.getInstance(), ads);
 }
 
+/// 비어 있는 테마 모드 저장소(SharedPreferences mock). 고른 적이 없으니 시스템 모드다.
+Future<ThemeModeStore> fakeThemeModeStore() async {
+  SharedPreferences.setMockInitialValues({});
+  return ThemeModeStore(await SharedPreferences.getInstance());
+}
+
 /// 테스트용 ProviderContainer. 준 재료만 fake로 바꾼다.
 ///
 /// 전역 get_it을 등록·reset하는 대신 의존성 seam(`service/*_provider.dart`)을 override한다.
@@ -216,6 +224,7 @@ ProviderContainer fakeContainer({
   AdService? adService,
   LaunchInterstitial? launchInterstitial,
   AppStatusSource? appStatusSource,
+  ThemeModeStore? themeModeStore,
   void Function()? exitApp,
 }) {
   final auth = authRepository ?? InMemoryAuthRepository(user);
@@ -240,6 +249,7 @@ ProviderContainer fakeContainer({
       if (launchInterstitial != null)
         launchInterstitialProvider.overrideWithValue(launchInterstitial),
       appStatusSourceProvider.overrideWithValue(appStatusSource ?? FakeAppStatusSource()),
+      if (themeModeStore != null) themeModeStoreProvider.overrideWithValue(themeModeStore),
       // 테스트가 점검 안내를 확인해도 테스트 프로세스가 끝나지 않게 한다.
       appExitProvider.overrideWithValue(exitApp ?? () {}),
     ],

@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/page/login/login.page.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
@@ -39,9 +38,7 @@ void main() {
 
     await t.pumpWidget(fakeScope(
       container,
-      provider.ChangeNotifierProvider(
-        create: (_) => ThemeService(),
-        child: MaterialApp(home: const LoginPage(), theme: ThemeService().lightThemeData())),
+      MaterialApp(home: const LoginPage(), theme: materialTheme(LightTheme())),
     ));
     await t.pump();
 
@@ -63,9 +60,7 @@ void main() {
 
     await t.pumpWidget(fakeScope(
       container,
-      provider.ChangeNotifierProvider(
-        create: (_) => ThemeService(),
-        child: MaterialApp(home: const LoginPage(), theme: ThemeService().lightThemeData())),
+      MaterialApp(home: const LoginPage(), theme: materialTheme(LightTheme())),
     ));
     await t.pump();
 
@@ -85,10 +80,8 @@ void main() {
 
     await t.pumpWidget(fakeScope(
       container,
-      provider.ChangeNotifierProvider(
-        create: (_) => ThemeService(),
-        child: MaterialApp(home: const LoginPage(),
-          theme: ThemeService().lightThemeData())),
+      MaterialApp(home: const LoginPage(),
+          theme: materialTheme(LightTheme())),
     ));
     await t.pump();
 

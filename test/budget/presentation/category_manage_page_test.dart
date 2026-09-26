@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/category_manage.page.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_edit_sheet.dart';
 import 'package:sedae_budget/theme/theme.dart';
@@ -58,15 +56,10 @@ Future<InMemoryCategoryRepository> pumpPage(
       GoRoute(path: '/manage', builder: (_, _) => CategoryManagePage(initialEditing: editing)),
     ],
   );
-  await tester.pumpWidget(provider.ChangeNotifierProvider(
-    create: (_) => ThemeService(),
-    child: fakeScope(container, MaterialApp.router(theme: theme, routerConfig: router)),
-  ));
+  await tester.pumpWidget(fakeScope(container, MaterialApp.router(theme: theme, routerConfig: router)));
   await tester.pump();
   router.push('/manage');
-  // DefaultLayout이 계속 도는 Lottie를 띄워 pumpAndSettle은 끝나지 않는다.
-  await tester.pump();
-  await tester.pump(const Duration(seconds: 1));
+  await tester.pumpAndSettle();
   return repo;
 }
 

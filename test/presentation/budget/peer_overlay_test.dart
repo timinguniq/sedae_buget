@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/summary_hero_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_rank_card.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 PeerStats _peer({int avg = 2000000}) => PeerStats(
     ageGroup: AgeGroup.thirties, avgMonthlyExpense: avg, avgSavingsRate: 0.2,
     avgByCategory: const {}, samples: const []);
 
-Widget _wrap(Widget child) => provider.ChangeNotifierProvider(
-  create: (_) => ThemeService(),
-  child: MaterialApp(home: Scaffold(body: child), theme: ThemeService().lightThemeData()));
+Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child), theme: materialTheme(LightTheme()));
 
 void main() {
   testWidgets('hero pill shows peer comparison', (t) async {

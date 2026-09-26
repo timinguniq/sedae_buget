@@ -3,13 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/login/widget/social_login_button.dart';
 import 'package:sedae_budget/presentation/page/main/main_shell.dart';
 import 'package:sedae_budget/presentation/route/custom_route.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
@@ -37,15 +36,12 @@ class _EmptyRepo implements TransactionRepository {
 
 Widget _buildApp(ProviderContainer container) => fakeScope(
       container,
-      provider.ChangeNotifierProvider(
-        create: (_) => ThemeService(),
-        child: Consumer(
+      Consumer(
           builder: (_, ref, _) => MaterialApp.router(
             routerConfig: ref.watch(routerProvider),
-            theme: ThemeService().lightThemeData(),
+            theme: materialTheme(LightTheme()),
           ),
         ),
-      ),
     );
 
 /// [online]이 false인 동안 세션 확인이 네트워크 오류로 실패하는 서버(토큰은 있다).
@@ -83,6 +79,7 @@ Future<ProviderContainer> _container({
     categories: InMemoryCategoryRepository(),
     peerRepository: FakePeerStatsRepository(),
     adService: ads,
+    themeModeStore: await fakeThemeModeStore(),
     launchInterstitial: await fakeLaunchInterstitial(ads),
   );
 }

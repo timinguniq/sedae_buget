@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/core/ads/index.dart';
 import 'package:sedae_budget/core/app_config/remote_config.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/initial/splash.page.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
@@ -39,13 +38,10 @@ void main() {
 
   Widget buildApp(ProviderContainer c, GoRouter router) => fakeScope(
         c,
-        provider.ChangeNotifierProvider(
-          create: (_) => ThemeService(),
-          child: MaterialApp.router(
+        MaterialApp.router(
             routerConfig: router,
-            theme: ThemeService().lightThemeData(),
+            theme: materialTheme(LightTheme()),
           ),
-        ),
       );
 
   GoRouter buildRouter() => GoRouter(

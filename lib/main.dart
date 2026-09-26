@@ -15,10 +15,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sedae_budget/theme/theme.dart';
 import 'core/util/logger/custom_logger.dart';
-import 'package:provider/provider.dart' as provider;
 
 final _logger = CustomLogger.create(tag: 'main');
+final _lightTheme = materialTheme(LightTheme());
+final _darkTheme = materialTheme(DarkTheme());
 
 Future<void> main() async {
   unawaited(
@@ -32,7 +34,9 @@ Future<void> main() async {
       configureBudgetDependencies();
       configurePeerDependencies();
       configureUserDependencies();
-      configureAdDependencies(await SharedPreferences.getInstance());
+      final prefs = await SharedPreferences.getInstance();
+      configureAdDependencies(prefs);
+      configureThemeDependencies(prefs);
       configureAppStatusDependencies();
       unawaited(locator<AdService>().initialize()); // 부팅을 막지 않고 미리 워밍업
 
@@ -53,14 +57,7 @@ Future<void> main() async {
 
       //HttpOverrides.global = NoCheckCertificateHttpOverrides(); // 생성된 HttpOverrides 객체 등록
 
-      runApp(
-        ProviderScope(
-          child: provider.ChangeNotifierProvider(
-            create: (context) => ThemeService()..loadPersisted(),
-            child: const MyApp(),
-          ),
-        ),
-      );
+      runApp(const ProviderScope(child: MyApp()));
     }, (e, s) {
       // 글로벌 에러 핸들링
       _logger.e('Unhandled Exception:', error: e, stackTrace: s);
@@ -94,9 +91,9 @@ class MyApp extends ConsumerWidget {
       routerConfig: ref.watch(routerProvider),
       title: '세대 가계부',
       debugShowCheckedModeBanner: false,
-      theme: context.themeService.lightThemeData(),
-      darkTheme: context.themeService.darkThemeData(),
-      themeMode: context.themeService.themeMode,
+      theme: _lightTheme,
+      darkTheme: _darkTheme,
+      themeMode: ref.watch(themeModeProvider),
     );
   }
 }

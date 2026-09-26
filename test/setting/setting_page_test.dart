@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
@@ -12,24 +11,18 @@ import '../helper/fakes.dart';
 
 void main() {
   setUp(() {
-    SharedPreferences.setMockInitialValues({}); // ThemeService 테마 모드 저장용
+    SharedPreferences.setMockInitialValues({});
     PackageInfo.setMockInitialValues(
       appName: 'sedae', packageName: 'com.sedae.budget',
       version: '1.0.0', buildNumber: '1', buildSignature: '');
   });
 
-  Widget app(ProviderContainer container, ThemeService service) => fakeScope(
-        container,
-        provider.ChangeNotifierProvider<ThemeService>.value(
-          value: service,
-          child: const MaterialApp(home: SettingPage()),
-        ),
-      );
+  Widget app(ProviderContainer container) => fakeScope(container, const MaterialApp(home: SettingPage()));
 
   testWidgets('renders and dark chip switches theme mode', (tester) async {
-    final container = fakeContainer(categories: InMemoryCategoryRepository());
-    final service = ThemeService();
-    await tester.pumpWidget(app(container, service));
+    final store = await fakeThemeModeStore();
+    final container = fakeContainer(categories: InMemoryCategoryRepository(), themeModeStore: store);
+    await tester.pumpWidget(app(container));
     await tester.pump();
 
     expect(find.text('설정'), findsOneWidget);
@@ -42,7 +35,8 @@ void main() {
 
     await tester.tap(find.text('다크'));
     await tester.pump();
-    expect(service.themeMode, ThemeMode.dark);
+    expect(container.read(themeModeProvider), ThemeMode.dark);
+    expect(store.read(), ThemeMode.dark); // 다음 실행에도 다크로 시작한다
   });
 
   testWidgets('logged in: bottom logout button is shown', (tester) async {
@@ -52,8 +46,9 @@ void main() {
     final container = fakeContainer(
       user: const AuthUser(provider: AuthProvider.naver, nickname: '네이버 사용자'),
       categories: InMemoryCategoryRepository(),
+      themeModeStore: await fakeThemeModeStore(),
     );
-    await tester.pumpWidget(app(container, ThemeService()));
+    await tester.pumpWidget(app(container));
     await tester.pump();
     await tester.pump();
 

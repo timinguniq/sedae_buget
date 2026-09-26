@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/report/report.page.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
@@ -77,16 +76,13 @@ void main() {
       peerStats: StubPeerData.forGroup(AgeGroup.thirties),
     );
     await tester.pumpWidget(
-      provider.ChangeNotifierProvider(
-        create: (_) => ThemeService(),
-        child: fakeScope(
+      fakeScope(
           container,
           MaterialApp(
-            theme: ThemeService().lightThemeData(),
+            theme: materialTheme(LightTheme()),
             home: const ReportPage(),
           ),
         ),
-      ),
     );
 
     // Pump several frames to allow FutureProviders to resolve.
@@ -127,11 +123,8 @@ void main() {
           samples: stub.samples,
         ),
       );
-      await tester.pumpWidget(provider.ChangeNotifierProvider(
-        create: (_) => ThemeService(),
-        child: fakeScope(container,
-            MaterialApp(theme: ThemeService().lightThemeData(), home: const ReportPage())),
-      ));
+      await tester.pumpWidget(fakeScope(container,
+            MaterialApp(theme: materialTheme(LightTheme()), home: const ReportPage())));
       for (var i = 0; i < 4; i++) {
         await tester.pump();
       }
@@ -193,11 +186,8 @@ Future<void> _pumpReport(WidgetTester tester, ProviderContainer container) async
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  await tester.pumpWidget(provider.ChangeNotifierProvider(
-    create: (_) => ThemeService(),
-    child: fakeScope(container,
-        MaterialApp(theme: ThemeService().lightThemeData(), home: const ReportPage())),
-  ));
+  await tester.pumpWidget(fakeScope(container,
+        MaterialApp(theme: materialTheme(LightTheme()), home: const ReportPage())));
   await tester.pump();
   await tester.pump();
   await tester.pump();

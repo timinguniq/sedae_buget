@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
 import 'package:sedae_budget/entity/entity.dart';
@@ -42,15 +41,8 @@ void main() {
       transactions: _FakeRepo(),
       peerStats: StubPeerData.forGroup(AgeGroup.thirties),
     );
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(container, MaterialApp(home: const BudgetHomePage())),
-    ));
-    // DefaultLayout always renders a perpetually-animating loading Lottie
-    // (opacity 0 when not loading), so pumpAndSettle never settles. Pump a
-    // couple of frames to let the async provider resolve to data instead.
-    await tester.pump();
-    await tester.pump();
+    await tester.pumpWidget(fakeScope(container, MaterialApp(home: const BudgetHomePage())));
+    await tester.pumpAndSettle();
     expect(find.textContaining('12,000'), findsWidgets);
     expect(find.text('택시'), findsOneWidget); // memo is the tile title (design)
 
@@ -77,10 +69,7 @@ void main() {
           const [CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12)]),
       peerStats: StubPeerData.forGroup(AgeGroup.thirties),
     );
-    await tester.pumpWidget(provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: fakeScope(container, MaterialApp(home: const BudgetHomePage())),
-    ));
+    await tester.pumpWidget(fakeScope(container, MaterialApp(home: const BudgetHomePage())));
     await tester.pump();
     await tester.pump();
 
@@ -195,10 +184,7 @@ Future<void> _pumpHome(WidgetTester tester, ProviderContainer container) async {
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  await tester.pumpWidget(provider.ChangeNotifierProvider(
-    create: (_) => ThemeService(),
-    child: fakeScope(container, MaterialApp(home: const BudgetHomePage())),
-  ));
+  await tester.pumpWidget(fakeScope(container, MaterialApp(home: const BudgetHomePage())));
   await tester.pump();
   await tester.pump();
 }

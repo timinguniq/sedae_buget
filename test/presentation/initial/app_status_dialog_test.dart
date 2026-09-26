@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/initial/app_status_dialog.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 const _version = AppVersion(releaseVersion: 20, minimumAvailableVersion: 15, link: 'store-link');
 
@@ -41,7 +41,7 @@ class _Harness {
         ),
       ),
     ]);
-    await t.pumpWidget(MaterialApp.router(routerConfig: router, theme: ThemeService().lightThemeData()));
+    await t.pumpWidget(MaterialApp.router(routerConfig: router, theme: materialTheme(LightTheme())));
     await t.tap(find.text('HOME'));
     await t.pumpAndSettle();
     await t.tap(find.text('SECOND'));

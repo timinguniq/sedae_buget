@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 import 'package:sedae_budget/presentation/page/budget/category_analysis.page.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
@@ -48,10 +46,7 @@ Widget _app(
     categories: categoryRepository ?? InMemoryCategoryRepository(customs),
     peerRepository: peerRepository ?? FakePeerStatsRepository(),
   );
-  return provider.ChangeNotifierProvider(
-    create: (_) => ThemeService(),
-    child: fakeScope(container, const MaterialApp(home: CategoryAnalysisPage())),
-  );
+  return fakeScope(container, const MaterialApp(home: CategoryAnalysisPage()));
 }
 
 void main() {

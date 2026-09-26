@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
@@ -32,10 +31,8 @@ void main() {
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingFlowPage()),
       GoRoute(path: '/budget', builder: (_, _) => const Scaffold(body: Text('HOME'))),
     ]);
-    await t.pumpWidget(fakeScope(container, provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: MaterialApp.router(routerConfig: router,
-        theme: ThemeService().lightThemeData()))));
+    await t.pumpWidget(fakeScope(container, MaterialApp.router(routerConfig: router,
+        theme: materialTheme(LightTheme()))));
     await t.pump();
     await t.tap(find.text('20대'));
     await t.pump();
@@ -66,10 +63,8 @@ void main() {
       GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingFlowPage()),
       GoRoute(path: '/budget', builder: (_, _) => const Scaffold(body: Text('HOME'))),
     ]);
-    await t.pumpWidget(fakeScope(fakeContainer(), provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: MaterialApp.router(routerConfig: router,
-        theme: ThemeService().lightThemeData()))));
+    await t.pumpWidget(fakeScope(fakeContainer(), MaterialApp.router(routerConfig: router,
+        theme: materialTheme(LightTheme()))));
     await t.pump();
 
     expect(find.text('다음'), findsOneWidget);

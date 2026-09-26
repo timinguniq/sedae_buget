@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/top_category_card.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
-Widget _wrap(Widget child) => provider.ChangeNotifierProvider(
-      create: (_) => ThemeService(),
-      child: MaterialApp(home: Scaffold(body: child), theme: ThemeService().lightThemeData()));
+Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child), theme: materialTheme(LightTheme()));
 
 void main() {
   // 어떤 분류를 몇 개 고를지는 MonthOverview.topCategories가 정한다. 카드는 받은 순서대로 그린다.

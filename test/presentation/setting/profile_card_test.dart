@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/setting/widget/logout_button.dart';
 import 'package:sedae_budget/presentation/page/setting/widget/profile_card.dart';
 import 'package:sedae_budget/presentation/page/setting/widget/provider_badge.dart';
-import 'package:sedae_budget/presentation/service/theme_service.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
@@ -14,13 +12,10 @@ import '../../helper/fakes.dart';
 /// 설정 화면과 같은 구성: 프로필 카드 + 하단 로그아웃 버튼.
 Widget _wrap(ProviderContainer container) => fakeScope(
       container,
-      provider.ChangeNotifierProvider(
-        create: (_) => ThemeService(),
-        child: MaterialApp(
+      MaterialApp(
           home: const Scaffold(body: Column(children: [ProfileCard(), LogoutButton()])),
-          theme: ThemeService().lightThemeData(),
+          theme: materialTheme(LightTheme()),
         ),
-      ),
     );
 
 void main() {

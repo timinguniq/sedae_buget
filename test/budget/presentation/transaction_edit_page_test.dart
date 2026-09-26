@@ -4,10 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:provider/provider.dart' as provider;
 import 'package:sedae_budget/domain/repository/transaction_repository.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart';
 
 import '../../helper/fakes.dart';
@@ -66,8 +64,7 @@ void main() {
 
   // Pushes TransactionEditPage onto a real GoRouter stack so the page's
   // context.pop() (go_router) has somewhere to pop back to. Phone-sized
-  // viewport keeps the keypad + save button on-screen. DefaultLayout mounts a
-  // perpetual Lottie, so we pump fixed durations instead of pumpAndSettle.
+  // viewport keeps the keypad + save button on-screen.
   Future<_CapturingRepo> pumpEditPage(
     WidgetTester tester, {
     List<CustomCategory> customs = const [],
@@ -93,15 +90,11 @@ void main() {
       ],
     );
     await tester.pumpWidget(
-      provider.ChangeNotifierProvider(
-        create: (_) => ThemeService(),
-        child: fakeScope(container, MaterialApp.router(routerConfig: router)),
-      ),
+      fakeScope(container, MaterialApp.router(routerConfig: router)),
     );
     await tester.pump();
     router.push('/edit');
-    await tester.pump();
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle();
     return repo;
   }
 
