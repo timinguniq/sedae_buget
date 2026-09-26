@@ -1,7 +1,8 @@
 # AGENTS.md
 
-Claude Code와 Codex가 함께 읽는 **공통 작업 지침**이다. 두 도구의 지침이 다르면 이 파일이 기준이다.
-도구별 추가 사항은 `CLAUDE.md`(Claude Code)에 둔다. Codex는 이 파일을 직접 읽는다.
+Claude Code와 Codex가 함께 읽는 **작업 지침**이다. 두 도구 모두 이 파일을 직접 읽는다.
+도구별 추가 사항은 맨 아래 "Claude Code 전용" 절에 둔다.
+`CLAUDE.md`·`CLAUDE.local.md`를 만들지 않는다. 있으면 Claude Code가 이 파일을 읽지 않는다.
 
 - 프로젝트: Flutter 앱 `sedae_budget` (패키지 import 접두어 `package:sedae_budget/`)
 - 구조와 의존성 규칙: `docs/architecture.md`
@@ -141,3 +142,18 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ### 한 도구만 쓸 수 있을 때
 
 교차 리뷰를 실행하지 못했다면(호출 권한·모델 접근·사용량 제한 등) 같은 도구의 별도 세션·서브에이전트로 대체하고, **교차 검증 미실행과 사유**를 보고에 적는다.
+
+---
+
+## Claude Code 전용
+
+### Workflow
+
+- 코드 변경(파일 추가/수정/삭제)이 발생하면 커밋 전에 `regression-verifier` 서브에이전트를 호출해 기존 기능이 깨지지 않는지 회귀 검증을 수행한다.
+- `regression-verifier`를 호출할 때는 "작업 트리·인덱스를 바꾸는 Git 명령(`git stash`, `checkout`, `reset`, `clean`) 금지"를 프롬프트에 명시한다.
+- 교차 코드 리뷰는 Codex가 맡는다: `codex review --uncommitted` (커밋 후라면 `codex review --base main`). 실행하지 못하면 미실행과 사유를 보고한다.
+
+### 훅
+
+- `.claude/settings.json`의 `PreToolUse`(Bash, `git *`) 훅이 `tool/agent_pre_commit.py`를 실행한다. `git commit`일 때만 Git 훅 등록 여부와 우회 옵션을 확인하며, 실제 검사는 Git `pre-commit` 훅이 수행한다(`docs/harness.md`).
+- 개인 권한 설정은 `.claude/settings.local.json`에 두고 커밋하지 않는다.
