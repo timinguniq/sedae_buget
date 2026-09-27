@@ -7,7 +7,8 @@ import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_edit_sheet.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-/// 지출 입력. 디자인: ✕ 원형 + 트랙형 세그먼트 / 카테고리 pill + 금액 800·42 + 메모 / 가로 스크롤 칩 / 키패드 / 저장하기.
+/// 지출 입력. 디자인: ✕ 원형 + 제목 / 카테고리 pill + 금액 800·42 + 메모 / 가로 스크롤 칩 / 키패드 / 저장하기.
+/// 새 거래는 지출만 적는다(소득은 프로필 월소득). 전에 적은 수입은 고칠 수 있다.
 class TransactionEditPage extends ConsumerStatefulWidget {
   const TransactionEditPage({super.key, this.existing});
   final Transaction? existing;
@@ -94,12 +95,16 @@ class _State extends ConsumerState<TransactionEditPage> {
         child: Column(children: [
           Row(children: [
             RoundIconButton(icon: Icons.close, onTap: () => context.pop()),
-            const Spacer(),
-            TypeSegmented(value: _draft.type, onChanged: (t) => setState(() => _draft = _draft.withType(t))),
-            if (_draft.isEdit) ...[
-              const SizedBox(width: 10),
-              RoundIconButton(key: const Key('delete-button'), icon: Icons.delete_outline, onTap: _delete),
-            ],
+            Expanded(child: Text(
+              '${_draft.type == TransactionType.income ? '수입' : '지출'} ${_draft.isEdit ? '수정' : '입력'}',
+              textAlign: TextAlign.center,
+              style: context.typo.label1W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.normal),
+            )),
+            // 제목이 가운데 오도록 오른쪽도 ✕와 같은 폭을 차지한다.
+            if (_draft.isEdit)
+              RoundIconButton(key: const Key('delete-button'), icon: Icons.delete_outline, onTap: _delete)
+            else
+              const SizedBox(width: 30),
           ]),
           Expanded(child: SingleChildScrollView(child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -209,7 +214,7 @@ class _CategoryChips extends StatelessWidget {
   final ValueChanged<CustomCategory> onPickCustom;
   final VoidCallback onAdd;
 
-  static const _chipPadding = EdgeInsets.symmetric(horizontal: 13, vertical: 8);
+  static const _chipPadding = EdgeInsets.symmetric(horizontal: 10, vertical: 8);
 
   @override
   Widget build(BuildContext context) {
@@ -239,7 +244,7 @@ class _CategoryChips extends StatelessWidget {
           onTap: onAdd,
           behavior: HitTestBehavior.opaque,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
             decoration: BoxDecoration(
               color: context.color.primary.tint,
               border: Border.all(color: context.color.primary.normal.withValues(alpha: 0.45)),
