@@ -1,29 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-class SettingPage extends ConsumerStatefulWidget {
+class SettingPage extends ConsumerWidget {
   const SettingPage({super.key});
-  @override
-  ConsumerState<SettingPage> createState() => _SettingPageState();
-}
-
-class _SettingPageState extends ConsumerState<SettingPage> {
-  String _version = '';
-  @override
-  void initState() {
-    super.initState();
-    PackageInfo.fromPlatform().then((i) {
-      if (mounted) setState(() => _version = i.version);
-    });
-  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final version = ref.watch(appVersionProvider).value;
     return DefaultLayout(
       child: Column(children: [
         // 헤더: ‹ 원형 버튼 + "설정" 800·20
@@ -58,7 +45,7 @@ class _SettingPageState extends ConsumerState<SettingPage> {
                   );
                 }),
                 _divider(context),
-                SettingsTile(label: '앱 버전', value: _version.isEmpty ? '...' : 'v$_version'),
+                SettingsTile(label: '앱 버전', value: version == null ? '...' : 'v$version'),
                 _divider(context),
                 SettingsTile(label: '이용약관 · 개인정보', onTap: () {}),
               ]),
