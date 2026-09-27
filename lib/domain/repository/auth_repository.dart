@@ -6,8 +6,9 @@ abstract class AuthRepository {
   /// 그 밖의 실패는 [Result.failure].
   Future<Result<AuthUser?>> currentUser();
 
-  /// 소셜 id_token을 서버 세션으로 교환하고 사용자를 돌려준다.
-  Future<Result<AuthUser>> signIn(AuthProvider provider, String idToken);
+  /// [provider]의 소셜 id_token을 받아 서버 세션으로 교환하고 사용자를 돌려준다.
+  /// 소셜 쪽에서 토큰을 못 받으면 서버를 부르지 않고 그 실패를 그대로 돌려준다.
+  Future<Result<AuthUser>> signIn(AuthProvider provider);
 
   /// 서버 세션과 로컬 토큰을 모두 끝낸다.
   /// 서버가 응답하지 않아도 로컬 세션은 끝나지만, 그 사실을 [Result.failure]로 알린다.

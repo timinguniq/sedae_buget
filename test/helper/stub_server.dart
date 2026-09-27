@@ -54,7 +54,8 @@ class StubServer {
   final SessionExpiry sessionExpiry;
   final ServerFaults faults;
 
-  AuthRepository get auth => AuthRepositoryImpl(AuthApi(dio), tokens, sessionExpiry);
+  AuthRepository get auth =>
+      AuthRepositoryImpl(AuthApi(dio), tokens, sessionExpiry, StubSocialIdTokenProvider());
   UserProfileRepository get profiles => UserProfileRepositoryImpl(UserProfileApi(dio));
   TransactionRepository get transactions => TransactionRepositoryImpl(TransactionApi(dio));
   CategoryRepository get categories => CategoryRepositoryImpl(CategoryApi(dio));
@@ -62,7 +63,7 @@ class StubServer {
 
   /// 실제 로그인 요청으로 [provider] 사용자가 된다.
   Future<void> signIn(AuthProvider provider) async =>
-      (await auth.signIn(provider, 'test-id-token')).unwrap();
+      (await auth.signIn(provider)).unwrap();
 
   /// [provider]로 로그인하고 [profile]·[categories]·[transactions]를 실제 API로 심는다.
   Future<void> seed({

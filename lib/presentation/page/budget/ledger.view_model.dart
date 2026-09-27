@@ -1,6 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:sedae_budget/domain/usecase/category_usecase.dart';
-import 'package:sedae_budget/domain/usecase/transaction_usecase.dart';
+import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
@@ -36,13 +35,13 @@ final selectedMonthProvider =
     NotifierProvider<SelectedMonthNotifier, YearMonth>(SelectedMonthNotifier.new);
 
 class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
-  TransactionUsecase get _usecase => ref.read(transactionUsecaseProvider);
+  TransactionRepository get _transactions => ref.read(transactionRepositoryProvider);
 
   @override
   Future<List<Transaction>> build() async {
     final month = ref.watch(selectedMonthProvider);
     if (!await _signedIn(ref)) return const [];
-    return (await _usecase.getMonth(month.year, month.month)).unwrap();
+    return (await _transactions.getRange(month.start, month.end)).unwrap();
   }
 
   /// 변경 메서드는 서버 결과를 그대로 돌려준다. 실패를 호출부가 보고 문구를 띄운다.
@@ -57,10 +56,10 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
     } catch (_) {
       // catalog == null: 지워졌는지 판정하지 않는다.
     }
-    return _apply(() => _usecase.save(draft.toTransaction(catalog)));
+    return _apply(() => _transactions.upsert(draft.toTransaction(catalog)));
   }
 
-  Future<Result<Transaction>> delete(Transaction tx) => _apply(() => _usecase.delete(tx));
+  Future<Result<Transaction>> delete(Transaction tx) => _apply(() => _transactions.delete(tx));
 
   /// 불러오기에 실패한 화면의 '다시 시도'. 달 화면이 읽는 서버 데이터
   /// (이달 거래·추이·사용자 카테고리·또래 통계)를 모두 다시 읽는다.
@@ -91,12 +90,12 @@ final monthlyTransactionsProvider =
 final selfTrendProvider =
     FutureProvider<List<({YearMonth month, int expense})>>((ref) async {
   final anchor = ref.watch(selectedMonthProvider);
-  final usecase = ref.watch(transactionUsecaseProvider);
+  final transactions = ref.watch(transactionRepositoryProvider);
   const n = 6;
   final months = [for (var m = anchor, i = 0; i < n; m = m.previous, i++) m].reversed.toList();
   // 실패를 빈 목록으로 감추면 "지출 0"인 평탄한 추이로 보인다. 그대로 드러낸다.
   final txs = await _signedIn(ref)
-      ? (await usecase.getRange(months.first.start, anchor.end)).unwrap()
+      ? (await transactions.getRange(months.first.start, anchor.end)).unwrap()
       : const <Transaction>[];
   return [
     for (final m in months) (month: m, expense: ViewedMonth.expenseOf(txs.where((t) => m.contains(t.date)))),
@@ -127,29 +126,20 @@ final viewedMonthNameProvider =
 /// 변경 메서드는 서버 결과를 그대로 돌려준다. 이름 중복·길이처럼 사용자가 바로 고칠 수 있는
 /// 오류라 화면에서 문구를 보여주고, 성공하면 만들어진 카테고리를 호출부가 이어서 쓴다.
 class CustomCategoriesNotifier extends AsyncNotifier<List<CustomCategory>> {
-  CategoryUsecase get _usecase => ref.read(categoryUsecaseProvider);
+  CategoryRepository get _categories => ref.read(categoryRepositoryProvider);
 
   @override
   Future<List<CustomCategory>> build() async {
     if (!await _signedIn(ref)) return const [];
-    return (await _usecase.getAll()).unwrap();
+    return (await _categories.getAll()).unwrap();
   }
 
-  Future<Result<CustomCategory>> add({
-    required String name,
-    required BudgetCategory base,
-  }) =>
-      _apply(() => _usecase.add(name: name, base: base));
-
-  Future<Result<CustomCategory>> edit(
-    CustomCategory category, {
-    required String name,
-    required BudgetCategory base,
-  }) =>
-      _apply(() => _usecase.update(category, name: name, base: base));
+  /// 입력한 카테고리를 저장한다(새 카테고리면 추가, 아니면 수정). 같은 초안은 몇 번 저장해도 카테고리 하나다.
+  Future<Result<CustomCategory>> save(CategoryDraft draft) =>
+      _apply(() => _categories.upsert(draft.toCategory()));
 
   Future<Result<CustomCategory>> remove(CustomCategory category) =>
-      _apply(() => _usecase.delete(category));
+      _apply(() => _categories.delete(category));
 
   /// 카테고리가 바뀌면 카테고리와 이달 거래를 다시 읽는다. 서버는 지운 카테고리의 거래를 기본 분류로
   /// 되돌리고, 상위 분류를 바꾸면 거래를 새 분류로 옮긴다. 추이는 금액만 보므로 그대로 둔다.

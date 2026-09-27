@@ -40,6 +40,25 @@ class _BrokenTokenStore extends MemoryAuthTokenStore {
   Future<void> clear() => broken == _TokenOp.clear ? _fail() : super.clear();
 }
 
+/// 요청받은 소셜 로그인을 기록하고 고정 토큰을 준다.
+class _FixedToken implements SocialIdTokenProvider {
+  final asked = <AuthProvider>[];
+
+  @override
+  Future<Result<String>> idToken(AuthProvider provider) async {
+    asked.add(provider);
+    return Result.success('t-${provider.name}');
+  }
+}
+
+/// 소셜 SDK 쪽에서 토큰을 받지 못하는 상황.
+class _FailingToken implements SocialIdTokenProvider {
+  @override
+  Future<Result<String>> idToken(AuthProvider provider) async => const Result.failure(
+        ErrorResult(reason: FailureReason.unknown, message: '소셜 로그인이 취소되었습니다.'),
+      );
+}
+
 void main() {
   late StubServer server;
   late MemoryAuthTokenStore tokens;
@@ -52,19 +71,34 @@ void main() {
   });
 
   /// 요청 헤더는 서버의 토큰 저장소로 붙고, 저장소 구현만 고장 난 토큰 저장소를 쓴다.
-  AuthRepository brokenRepo(_TokenOp broken) =>
-      AuthRepositoryImpl(AuthApi(server.dio), _BrokenTokenStore(broken), server.sessionExpiry);
+  AuthRepository brokenRepo(_TokenOp broken) => AuthRepositoryImpl(
+      AuthApi(server.dio), _BrokenTokenStore(broken), server.sessionExpiry, StubSocialIdTokenProvider());
 
   test('no token → currentUser null', () async {
     expect((await repo.currentUser()).unwrap(), isNull);
   });
 
   test('signIn stores token and returns user; currentUser round-trips', () async {
-    final u = (await repo.signIn(AuthProvider.naver, 'id-token')).unwrap();
+    final u = (await repo.signIn(AuthProvider.naver)).unwrap();
     expect(u.nickname, '네이버 사용자');
     expect(u.provider, AuthProvider.naver);
     expect(tokens.token, isNotEmpty);
     expect((await repo.currentUser()).unwrap()?.provider, AuthProvider.naver);
+  });
+
+  test('소셜 id_token을 받아 서버 세션으로 바꾼다', () async {
+    final social = _FixedToken();
+    final auth = AuthRepositoryImpl(AuthApi(server.dio), tokens, server.sessionExpiry, social);
+    expect((await auth.signIn(AuthProvider.kakao)).unwrap().provider, AuthProvider.kakao);
+    expect(social.asked, [AuthProvider.kakao]);
+  });
+
+  test('id_token을 못 받으면 서버를 부르지 않고 그 실패를 돌려준다', () async {
+    final auth = AuthRepositoryImpl(AuthApi(server.dio), tokens, server.sessionExpiry, _FailingToken());
+    final res = await auth.signIn(AuthProvider.kakao);
+    expect(res.failureOrNull?.message, '소셜 로그인이 취소되었습니다.');
+    expect(server.faults.count('POST', '/v1/auth/login'), 0);
+    expect(tokens.token, isNull);
   });
 
   test('invalid token → 401 → token cleared, 미로그인으로 성공', () async {
@@ -76,7 +110,7 @@ void main() {
   });
 
   test('서버가 저장된 토큰을 거부하면 sessionExpired로 알린다', () async {
-    await repo.signIn(AuthProvider.kakao, 'x');
+    await repo.signIn(AuthProvider.kakao);
     final expired = expectLater(repo.sessionExpired, emits(null));
     tokens.token = 'garbage';
     await repo.currentUser();
@@ -84,7 +118,7 @@ void main() {
   });
 
   test('signOut clears token', () async {
-    await repo.signIn(AuthProvider.google, 'x');
+    await repo.signIn(AuthProvider.google);
     // 토큰을 먼저 지우면 로그아웃 요청이 인증 없이 가서 401로 실패한다.
     expect((await repo.signOut()).failureOrNull, isNull);
     expect(tokens.token, isNull);
@@ -96,7 +130,7 @@ void main() {
       env: AppEnvironment.local, tokenStore: tokens, sessionExpiry: expiry,
       localServer: () => _ServerDown(),
     );
-    final down = AuthRepositoryImpl(AuthApi(dio), tokens, expiry);
+    final down = AuthRepositoryImpl(AuthApi(dio), tokens, expiry, StubSocialIdTokenProvider());
     tokens.token = 'stub.kakao';
     expect((await down.currentUser()).failureOrNull?.reason, FailureReason.server);
     expect(tokens.token, 'stub.kakao'); // 500은 토큰을 지우지 않는다
@@ -112,7 +146,7 @@ void main() {
     });
 
     test('못 쓰면 signIn → unknown 실패', () async {
-      final res = await brokenRepo(_TokenOp.write).signIn(AuthProvider.kakao, 'x');
+      final res = await brokenRepo(_TokenOp.write).signIn(AuthProvider.kakao);
       expect(res.failureOrNull?.reason, FailureReason.unknown);
     });
 

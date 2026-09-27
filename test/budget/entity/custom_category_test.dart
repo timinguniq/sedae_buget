@@ -2,10 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 void main() {
-  test('create assigns a uuid and keeps name/base', () {
-    final c = CustomCategory.create(name: '반려동물', baseCategoryId: 12);
-    expect(c.id, isNotEmpty);
-    expect(c.name, '반려동물');
+  test('상위 분류는 baseCategoryId의 기본 분류다', () {
+    const c = CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12);
     expect(c.base, BudgetCategory.etc);
   });
 

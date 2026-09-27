@@ -9,7 +9,7 @@
 | 경로 | 책임 |
 |---|---|
 | `lib/entity/` | 순수 도메인 모델·값 객체·결과 타입(`Result`). Flutter와 다른 레이어를 모른다 |
-| `lib/domain/` | `repository/`(리포지토리 등 **인터페이스**), `usecase/`(유스케이스 — 저장소를 부르는 흐름. 계산 규칙은 `entity`에 둔다), `manager/`(앱 전역 상태를 쥐는 도메인 객체 — 아직 없음). `entity`에만 의존 |
+| `lib/domain/` | `repository/`(리포지토리 등 **인터페이스**), `usecase/`(유스케이스 — 여러 저장소를 잇는 흐름이 생길 때만 둔다. 아직 없음. 저장소 하나를 부르는 일은 viewmodel이 저장소 seam에서 바로 하고, 계산 규칙은 `entity`에 둔다), `manager/`(앱 전역 상태를 쥐는 도메인 객체 — 아직 없음). `entity`에만 의존 |
 | `lib/data/` | `data_source/remote/`(retrofit **명세**와 Stub API), `data_source/local/`(로컬 저장), `dto/`(서버 JSON 형식과 엔티티 변환), `repository_impl/`(실제 통신: 명세 호출·DTO↔엔티티 변환·오류 변환) |
 | `lib/core/` | 기술 기반: HTTP 클라이언트, 로컬 저장소, 설정, 광고, 분석, 로깅, DI |
 | `lib/presentation/` | 화면(`page/`), 라우팅(`route/`), 공용 위젯(`widget/`), 앱 서비스(`service/`) |
@@ -26,6 +26,7 @@
   - 거래의 카테고리(표시 이름·기본 분류)는 `entity/budget/category_catalog.dart`의 `CategoryCatalog`로만 판정한다.
   - 또래 비교: 내 금액과 또래 평균의 비교(더·덜·비슷, %, 배율, 크게 넘음)는 `entity/peer/peer_comparison.dart`의 `PeerComparison`이 정하고, `PeerStats`가 월 합계·분류별·가장 큰 차이를 이 값으로 내준다. 또래 값이 없으면(평균 0·빠짐) 비교는 null이고, 표본이 없으면 순위(`PeerStats.rankOf`)도 null이다. 그 비교를 무엇이라 말할지(자리별 문구·기호·배율 글·색조, 저축률 한마디)는 `presentation/widget/common/peer_text.dart`만 정하고, 위젯은 받은 값을 배치만 한다.
   - 거래 입력: 입력 화면의 규칙(카테고리 선택·저장 가능 여부·고를 수 있는 가장 늦은 날짜·저장할 거래)은 `entity/budget/transaction_draft.dart`의 `TransactionDraft`가 가진다. 장부의 `save(draft)`가 추가·수정을 정하고, 다 불러온 사용자 카테고리 목록으로 카테고리를 맞춘다(지워진 사용자 카테고리는 기본 분류로).
+  - 카테고리 입력: 추가·수정 시트의 규칙(이름 다듬기·저장 가능 여부·상위 분류)은 `entity/budget/category_draft.dart`의 `CategoryDraft`가 가진다. 거래 초안처럼 id를 한 번 정하므로 시간 초과 뒤 다시 저장해도 카테고리는 하나다. 장부의 `save(draft)`가 추가·수정을 정한다.
   - 세션 게이트: 앱이 어디로 갈지는 `route/auth_gate.dart`의 `SessionGate`(확인 중·연결 안 됨·로그아웃·프로필 필요·준비됨)와 순수 함수 `sessionRedirect`만 정한다. 인증·프로필 확인에 실패하면 로그아웃·프로필 없음이 아니라 '연결 안 됨'(`/unreachable`, 다시 시도)이다. 스플래시·온보딩·로그인 화면은 행선지를 고르지 않는다(`context.go`로 게이트 화면을 고르지 않는다).
   - 세션 만료: 서버가 저장된 토큰을 거부하면(401) `core/http_client/auth_token_interceptor.dart`가 토큰을 지우고 `SessionExpiry`로 알린다. 이 신호는 `AuthRepository.sessionExpired`로 domain에 드러나고, `AuthNotifier`가 로그아웃 상태로 바꾼 뒤 로그인 화면이 안내한다.
   - 앱 이용 가능 여부(점검·업데이트): 판정은 `entity/core/app_status.dart`의 `AppStatus.of`, 재료(원격 설정·빌드 번호)는 `core/app_config/remote_config.dart`의 `AppStatusSource`, 안내는 `page/initial/app_status_dialog.dart`가 한다. 앱을 켤 때는 스플래시가, 쓰는 중 원격 설정이 바뀌면 `MyApp`이 안내한다.
@@ -52,10 +53,10 @@
 ## 예시
 
 ```dart
-// 허용: viewmodel이 provider seam에서 유스케이스를 얻는다 (lib/presentation/page/budget/ledger.view_model.dart)
-import 'package:sedae_budget/domain/usecase/category_usecase.dart';
+// 허용: viewmodel이 provider seam에서 저장소 인터페이스를 얻는다 (lib/presentation/page/budget/ledger.view_model.dart)
+import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/presentation/service/dependency_provider.dart';
-// CategoryUsecase get _usecase => ref.read(categoryUsecaseProvider);
+// CategoryRepository get _categories => ref.read(categoryRepositoryProvider);
 
 // 금지: 페이지·viewmodel이 locator를 직접 부른다 → service/*_provider.dart를 거친다
 // 금지: presentation이 data 구현체를 import한다 → domain 인터페이스에 의존한다

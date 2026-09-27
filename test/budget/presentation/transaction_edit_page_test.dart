@@ -13,7 +13,7 @@ const _pet = CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12);
 /// 서버에 저장된 이번 달 거래(새 초안의 날짜는 오늘이다).
 Future<List<Transaction>> _onServer(WidgetTester tester, StubServer server) async {
   final now = DateTime.now();
-  return (await tester.untilDone(server.transactions.getMonth(now.year, now.month))).unwrap();
+  return (await tester.untilDone(server.transactions.getRange(YearMonth.of(now).start, YearMonth.of(now).end))).unwrap();
 }
 
 void main() {
@@ -194,7 +194,7 @@ void main() {
 
     final now = DateTime.now();
     final last = DateTime(now.year, now.month - 1);
-    final saved = (await tester.untilDone(server.transactions.getMonth(last.year, last.month))).unwrap();
+    final saved = (await tester.untilDone(server.transactions.getRange(YearMonth.of(last).start, YearMonth.of(last).end))).unwrap();
     expect(saved.single.amount, 1000);
   });
 

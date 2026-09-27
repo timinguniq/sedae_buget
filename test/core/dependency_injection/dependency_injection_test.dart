@@ -24,20 +24,22 @@ void main() {
   test('조립한 의존성으로 로그인 → 거래 저장 → 조회가 된다', () async {
     _configure();
 
-    final user = (await locator<AuthUsecase>().signIn(AuthProvider.kakao)).unwrap();
+    final user = (await locator<AuthRepository>().signIn(AuthProvider.kakao)).unwrap();
     expect(user.provider, AuthProvider.kakao);
 
     final tx = Transaction.create(
         amount: 1000, categoryId: 1, date: DateTime(2026, 9, 3), type: TransactionType.expense);
-    (await locator<TransactionUsecase>().save(tx)).unwrap();
-    expect((await locator<TransactionUsecase>().getMonth(2026, 9)).unwrap().single.id, tx.id);
+    (await locator<TransactionRepository>().upsert(tx)).unwrap();
+    final september = YearMonth.of(DateTime(2026, 9));
+    expect((await locator<TransactionRepository>().getRange(september.start, september.end)).unwrap().single.id,
+        tx.id);
     expect((await locator<PeerStatsRepository>().forGroup(AgeGroup.thirties)).unwrap().ageGroup,
         AgeGroup.thirties);
   });
 
-  test('서버가 토큰을 거부하면 AuthUsecase.sessionExpired로 알린다', () async {
+  test('서버가 토큰을 거부하면 AuthRepository.sessionExpired로 알린다', () async {
     final tokens = _configure();
-    final auth = locator<AuthUsecase>();
+    final auth = locator<AuthRepository>();
     await auth.signIn(AuthProvider.kakao);
 
     final expired = expectLater(auth.sessionExpired, emits(null));
