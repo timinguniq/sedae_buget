@@ -163,4 +163,22 @@ void main() {
         .first);
     expect((card.decoration as BoxDecoration).color, Palette.darkSurfaceSunken);
   });
+
+  // 이전에는 설명이 검정 80% 고정이라 다크 대화상자 배경 위에서 읽히지 않았다.
+  testWidgets('다크 모드에서 삭제 확인창의 설명·버튼은 다크 토큰 색이다', (tester) async {
+    await pumpPage(tester, editing: true, theme: ThemeData(brightness: Brightness.dark));
+    await tester.tap(find.byKey(const Key('category-delete-c1')));
+    await tester.settle();
+
+    Color? fillOf(String label) => tester
+        .widget<ElevatedButton>(find.ancestor(of: find.text(label), matching: find.byType(ElevatedButton)))
+        .style!
+        .backgroundColor!
+        .resolve({});
+    expect(tester.widget<Text>(find.textContaining('(으)로 돌아가요')).style!.color, Palette.darkText);
+    expect(tester.widget<Text>(find.text('취소')).style!.color, Palette.darkTextSecondary);
+    expect(fillOf('취소'), Palette.darkSurfaceSunken);
+    expect(fillOf('삭제'), Palette.primaryHeavy);
+    expect(tester.widget<Text>(find.text('삭제')).style!.color, Palette.staticWhite);
+  });
 }

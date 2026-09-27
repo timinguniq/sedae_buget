@@ -44,7 +44,10 @@ Future<bool> showAppStatusDialog(
           buttons: [
             if (!forced)
               CDialogButton(
-                  label: '닫기', result: false, color: Palette.fillGrey, labelColor: Palette.labelNeutral),
+                  label: '닫기',
+                  result: false,
+                  color: context.color.fill.grey,
+                  labelColor: context.color.label.neutral),
             CDialogButton(label: '업데이트', result: true),
           ],
         ),

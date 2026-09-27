@@ -19,7 +19,7 @@ class _Harness {
   bool? result;
   final log = <String>[];
 
-  Future<void> open(WidgetTester t, AppStatus status) async {
+  Future<void> open(WidgetTester t, AppStatus status, {AppTheme? theme}) async {
     final router = GoRouter(routes: [
       GoRoute(
         path: '/',
@@ -41,7 +41,7 @@ class _Harness {
         ),
       ),
     ]);
-    await t.pumpWidget(MaterialApp.router(routerConfig: router, theme: materialTheme(LightTheme())));
+    await t.pumpWidget(MaterialApp.router(routerConfig: router, theme: materialTheme(theme ?? LightTheme())));
     await t.tap(find.text('HOME'));
     await t.pumpAndSettle();
     await t.tap(find.text('SECOND'));
@@ -94,5 +94,23 @@ void main() {
 
     expect(h.log, ['store store-link', 'exit']);
     expect(h.result, isFalse);
+  });
+
+  // 이전에는 설명이 검정 80% 고정이라 다크 대화상자 배경 위에서 점검 공지를 읽을 수 없었다.
+  testWidgets('다크 모드에서 점검 공지 본문은 다크 글자색이다', (t) async {
+    final h = _Harness();
+    await h.open(t, _maintenance, theme: DarkTheme());
+
+    expect(t.widget<Text>(find.text('곧 돌아올게요')).style!.color, Palette.darkText);
+  });
+
+  testWidgets('다크 모드에서 선택 업데이트의 닫기 버튼은 다크 토큰 색이다', (t) async {
+    final h = _Harness();
+    await h.open(t, const AppUpdateAvailable(_version, forced: false), theme: DarkTheme());
+
+    final close = t.widget<ElevatedButton>(
+        find.ancestor(of: find.text('닫기'), matching: find.byType(ElevatedButton)));
+    expect(close.style!.backgroundColor!.resolve({}), Palette.darkSurfaceSunken);
+    expect(t.widget<Text>(find.text('닫기')).style!.color, Palette.darkTextSecondary);
   });
 }
