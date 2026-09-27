@@ -37,7 +37,7 @@
 | 메서드 | 경로 | 요청 | 응답 |
 |---|---|---|---|
 | POST | `/v1/auth/login` | `{"provider":"kakao","idToken":"..."}` | 200 `{"accessToken":"...","user":{"id":"...","provider":"kakao","nickname":"..."}}`. `idToken`이 없거나 `provider`가 틀리면 400 |
-| POST | `/v1/auth/logout` | | 204. 그 토큰은 더는 쓸 수 없다(401). 다시 로그인하면 새 토큰을 준다 |
+| POST | `/v1/auth/logout` | | 204. 그 토큰은 더는 쓸 수 없다(401). 다시 로그인하면 새 토큰을 준다. 준 적 없는 토큰(바꾼 토큰)도 401 |
 | GET | `/v1/me` | | 200 사용자(로그인 응답의 `user`와 같은 모양) |
 | GET | `/v1/me/profile` | | 200 `{"ageGroup":"thirties","monthlyIncome":3000000}` / 404 `PROFILE_NOT_FOUND` |
 | PUT | `/v1/me/profile` | `{"ageGroup":"thirties","monthlyIncome":3000000}` | 200 같은 모양 |

@@ -10,11 +10,12 @@ final _logger = CustomLogger.create(tag: 'session');
 /// 로그인 세션: 서버가 준 액세스 토큰을 기기에 두고, 요청마다 붙이고, 끝낸다.
 ///
 /// - 토큰은 [AuthTokenStore] adapter에 둔다(앱: 보안 저장소, 테스트: 메모리).
-/// - [interceptor]가 모든 요청에 `Authorization: Bearer`를 붙인다. 서버가 지금 가진 토큰을 거부하면(401)
+/// - [interceptor]가 모든 요청에 `Authorization: Bearer`를 붙인다(이미 적힌 요청 — 로그아웃 — 은 그대로 둔다). 서버가 지금 가진 토큰을 거부하면(401)
 ///   토큰을 지우고 [expired]로 알린다. 앱을 켤 때 세션을 확인하다가도, 쓰는 중에도 같다.
 /// - 저장소를 읽지 못하면(키 저장소 고장) 세션이 없는 것으로 본다. 다시 시도해도 고쳐지지 않으므로 토큰 지우기를
 ///   시도하고, 요청을 보내던 중이었으면 [expired]로 알린다(다시 로그인하게). 요청은 토큰 없이 보낸다.
 /// - [start]·[end]는 저장소에 쓰고 지우는 일이다. 실패해도 던지지 않고 [Result.failure](unknown)로 돌려준다.
+/// - [end]는 기기의 토큰을 먼저 지우고, 지웠을 때만 서버에 알린다. 못 지우면 서버 세션도 그대로라 계속 쓸 수 있다.
 class Session {
   Session(this._store);
 
@@ -33,8 +34,18 @@ class Session {
   /// 서버가 준 [token]으로 세션을 시작한다.
   Future<Result<void>> start(String token) => _guard(() => _store.write(token));
 
-  /// 이 기기의 세션을 끝낸다. 토큰을 지우지 못하면 실패이고 세션은 그대로다.
-  Future<Result<void>> end() => _guard(_store.clear);
+  /// 이 기기의 세션을 끝낸다. 토큰을 지운 다음 [tellServer]에 그 토큰의 `Authorization` 값을 넘겨 서버에 알린다.
+  /// 토큰을 지우지 못하면 서버에 알리지 않고 실패다(세션은 그대로 쓸 수 있다). 서버에 알리지 못해도 성공이다.
+  Future<Result<void>> end({Future<void> Function(String authorization)? tellServer}) async {
+    final saved = await _read();
+    final cleared = await _guard(_store.clear);
+    final token = saved.token;
+    if (cleared.failureOrNull == null && token != null) await tellServer?.call('$_scheme$token');
+    return cleared;
+  }
+
+  static const _header = 'Authorization';
+  static const _scheme = 'Bearer ';
 
   /// 저장된 토큰. 읽지 못했으면 세션을 버리고(지우기 시도) [unreadable]이 true다.
   Future<({String? token, bool unreadable})> _read() async {
@@ -74,11 +85,13 @@ class _SessionInterceptor extends Interceptor {
 
   final Session _session;
 
-  static const _header = 'Authorization';
-  static const _scheme = 'Bearer ';
+  static const _header = Session._header;
+  static const _scheme = Session._scheme;
 
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+    // 끝낼 세션을 직접 적은 요청(로그아웃)은 그대로 보낸다. 그 사이 새로 로그인했어도 새 토큰으로 덮지 않는다.
+    if (options.headers.containsKey(_header)) return handler.next(options);
     final saved = await _session._read();
     if (saved.unreadable) _session._expired.add(null);
     final token = saved.token;

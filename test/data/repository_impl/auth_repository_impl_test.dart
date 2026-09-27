@@ -92,11 +92,14 @@ void main() {
     await expired;
   });
 
-  test('signOut clears token', () async {
+  test('signOut은 기기 토큰을 지우고 서버 세션도 끝낸다', () async {
     await repo.signIn(AuthProvider.google);
-    // 토큰을 먼저 지우면 로그아웃 요청이 인증 없이 가서 401로 실패한다.
+    final old = tokens.token;
     expect((await repo.signOut()).failureOrNull, isNull);
     expect(tokens.token, isNull);
+    // 지운 토큰으로 서버에 알렸으므로 그 토큰은 더 쓸 수 없다.
+    tokens.token = old;
+    expect((await repo.currentUser()).unwrap(), isNull);
   });
 
   test('server error on /me → server 실패, 토큰은 그대로', () async {
@@ -132,12 +135,16 @@ void main() {
       expect(res.failureOrNull?.reason, FailureReason.unknown);
     });
 
-    test('못 지우면 signOut → unknown 실패, 토큰은 남는다', () async {
+    // 로그인 상태로 남는 세션은 서버에서도 살아 있어야 한다. 서버에 먼저 알리면 다음 요청에서 만료로 튕긴다.
+    test('못 지우면 signOut → unknown 실패이고, 서버에 알리지 않아 세션은 그대로 쓸 수 있다', () async {
       await server.signIn(AuthProvider.kakao);
       tokens.failClear = true;
       final res = await repo.signOut();
       expect(res.failureOrNull?.reason, FailureReason.unknown);
       expect(tokens.token, isNotNull);
+      expect(server.faults.count('POST', '/v1/auth/logout'), 0);
+      tokens.failClear = false;
+      expect((await repo.currentUser()).unwrap(), testUser);
     });
   });
 

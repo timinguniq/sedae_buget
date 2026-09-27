@@ -62,6 +62,15 @@ void main() {
     expect(headers['Authorization'], 'Bearer abc');
   });
 
+  // 로그아웃은 지운 토큰을 직접 적어 보낸다. 그 사이 새로 로그인했어도 새 토큰으로 덮으면 새 세션이 끝난다.
+  test('요청에 이미 Authorization이 있으면 지금 토큰으로 덮지 않는다', () async {
+    tokens.token = 'new';
+    final headers = (await dioWith(_EchoHeaders())
+            .get<Map<String, dynamic>>('/x', options: Options(headers: {'Authorization': 'Bearer old'})))
+        .data!;
+    expect(headers['Authorization'], 'Bearer old');
+  });
+
   test('no token → no Authorization header', () async {
     final headers = (await dioWith(_EchoHeaders()).get<Map<String, dynamic>>('/x')).data!;
     expect(headers.containsKey('Authorization'), isFalse);

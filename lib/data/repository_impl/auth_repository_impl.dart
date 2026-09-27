@@ -48,10 +48,9 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
-  Future<Result<void>> signOut() async {
-    // 토큰을 먼저 지우면 로그아웃 요청이 인증 없이 간다. 서버가 응답하지 않아도 이 기기의 세션은 끝낸다.
-    final server = (await guardApi(_api.logout)).failureOrNull;
-    if (server != null) _logger.w('서버에 로그아웃을 알리지 못했어요(${server.reason.name}). 서버 세션은 만료로 끝나요');
-    return _session.end();
-  }
+  Future<Result<void>> signOut() => _session.end(tellServer: (authorization) async {
+        // 서버가 응답하지 않아도 이 기기의 세션은 이미 끝났다.
+        final server = (await guardApi(() => _api.logout(authorization))).failureOrNull;
+        if (server != null) _logger.w('서버에 로그아웃을 알리지 못했어요(${server.reason.name}). 서버 세션은 만료로 끝나요');
+      });
 }
