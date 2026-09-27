@@ -3,6 +3,7 @@ import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
+import '../../helper/fake_http_adapter.dart';
 import '../../helper/stub_server.dart';
 
 void main() {
@@ -34,5 +35,20 @@ void main() {
     final avgs = (await repo.generationAverages()).unwrap();
     expect(avgs.keys, unorderedEquals(AgeGroup.values));
     expect(avgs[AgeGroup.teens], StubPeerData.forGroup(AgeGroup.teens).avgMonthlyExpense);
+  });
+
+  test('세대별 평균에서 모르는 나이대 행은 버린다', () async {
+    final repo = PeerStatsRepositoryImpl(PeerStatsApi(fakeDio(FakeHttpAdapter.reply(200,
+        '[{"ageGroup":"teens","avgMonthlyExpense":800000},{"ageGroup":"lateTwenties","avgMonthlyExpense":1}]'))));
+    expect((await repo.generationAverages()).unwrap(), {AgeGroup.teens: 800000});
+  });
+
+  test('또래 통계는 응답의 나이대가 무엇이든 요청한 나이대로 읽는다', () async {
+    final repo = PeerStatsRepositoryImpl(PeerStatsApi(fakeDio(FakeHttpAdapter.reply(200,
+        '{"ageGroup":"lateTwenties","avgMonthlyExpense":1900000,"avgSavingsRate":0.2,'
+        '"avgByCategory":{"1":300000},"samples":[1000000]}'))));
+    final stats = (await repo.forGroup(AgeGroup.twenties)).unwrap();
+    expect(stats.ageGroup, AgeGroup.twenties);
+    expect(stats.avgMonthlyExpense, 1900000);
   });
 }

@@ -37,4 +37,13 @@ void main() {
         UserProfileApi(fakeDio(FakeHttpAdapter.reply(404, errorBody('NOT_FOUND')))));
     expect((await repo.current()).failureOrNull?.reason, FailureReason.notFound);
   });
+
+  // 서버가 나이대를 늘리거나 바꾸면(예: 전반/후반) 이전에는 디코드가 던져 '연결 안 됨'에 계속 머물렀다.
+  test('모르는 나이대로 저장된 프로필은 없는 프로필로 읽는다(온보딩에서 다시 고른다)', () async {
+    final repo = UserProfileRepositoryImpl(UserProfileApi(
+        fakeDio(FakeHttpAdapter.reply(200, '{"ageGroup":"lateTwenties","monthlyIncome":3000000}'))));
+    final res = await repo.current();
+    expect(res.failureOrNull, isNull);
+    expect(res.unwrap(), isNull);
+  });
 }

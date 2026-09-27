@@ -40,7 +40,8 @@ Future<ProviderContainer> _pump(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
-  final server = await tester.seedServer(categories: customs, transactions: transactions ?? [_expense(5000, 5)]);
+  final server = await tester.seedServer(
+      profile: noIncomeProfile, categories: customs, transactions: transactions ?? [_expense(5000, 5)]);
   faults?.call(server.faults);
   final ads = FakeAdService();
   final container = fakeContainer(

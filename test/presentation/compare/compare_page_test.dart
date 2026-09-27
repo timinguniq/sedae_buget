@@ -47,6 +47,7 @@ Future<void> _pumpCompare(
   addTearDown(tester.view.resetDevicePixelRatio);
   final month = lastMonth ? DateTime(_now.year, _now.month - 1) : _thisMonth;
   final server = await tester.seedServer(
+    profile: noIncomeProfile,
     categories: customs,
     transactions: transactions ?? _spending(month),
     peerStats: peer == null ? null : (_) => peer,

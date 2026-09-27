@@ -13,6 +13,10 @@ export 'server_faults.dart';
 /// Stub이 kakao 로그인에 돌려주는 사용자.
 const testUser = AuthUser(provider: AuthProvider.kakao, nickname: '카카오 사용자');
 
+/// 또래 통계를 읽으려면 프로필(나이대)이 있어야 한다. 소득을 정하지 않는 테스트가 심는 프로필:
+/// 30대, 월소득 0(소득은 그 달 수입의 합계가 된다).
+const noIncomeProfile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 0);
+
 /// 테스트용 인메모리 토큰 저장소. [failRead]·[failWrite]·[failClear]를 켜면 그 작업이 보안 저장소처럼 던진다.
 class MemoryAuthTokenStore implements AuthTokenStore {
   MemoryAuthTokenStore([this.token]);

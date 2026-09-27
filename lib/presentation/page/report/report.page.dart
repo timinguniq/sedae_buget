@@ -7,15 +7,6 @@ import 'package:sedae_budget/presentation/page/report/widget/monthly_insight_car
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-/// 세대별 대표 소비 칩 카피(디자인). 또래 통계에 대표 항목이 없어 고정 문구.
-const _signatureSpend = <AgeGroup, String>{
-  AgeGroup.teens: '간식',
-  AgeGroup.twenties: '카페·모임',
-  AgeGroup.thirties: '육아·주거',
-  AgeGroup.forties: '자녀교육',
-  AgeGroup.fiftiesPlus: '건강',
-};
-
 class ReportPage extends ConsumerWidget {
   const ReportPage({super.key});
 
@@ -104,7 +95,7 @@ class ReportPage extends ConsumerWidget {
                 children: [
                   for (final g in AgeGroup.values)
                     DesignChip(
-                      label: '${g.label} · ${_signatureSpend[g]}',
+                      label: '${g.label} · ${g.signatureSpend}',
                       style: g == ageGroup ? DesignChipStyle.coral : DesignChipStyle.outline,
                       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
                     ),

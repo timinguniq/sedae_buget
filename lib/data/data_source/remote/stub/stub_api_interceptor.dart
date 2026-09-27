@@ -5,6 +5,7 @@ import 'package:sedae_budget/data/data_source/local/stub_state_store.dart';
 import 'package:sedae_budget/data/data_source/remote/api_path.dart';
 import 'package:sedae_budget/data/data_source/remote/stub/stub_api_state.dart';
 import 'package:sedae_budget/data/data_source/remote/stub/stub_peer_data.dart';
+import 'package:sedae_budget/data/dto/age_group_wire.dart';
 import 'package:sedae_budget/data/dto/peer_stats_dto.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:uuid/uuid.dart';
@@ -85,7 +86,7 @@ class StubApiInterceptor extends Interceptor {
     final catId = _idAfter(ApiPath.categories, p);
     if (catId != null) return _category(db, m, catId, o.data);
     if (m == 'GET' && p == ApiPath.peerStats) {
-      final g = _enumOrNull(AgeGroup.values, o.queryParameters['ageGroup']);
+      final g = ageGroupFromWire(o.queryParameters['ageGroup']);
       if (g == null) throw _StubError(400, 'VALIDATION', 'ageGroup이 잘못되었습니다.');
       return (200, PeerStatsDto.fromEntity(_peerStats(g)).toJson());
     }
@@ -94,7 +95,7 @@ class StubApiInterceptor extends Interceptor {
         200,
         [
           for (final g in AgeGroup.values)
-            {'ageGroup': g.name, 'avgMonthlyExpense': _peerStats(g).avgMonthlyExpense},
+            {'ageGroup': g.wire, 'avgMonthlyExpense': _peerStats(g).avgMonthlyExpense},
         ],
       );
     }
@@ -155,7 +156,7 @@ class StubApiInterceptor extends Interceptor {
       case 'PUT':
         final b = _bodyOf(body);
         final income = b['monthlyIncome'];
-        if (_enumOrNull(AgeGroup.values, b['ageGroup']) == null) {
+        if (ageGroupFromWire(b['ageGroup']) == null) {
           throw _StubError(400, 'VALIDATION', 'ageGroup이 잘못되었습니다.');
         }
         if (income is! int || income < 0) throw _StubError(400, 'VALIDATION', 'monthlyIncome은 0 이상 정수입니다.');

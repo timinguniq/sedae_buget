@@ -26,7 +26,7 @@ Future<void> _pump(
   List<CustomCategory> customs = const [],
   void Function(ServerFaults faults)? faults,
 }) async {
-  final server = await t.seedServer(categories: customs, transactions: transactions);
+  final server = await t.seedServer(profile: noIncomeProfile, categories: customs, transactions: transactions);
   faults?.call(server.faults);
   await t.pumpWidget(fakeScope(fakeContainer(server: server), const MaterialApp(home: CategoryAnalysisPage())));
   await t.settle();

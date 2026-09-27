@@ -8,20 +8,12 @@ part of 'user_profile_dto.dart';
 
 UserProfileDto _$UserProfileDtoFromJson(Map<String, dynamic> json) =>
     UserProfileDto(
-      ageGroup: $enumDecode(_$AgeGroupEnumMap, json['ageGroup']),
+      ageGroup: json['ageGroup'] as String,
       monthlyIncome: (json['monthlyIncome'] as num).toInt(),
     );
 
 Map<String, dynamic> _$UserProfileDtoToJson(UserProfileDto instance) =>
     <String, dynamic>{
-      'ageGroup': _$AgeGroupEnumMap[instance.ageGroup]!,
+      'ageGroup': instance.ageGroup,
       'monthlyIncome': instance.monthlyIncome,
     };
-
-const _$AgeGroupEnumMap = {
-  AgeGroup.teens: 'teens',
-  AgeGroup.twenties: 'twenties',
-  AgeGroup.thirties: 'thirties',
-  AgeGroup.forties: 'forties',
-  AgeGroup.fiftiesPlus: 'fiftiesPlus',
-};
