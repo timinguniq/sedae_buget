@@ -4,7 +4,8 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_delta_badge.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-/// 홈 "많이 쓴 카테고리" 카드: [top] 진행바(7px, 코랄) + 또래 배지. 탭 시 [onTap].
+/// 홈 "많이 쓴 카테고리" 카드: [top] 진행바(7px) + 또래 배지. 탭 시 [onTap].
+/// 막대는 또래보다 더 쓴 분류만 코랄이고, 덜 쓰거나 비슷하면 회색이다(또래 비교가 없으면 코랄).
 class TopCategoryCard extends StatelessWidget {
   const TopCategoryCard({
     super.key,
@@ -38,6 +39,11 @@ class TopCategoryCard extends StatelessWidget {
 
   Widget _row(BuildContext context, BudgetCategory cat, int amount, double fraction, PeerComparison? comparison) {
     final won = NumberFormat.decimalPattern('ko');
+    final notOver = comparison != null && comparison.direction != PeerDirection.more;
+    final dark = context.theme.brightness == Brightness.dark;
+    final bar = notOver
+        ? (dark ? context.color.label.disable : Palette.neutral400)
+        : context.color.primary.normal;
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text(cat.label, style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.normal)),
@@ -56,7 +62,7 @@ class TopCategoryCard extends StatelessWidget {
         child: LinearProgressIndicator(
           value: fraction.clamp(0.0, 1.0), minHeight: 7,
           backgroundColor: context.color.background.alternative,
-          color: context.color.primary.normal),
+          color: bar),
       ),
     ]);
   }

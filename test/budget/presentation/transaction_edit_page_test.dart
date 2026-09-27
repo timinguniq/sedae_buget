@@ -100,17 +100,33 @@ void main() {
     expect(find.byType(TransactionEditPage), findsNothing);
   });
 
-  // 이전에는 수입에도 지출 카테고리 칩을 보여 월급이 '식료품'으로 저장됐다.
-  testWidgets('수입을 고르면 카테고리를 고르지 않는다', (tester) async {
-    await pumpEditPage(tester, customs: const [_pet]);
-    expect(find.byKey(const Key('category-add-chip')), findsOneWidget);
+  // 디자인: 입력 화면은 지출만 적는다(소득은 프로필 월소득). 지출/수입 토글 대신 제목이 있다.
+  group('제목', () {
+    testWidgets('새 거래는 지출 입력이고 지출/수입을 고르지 않는다', (tester) async {
+      await pumpEditPage(tester);
+      expect(find.text('지출 입력'), findsOneWidget);
+      expect(find.text('수입'), findsNothing);
+      expect(find.byKey(const Key('category-add-chip')), findsOneWidget);
+      expect(find.byKey(const Key('delete-button')), findsNothing);
+    });
 
-    await tester.tap(find.text('수입'));
-    await tester.pump();
+    testWidgets('지출을 고치면 지출 수정이고 지울 수 있다', (tester) async {
+      await pumpEditPage(tester, existing: Transaction.create(
+          amount: 1000, categoryId: 1, date: DateTime.now(), type: TransactionType.expense));
+      expect(find.text('지출 수정'), findsOneWidget);
+      expect(find.byKey(const Key('delete-button')), findsOneWidget);
+    });
 
-    expect(find.byKey(const Key('category-add-chip')), findsNothing);
-    expect(find.text('반려동물'), findsNothing);
-    expect(find.text(BudgetCategory.transport.label), findsNothing);
+    // 전에 적은 수입은 남아 있으니 고칠 수 있어야 한다. 수입은 카테고리가 없다
+    // (이전에는 수입에도 지출 카테고리 칩을 보여 월급이 '식료품'으로 저장됐다).
+    testWidgets('수입을 고치면 수입 수정이고 카테고리를 고르지 않는다', (tester) async {
+      await pumpEditPage(tester, customs: const [_pet], existing: Transaction.create(
+          amount: 3000000, categoryId: 1, date: DateTime.now(), type: TransactionType.income));
+      expect(find.text('수입 수정'), findsOneWidget);
+      expect(find.byKey(const Key('category-add-chip')), findsNothing);
+      expect(find.text('반려동물'), findsNothing);
+      expect(find.text(BudgetCategory.transport.label), findsNothing);
+    });
   });
 
   testWidgets('zero amount is blocked', (tester) async {

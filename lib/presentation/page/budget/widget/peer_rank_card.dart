@@ -3,7 +3,7 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 또래 순위 카드. 통계 값은 서버(PeerStatsRepository).
-/// 디자인: `상위 N%`(800·25 코랄) + `100명 중 N등` / 트랙 6px + 코랄 원형 마커 17px / "적게 씀"·"많이 씀" / `자세히 ›`.
+/// 디자인: `많이 쓰는 쪽 N%`(800·25 코랄) + `100명 중 N등` / 트랙 6px + 코랄 원형 마커 17px / "적게 씀"·"많이 씀" / `자세히 ›`.
 class PeerRankCard extends StatelessWidget {
   const PeerRankCard({super.key, required this.rank, this.onDetail});
 
@@ -26,12 +26,17 @@ class PeerRankCard extends StatelessWidget {
           Text('자세히 ›', style: context.typo.caption2W600.copyWith(fontSize: 11, color: context.color.label.assistive)),
         ]),
         const SizedBox(height: 7),
-        Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-          Text('상위 $topPercent%', style: context.typo.amountDisplaySmall.copyWith(color: context.color.primary.normal)),
-          const SizedBox(width: 8),
-          Text('${r.total}명 중 ${r.rank}등',
-              style: context.typo.caption1W600.copyWith(color: context.color.label.alternative)),
-        ]),
+        // 한 줄이 좁은 화면에서 넘치면 줄 전체를 줄인다(두 글자 크기의 비율은 유지).
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
+            Text('많이 쓰는 쪽 $topPercent%', style: context.typo.amountDisplaySmall.copyWith(color: context.color.primary.normal)),
+            const SizedBox(width: 8),
+            Text('${r.total}명 중 ${r.rank}등',
+                style: context.typo.caption1W600.copyWith(color: context.color.label.alternative)),
+          ]),
+        ),
         const SizedBox(height: 10),
         SizedBox(
           height: 36,

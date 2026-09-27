@@ -37,13 +37,12 @@ void main() {
     test('입력한 값으로 새 거래를 만든다', () {
       final tx = TransactionDraft.create(_day)
           .withAmount(12000)
-          .withType(TransactionType.income)
           .withDate(DateTime(2026, 6, 7))
           .pickBase(BudgetCategory.transport)
           .withMemo('  버스  ')
           .toTransaction(const CategoryCatalog());
       expect(tx.amount, 12000);
-      expect(tx.type, TransactionType.income);
+      expect(tx.type, TransactionType.expense);
       expect(tx.date, DateTime(2026, 6, 7));
       expect(tx.categoryId, BudgetCategory.transport.id);
       expect(tx.customCategoryId, isNull);
@@ -76,29 +75,25 @@ void main() {
   });
 
   // 수입은 카테고리가 없다. 이전에는 수입에도 지출 카테고리(기본값 식료품)가 붙어 그 분류에 섞였다.
+  // 새 거래는 지출만 적으므로 수입 초안은 전에 적은 수입을 고칠 때만 생긴다.
   group('수입', () {
+    const catalog = CategoryCatalog([_pet]);
+    final income = _saved().copyWith(type: TransactionType.income);
+
     test('지출만 카테고리를 고른다', () {
-      final d = TransactionDraft.create(_day);
-      expect(d.hasCategory, isTrue);
-      expect(d.withType(TransactionType.income).hasCategory, isFalse);
+      expect(TransactionDraft.create(_day).hasCategory, isTrue);
+      expect(TransactionDraft.edit(income, catalog).hasCategory, isFalse);
     });
 
     test('수입의 이름은 수입이다', () {
-      final d = TransactionDraft.create(_day).pickCustom(_pet).withType(TransactionType.income);
-      expect(d.label(const CategoryCatalog([_pet])), '수입');
+      final d = TransactionDraft.edit(income, catalog).pickCustom(_pet);
+      expect(d.label(catalog), '수입');
     });
 
     test('수입은 사용자 카테고리 없이 저장한다', () {
-      final tx = TransactionDraft.create(_day).withAmount(1).pickCustom(_pet)
-          .withType(TransactionType.income).toTransaction(const CategoryCatalog([_pet]));
+      final tx = TransactionDraft.edit(income, catalog).pickCustom(_pet).toTransaction(catalog);
       expect(tx.type, TransactionType.income);
       expect(tx.customCategoryId, isNull);
-    });
-
-    test('지출로 되돌리면 고른 카테고리가 그대로다', () {
-      final d = TransactionDraft.create(_day).pickCustom(_pet)
-          .withType(TransactionType.income).withType(TransactionType.expense);
-      expect(d.label(const CategoryCatalog([_pet])), '반려동물');
     });
   });
 

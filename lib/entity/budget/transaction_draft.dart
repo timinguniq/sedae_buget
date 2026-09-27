@@ -83,11 +83,10 @@ class TransactionDraft {
     return saved != null && saved.isAfter(today) ? saved : today;
   }
 
-  /// 카테고리를 고르는가. 수입은 카테고리가 없다(고른 카테고리는 지출로 되돌릴 때를 위해 남겨 둔다).
+  /// 카테고리를 고르는가. 수입은 카테고리가 없다.
   bool get hasCategory => type == TransactionType.expense;
 
   TransactionDraft withAmount(int amount) => _copy(amount: amount);
-  TransactionDraft withType(TransactionType type) => _copy(type: type);
   TransactionDraft withDate(DateTime date) => _copy(date: date);
   TransactionDraft withMemo(String memo) => _copy(memo: memo);
 
@@ -140,7 +139,6 @@ class TransactionDraft {
 
   TransactionDraft _copy({
     int? amount,
-    TransactionType? type,
     BudgetCategory? base,
     Object? customCategoryId = _keep,
     DateTime? date,
@@ -149,7 +147,7 @@ class TransactionDraft {
       TransactionDraft._(
         id: id,
         amount: amount ?? this.amount,
-        type: type ?? this.type,
+        type: type,
         base: base ?? this.base,
         customCategoryId:
             identical(customCategoryId, _keep) ? this.customCategoryId : customCategoryId as String?,

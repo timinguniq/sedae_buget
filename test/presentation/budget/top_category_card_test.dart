@@ -36,6 +36,32 @@ void main() {
     expect(taps, 1);
   });
 
+  // 디자인: 또래보다 더 쓴 분류만 코랄 막대, 덜 쓰거나 비슷하면 회색 막대. 또래 비교가 없으면 코랄 그대로.
+  group('막대 색', () {
+    final top = [
+      (category: BudgetCategory.fromId(1), amount: 540000, peer: PeerComparison.of(mine: 540000, peer: 470000)),
+      (category: BudgetCategory.fromId(4), amount: 380000, peer: PeerComparison.of(mine: 380000, peer: 420000)),
+      (category: BudgetCategory.fromId(7), amount: 200000, peer: PeerComparison.of(mine: 200000, peer: 200000)),
+      (category: BudgetCategory.fromId(11), amount: 100000, peer: null),
+    ];
+
+    List<Color?> barColors(WidgetTester t) =>
+        t.widgetList<LinearProgressIndicator>(find.byType(LinearProgressIndicator)).map((w) => w.color).toList();
+
+    testWidgets('라이트: 더 씀·비교 없음은 코랄, 덜 씀·비슷은 회색', (t) async {
+      await t.pumpWidget(_wrap(TopCategoryCard(top: top)));
+      expect(barColors(t),
+          [Palette.primaryNormal, Palette.neutral400, Palette.neutral400, Palette.primaryNormal]);
+    });
+
+    testWidgets('다크: 회색 막대는 다크 톤이다', (t) async {
+      await t.pumpWidget(MaterialApp(
+          home: Scaffold(body: TopCategoryCard(top: top)), theme: materialTheme(DarkTheme())));
+      expect(barColors(t),
+          [Palette.primaryNormal, Palette.darkTextDisabled, Palette.darkTextDisabled, Palette.primaryNormal]);
+    });
+  });
+
   testWidgets('empty summary shows placeholder', (t) async {
     await t.pumpWidget(_wrap(const TopCategoryCard(top: [])));
     await t.pump();

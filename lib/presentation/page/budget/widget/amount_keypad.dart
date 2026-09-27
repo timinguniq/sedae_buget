@@ -15,8 +15,8 @@ class KeypadInput {
   KeypadInput backspace() => KeypadInput(amount ~/ 10);
 }
 
-/// 디자인 키패드: 버튼 h52 / surface 배경 + line.normal 테두리 / r14 / 600·22, 간격 5. `⌫`는 투명.
-/// `00` 키는 앱이 원 단위 정수라 유지(디자인의 `.` 자리).
+/// 디자인 키패드: 버튼 h52 / surface 배경 + line.normal 테두리 / r14 / 600·22, 간격 5.
+/// 아래 줄 양 끝의 `00`(600·19)과 `⌫`는 바탕 없이 alternative 색.
 class AmountKeypad extends StatelessWidget {
   const AmountKeypad({super.key, required this.value, required this.onChanged});
   final KeypadInput value;
@@ -46,13 +46,14 @@ class AmountKeypad extends StatelessWidget {
 
   Widget _key(BuildContext context, String k) {
     final erase = k == '⌫';
+    final doubleZero = k == '00';
     return GestureDetector(
       onTap: () => onChanged(erase ? value.backspace() : value.press(k)),
       behavior: HitTestBehavior.opaque,
       child: Container(
         height: 52,
         alignment: Alignment.center,
-        decoration: erase
+        decoration: erase || doubleZero
             ? null
             : BoxDecoration(
                 color: context.color.background.surface,
@@ -61,7 +62,9 @@ class AmountKeypad extends StatelessWidget {
               ),
         child: erase
             ? Icon(Icons.backspace_outlined, size: 22, color: context.color.label.alternative)
-            : Text(k, style: context.typo.heading1W600.copyWith(color: context.color.label.normal)),
+            : Text(k, style: doubleZero
+                ? context.typo.heading1W600.copyWith(fontSize: 19, color: context.color.label.alternative)
+                : context.typo.heading1W600.copyWith(color: context.color.label.normal)),
       ),
     );
   }
