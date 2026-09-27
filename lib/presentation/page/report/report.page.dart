@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
-import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
 import 'package:sedae_budget/presentation/page/report/widget/generation_avg_chart.dart';
 import 'package:sedae_budget/presentation/page/report/widget/monthly_insight_card.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
@@ -24,12 +23,9 @@ class ReportPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final overview = ref.watch(monthOverviewProvider);
-    final asyncProfile = ref.watch(userProfileProvider);
     final selfTrend = ref.watch(selfTrendProvider);
     final generationAvg = ref.watch(generationAvgProvider);
     final month = ref.watch(selectedMonthProvider);
-
-    final ageGroup = asyncProfile.value?.ageGroup ?? AgeGroup.thirties;
 
     return DefaultLayout(
       child: overview.when(
@@ -37,7 +33,10 @@ class ReportPage extends ConsumerWidget {
         error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
         data: (o) {
           // 리포트는 또래 비교가 중심이라, 또래 통계를 못 읽으면 화면 전체를 안내로 바꾼다.
-          if (!o.hasPeer) return const Center(child: Text(peerUnavailableText));
+          final peer = o.peer;
+          if (peer == null) return const Center(child: Text(peerUnavailableText));
+          // '내 세대' 강조는 순위·인사이트를 계산한 또래 통계의 나이대를 따른다.
+          final ageGroup = peer.ageGroup;
           final won = NumberFormat.decimalPattern('ko');
           final peerTop = o.rank?.topPercent; // 또래 상위 N%. 빈 달이거나 표본이 없으면 null
           // 소득이 없으면 저축률·소득 대비 지출 모두 '—'.
