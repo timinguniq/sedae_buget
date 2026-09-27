@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/report/report.page.dart';
+import 'package:sedae_budget/presentation/page/report/widget/generation_avg_chart.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
@@ -112,12 +113,39 @@ void main() {
 
     expect(find.text('또래 통계를 불러오지 못했어요'), findsOneWidget);
   });
+
+  // 세대 차트와 대표 소비 칩은 '내 세대' 하나만 강조한다.
+  group('내 세대 강조', () {
+    void expectMyGroup(WidgetTester tester, AgeGroup mine) {
+      expect(tester.widget<GenerationAvgChart>(find.byType(GenerationAvgChart)).myGroup, mine);
+      final chips = tester.widgetList<DesignChip>(find.byType(DesignChip));
+      expect(chips, hasLength(AgeGroup.values.length));
+      for (final chip in chips) {
+        final isMine = chip.label.startsWith('${mine.label} ');
+        expect(chip.style, isMine ? DesignChipStyle.coral : DesignChipStyle.outline, reason: chip.label);
+      }
+    }
+
+    testWidgets('프로필의 나이대를 강조한다', (tester) async {
+      await _pumpReport(tester,
+          profile: const UserProfile(ageGroup: AgeGroup.forties, monthlyIncome: 3000000));
+      expectMyGroup(tester, AgeGroup.forties);
+    });
+
+    // 강조는 순위·인사이트를 계산한 또래 통계의 나이대를 따른다. 프로필이 없어 30대를 물었는데
+    // 서버가 20대 통계로 답하는 억지 입력으로, 두 값의 출처가 하나인지 본다.
+    testWidgets('비교에 쓴 또래 통계의 나이대를 강조한다', (tester) async {
+      await _pumpReport(tester, peer: StubPeerData.forGroup(AgeGroup.twenties));
+      expectMyGroup(tester, AgeGroup.twenties);
+    });
+  });
 }
 
-/// 리포트 화면을 띄운다. 서버는 [transactions](기본은 [_ledger])를 심고 또래 통계는 [peer]로 답한다.
+/// 리포트 화면을 띄운다. 서버는 [profile]과 [transactions](기본은 [_ledger])를 심고 또래 통계는 [peer]로 답한다.
 Future<void> _pumpReport(
   WidgetTester tester, {
   PeerStats? peer,
+  UserProfile? profile,
   List<Transaction>? transactions,
   void Function(ServerFaults faults)? faults,
 }) async {
@@ -126,6 +154,7 @@ Future<void> _pumpReport(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   final server = await tester.seedServer(
+    profile: profile,
     transactions: transactions ?? _ledger(),
     peerStats: peer == null ? null : (_) => peer,
   );

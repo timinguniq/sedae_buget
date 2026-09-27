@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'package:sedae_budget/core/ads/ad_service.dart';
 import 'package:sedae_budget/presentation/service/ad_provider.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
@@ -17,7 +17,7 @@ class DayAdBanner extends ConsumerStatefulWidget {
 }
 
 class _DayAdBannerState extends ConsumerState<DayAdBanner> {
-  BannerAd? _ad;
+  LoadedBanner? _ad;
 
   @override
   void initState() {
@@ -45,8 +45,8 @@ class _DayAdBannerState extends ConsumerState<DayAdBanner> {
   Widget build(BuildContext context) {
     final ad = _ad;
     if (ad == null) return const SizedBox.shrink();
-    final width = ad.size.width.toDouble();
-    final height = ad.size.height.toDouble();
+    final width = ad.width.toDouble();
+    final height = ad.height.toDouble();
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -62,7 +62,7 @@ class _DayAdBannerState extends ConsumerState<DayAdBanner> {
                     fontSize: 8.5, letterSpacing: 0.4,
                     fontWeight: context.typo.bold, color: context.color.label.alternative)),
           ),
-          Text('AdMob · ${ad.size.width}×${ad.size.height}',
+          Text('AdMob · ${ad.width}×${ad.height}',
               style: context.typo.caption2W500.copyWith(fontSize: 9, color: context.color.label.disable)),
         ]),
         const SizedBox(height: 6),
@@ -75,7 +75,7 @@ class _DayAdBannerState extends ConsumerState<DayAdBanner> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Center(
-            child: SizedBox(width: width, height: height, child: AdWidget(ad: ad)),
+            child: SizedBox(width: width, height: height, child: ad.view),
           ),
         ),
       ]),

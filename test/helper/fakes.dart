@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'package:sedae_budget/core/ads/index.dart';
 import 'package:sedae_budget/core/app_config/remote_config.dart';
 import 'package:sedae_budget/core/local_storage/theme_mode_store.dart';
@@ -20,11 +19,15 @@ import 'stub_server.dart';
 
 export 'stub_server.dart';
 
-/// 광고 SDK 없이 호출 횟수만 기록하는 fake. 배너는 항상 실패(null), 전면은 [interstitial]의 결과를 따른다.
+/// 광고 SDK 없이 호출 횟수만 기록하는 fake. 배너는 [banner]의 결과(기본은 실패 null),
+/// 전면은 [interstitial]의 결과를 따른다.
 class FakeAdService implements AdService {
-  FakeAdService({Future<bool>? interstitial}) : _interstitial = interstitial ?? Future.value(true);
+  FakeAdService({Future<bool>? interstitial, Future<LoadedBanner?>? banner})
+      : _interstitial = interstitial ?? Future.value(true),
+        _banner = banner ?? Future.value();
 
   final Future<bool> _interstitial;
+  final Future<LoadedBanner?> _banner;
   int loadInterstitialCalls = 0;
   int showInterstitialCalls = 0;
 
@@ -32,7 +35,7 @@ class FakeAdService implements AdService {
   Future<void> initialize() async {}
 
   @override
-  Future<BannerAd?> loadBanner() async => null;
+  Future<LoadedBanner?> loadBanner() => _banner;
 
   @override
   Future<bool> loadInterstitial() {

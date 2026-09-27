@@ -47,6 +47,7 @@
 | `presentation/page` | `shared_preferences` 직접 사용 |
 | `theme` | `presentation`, `domain`, `data` |
 | `domain`·`entity`·`presentation`·`theme` | `package:dio/` (HTTP는 `core`·`data`에만) |
+| 모든 레이어 | `package:google_mobile_ads/` — 단 AdMob 구현 `lib/core/ads/admob_ad_service.dart`는 허용(`AdService` 경계와 화면은 `LoadedBanner`만 본다) |
 
 ## 예시
 

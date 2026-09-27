@@ -41,7 +41,7 @@ class CDialog<T> extends StatelessWidget {
                 /// 설명
                 Text(
                   description,
-                  style: context.typo.headline1W500.copyWith(color: const Color(0xCC000000)),
+                  style: context.typo.headline1W500.copyWith(color: context.color.label.normal),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -111,9 +111,9 @@ class _Button<T> extends StatelessWidget {
     return CButton(
       label: item.label,
       labelStyle: context.typo.titleReadingW600.copyWith(
-        color: item.labelColor ?? Palette.labelWhite,
+        color: item.labelColor ?? context.color.static.white,
       ),
-      buttonColor: item.color ?? Palette.primaryStrong,
+      buttonColor: item.color,
       size: CButtonSize.lg,
       type: item.type ?? CButtonType.fill,
       onTap: () => context.pop<T>(item.result),

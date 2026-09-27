@@ -31,12 +31,23 @@ void main() {
     expect(find.text('화면'), findsOneWidget);
     expect(find.text('일반'), findsOneWidget);
     expect(find.byKey(const Key('category-manage-tile')), findsOneWidget);
+    expect(find.text('v1.0.0'), findsOneWidget); // 설치된 앱 버전
     expect(find.text('로그아웃'), findsNothing); // 로그아웃 상태
 
     await tester.tap(find.text('다크'));
     await tester.settle();
     expect(container.read(themeModeProvider), ThemeMode.dark);
     expect(store.read(), ThemeMode.dark); // 다음 실행에도 다크로 시작한다
+  });
+
+  testWidgets('앱 버전을 읽지 못하면 ...을 보인다', (tester) async {
+    PackageInfo.setMockInitialValues(
+      appName: 'sedae', packageName: 'com.sedae.budget',
+      version: '', buildNumber: '1', buildSignature: '');
+    await tester.pumpWidget(app(fakeContainer(themeModeStore: await fakeThemeModeStore())));
+    await tester.settle();
+
+    expect(find.text('...'), findsOneWidget);
   });
 
   testWidgets('logged in: bottom logout button is shown', (tester) async {

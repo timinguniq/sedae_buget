@@ -24,7 +24,7 @@ class AdMobAdService implements AdService {
   }
 
   @override
-  Future<BannerAd?> loadBanner() async {
+  Future<LoadedBanner?> loadBanner() async {
     await initialize();
     final loaded = Completer<bool>();
     final ad = BannerAd(
@@ -45,7 +45,14 @@ class AdMobAdService implements AdService {
       _logger.w('배너 로드 예외: $e', stackTrace: s);
       if (!loaded.isCompleted) loaded.complete(false);
     }
-    if (await loaded.future) return ad;
+    if (await loaded.future) {
+      return LoadedBanner(
+        width: ad.size.width,
+        height: ad.size.height,
+        view: AdWidget(ad: ad),
+        dispose: ad.dispose,
+      );
+    }
     await _dispose(ad);
     return null;
   }

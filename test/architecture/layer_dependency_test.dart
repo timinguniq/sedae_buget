@@ -190,6 +190,17 @@ void main() {
     }
   });
 
+  // AdService 경계(ad_service.dart)도 SDK를 모른다. 화면은 LoadedBanner만 받는다.
+  test('광고 SDK(google_mobile_ads)는 AdMob 구현에만 있다', () {
+    for (final layer in ['core', 'data', 'domain', 'entity', 'presentation', 'theme']) {
+      expect(
+        violations(layer, ['google_mobile_ads/'], skip: (p) => p == 'lib/core/ads/admob_ad_service.dart'),
+        isEmpty,
+        reason: layer,
+      );
+    }
+  });
+
   test('data의 로컬 저장 기술은 data_source/local에서만 쓴다', () {
     expect(
       violations(

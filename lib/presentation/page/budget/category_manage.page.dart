@@ -33,8 +33,8 @@ class _CategoryManagePageState extends ConsumerState<CategoryManagePage> {
           CDialogButton(
             label: '취소',
             result: false,
-            color: Palette.fillGrey,
-            labelColor: Palette.labelNeutral),
+            color: context.color.fill.grey,
+            labelColor: context.color.label.neutral),
           CDialogButton(label: '삭제', result: true),
         ],
       ),
