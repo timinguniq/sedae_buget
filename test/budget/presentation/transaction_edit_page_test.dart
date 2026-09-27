@@ -13,7 +13,7 @@ const _pet = CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12);
 /// 서버에 저장된 이번 달 거래(새 초안의 날짜는 오늘이다).
 Future<List<Transaction>> _onServer(WidgetTester tester, StubServer server) async {
   final now = DateTime.now();
-  return (await tester.untilDone(server.transactions.getMonth(now.year, now.month))).unwrap();
+  return (await tester.untilDone(server.transactions.getRange(YearMonth.of(now).start, YearMonth.of(now).end))).unwrap();
 }
 
 void main() {
@@ -194,7 +194,7 @@ void main() {
 
     final now = DateTime.now();
     final last = DateTime(now.year, now.month - 1);
-    final saved = (await tester.untilDone(server.transactions.getMonth(last.year, last.month))).unwrap();
+    final saved = (await tester.untilDone(server.transactions.getRange(YearMonth.of(last).start, YearMonth.of(last).end))).unwrap();
     expect(saved.single.amount, 1000);
   });
 
@@ -207,6 +207,18 @@ void main() {
 
     final picker = tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
     expect(DateUtils.isSameDay(picker.lastDate, DateTime.now()), isTrue);
+  });
+
+  // 이전에는 첫 날짜가 2020년으로 박혀 있어 그보다 이른 거래의 날짜를 누르면 assert로 멈췄다.
+  testWidgets('2020년보다 이른 거래도 날짜를 고를 수 있다', (tester) async {
+    final old = Transaction.create(
+        amount: 1000, categoryId: 1, date: DateTime(2019, 12, 27), type: TransactionType.expense);
+    await pumpEditPage(tester, existing: old);
+    await tester.tap(find.byIcon(Icons.calendar_today_outlined));
+    await tester.pumpAndSettle();
+
+    final picker = tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
+    expect(picker.firstDate, DateTime(2019, 12, 27));
   });
 
   testWidgets('메모 필드는 전역 inputDecorationTheme의 outline 테두리를 받지 않는다', (tester) async {

@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
@@ -64,5 +65,23 @@ void main() {
     expect(find.byType(LogoutButton), findsOneWidget);
     expect(find.text('로그아웃'), findsOneWidget);
     expect(find.text('네이버'), findsOneWidget); // provider 배지
+  });
+
+  testWidgets('기기에서 토큰을 지우지 못하면 로그인 상태로 두고 이유를 알린다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final server = await tester.seedServer(provider: AuthProvider.naver);
+    final container = fakeContainer(server: server, themeModeStore: await fakeThemeModeStore());
+    await tester.pumpWidget(app(container));
+    await tester.settle();
+    server.tokens.failClear = true;
+
+    await tester.tap(find.text('로그아웃'));
+    await tester.settle();
+
+    expect(find.text('로그아웃하지 못했어요. 문제가 생겼어요. 잠시 후 다시 시도해 주세요'), findsOneWidget);
+    expect(find.byType(LogoutButton), findsOneWidget);
+    expect(container.read(authProvider).value?.provider, AuthProvider.naver);
   });
 }

@@ -24,14 +24,59 @@ class SavingsComparison {
 /// 두 막대의 길이. 큰 쪽이 1이고 음수는 0이다.
 typedef BarPair = ({double mine, double peer});
 
+/// 이달을 또래와 견준 상황. 화면은 이 셋 중 무엇인지로 갈라 그린다.
+sealed class PeerStanding {
+  const PeerStanding();
+}
+
+/// 또래 통계를 못 읽었다. 비교가 모두 없다.
+final class PeerUnavailable extends PeerStanding {
+  const PeerUnavailable();
+}
+
+/// 빈 달(지출 0원)이라 또래와 견주지 않는다.
+final class PeerEmptyMonth extends PeerStanding {
+  const PeerEmptyMonth();
+}
+
+/// 이달 전체를 또래와 견줬다. 또래 값이 없는 것(월평균 0·빠짐, 표본 없음)만 null이다.
+final class PeerCompared extends PeerStanding {
+  const PeerCompared({
+    required this.total,
+    required this.rank,
+    required this.savings,
+    required this.totalBars,
+    required this.savingsBars,
+  });
+
+  /// 이달 총지출과 또래 월평균. 또래 월평균이 없으면 null.
+  final PeerComparison? total;
+
+  /// 또래 중 내 지출 순위. 표본이 없으면 null.
+  final PeerRank? rank;
+
+  /// 저축률 비교. 내 저축률을 모르면(소득 없음) [SavingsComparison.mine]만 null이다.
+  final SavingsComparison savings;
+
+  /// 총지출 막대. [total]이 없으면 null.
+  final BarPair? totalBars;
+
+  /// 저축률 막대. 내 저축률을 모르거나 음수면 내 막대는 0이다.
+  final BarPair savingsBars;
+}
+
+/// 분석 화면 한 줄. [item]이 null이면 금액이 큰 줄들 밖을 묶은 나머지 줄이다.
+/// 또래 비교([peer])는 기본 분류 줄에만 붙는다(사용자 카테고리·나머지 줄, 또래 값이 없으면 null).
+typedef AnalysisRow = ({CategoryBreakdown? item, int amount, PeerComparison? peer});
+
 /// 이달 개요: 보고 있는 달([month])을 또래([peer])와 견준 결과.
 ///
 /// 달을 보여주는 화면(홈·비교·내역·리포트·분석)은 무엇을 또래와 견줄지, 무엇을 뺄지를 모두 여기서 읽는다.
-/// - 또래 통계를 못 읽었으면([hasPeer]가 false) 비교는 모두 없다. 내 값은 [month]로 그대로 보인다.
-/// - 빈 달(지출 0원, [isEmpty])은 또래와 견주지 않는다: 총지출·순위·분류별·가장 큰 차이·저축률 비교가 모두 없다.
+/// - 달 전체의 상황은 [standing]이다: 또래 통계를 못 읽음 · 빈 달(지출 0원 — 또래와 견주지 않는다) · 견줌.
+///   못 읽었거나 빈 달이면 분류별·가장 큰 차이 비교도 없다. 내 값은 [month]로 그대로 보인다.
 /// - 또래 값이 없는 항목(평균 0·빠짐)은 그 비교만 없다([PeerComparison.of]).
 class MonthOverview {
-  const MonthOverview({required this.month, this.peer});
+  MonthOverview({required this.month, this.peer});
 
   /// 보고 있는 달의 장부.
   final ViewedMonth month;
@@ -39,27 +84,40 @@ class MonthOverview {
   /// 또래 통계. 못 읽었으면 null. 분포 그림·나이대 표시에만 쓰고, 비교는 이 클래스의 멤버로 한다.
   final PeerStats? peer;
 
-  bool get hasPeer => peer != null;
-
-  /// 지출이 없는 달.
-  bool get isEmpty => month.expense == 0;
+  /// 이달을 또래와 견준 상황.
+  late final PeerStanding standing = () {
+    final p = _comparable;
+    if (p == null) return peer == null ? const PeerUnavailable() : const PeerEmptyMonth();
+    final total = p.compareTotal(month.expense);
+    final savings = SavingsComparison(mine: month.savingsRate, peer: p.avgSavingsRatePercent);
+    return PeerCompared(
+      total: total,
+      rank: p.rankOf(month.expense),
+      savings: savings,
+      totalBars: total == null ? null : _bars(total.mine, total.peer),
+      savingsBars: _bars(savings.mine ?? 0, savings.peer),
+    );
+  }();
 
   /// 견줄 또래 통계. 못 읽었거나 빈 달이면 null.
-  PeerStats? get _comparable => isEmpty ? null : peer;
-
-  /// 이달 총지출과 또래 월평균.
-  PeerComparison? get total => _comparable?.compareTotal(month.expense);
-
-  /// 또래 중 내 지출 순위. 표본이 없어도 null.
-  PeerRank? get rank => _comparable?.rankOf(month.expense);
+  PeerStats? get _comparable => month.expense == 0 ? null : peer;
 
   /// [category]의 이달 지출(사용자 카테고리 포함)과 또래 평균.
   PeerComparison? category(BudgetCategory category) =>
       _comparable?.compareCategory(category, month.byCategory[category] ?? 0);
 
-  /// 분석 화면 한 줄의 또래 비교. 또래 비교는 기본 분류로만 하므로 사용자 카테고리 행은 null이다.
-  PeerComparison? row(CategoryBreakdown row) =>
-      row.custom == null ? _comparable?.compareCategory(row.base, row.amount) : null;
+  /// 분석 화면의 줄: 금액이 큰 [n]개(내림차순)와, 그 밖이 있으면 나머지를 묶은 줄 하나(맨 끝).
+  /// 줄 금액의 합은 이달 지출이다.
+  List<AnalysisRow> analysisRows(int n) {
+    final rows = month.breakdown;
+    final rest = rows.skip(n).fold(0, (sum, e) => sum + e.amount);
+    return [
+      for (final e in rows.take(n))
+        // 또래 비교는 기본 분류로만 한다. 사용자 카테고리로 뗀 줄에는 붙이지 않는다.
+        (item: e, amount: e.amount, peer: e.custom == null ? _comparable?.compareCategory(e.base, e.amount) : null),
+      if (rest > 0) (item: null, amount: rest, peer: null),
+    ];
+  }
 
   /// 많이 쓴 기본 분류 [n]개(금액 내림차순)와 각 분류의 또래 비교.
   List<({BudgetCategory category, int amount, PeerComparison? peer})> topCategories(int n) => [
@@ -70,12 +128,6 @@ class MonthOverview {
   ({BudgetCategory category, PeerComparison comparison})? get largestGap =>
       _comparable?.largestCategoryGap(month.byCategory);
 
-  /// 저축률 비교.
-  SavingsComparison? get savings {
-    final p = _comparable;
-    return p == null ? null : SavingsComparison(mine: month.savingsRate, peer: p.avgSavingsRatePercent);
-  }
-
   /// 또래가 가장 많이 쓰는 분류(또래 평균을 가장 끌어올리는 항목).
   BudgetCategory? get peerTopCategory {
     MapEntry<BudgetCategory, int>? top;
@@ -83,18 +135,6 @@ class MonthOverview {
       if (top == null || e.value > top.value) top = e;
     }
     return top?.key;
-  }
-
-  /// 총지출 막대. 또래 월평균이 없으면 null.
-  BarPair? get totalBars {
-    final t = total;
-    return t == null ? null : _bars(t.mine, t.peer);
-  }
-
-  /// 저축률 막대. 내 저축률을 모르거나 음수면 내 막대는 0이다.
-  BarPair? get savingsBars {
-    final s = savings;
-    return s == null ? null : _bars(s.mine ?? 0, s.peer);
   }
 
   /// [tx]가 속한 기본 분류에서 이달 내 지출이 또래 평균보다 많은가.

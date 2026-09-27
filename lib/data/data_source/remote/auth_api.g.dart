@@ -48,10 +48,11 @@ class _AuthApi implements AuthApi {
   }
 
   @override
-  Future<void> logout() async {
+  Future<void> logout(String authorization) async {
     final _extra = <String, dynamic>{};
     final queryParameters = <String, dynamic>{};
-    final _headers = <String, dynamic>{};
+    final _headers = <String, dynamic>{r'Authorization': authorization};
+    _headers.removeWhere((k, v) => v == null);
     const Map<String, dynamic>? _data = null;
     final _options = _setStreamType<void>(
       Options(method: 'POST', headers: _headers, extra: _extra)

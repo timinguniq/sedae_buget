@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/core/core.dart';
 import 'package:sedae_budget/data/data.dart';
@@ -12,49 +13,61 @@ export 'server_faults.dart';
 /// Stub이 kakao 로그인에 돌려주는 사용자.
 const testUser = AuthUser(provider: AuthProvider.kakao, nickname: '카카오 사용자');
 
-/// 테스트용 인메모리 토큰 저장소.
+/// 또래 통계를 읽으려면 프로필(나이대)이 있어야 한다. 소득을 정하지 않는 테스트가 심는 프로필:
+/// 30대, 월소득 0(소득은 그 달 수입의 합계가 된다).
+const noIncomeProfile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 0);
+
+/// 테스트용 인메모리 토큰 저장소. [failRead]·[failWrite]·[failClear]를 켜면 그 작업이 보안 저장소처럼 던진다.
 class MemoryAuthTokenStore implements AuthTokenStore {
   MemoryAuthTokenStore([this.token]);
 
   String? token;
+  bool failRead = false;
+  bool failWrite = false;
+  bool failClear = false;
+
+  Never _fail() => throw PlatformException(code: 'keystore');
 
   @override
-  Future<String?> read() async => token;
+  Future<String?> read() async => failRead ? _fail() : token;
 
   @override
-  Future<void> write(String token) async => this.token = token;
+  Future<void> write(String token) async => failWrite ? _fail() : this.token = token;
 
   @override
-  Future<void> clear() async => token = null;
+  Future<void> clear() async => failClear ? _fail() : token = null;
 }
 
-/// 운영의 local 환경과 같은 배선(`connectToServer` = 토큰 인터셉터 → 로거 → Stub)으로 만든 가짜 서버.
+/// 운영의 local 환경과 같은 배선(`connectToServer` = 세션 인터셉터 → 로거 → Stub)으로 만든 가짜 서버.
 /// 테스트가 쓰는 유일한 서버 adapter다.
 ///
-/// 저장소 구현은 모두 같은 [dio]·[tokens]를 쓴다. 그래서 로그인하면 다른 저장소도 그 사용자로 부르고,
-/// 서버가 토큰을 거부하면(401) [sessionExpiry]가 알린다. Stub 바로 앞의 [faults]로 장애·느린 응답을
+/// 저장소 구현은 모두 같은 [dio]·[session]을 쓴다. 그래서 로그인하면 다른 저장소도 그 사용자로 부르고,
+/// 서버가 토큰을 거부하면(401) [session]이 만료를 알린다. Stub 바로 앞의 [faults]로 장애·느린 응답을
 /// 흉내 내고 서버에 닿은 요청을 센다. [peerStats]를 주면 Stub이 그 또래 통계로 답한다.
 class StubServer {
-  factory StubServer({StubStateStore? store, PeerStats Function(AgeGroup)? peerStats}) =>
-      StubServer._(MemoryAuthTokenStore(), SessionExpiry(), ServerFaults(), store, peerStats);
+  factory StubServer({StubStateStore? store, PeerStats Function(AgeGroup)? peerStats}) {
+    final tokens = MemoryAuthTokenStore();
+    return StubServer._(tokens, Session(tokens), ServerFaults(), store, peerStats);
+  }
 
-  StubServer._(this.tokens, this.sessionExpiry, this.faults, StubStateStore? store,
+  StubServer._(this.tokens, this.session, this.faults, StubStateStore? store,
       PeerStats Function(AgeGroup)? peerStats)
       : dio = connectToServer(
           env: AppEnvironment.local,
-          tokenStore: tokens,
-          sessionExpiry: sessionExpiry,
+          session: session,
           localServer: () => StubApiInterceptor(store: store, peerStats: peerStats),
         ) {
     dio.interceptors.insert(dio.interceptors.length - 1, faults);
   }
 
   final Dio dio;
+
+  /// [session]이 쓰는 토큰 저장소. 테스트가 토큰을 바꾸거나 고장 낸다.
   final MemoryAuthTokenStore tokens;
-  final SessionExpiry sessionExpiry;
+  final Session session;
   final ServerFaults faults;
 
-  AuthRepository get auth => AuthRepositoryImpl(AuthApi(dio), tokens, sessionExpiry);
+  AuthRepository get auth => AuthRepositoryImpl(AuthApi(dio), session, StubSocialIdTokenProvider());
   UserProfileRepository get profiles => UserProfileRepositoryImpl(UserProfileApi(dio));
   TransactionRepository get transactions => TransactionRepositoryImpl(TransactionApi(dio));
   CategoryRepository get categories => CategoryRepositoryImpl(CategoryApi(dio));
@@ -62,7 +75,7 @@ class StubServer {
 
   /// 실제 로그인 요청으로 [provider] 사용자가 된다.
   Future<void> signIn(AuthProvider provider) async =>
-      (await auth.signIn(provider, 'test-id-token')).unwrap();
+      (await auth.signIn(provider)).unwrap();
 
   /// [provider]로 로그인하고 [profile]·[categories]·[transactions]를 실제 API로 심는다.
   Future<void> seed({

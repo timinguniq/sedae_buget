@@ -39,7 +39,7 @@ Future<StubServer> _server({
   PeerStats Function(AgeGroup)? peerStats,
 }) async {
   final server = StubServer(peerStats: peerStats);
-  await server.seed(profile: profile, categories: categories, transactions: transactions);
+  await server.seed(profile: profile ?? noIncomeProfile, categories: categories, transactions: transactions);
   return server;
 }
 
@@ -48,6 +48,16 @@ Future<ProviderContainer> _container(List<Transaction> transactions) async =>
     fakeContainer(server: await _server(transactions: transactions));
 
 void main() {
+  // 이전에는 프로필을 읽는 첫 순간 '30대 기본'으로 또래 통계를 한 번 헛되이 읽었다.
+  test('또래 통계는 프로필의 나이대로 한 번만 읽는다', () async {
+    final server = await _server(
+        profile: const UserProfile(ageGroup: AgeGroup.twenties, monthlyIncome: 3000000));
+    final c = fakeContainer(server: server);
+
+    expect((await c.read(peerStatsProvider.future))?.ageGroup, AgeGroup.twenties);
+    expect(server.faults.count('GET', '/v1/peer/stats'), 1);
+  });
+
   // 합계·분류·소득 규칙 자체는 ViewedMonth 테스트가 본다. 여기서는 재료가 모이는지만 본다.
   test('보고 있는 달을 이달 거래·사용자 카테고리·프로필 소득으로 만든다', () async {
     const study = CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 9);

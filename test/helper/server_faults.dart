@@ -25,8 +25,18 @@ class ServerFaults extends Interceptor {
   }) =>
       _failures.add(_Failure(method, path, reason, times, message));
 
+  /// [method] [path]로 가는 요청은 서버가 처리하지만, 그 응답을 [times]번 시간 초과로 잃는다
+  /// (서버는 저장했는데 앱은 실패로 아는 상황).
+  void loseResponse(String method, String path, {int times = 1}) =>
+      _lostResponses.add(_Failure(method, path, FailureReason.timeout, times, ''));
+
+  final _lostResponses = <_Failure>[];
+
   /// 걸어 둔 실패를 모두 푼다.
-  void heal() => _failures.clear();
+  void heal() {
+    _failures.clear();
+    _lostResponses.clear();
+  }
 
   /// [method] [path]로 가는 요청을 돌려준 [Completer]가 끝날 때까지 붙잡는다(한 번).
   Completer<void> hold(String method, String path) {
@@ -54,6 +64,18 @@ class ServerFaults extends Interceptor {
     }
     requests.add('$method $path');
     handler.next(options);
+  }
+
+  @override
+  void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
+    final o = response.requestOptions;
+    final lost = _lostResponses.where((f) => f.matches(o.method, o.path)).firstOrNull;
+    if (lost != null) {
+      if (lost.used()) _lostResponses.remove(lost);
+      handler.reject(lost.toException(o), true);
+      return;
+    }
+    handler.next(response);
   }
 }
 

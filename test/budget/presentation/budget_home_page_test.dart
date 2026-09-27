@@ -96,6 +96,15 @@ void main() {
     expect(find.text('소득 ₩3,000,000 · 잔액 ₩2,988,000'), findsOneWidget);
   });
 
+  // 이전에는 '잔액 ₩-2,000'처럼 ₩ 뒤에 하이픈을 붙였다. 앱의 다른 음수는 '−'를 쓴다.
+  testWidgets('잔액이 음수면 −₩로 쓴다', (tester) async {
+    final server = await tester.seedServer(
+        profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 10000), transactions: _taxi());
+    await _pumpHome(tester, fakeContainer(server: server));
+
+    expect(find.text('소득 ₩10,000 · 잔액 −₩2,000'), findsOneWidget);
+  });
+
   // 이전에는 표본이 없어도 '1명 중 1등 · 상위 100%'로 보였다.
   testWidgets('또래 표본이 없으면 순위 카드를 보이지 않는다', (tester) async {
     final server = await tester.seedServer(

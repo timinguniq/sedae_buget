@@ -144,6 +144,18 @@ void main() {
     });
   });
 
+  group('고를 수 있는 가장 이른 날짜', () {
+    test('보고 있는 달의 하한(2020년 1월 1일)이다', () {
+      expect(TransactionDraft.create(DateTime(2026, 9, 5)).earliestDate, DateTime(2020, 1, 1));
+    });
+
+    // 이전에는 날짜 선택이 2020년부터라 그보다 이른 거래를 고치면 날짜 선택이 assert로 멈췄다.
+    test('그보다 이른 거래를 고칠 때는 그 날짜까지다', () {
+      final old = _saved().copyWith(date: DateTime(2019, 12, 27, 13, 5));
+      expect(TransactionDraft.edit(old, const CategoryCatalog()).earliestDate, DateTime(2019, 12, 27));
+    });
+  });
+
   group('기존 거래 고치기', () {
     // 수입은 카테고리가 없다. 서버가 수입에 어떤 분류 id를 적었든 사용자 카테고리로 판정하지 않고,
     // 모르는 id면 새 거래처럼 식비로 둔다.

@@ -1,3 +1,4 @@
+export 'age_group_wire.dart';
 export 'auth_user_dto.dart';
 export 'custom_category_dto.dart';
 export 'login_dto.dart';

@@ -25,8 +25,10 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
       child: Column(children: [
         _Header(
           month: month,
-          onPrev: () => ref.read(selectedMonthProvider.notifier).prev(),
-          // 이번 달보다 뒤로는 가지 않는다.
+          // 2020년 1월보다 앞으로, 이번 달보다 뒤로는 가지 않는다.
+          onPrev: ref.read(selectedMonthProvider.notifier).canGoPrevious
+              ? () => ref.read(selectedMonthProvider.notifier).prev()
+              : null,
           onNext: ref.read(selectedMonthProvider.notifier).canGoNext
               ? () => ref.read(selectedMonthProvider.notifier).next()
               : null,
@@ -40,38 +42,29 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
             return Center(child: Text('지출이 없어요',
                 style: context.typo.body2W400.copyWith(color: context.color.label.alternative)));
           }
-          final (:top, rest: restSum) = o.month.slices(6);
-          final labels = [
-            ...top.map((e) => e.label),
-            if (restSum > 0) '기타',
-          ];
-          final values = [...top.map((e) => e.amount), if (restSum > 0) restSum];
-          // 또래 비교가 붙는 행은 기본 분류 행뿐이다('기타' 롤업·커스텀 카테고리는 null — MonthOverview.row).
-          final peers = [
-            ...top.map(o.row),
-            if (restSum > 0) null,
-          ];
+          // 금액이 큰 6줄과 나머지를 묶은 '기타' 줄. 또래 비교는 기본 분류 줄에만 붙는다.
+          final rows = o.analysisRows(6);
           // 첫 조각은 코랄, 나머지는 밝기별 램프(다크는 darkRamp).
           final ramp = context.theme.brightness == Brightness.dark ? Palette.darkRamp : Palette.neutralRamp;
-          final colors = List<Color>.generate(values.length,
+          final colors = List<Color>.generate(rows.length,
               (i) => i == 0 ? context.color.primary.normal : ramp[(i - 1) % ramp.length]);
-          final total = values.fold<int>(0, (s, v) => s + v);
+          final total = o.month.expense;
           return ListView(padding: const EdgeInsets.fromLTRB(22, 6, 22, 20), children: [
             Center(child: SizedBox(
               width: 170, height: 170,
               child: Stack(alignment: Alignment.center, children: [
-                CategoryDonut(values: values, colors: colors, size: 170, stroke: 36),
+                CategoryDonut(values: [for (final r in rows) r.amount], colors: colors, size: 170, stroke: 36),
                 Column(mainAxisSize: MainAxisSize.min, children: [
                   Text('${ref.watch(viewedMonthNameProvider)} 총지출',
                       style: context.typo.caption2W600.copyWith(fontSize: 11, color: context.color.label.assistive)),
-                  Text(_compactWon(total),
+                  Text(WonText.short.of(total),
                       style: context.typo.amountDisplaySmall.copyWith(fontSize: 23, color: context.color.label.normal)),
                 ]),
               ]),
             )),
             const SizedBox(height: 16),
             // 또래 비교 토글 (디자인 42×24 코랄 토글 — 테마 Switch를 축소). 또래 통계가 없으면 뺀다.
-            if (o.hasPeer) ...[
+            if (o.standing is! PeerUnavailable) ...[
               Row(children: [
                 Text('또래 평균과 비교',
                     style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.normal)),
@@ -94,10 +87,11 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
               ),
             ]),
             const SizedBox(height: 1),
-            ...List.generate(labels.length, (i) => CategoryRow(
-                label: labels[i], amount: values[i],
-                color: colors[i], percent: values[i] / total,
-                peer: _showPeer ? peers[i] : null)),
+            for (final (i, r) in rows.indexed)
+              CategoryRow(
+                label: r.item?.label ?? '기타', amount: r.amount,
+                color: colors[i], percent: r.amount / total,
+                peer: _showPeer ? r.peer : null),
           ]);
         },
         )),
@@ -110,7 +104,8 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
 class _Header extends StatelessWidget {
   const _Header({required this.month, required this.onPrev, required this.onNext});
   final YearMonth month;
-  final VoidCallback onPrev;
+  /// 이전 달로 갈 수 없으면(보고 있는 달이 하한) null.
+  final VoidCallback? onPrev;
   /// 다음 달로 갈 수 없으면(보고 있는 달이 이번 달) null.
   final VoidCallback? onNext;
 
@@ -134,15 +129,4 @@ class _Header extends StatelessWidget {
       ]),
     );
   }
-}
-
-/// 축약 원화: 1,920,000 → `192만`, 14,000 → `1.4만`, 9,300 → `9,300원`, 250,000,000 → `2.5억`.
-String _compactWon(int v) {
-  String trim(String s) => s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
-  if (v >= 100000000) return '${trim((v / 100000000).toStringAsFixed(1))}억';
-  if (v >= 10000) {
-    final man = v / 10000;
-    return '${man >= 100 ? man.round().toString() : trim(man.toStringAsFixed(1))}만';
-  }
-  return '${NumberFormat.decimalPattern('ko').format(v)}원';
 }

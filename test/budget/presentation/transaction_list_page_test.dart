@@ -40,7 +40,8 @@ Future<ProviderContainer> _pump(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
-  final server = await tester.seedServer(categories: customs, transactions: transactions ?? [_expense(5000, 5)]);
+  final server = await tester.seedServer(
+      profile: noIncomeProfile, categories: customs, transactions: transactions ?? [_expense(5000, 5)]);
   faults?.call(server.faults);
   final ads = FakeAdService();
   final container = fakeContainer(
@@ -77,6 +78,27 @@ void main() {
     await tester.settle();
     expect(find.byType(TransactionTile), findsOneWidget);
     expect(find.text('장보기'), findsOneWidget);
+  });
+
+  // 이전에는 내역 머리가 만 단위로 반올림해 '2만원', 분석 화면은 같은 달을 '1.5만'으로 썼다.
+  testWidgets('머리글의 달 지출은 짧게 쓰는 규칙(100만 미만 소수 한 자리)을 따른다', (tester) async {
+    await _pump(tester, transactions: [_expense(15000, 5)]);
+    expect(find.text('${_last.month}월 1.5만원 · 1건'), findsOneWidget);
+  });
+
+  // 보고 있는 달은 2020년 1월보다 앞으로 가지 않는다. 월 칩도 그 앞 달을 고르지 못하게 한다.
+  testWidgets('2020년 1월에서는 월 칩의 이전 달을 고를 수 없다', (tester) async {
+    final c = await _pump(tester);
+    for (var i = 0; i < 12 * 20; i++) {
+      c.read(selectedMonthProvider.notifier).prev();
+    }
+    await tester.settle();
+    await tester.tap(find.byKey(const Key('month-chip')));
+    await tester.pumpAndSettle();
+
+    final previous = tester.widget<PopupMenuItem<int>>(find.ancestor(
+        of: find.text('이전 달 · 12월'), matching: find.byType(PopupMenuItem<int>)));
+    expect(previous.enabled, isFalse);
   });
 
   // 또래 통계가 실패해도 내 내역은 보인다. 또래 초과 배지만 빠진다.

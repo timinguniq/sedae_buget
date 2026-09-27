@@ -7,6 +7,9 @@ class YearMonth implements Comparable<YearMonth> {
   /// [date]가 속한 달.
   factory YearMonth.of(DateTime date) => YearMonth._(date.year, date.month);
 
+  /// 보고 있는 달의 하한. 이 달보다 앞으로는 가지 않고, 날짜 선택의 가장 이른 날도 이 달 1일이다.
+  static const earliest = YearMonth._(2020, 1);
+
   final int year;
 
   /// 1~12.
@@ -24,6 +27,9 @@ class YearMonth implements Comparable<YearMonth> {
   bool contains(DateTime date) => !date.isBefore(start) && date.isBefore(end);
 
   bool isCurrent(DateTime today) => this == YearMonth.of(today);
+
+  /// 이전 달로 갈 수 있는가. 보고 있는 달은 [earliest]보다 앞으로 가지 않는다.
+  bool get canGoPrevious => compareTo(earliest) > 0;
 
   /// 다음 달로 갈 수 있는가. 보고 있는 달은 이번 달보다 뒤로 가지 않는다.
   bool canGoNext(DateTime today) => compareTo(YearMonth.of(today)) < 0;

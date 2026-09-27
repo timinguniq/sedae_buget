@@ -1,5 +1,4 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:uuid/uuid.dart';
 import 'package:sedae_budget/entity/budget/budget_category.dart';
 
 part 'custom_category.freezed.dart';
@@ -17,13 +16,6 @@ abstract class CustomCategory with _$CustomCategory {
   }) = _CustomCategory;
 
   const CustomCategory._();
-
-  /// 새 카테고리. id는 클라이언트 UUID(거래와 같은 규칙).
-  factory CustomCategory.create({
-    required String name,
-    required int baseCategoryId,
-  }) =>
-      CustomCategory(id: const Uuid().v4(), name: name, baseCategoryId: baseCategoryId);
 
   /// 이름 최대 길이. 클라이언트 입력 제한과 서버 검증이 같은 값을 쓴다.
   static const maxNameLength = 10;

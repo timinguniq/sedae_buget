@@ -140,6 +140,27 @@ void main() {
     expect(saved.base, BudgetCategory.etc);
   });
 
+  // 서버는 저장했는데 응답을 잃었다. 다시 누르면 같은 카테고리로 저장돼 이름이 겹친다고 막히지 않는다.
+  testWidgets('응답을 잃은 뒤 다시 누르면 카테고리 하나로 저장하고 닫힌다', (tester) async {
+    final server = await pumpPage(tester, customs: const []);
+    server.faults.loseResponse('PUT', '/v1/categories');
+
+    await tester.tap(find.byKey(const Key('category-add-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.enterText(find.byKey(const Key('category-name-field')), '반려동물');
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('category-submit-button')));
+    await tester.settle();
+    expect(find.byType(CategoryEditSheet), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('category-submit-button')));
+    await tester.settle();
+
+    expect(find.byType(CategoryEditSheet), findsNothing);
+    expect((await _onServer(tester, server)).map((c) => c.name), ['반려동물']);
+  });
+
   // 사용자가 고칠 수 있는 실패라 서버 문구를 이유로 보여준다.
   testWidgets('이름이 겹치면 시트에 이유를 보여주고 닫지 않는다', (tester) async {
     await pumpPage(tester); // 서버에 이미 '반려동물'이 있다

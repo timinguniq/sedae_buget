@@ -26,7 +26,7 @@ Future<void> _pump(
   List<CustomCategory> customs = const [],
   void Function(ServerFaults faults)? faults,
 }) async {
-  final server = await t.seedServer(categories: customs, transactions: transactions);
+  final server = await t.seedServer(profile: noIncomeProfile, categories: customs, transactions: transactions);
   faults?.call(server.faults);
   await t.pumpWidget(fakeScope(fakeContainer(server: server), const MaterialApp(home: CategoryAnalysisPage())));
   await t.settle();
@@ -38,6 +38,19 @@ void main() {
     await _pump(tester, [_expense(10000, 7, 5), _expense(4000, 11, 6)]);
     expect(find.byType(CategoryDonut), findsOneWidget);
     expect(find.byType(CategoryRow), findsWidgets);
+  });
+
+  // 금액이 큰 6줄 밖은 '기타' 한 줄로 묶고, 그 줄에는 또래 비교가 없다.
+  testWidgets('7개 이상이면 6줄과 나머지를 묶은 기타 줄을 보인다', (tester) async {
+    tester.view.physicalSize = const Size(390, 1600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    await _pump(tester, [for (var id = 1; id <= 8; id++) _expense(1000 * (9 - id), id, 5)]);
+
+    final rows = tester.widgetList<CategoryRow>(find.byType(CategoryRow)).toList();
+    expect(rows.map((r) => r.amount), [8000, 7000, 6000, 5000, 4000, 3000, 2000 + 1000]);
+    expect(rows.last.label, '기타');
+    expect(rows.last.peer, isNull);
   });
 
   testWidgets('custom header shows title, month total and month navigator', (tester) async {

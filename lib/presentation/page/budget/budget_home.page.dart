@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_rank_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/savings_rate_card.dart';
@@ -43,12 +44,12 @@ class BudgetHomePage extends ConsumerWidget {
               return ListView(children: [
                 SummaryHeroCard(
                     label: name, expense: m.expense, income: m.income, balance: m.balance,
-                    peer: o.hasPeer ? (emptyMonth: o.isEmpty, total: o.total) : null),
-                if (!o.hasPeer) ...[
+                    peer: o.standing.heroPill),
+                if (o.standing is PeerUnavailable) ...[
                   const SizedBox(height: 13),
                   SurfaceCard(child: Text(peerUnavailableText,
                     style: context.typo.caption1W500.copyWith(color: context.color.label.assistive))),
-                ] else if (o.rank case final rank?) ...[
+                ] else if (o.standing case PeerCompared(:final rank?)) ...[
                   const SizedBox(height: 13),
                   PeerRankCard(rank: rank, onDetail: () => context.go(RoutePath.compare.path)),
                 ],
@@ -57,7 +58,8 @@ class BudgetHomePage extends ConsumerWidget {
                   onTap: () => context.push(RoutePath.categoryAnalysis.path)),
                 if (savingsRate != null) ...[
                   const SizedBox(height: 13),
-                  SavingsRateCard(label: name, rate: savingsRate, peer: o.savings),
+                  SavingsRateCard(label: name, rate: savingsRate,
+                    peer: switch (o.standing) { PeerCompared(:final savings) => savings, _ => null }),
                 ],
                 const SizedBox(height: 13),
                 Text('최근 내역', style: context.typo.sectionTitle.copyWith(color: context.color.label.normal)),

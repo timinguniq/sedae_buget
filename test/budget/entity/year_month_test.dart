@@ -32,6 +32,13 @@ void main() {
     expect(thisMonth.previous.canGoNext(today), isTrue);
   });
 
+  // 이전에는 하한이 없어 2019년으로 갈 수 있었고, 그 달에서 적는 거래는 날짜 선택(2020년부터)과 어긋났다.
+  test('보고 있는 달은 2020년 1월보다 앞으로 가지 않는다', () {
+    expect(YearMonth.earliest, YearMonth.of(DateTime(2020, 1)));
+    expect(YearMonth.of(DateTime(2020, 1)).canGoPrevious, isFalse);
+    expect(YearMonth.of(DateTime(2020, 2)).canGoPrevious, isTrue);
+  });
+
   test('이름은 이번 달이면 이번 달, 아니면 M월이고, 긴 이름은 연도까지 쓴다', () {
     expect(YearMonth.of(today).name(today), '이번 달');
     expect(YearMonth.of(DateTime(2026, 8)).name(today), '8월');

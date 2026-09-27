@@ -27,18 +27,21 @@ class CategoryEditSheet extends ConsumerStatefulWidget {
 
 class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
   late final TextEditingController _name;
-  late BudgetCategory _base;
+
+  /// 시트가 열려 있는 동안 초안은 하나다. 다시 저장해도 같은 카테고리로 보낸다.
+  late CategoryDraft _draft;
   String? _error;
   bool _saving = false;
 
-  bool get _isEdit => widget.existing != null;
+  bool get _isEdit => _draft.isEdit;
 
   @override
   void initState() {
     super.initState();
-    _name = TextEditingController(text: widget.existing?.name ?? '')
-      ..addListener(() => setState(() {}));
-    _base = widget.existing?.base ?? BudgetCategory.etc;
+    final existing = widget.existing;
+    _draft = existing == null ? CategoryDraft.create() : CategoryDraft.edit(existing);
+    _name = TextEditingController(text: _draft.name)
+      ..addListener(() => setState(() => _draft = _draft.withName(_name.text)));
   }
 
   @override
@@ -48,13 +51,9 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
   }
 
   Future<void> _submit() async {
-    final name = _name.text.trim();
-    if (name.isEmpty || _saving) return;
+    if (!_draft.canSave || _saving) return;
     setState(() => _saving = true);
-    final notifier = ref.read(customCategoriesProvider.notifier);
-    final res = widget.existing == null
-        ? await notifier.add(name: name, base: _base)
-        : await notifier.edit(widget.existing!, name: name, base: _base);
+    final res = await ref.read(customCategoriesProvider.notifier).save(_draft);
     if (!mounted) return;
     final error = res.failureOrNull;
     if (error != null) {
@@ -69,7 +68,6 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final name = _name.text.trim();
     return Padding(
       padding: MediaQuery.viewInsetsOf(context),
       child: Container(
@@ -99,12 +97,12 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
               key: const Key('category-name-field'),
               controller: _name,
               autofocus: !_isEdit,
-              maxLength: CustomCategory.maxNameLength,
-              inputFormatters: [LengthLimitingTextInputFormatter(CustomCategory.maxNameLength)],
+              maxLength: CategoryDraft.maxNameLength,
+              inputFormatters: [LengthLimitingTextInputFormatter(CategoryDraft.maxNameLength)],
               style: context.typo.body2W600.copyWith(color: context.color.label.normal),
               decoration: InputDecoration(
                 hintText: '예) 반려동물',
-                counterText: '${_name.text.length} / ${CustomCategory.maxNameLength}',
+                counterText: '${_name.text.length} / ${CategoryDraft.maxNameLength}',
               ),
             ),
             const SizedBox(height: 12),
@@ -128,8 +126,8 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
               for (final c in BudgetCategory.values)
                 _BaseChip(
                   category: c,
-                  selected: c == _base,
-                  onTap: () => setState(() => _base = c),
+                  selected: c == _draft.base,
+                  onTap: () => setState(() => _draft = _draft.pickBase(c)),
                 ),
             ]),
             if (_error != null) ...[
@@ -140,7 +138,7 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
             const SizedBox(height: 22),
             SizedBox(width: double.infinity, child: FilledButton(
               key: const Key('category-submit-button'),
-              onPressed: name.isEmpty || _saving ? null : _submit,
+              onPressed: !_draft.canSave || _saving ? null : _submit,
               child: Text(_isEdit ? '저장하기' : '추가하기'),
             )),
           ]),

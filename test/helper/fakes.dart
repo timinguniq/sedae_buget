@@ -6,8 +6,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/core/ads/index.dart';
 import 'package:sedae_budget/core/app_config/remote_config.dart';
 import 'package:sedae_budget/core/local_storage/theme_mode_store.dart';
-import 'package:sedae_budget/data/data.dart';
-import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/initial/app_status.view_model.dart';
 import 'package:sedae_budget/presentation/service/ad_provider.dart';
@@ -95,10 +93,10 @@ ProviderContainer fakeContainer({
     // 실패한 provider를 자동 재시도하면 타이머가 테스트 끝까지 남는다. 테스트는 한 번만 본다.
     retry: (_, _) => null,
     overrides: [
-      authUsecaseProvider.overrideWithValue(AuthUsecase(s.auth, StubSocialIdTokenProvider())),
+      authRepositoryProvider.overrideWithValue(s.auth),
       userProfileRepositoryProvider.overrideWithValue(s.profiles),
-      transactionUsecaseProvider.overrideWithValue(TransactionUsecase(s.transactions)),
-      categoryUsecaseProvider.overrideWithValue(CategoryUsecase(s.categories)),
+      transactionRepositoryProvider.overrideWithValue(s.transactions),
+      categoryRepositoryProvider.overrideWithValue(s.categories),
       peerStatsRepositoryProvider.overrideWithValue(s.peerStats),
       if (adService != null) adServiceProvider.overrideWithValue(adService),
       if (launchInterstitial != null)

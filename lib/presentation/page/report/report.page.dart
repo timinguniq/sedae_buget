@@ -1,21 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/report/widget/generation_avg_chart.dart';
 import 'package:sedae_budget/presentation/page/report/widget/monthly_insight_card.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
-
-/// 세대별 대표 소비 칩 카피(디자인). 또래 통계에 대표 항목이 없어 고정 문구.
-const _signatureSpend = <AgeGroup, String>{
-  AgeGroup.teens: '간식',
-  AgeGroup.twenties: '카페·모임',
-  AgeGroup.thirties: '육아·주거',
-  AgeGroup.forties: '자녀교육',
-  AgeGroup.fiftiesPlus: '건강',
-};
 
 class ReportPage extends ConsumerWidget {
   const ReportPage({super.key});
@@ -37,8 +27,8 @@ class ReportPage extends ConsumerWidget {
           if (peer == null) return const Center(child: Text(peerUnavailableText));
           // '내 세대' 강조는 순위·인사이트를 계산한 또래 통계의 나이대를 따른다.
           final ageGroup = peer.ageGroup;
-          final won = NumberFormat.decimalPattern('ko');
-          final peerTop = o.rank?.topPercent; // 많이 쓰는 쪽 N%. 빈 달이거나 표본이 없으면 null
+          // 빈 달이거나 표본이 없으면 순위가 없다.
+          final rank = switch (o.standing) { PeerCompared(:final rank) => rank, _ => null };
           // 소득이 없으면 저축률·소득 대비 지출 모두 '—'.
           final savingsRate = o.month.savingsRate;
           final incomeRatio = o.month.expenseRatio;
@@ -59,7 +49,7 @@ class ReportPage extends ConsumerWidget {
                 body: _insightBody(context, insight),
                 sub: insight == null
                     ? null
-                    : '한 달 ₩${won.format(insight.comparison.mine)} · 또래는 ₩${won.format(insight.comparison.peer)}',
+                    : '한 달 ${WonText.full.of(insight.comparison.mine)} · 또래는 ${WonText.full.of(insight.comparison.peer)}',
               ),
 
               const SizedBox(height: 13),
@@ -67,7 +57,7 @@ class ReportPage extends ConsumerWidget {
               // ── 3 stat tiles ─────────────────────────────────────
               Row(children: [
                 Expanded(child: _StatTile(
-                    label: '많이 쓰는 쪽', value: peerTop == null ? '—' : '$peerTop%', accent: true)),
+                    label: rankSideLabel, value: rank?.topPercentText ?? '—', accent: true)),
                 const SizedBox(width: 9),
                 Expanded(child: _StatTile(
                     label: '저축률', value: savingsRate == null ? '—' : '$savingsRate%')),
@@ -105,7 +95,7 @@ class ReportPage extends ConsumerWidget {
                 children: [
                   for (final g in AgeGroup.values)
                     DesignChip(
-                      label: '${g.label} · ${_signatureSpend[g]}',
+                      label: '${g.label} · ${g.signatureSpend}',
                       style: g == ageGroup ? DesignChipStyle.coral : DesignChipStyle.outline,
                       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
                     ),
@@ -193,7 +183,7 @@ class _StatTile extends StatelessWidget {
 class _SelfTrendBars extends StatelessWidget {
   const _SelfTrendBars({required this.trend});
 
-  final List<({YearMonth month, int expense})> trend;
+  final List<MonthExpense> trend;
 
   @override
   Widget build(BuildContext context) {

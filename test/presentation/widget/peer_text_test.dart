@@ -48,10 +48,28 @@ void main() {
   });
 
   test('비교 탭 지출 비교: 차이 금액과 방향', () {
-    String won(int v) => '${v ~/ 10000}만';
-    expect(_c(1200000, 1000000).totalFooter(won), '또래보다 약 20만원 더 ▲');
-    expect(_c(800000, 1000000).totalFooter(won), '또래보다 약 20만원 덜 ▼');
-    expect(_c(1000000, 1000000).totalFooter(won), '또래와 비슷해요');
+    expect(_c(1200000, 1000000).totalFooter(), '또래보다 약 20만원 더 ▲');
+    expect(_c(800000, 1000000).totalFooter(), '또래보다 약 20만원 덜 ▼');
+    expect(_c(1015000, 1000000).totalFooter(), '또래보다 약 1.5만원 더 ▲');
+    expect(_c(1000000, 1000000).totalFooter(), '또래와 비슷해요');
+  });
+
+  test('홈 pill: 못 읽으면 없고, 빈 달·또래 평균 없음·비교를 각각 말한다', () {
+    PeerCompared compared(PeerComparison? total) => PeerCompared(
+        total: total, rank: null, savings: const SavingsComparison(mine: null, peer: 20),
+        totalBars: null, savingsBars: (mine: 0, peer: 1));
+    expect(const PeerUnavailable().heroPill, isNull);
+    expect(const PeerEmptyMonth().heroPill, (arrow: null, text: '내역을 추가하면 비교가 시작돼요'));
+    expect(compared(null).heroPill, (arrow: null, text: '또래 평균 집계 중'));
+    expect(compared(_c(88000)).heroPill, (arrow: '▼', text: '또래 평균보다 12% 덜 썼어요'));
+  });
+
+  test('순위: 많이 쓰는 쪽 N%와 N명 중 M등', () {
+    const r = (rank: 34, total: 100, percentBelow: 66, topPercent: 34);
+    expect(r.sideText, '많이 쓰는 쪽 34%');
+    expect(r.topPercentText, '34%');
+    expect(r.placeText, '100명 중 34등');
+    expect(r.headlineLead, '또래 100명 중 내 지출은');
   });
 
   test('저축률: 또래만큼 모으면 칭찬, 아니면 권유', () {

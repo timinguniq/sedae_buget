@@ -6,6 +6,6 @@ abstract class TransactionRepository {
   /// 삭제한 거래를 그대로 돌려준다.
   Future<Result<Transaction>> delete(Transaction tx);
 
-  Future<Result<List<Transaction>>> getMonth(int year, int month);
+  /// [start] 이상 [end] 미만 날짜의 거래.
   Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end);
 }

@@ -17,7 +17,7 @@ void main() {
       (r as Success<List<CustomCategory>>).data;
 
   test('upsert → getAll round-trips through the Stub contract', () async {
-    final pet = CustomCategory.create(name: '반려동물', baseCategoryId: 12);
+    const pet = CustomCategory(id: 'c-pet', name: '반려동물', baseCategoryId: 12);
     final res = await repo.upsert(pet);
     expect(res, isA<Success<CustomCategory>>());
     expect((res as Success<CustomCategory>).data, pet);
@@ -28,22 +28,22 @@ void main() {
   });
 
   test('duplicate name → Failure with the server code', () async {
-    await repo.upsert(CustomCategory.create(name: '반려동물', baseCategoryId: 12));
-    final res = await repo.upsert(CustomCategory.create(name: '반려동물', baseCategoryId: 9));
+    await repo.upsert(const CustomCategory(id: 'c-pet', name: '반려동물', baseCategoryId: 12));
+    final res = await repo.upsert(const CustomCategory(id: 'c-pet2', name: '반려동물', baseCategoryId: 9));
     expect(res, isA<Error<CustomCategory>>());
     expect(res.failureOrNull?.code, 'CATEGORY_DUPLICATE');
     expect(res.failureOrNull?.reason, FailureReason.conflict);
   });
 
   test('too long name → Failure VALIDATION', () async {
-    final res = await repo.upsert(CustomCategory.create(
-        name: 'a' * (CustomCategory.maxNameLength + 1), baseCategoryId: 1));
+    final res = await repo.upsert(CustomCategory(
+        id: 'c-long', name: 'a' * (CustomCategory.maxNameLength + 1), baseCategoryId: 1));
     expect(res.failureOrNull?.code, 'VALIDATION');
     expect(res.failureOrNull?.reason, FailureReason.invalid);
   });
 
   test('delete removes it and returns the deleted category', () async {
-    final pet = CustomCategory.create(name: '반려동물', baseCategoryId: 12);
+    const pet = CustomCategory(id: 'c-pet', name: '반려동물', baseCategoryId: 12);
     await repo.upsert(pet);
     final res = await repo.delete(pet);
     expect((res as Success<CustomCategory>).data, pet);

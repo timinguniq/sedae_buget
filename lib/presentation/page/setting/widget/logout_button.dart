@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
+import 'package:sedae_budget/presentation/widget/common/failure_message.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 설정 하단 로그아웃 아웃라인 버튼: full-width h52 / r16 / surface 배경 / 연코랄 테두리 / 코랄 글씨 + 아이콘.
@@ -25,7 +27,15 @@ class LogoutButton extends ConsumerWidget {
           side: BorderSide(color: dark ? context.color.line.normal : _borderLight, width: 1.5),
         ),
         child: InkWell(
-          onTap: () => ref.read(authProvider.notifier).signOut(),
+          onTap: () async {
+            // 기기에서 토큰을 지우지 못하면 로그인 상태 그대로다. 이유만 알린다.
+            final error = (await ref.read(authProvider.notifier).signOut()).failureOrNull;
+            if (error != null && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(failureMessage(UserAction.signOut, error)),
+              ));
+            }
+          },
           borderRadius: BorderRadius.circular(16),
           child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
             Icon(Icons.logout, size: 16, color: coral),

@@ -146,11 +146,11 @@ void main() {
       expectMyGroup(tester, AgeGroup.forties);
     });
 
-    // 강조는 순위·인사이트를 계산한 또래 통계의 나이대를 따른다. 프로필이 없어 30대를 물었는데
-    // 서버가 20대 통계로 답하는 억지 입력으로, 두 값의 출처가 하나인지 본다.
-    testWidgets('비교에 쓴 또래 통계의 나이대를 강조한다', (tester) async {
+    // 강조는 순위·인사이트를 계산한 또래 통계의 나이대를 따르고, 또래 통계는 요청한 나이대로 읽는다.
+    // 30대를 물었는데 서버가 20대라고 적어 보내는 억지 입력으로, 두 값의 출처가 하나인지 본다.
+    testWidgets('서버가 다른 나이대를 적어 보내도 요청한 나이대를 강조한다', (tester) async {
       await _pumpReport(tester, peer: StubPeerData.forGroup(AgeGroup.twenties));
-      expectMyGroup(tester, AgeGroup.twenties);
+      expectMyGroup(tester, AgeGroup.thirties);
     });
   });
 }
@@ -170,7 +170,7 @@ Future<void> _pumpReport(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
   final server = await tester.seedServer(
-    profile: profile,
+    profile: profile ?? noIncomeProfile,
     transactions: transactions ?? _ledger(),
     peerStats: peer == null ? null : (_) => peer,
   );

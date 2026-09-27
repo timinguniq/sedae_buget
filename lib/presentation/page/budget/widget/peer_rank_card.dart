@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/widget/common/peer_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 또래 순위 카드. 통계 값은 서버(PeerStatsRepository).
@@ -17,7 +18,6 @@ class PeerRankCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = rank;
     final below = r.percentBelow; // 또래 중 나보다 적게 쓴 %
-    final topPercent = r.topPercent; // 지출 상위 %
     return SurfaceCard(
       onTap: onDetail,
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -31,9 +31,9 @@ class PeerRankCard extends StatelessWidget {
           fit: BoxFit.scaleDown,
           alignment: Alignment.centerLeft,
           child: Row(crossAxisAlignment: CrossAxisAlignment.baseline, textBaseline: TextBaseline.alphabetic, children: [
-            Text('많이 쓰는 쪽 $topPercent%', style: context.typo.amountDisplaySmall.copyWith(color: context.color.primary.normal)),
+            Text(r.sideText, style: context.typo.amountDisplaySmall.copyWith(color: context.color.primary.normal)),
             const SizedBox(width: 8),
-            Text('${r.total}명 중 ${r.rank}등',
+            Text(r.placeText,
                 style: context.typo.caption1W600.copyWith(color: context.color.label.alternative)),
           ]),
         ),

@@ -81,13 +81,12 @@ class _State extends ConsumerState<TransactionEditPage> {
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context, initialDate: _draft.date,
-      firstDate: DateTime(2020), lastDate: _draft.latestDate(DateTime.now()));
+      firstDate: _draft.earliestDate, lastDate: _draft.latestDate(DateTime.now()));
     if (picked != null) setState(() => _draft = _draft.withDate(picked));
   }
 
   @override
   Widget build(BuildContext context) {
-    final won = NumberFormat.decimalPattern('ko');
     final customs = ref.watch(customCategoriesProvider).value ?? const <CustomCategory>[];
     return DefaultLayout(
       child: Padding(
@@ -112,7 +111,7 @@ class _State extends ConsumerState<TransactionEditPage> {
               const SizedBox(height: 22),
               Center(child: _CategoryPill(label: _draft.label(CategoryCatalog(customs)))),
               const SizedBox(height: 14),
-              Text('₩${won.format(_draft.amount)}',
+              Text(WonText.full.of(_draft.amount),
                   textAlign: TextAlign.center,
                   style: context.typo.amountHero.copyWith(color: context.color.label.normal)),
               const SizedBox(height: 5),

@@ -5,7 +5,8 @@ enum UserAction {
   save('저장하지 못했어요'),
   delete('삭제하지 못했어요'),
   load('불러오지 못했어요'),
-  signIn('로그인하지 못했어요');
+  signIn('로그인하지 못했어요'),
+  signOut('로그아웃하지 못했어요');
 
   const UserAction(this.failed);
 

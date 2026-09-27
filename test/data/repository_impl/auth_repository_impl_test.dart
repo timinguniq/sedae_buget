@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/core/core.dart';
 import 'package:sedae_budget/data/data.dart';
@@ -20,24 +19,23 @@ class _ServerDown extends Interceptor {
       );
 }
 
-enum _TokenOp { read, write, clear }
-
-/// secure storage 고장 흉내: [broken] 작업에서 [PlatformException]을 던지고, 나머지는 메모리에 둔다.
-class _BrokenTokenStore extends MemoryAuthTokenStore {
-  _BrokenTokenStore(this.broken);
-
-  final _TokenOp broken;
-
-  Future<Never> _fail() async => throw PlatformException(code: 'keystore');
+/// 요청받은 소셜 로그인을 기록하고 고정 토큰을 준다.
+class _FixedToken implements SocialIdTokenProvider {
+  final asked = <AuthProvider>[];
 
   @override
-  Future<String?> read() => broken == _TokenOp.read ? _fail() : super.read();
+  Future<Result<String>> idToken(AuthProvider provider) async {
+    asked.add(provider);
+    return Result.success('t-${provider.name}');
+  }
+}
 
+/// 소셜 SDK 쪽에서 토큰을 받지 못하는 상황.
+class _FailingToken implements SocialIdTokenProvider {
   @override
-  Future<void> write(String token) => broken == _TokenOp.write ? _fail() : super.write(token);
-
-  @override
-  Future<void> clear() => broken == _TokenOp.clear ? _fail() : super.clear();
+  Future<Result<String>> idToken(AuthProvider provider) async => const Result.failure(
+        ErrorResult(reason: FailureReason.unknown, message: '소셜 로그인이 취소되었습니다.'),
+      );
 }
 
 void main() {
@@ -51,20 +49,31 @@ void main() {
     repo = server.auth;
   });
 
-  /// 요청 헤더는 서버의 토큰 저장소로 붙고, 저장소 구현만 고장 난 토큰 저장소를 쓴다.
-  AuthRepository brokenRepo(_TokenOp broken) =>
-      AuthRepositoryImpl(AuthApi(server.dio), _BrokenTokenStore(broken), server.sessionExpiry);
-
   test('no token → currentUser null', () async {
     expect((await repo.currentUser()).unwrap(), isNull);
   });
 
   test('signIn stores token and returns user; currentUser round-trips', () async {
-    final u = (await repo.signIn(AuthProvider.naver, 'id-token')).unwrap();
+    final u = (await repo.signIn(AuthProvider.naver)).unwrap();
     expect(u.nickname, '네이버 사용자');
     expect(u.provider, AuthProvider.naver);
     expect(tokens.token, isNotEmpty);
     expect((await repo.currentUser()).unwrap()?.provider, AuthProvider.naver);
+  });
+
+  test('소셜 id_token을 받아 서버 세션으로 바꾼다', () async {
+    final social = _FixedToken();
+    final auth = AuthRepositoryImpl(AuthApi(server.dio), server.session, social);
+    expect((await auth.signIn(AuthProvider.kakao)).unwrap().provider, AuthProvider.kakao);
+    expect(social.asked, [AuthProvider.kakao]);
+  });
+
+  test('id_token을 못 받으면 서버를 부르지 않고 그 실패를 돌려준다', () async {
+    final auth = AuthRepositoryImpl(AuthApi(server.dio), server.session, _FailingToken());
+    final res = await auth.signIn(AuthProvider.kakao);
+    expect(res.failureOrNull?.message, '소셜 로그인이 취소되었습니다.');
+    expect(server.faults.count('POST', '/v1/auth/login'), 0);
+    expect(tokens.token, isNull);
   });
 
   test('invalid token → 401 → token cleared, 미로그인으로 성공', () async {
@@ -76,56 +85,74 @@ void main() {
   });
 
   test('서버가 저장된 토큰을 거부하면 sessionExpired로 알린다', () async {
-    await repo.signIn(AuthProvider.kakao, 'x');
+    await repo.signIn(AuthProvider.kakao);
     final expired = expectLater(repo.sessionExpired, emits(null));
     tokens.token = 'garbage';
     await repo.currentUser();
     await expired;
   });
 
-  test('signOut clears token', () async {
-    await repo.signIn(AuthProvider.google, 'x');
-    // 토큰을 먼저 지우면 로그아웃 요청이 인증 없이 가서 401로 실패한다.
+  test('signOut은 기기 토큰을 지우고 서버 세션도 끝낸다', () async {
+    await repo.signIn(AuthProvider.google);
+    final old = tokens.token;
     expect((await repo.signOut()).failureOrNull, isNull);
     expect(tokens.token, isNull);
+    // 지운 토큰으로 서버에 알렸으므로 그 토큰은 더 쓸 수 없다.
+    tokens.token = old;
+    expect((await repo.currentUser()).unwrap(), isNull);
   });
 
-  test('server error on /me → server 실패; signOut은 실패를 알리고도 토큰을 지운다', () async {
-    final expiry = SessionExpiry();
+  test('server error on /me → server 실패, 토큰은 그대로', () async {
+    final session = Session(tokens);
     final dio = connectToServer(
-      env: AppEnvironment.local, tokenStore: tokens, sessionExpiry: expiry,
-      localServer: () => _ServerDown(),
+      env: AppEnvironment.local, session: session, localServer: () => _ServerDown(),
     );
-    final down = AuthRepositoryImpl(AuthApi(dio), tokens, expiry);
-    tokens.token = 'stub.kakao';
+    final down = AuthRepositoryImpl(AuthApi(dio), session, StubSocialIdTokenProvider());
+    tokens.token = 'stub.kakao.t';
     expect((await down.currentUser()).failureOrNull?.reason, FailureReason.server);
-    expect(tokens.token, 'stub.kakao'); // 500은 토큰을 지우지 않는다
-    // 로그아웃은 서버가 죽어도 로컬 세션을 끝내지만, 실패를 삼키지는 않는다.
-    expect((await down.signOut()).failureOrNull?.reason, FailureReason.server);
-    expect(tokens.token, isNull);
+    expect(tokens.token, 'stub.kakao.t'); // 500은 토큰을 지우지 않는다
+
   });
 
-  group('토큰 저장소가 던져도 저장소는 던지지 않고 실패를 돌려준다', () {
-    test('못 읽으면 currentUser → unknown 실패', () async {
-      final res = await brokenRepo(_TokenOp.read).currentUser();
-      expect(res.failureOrNull?.reason, FailureReason.unknown);
+  group('토큰 저장소가 던져도 저장소는 던지지 않는다', () {
+    // 다시 시도해도 고쳐지지 않는 실패라 '연결 안 됨'에 가두지 않고 다시 로그인하게 한다.
+    test('못 읽으면 세션이 없는 것으로 보고(로그아웃 상태) 토큰 지우기를 시도한다', () async {
+      await server.signIn(AuthProvider.kakao);
+      tokens.failRead = true;
+
+      final res = await repo.currentUser();
+
+      expect(res.failureOrNull, isNull);
+      expect(res.unwrap(), isNull);
+      expect(server.faults.count('GET', '/v1/me'), 0);
+      tokens.failRead = false;
+      expect(tokens.token, isNull);
     });
 
     test('못 쓰면 signIn → unknown 실패', () async {
-      final res = await brokenRepo(_TokenOp.write).signIn(AuthProvider.kakao, 'x');
+      tokens.failWrite = true;
+      final res = await repo.signIn(AuthProvider.kakao);
       expect(res.failureOrNull?.reason, FailureReason.unknown);
     });
 
-    test('못 지우면 서버 로그아웃이 성공해도 signOut → unknown 실패', () async {
-      await server.signIn(AuthProvider.kakao); // 로그인해야 서버 로그아웃이 성공한다
-      final res = await brokenRepo(_TokenOp.clear).signOut();
+    // 로그인 상태로 남는 세션은 서버에서도 살아 있어야 한다. 서버에 먼저 알리면 다음 요청에서 만료로 튕긴다.
+    test('못 지우면 signOut → unknown 실패이고, 서버에 알리지 않아 세션은 그대로 쓸 수 있다', () async {
+      await server.signIn(AuthProvider.kakao);
+      tokens.failClear = true;
+      final res = await repo.signOut();
       expect(res.failureOrNull?.reason, FailureReason.unknown);
+      expect(tokens.token, isNotNull);
+      expect(server.faults.count('POST', '/v1/auth/logout'), 0);
+      tokens.failClear = false;
+      expect((await repo.currentUser()).unwrap(), testUser);
     });
+  });
 
-    test('서버 로그아웃도 실패하면 signOut은 서버 실패를 먼저 알린다', () async {
-      server.faults.fail('POST', '/v1/auth/logout', reason: FailureReason.server);
-      final res = await brokenRepo(_TokenOp.clear).signOut();
-      expect(res.failureOrNull?.reason, FailureReason.server);
-    });
+  // 서버 세션은 만료로 끝난다. 사용자가 원한 것은 이 기기에서 로그아웃하는 것이다.
+  test('서버 로그아웃이 실패해도 로컬 토큰을 지웠으면 signOut은 성공이다', () async {
+    await server.signIn(AuthProvider.kakao);
+    server.faults.fail('POST', '/v1/auth/logout', reason: FailureReason.server);
+    expect((await repo.signOut()).failureOrNull, isNull);
+    expect(tokens.token, isNull);
   });
 }

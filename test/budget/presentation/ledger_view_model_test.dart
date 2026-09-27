@@ -25,12 +25,22 @@ Future<StubServer> _server({
 
 /// 서버에 저장된 이달 거래.
 Future<List<Transaction>> _saved(StubServer server) async =>
-    (await server.transactions.getMonth(_thisMonth.year, _thisMonth.month)).unwrap();
+    (await server.transactions.getRange(YearMonth.of(_thisMonth).start, YearMonth.of(_thisMonth).end)).unwrap();
 
 /// 서버가 받은 거래 조회 수(이달·추이 모두).
 int _reads(StubServer server) => server.faults.count('GET', '/v1/transactions');
 
 void main() {
+  test('보고 있는 달은 2020년 1월에서 더 앞으로 가지 않는다', () {
+    final c = fakeContainer();
+    final months = c.read(selectedMonthProvider.notifier);
+    for (var i = 0; i < 12 * 20; i++) {
+      months.prev();
+    }
+    expect(c.read(selectedMonthProvider), YearMonth.earliest);
+    expect(months.canGoPrevious, isFalse);
+  });
+
   test('거래를 추가하면 최근 6개월 추이에도 반영된다', () async {
     final c = fakeContainer(server: await _server());
     expect((await c.read(selfTrendProvider.future)).last.expense, 0);
@@ -117,10 +127,27 @@ void main() {
     final reads = _reads(server);
 
     await c.read(customCategoriesProvider.notifier)
-        .edit(_pet, name: _pet.name, base: BudgetCategory.recreation);
+        .save(CategoryDraft.edit(_pet).pickBase(BudgetCategory.recreation));
     await c.read(monthlyTransactionsProvider.future);
 
     expect(_reads(server), reads + 1);
+  });
+
+  // 서버는 저장했는데 응답이 시간 초과로 사라지면 사용자는 다시 누른다. 같은 카테고리여야 한다.
+  test('응답을 잃은 카테고리 추가를 다시 저장해도 카테고리는 하나다', () async {
+    final server = await _server();
+    server.faults.loseResponse('PUT', '/v1/categories');
+    final c = fakeContainer(server: server);
+    final notifier = c.read(customCategoriesProvider.notifier);
+    final draft = CategoryDraft.create().withName('반려동물');
+
+    final first = await notifier.save(draft);
+    final retry = await notifier.save(draft);
+
+    expect(first.failureOrNull?.reason, FailureReason.timeout);
+    expect(retry.failureOrNull, isNull);
+    expect((await server.categories.getAll()).unwrap().map((e) => e.name), ['반려동물']);
+    expect((await c.read(customCategoriesProvider.future)).map((e) => e.name), ['반려동물']);
   });
 
   test('저장이 실패하면 다시 읽지 않는다', () async {

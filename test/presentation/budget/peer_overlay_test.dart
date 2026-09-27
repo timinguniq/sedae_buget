@@ -4,11 +4,20 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/summary_hero_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_rank_card.dart';
+import 'package:sedae_budget/presentation/widget/common/peer_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 또래 월평균 [avg]와 견준 히어로 pill.
-HeroPeer _peer(int expense, {int avg = 2000000}) =>
-    (emptyMonth: false, total: PeerComparison.of(mine: expense, peer: avg));
+PeerPill? _peer(int expense, {int avg = 2000000}) {
+  final total = PeerComparison.of(mine: expense, peer: avg);
+  return PeerCompared(
+    total: total,
+    rank: null,
+    savings: const SavingsComparison(mine: null, peer: 20),
+    totalBars: null,
+    savingsBars: (mine: 0, peer: 1),
+  ).heroPill;
+}
 
 Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child), theme: materialTheme(LightTheme()));
 
@@ -35,8 +44,8 @@ void main() {
   });
 
   testWidgets('빈 달이면 비교 대신 내역을 추가하라고 보인다', (t) async {
-    await t.pumpWidget(_wrap(const SummaryHeroCard(
-        label: '이번 달', expense: 0, peer: (emptyMonth: true, total: null))));
+    await t.pumpWidget(_wrap(SummaryHeroCard(
+        label: '이번 달', expense: 0, peer: const PeerEmptyMonth().heroPill)));
     await t.pump();
     expect(find.text('내역을 추가하면 비교가 시작돼요'), findsOneWidget);
     expect(find.text('▼'), findsNothing);
@@ -50,6 +59,7 @@ void main() {
     await t.pump();
     expect(find.textContaining('등'), findsOneWidget);
     expect(find.text('많이 쓰는 쪽 ${rank.topPercent}%'), findsOneWidget);
+    expect(find.text('${rank.total}명 중 ${rank.rank}등'), findsOneWidget);
     expect(find.textContaining('상위'), findsNothing);
     expect(find.text('적게 씀'), findsOneWidget);
     expect(find.text('많이 씀'), findsOneWidget);

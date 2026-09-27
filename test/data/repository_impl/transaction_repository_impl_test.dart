@@ -8,6 +8,12 @@ Transaction _tx(DateTime date, {int amount = 1000}) => Transaction.create(
       amount: amount, categoryId: 7, date: date, type: TransactionType.expense, memo: 'm',
     );
 
+/// [year]년 [month]월의 거래(보고 있는 달을 읽는 방식 그대로).
+Future<Result<List<Transaction>>> _month(TransactionRepository repo, int year, int month) {
+  final m = YearMonth.of(DateTime(year, month));
+  return repo.getRange(m.start, m.end);
+}
+
 void main() {
   late MemoryAuthTokenStore tokens;
   late TransactionRepository repo;
@@ -31,19 +37,19 @@ void main() {
     expect(saved.createdAt.isUtc, isFalse);
   });
 
-  test('getMonth returns only that month, newest first', () async {
+  test('한 달 범위는 그 달의 거래만 최신순으로 돌려준다', () async {
     await repo.upsert(_tx(DateTime(2026, 9, 1), amount: 1));
     await repo.upsert(_tx(DateTime(2026, 9, 10), amount: 2));
     await repo.upsert(_tx(DateTime(2026, 10, 1), amount: 3));
-    final res = await repo.getMonth(2026, 9);
+    final res = await _month(repo, 2026, 9);
     final list = (res as Success<List<Transaction>>).data;
     expect(list.map((t) => t.amount), [2, 1]);
   });
 
-  test('getMonth(12) rolls over to next January exclusively', () async {
+  test('12월 범위는 다음 해 1월 1일을 넣지 않는다', () async {
     await repo.upsert(_tx(DateTime(2026, 12, 31, 23, 59), amount: 1));
     await repo.upsert(_tx(DateTime(2027, 1, 1), amount: 2));
-    final list = ((await repo.getMonth(2026, 12)) as Success<List<Transaction>>).data;
+    final list = ((await _month(repo, 2026, 12)) as Success<List<Transaction>>).data;
     expect(list.map((t) => t.amount), [1]);
   });
 
@@ -53,7 +59,7 @@ void main() {
     final res = await repo.delete(tx);
     expect(res, isA<Success<Transaction>>());
     expect((res as Success<Transaction>).data.id, tx.id);
-    final after = await repo.getMonth(2026, 9);
+    final after = await _month(repo, 2026, 9);
     expect((after as Success<List<Transaction>>).data, isEmpty);
   });
 
@@ -61,14 +67,14 @@ void main() {
     final tx = _tx(DateTime(2026, 9, 6));
     await repo.upsert(tx);
     await repo.upsert(tx.copyWith(amount: 999));
-    final list = ((await repo.getMonth(2026, 9)) as Success<List<Transaction>>).data;
+    final list = ((await _month(repo, 2026, 9)) as Success<List<Transaction>>).data;
     expect(list.single.id, tx.id);
     expect(list.single.amount, 999);
   });
 
   test('without token → Result.failure with server code', () async {
     tokens.token = null;
-    final res = await repo.getMonth(2026, 9);
+    final res = await _month(repo, 2026, 9);
     expect(res, isA<Error<List<Transaction>>>());
     expect(res.failureOrNull?.code, 'AUTH_002');
     expect(res.failureOrNull?.reason, FailureReason.unauthorized);

@@ -14,8 +14,9 @@ abstract class AuthApi {
   @POST(ApiPath.login)
   Future<LoginResponseDto> login(@Body() LoginRequestDto body);
 
+  /// [authorization]은 끝낼 세션의 `Authorization` 값이다. 이 기기의 토큰은 이미 지웠으므로 직접 보낸다.
   @POST(ApiPath.logout)
-  Future<void> logout();
+  Future<void> logout(@Header('Authorization') String authorization);
 
   @GET(ApiPath.me)
   Future<AuthUserDto> me();

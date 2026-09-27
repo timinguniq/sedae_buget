@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/widget/common/won_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 또래 통계를 못 읽었을 때 보여줄 문구.
@@ -11,8 +12,8 @@ const peerPendingText = '또래 평균 집계 중';
 /// 빈 달(지출 0원)에 비교 대신 보여줄 문구.
 const emptyMonthText = '내역을 추가하면 비교가 시작돼요';
 
-/// 또래 비교([PeerComparison])를 화면의 말·기호·색으로 바꾼다. 위젯은 배치만 고르고,
-/// 무엇이라 말할지는 여기서 정한다(앱의 또래 비교 문구는 모두 여기 있다).
+/// 또래 비교([PeerComparison])·이달의 또래 상황([PeerStanding])·순위([PeerRank])를 화면의 말·기호·색으로 바꾼다.
+/// 위젯은 배치만 고르고, 무엇이라 말할지는 여기서 정한다(앱의 또래 비교 문구는 모두 여기 있다).
 ///
 /// - 비슷은 반올림한 차이가 0%일 때다([PeerDirection.similar]). 자리마다 길이에 맞춘 말을 쓴다.
 /// - 크게 넘으면(50%↑, [PeerComparison.strong]) 인사이트는 배율로 말한다.
@@ -64,15 +65,45 @@ extension PeerText on PeerComparison {
         PeerDirection.similar => '비슷하게',
       };
 
-  /// 비교 탭 지출 비교 카드 아래 줄: '또래보다 약 20만원 더 ▲'. 금액은 [won]으로 쓴다.
-  String totalFooter(String Function(int amount) won) => switch (direction) {
-        PeerDirection.more => '또래보다 약 ${won(mine - peer)}원 더 ▲',
-        PeerDirection.less => '또래보다 약 ${won(peer - mine)}원 덜 ▼',
+  /// 비교 탭 지출 비교 카드 아래 줄: '또래보다 약 20만원 더 ▲'.
+  String totalFooter() => switch (direction) {
+        PeerDirection.more => '또래보다 약 ${WonText.shortWithUnit.of(mine - peer)} 더 ▲',
+        PeerDirection.less => '또래보다 약 ${WonText.shortWithUnit.of(peer - mine)} 덜 ▼',
         PeerDirection.similar => '또래와 비슷해요',
       };
 
   /// 글자색: 더 썼으면 코랄, 덜 썼거나 비슷하면 흐리게.
   Color tone(BuildContext context) => _more ? context.color.primary.normal : context.color.label.alternative;
+}
+
+/// 홈 요약 pill에 그릴 것: 화살표('▲'·'▼', 없으면 null)와 문구.
+typedef PeerPill = ({String? arrow, String text});
+
+extension PeerStandingText on PeerStanding {
+  /// 홈 요약 pill. 또래 통계를 못 읽었으면 pill이 없다(null).
+  PeerPill? get heroPill => switch (this) {
+        PeerUnavailable() => null,
+        PeerEmptyMonth() => (arrow: null, text: emptyMonthText),
+        PeerCompared(:final total?) => (arrow: total.arrow, text: total.heroSentence),
+        PeerCompared() => (arrow: null, text: peerPendingText),
+      };
+}
+
+/// 순위 자리의 이름: '많이 쓰는 쪽'(리포트 타일은 이름과 값을 따로 쓴다).
+const rankSideLabel = '많이 쓰는 쪽';
+
+extension PeerRankText on PeerRank {
+  /// '34%'(많이 쓰는 쪽에서).
+  String get topPercentText => '$topPercent%';
+
+  /// '많이 쓰는 쪽 34%'.
+  String get sideText => '$rankSideLabel $topPercentText';
+
+  /// '100명 중 34등'.
+  String get placeText => '$total명 중 $rank등';
+
+  /// 비교 탭 순위 머리말: '또래 100명 중 내 지출은'.
+  String get headlineLead => '또래 $total명 중 내 지출은';
 }
 
 extension SavingsText on SavingsComparison {

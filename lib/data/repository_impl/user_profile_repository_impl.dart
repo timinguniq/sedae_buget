@@ -4,7 +4,8 @@ import 'package:sedae_budget/data/repository_impl/api_call.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-/// 서버에 저장되는 사용자 프로필(나이대·월소득). 아직 만들지 않았으면(`PROFILE_NOT_FOUND`) null.
+/// 서버에 저장되는 사용자 프로필(나이대·월소득). 아직 만들지 않았으면(`PROFILE_NOT_FOUND`) null이고,
+/// 모르는 나이대로 저장돼 있어도 null이다(온보딩에서 다시 고른다).
 class UserProfileRepositoryImpl implements UserProfileRepository {
   UserProfileRepositoryImpl(this._api);
 

@@ -59,6 +59,36 @@ void main() {
     expect((await after.send('GET', '/v1/categories', token: token)).list.single['name'], '반려동물');
   });
 
+  test('로그아웃한 토큰은 다시 켜도 거부하고, 저장하지 못한 로그아웃은 500이며 토큰도 그대로다', () async {
+    final store = _MemStore();
+    final before = _client(StubApiInterceptor(store: store));
+    final out = await before.login('kakao');
+    final kept = await before.login('kakao');
+    await before.send('POST', '/v1/auth/logout', token: out);
+
+    final after = _client(StubApiInterceptor(store: store));
+    expect((await after.send('GET', '/v1/me', token: out)).status, 401);
+    expect((await after.send('GET', '/v1/me', token: kept)).status, 200);
+
+    store.failSave = true;
+    expect((await after.send('POST', '/v1/auth/logout', token: kept)).status, 500);
+    expect((await after.send('GET', '/v1/me', token: kept)).status, 200);
+  });
+
+  // 준 토큰만 받는다. 로그인마다 새 토큰을 주기 전에 저장된 예전 형식 토큰도 준 적 없는 토큰이라, 한 번
+  // 만료로 끝나고 다시 로그인하면 된다(데이터는 사용자별로 남아 있다).
+  test('준 적 없는 토큰은 예전 형식(stub.<provider>)이어도 401이고, 다시 로그인하면 데이터가 그대로다', () async {
+    final store = _MemStore();
+    final before = _client(StubApiInterceptor(store: store));
+    final token = await before.login('kakao');
+    await before.send('PUT', '/v1/me/profile', body: {'ageGroup': 'forties', 'monthlyIncome': 1}, token: token);
+
+    final after = _client(StubApiInterceptor(store: store));
+    expect((await after.send('GET', '/v1/me', token: 'stub.kakao')).status, 401);
+    final again = await after.login('kakao');
+    expect((await after.send('GET', '/v1/me/profile', token: again)).json['ageGroup'], 'forties');
+  });
+
   test('사용자별로 나누기 전 형식으로 저장된 상태는 버린다', () async {
     final store = _MemStore()
       ..saved = jsonEncode({
@@ -154,10 +184,11 @@ void main() {
     PeerStats flat(AgeGroup g) => PeerStats(
         ageGroup: g, avgMonthlyExpense: 0, avgSavingsRate: 0, avgByCategory: const {}, samples: const []);
     final custom = _client(StubApiInterceptor(peerStats: flat));
-    final stats = await custom.send('GET', '/v1/peer/stats', query: {'ageGroup': 'thirties'}, token: token);
+    final customToken = await custom.login('kakao');
+    final stats = await custom.send('GET', '/v1/peer/stats', query: {'ageGroup': 'thirties'}, token: customToken);
     expect(stats.json['avgMonthlyExpense'], 0);
     expect(stats.json['samples'], isEmpty);
-    final generations = await custom.send('GET', '/v1/peer/generations', token: token);
+    final generations = await custom.send('GET', '/v1/peer/generations', token: customToken);
     expect(generations.list.every((g) => g['avgMonthlyExpense'] == 0), isTrue);
   });
 }

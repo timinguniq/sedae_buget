@@ -64,6 +64,30 @@ void main() {
     expect(c.read(sessionExpiredProvider), isFalse);
   });
 
+  // 앱을 켤 때도 쓰는 중과 같다: 왜 다시 로그인해야 하는지 알린다.
+  test('앱을 켤 때 저장된 토큰이 거부되면 로그아웃 상태로 두고 만료를 알린다', () async {
+    final server = await _signedIn();
+    server.tokens.token = 'expired';
+    final c = fakeContainer(server: server);
+
+    expect(await c.read(authProvider.future), isNull);
+    await Future<void>.delayed(Duration.zero);
+    expect(c.read(sessionExpiredProvider), isTrue);
+  });
+
+  // 이전에는 결과를 버려서 화면만 로그아웃되고 다음 실행에 다시 로그인됐다.
+  test('로컬 토큰을 못 지우면 로그인 상태로 두고 실패를 돌려준다', () async {
+    final server = await _signedIn();
+    final c = fakeContainer(server: server);
+    await c.read(authProvider.future);
+    server.tokens.failClear = true;
+
+    final res = await c.read(authProvider.notifier).signOut();
+
+    expect(res.failureOrNull?.reason, FailureReason.unknown);
+    expect(c.read(authProvider).value, testUser);
+  });
+
   test('세션 확인에 실패하면 retry로 다시 확인한다', () async {
     final server = await _signedIn();
     server.faults.fail('GET', '/v1/me', times: 1);

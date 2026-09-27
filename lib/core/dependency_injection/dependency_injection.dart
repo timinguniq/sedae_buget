@@ -11,15 +11,13 @@ final locator = GetIt.instance;
 /// API 인프라. 다른 configure*보다 먼저 호출한다. 빌드 환경이 local이면 Stub API가 서버 대신 답한다.
 void configureApiDependencies(AuthTokenStore tokenStore) {
   if (locator.isRegistered<Dio>()) return;
-  final sessionExpiry = SessionExpiry();
+  final session = Session(tokenStore);
   locator
-    ..registerSingleton<AuthTokenStore>(tokenStore)
-    ..registerSingleton<SessionExpiry>(sessionExpiry)
+    ..registerSingleton<Session>(session)
     ..registerSingleton<Dio>(
       connectToServer(
         env: AppEnvironment.current,
-        tokenStore: tokenStore,
-        sessionExpiry: sessionExpiry,
+        session: session,
         localServer: () => StubApiInterceptor(store: SharedPrefsStubStateStore()),
       ),
     );
@@ -27,19 +25,13 @@ void configureApiDependencies(AuthTokenStore tokenStore) {
 
 /// 거래·카테고리 의존성(서버). [configureApiDependencies]가 먼저 호출되어 있어야 한다.
 void configureBudgetDependencies() {
-  if (locator.isRegistered<TransactionUsecase>()) return;
+  if (locator.isRegistered<TransactionRepository>()) return;
   locator
     ..registerSingleton<TransactionRepository>(
       TransactionRepositoryImpl(TransactionApi(locator<Dio>())),
     )
-    ..registerSingleton<TransactionUsecase>(
-      TransactionUsecase(locator<TransactionRepository>()),
-    )
     ..registerSingleton<CategoryRepository>(
       CategoryRepositoryImpl(CategoryApi(locator<Dio>())),
-    )
-    ..registerSingleton<CategoryUsecase>(
-      CategoryUsecase(locator<CategoryRepository>()),
     );
 }
 
@@ -54,18 +46,10 @@ void configurePeerDependencies() {
 /// 인증·프로필 의존성. 둘 다 서버(AuthRepositoryImpl, UserProfileRepositoryImpl).
 /// [configureApiDependencies]가 먼저 호출되어 있어야 한다.
 void configureUserDependencies() {
-  if (locator.isRegistered<AuthUsecase>()) return;
+  if (locator.isRegistered<AuthRepository>()) return;
   locator
     ..registerSingleton<AuthRepository>(
-      AuthRepositoryImpl(
-        AuthApi(locator<Dio>()),
-        locator<AuthTokenStore>(),
-        locator<SessionExpiry>(),
-      ),
-    )
-    ..registerSingleton<SocialIdTokenProvider>(StubSocialIdTokenProvider())
-    ..registerSingleton<AuthUsecase>(
-      AuthUsecase(locator<AuthRepository>(), locator<SocialIdTokenProvider>()),
+      AuthRepositoryImpl(AuthApi(locator<Dio>()), locator<Session>(), StubSocialIdTokenProvider()),
     )
     ..registerSingleton<UserProfileRepository>(
       UserProfileRepositoryImpl(UserProfileApi(locator<Dio>())),

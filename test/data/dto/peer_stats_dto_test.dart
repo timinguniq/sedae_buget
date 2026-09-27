@@ -14,7 +14,7 @@ void main() {
   test('fromJson(toJson(x)) round-trips every field', () {
     final original = StubPeerData.forGroup(AgeGroup.fiftiesPlus);
     final back =
-        PeerStatsDto.fromJson(PeerStatsDto.fromEntity(original).toJson()).toEntity();
+        PeerStatsDto.fromJson(PeerStatsDto.fromEntity(original).toJson()).toEntity(original.ageGroup);
     expect(back.ageGroup, original.ageGroup);
     expect(back.avgMonthlyExpense, original.avgMonthlyExpense);
     expect(back.avgSavingsRate, original.avgSavingsRate);
@@ -28,7 +28,16 @@ void main() {
       'ageGroup': 'thirties', 'avgMonthlyExpense': 1000000, 'avgSavingsRate': 0.2,
       'avgByCategory': {'1': 300000, '13': 5000, 'x': 1, '0': 2},
       'samples': [1, 2, 3],
-    }).toEntity();
+    }).toEntity(AgeGroup.thirties);
     expect(stats.avgByCategory, {BudgetCategory.food: 300000});
+  });
+
+  test('나이대의 API 값은 나이대마다 하나이고, 모르는 값은 null이다', () {
+    expect(AgeGroup.values.map((g) => g.wire).toSet(), hasLength(AgeGroup.values.length));
+    for (final g in AgeGroup.values) {
+      expect(ageGroupFromWire(g.wire), g);
+    }
+    expect(ageGroupFromWire('lateTwenties'), isNull);
+    expect(ageGroupFromWire(null), isNull);
   });
 }

@@ -6,7 +6,6 @@ import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_feed.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/day_ad_banner.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/transaction_tile.dart';
-import 'package:sedae_budget/presentation/page/compare/widget/compare_format.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 내역 화면. 디자인: "내역" + 월 칩 / "이번 달 N원 · M건" / 카테고리 필터 칩 / 날짜 그룹 헤더.
@@ -48,7 +47,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                   _MonthChip(month: month),
                 ]),
                 const SizedBox(height: 4),
-                Text('$name ${manWon(m.expense)}원 · ${m.expenseCount}건',
+                Text('$name ${WonText.shortWithUnit.of(m.expense)} · ${m.expenseCount}건',
                     style: context.typo.caption1W500.copyWith(color: context.color.label.assistive)),
                 const SizedBox(height: 13),
                 SingleChildScrollView(
@@ -118,14 +117,15 @@ class _MonthChip extends ConsumerWidget {
     final prev = month.previous;
     final next = month.next;
     final canGoNext = ref.read(selectedMonthProvider.notifier).canGoNext;
+    final canGoPrevious = ref.read(selectedMonthProvider.notifier).canGoPrevious;
     return PopupMenuButton<int>(
       key: const Key('month-chip'),
       onSelected: (d) => d < 0
           ? ref.read(selectedMonthProvider.notifier).prev()
           : ref.read(selectedMonthProvider.notifier).next(),
       itemBuilder: (_) => [
-        PopupMenuItem(value: -1, child: Text('이전 달 · ${prev.month}월')),
-        // 이번 달보다 뒤로는 가지 않는다.
+        // 2020년 1월보다 앞으로, 이번 달보다 뒤로는 가지 않는다.
+        PopupMenuItem(value: -1, enabled: canGoPrevious, child: Text('이전 달 · ${prev.month}월')),
         PopupMenuItem(value: 1, enabled: canGoNext, child: Text('다음 달 · ${next.month}월')),
       ],
       child: Container(

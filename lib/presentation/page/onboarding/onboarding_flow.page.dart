@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
@@ -98,22 +97,6 @@ class _ProgressBar extends StatelessWidget {
   );
 }
 
-const _ageDescription = <AgeGroup, String>{
-  AgeGroup.teens: '학생 · 첫 용돈 관리',
-  AgeGroup.twenties: '사회초년생 · 첫 독립',
-  AgeGroup.thirties: '결혼 · 내 집 마련',
-  AgeGroup.forties: '자녀 교육 · 안정기',
-  AgeGroup.fiftiesPlus: '노후 · 건강 관리',
-};
-
-const _ageBadge = <AgeGroup, String>{
-  AgeGroup.teens: '10',
-  AgeGroup.twenties: '20',
-  AgeGroup.thirties: '30',
-  AgeGroup.forties: '40',
-  AgeGroup.fiftiesPlus: '50+',
-};
-
 class _AgeStep extends StatelessWidget {
   const _AgeStep({required this.selected, required this.onSelect});
   final AgeGroup? selected; final ValueChanged<AgeGroup> onSelect;
@@ -153,7 +136,7 @@ class _AgeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.color;
-    final badge = _ageBadge[group]!;
+    final badge = group.badge;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -180,7 +163,7 @@ class _AgeCard extends StatelessWidget {
             Text(group.label, style: context.typo.label2W600.copyWith(
               fontSize: 14.5, fontWeight: context.typo.bold, color: c.label.normal)),
             const SizedBox(height: 2),
-            Text(_ageDescription[group]!, style: context.typo.caption2W500.copyWith(
+            Text(group.lifeStage, style: context.typo.caption2W500.copyWith(
               fontSize: 11, color: selected ? _selectedDescription : c.label.assistive)),
           ])),
           _Radio(selected: selected),
@@ -217,7 +200,6 @@ class _IncomeStep extends StatelessWidget {
   final double income; final ValueChanged<double> onChanged;
   @override
   Widget build(BuildContext context) {
-    final won = NumberFormat.decimalPattern('ko');
     final c = context.color;
     final rangeStyle = context.typo.caption2W500.copyWith(fontSize: 11, color: c.label.assistive);
     return SingleChildScrollView(
@@ -229,7 +211,7 @@ class _IncomeStep extends StatelessWidget {
           style: context.typo.caption1W500.copyWith(fontSize: 13, color: c.label.assistive)),
         const SizedBox(height: 38),
         Center(child: Column(children: [
-          Text('₩${won.format(income.round())}',
+          Text(WonText.full.of(income.round()),
             style: context.typo.amountDisplay.copyWith(fontSize: 38, letterSpacing: -1.2, color: c.label.normal)),
           const SizedBox(height: 5),
           Text('월 평균 실수령액', style: context.typo.caption1W600.copyWith(color: c.label.assistive)),
@@ -243,8 +225,8 @@ class _IncomeStep extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('₩0', style: rangeStyle),
-          Text('₩${won.format(kOnboardingIncomeMax)}+', style: rangeStyle),
+          Text(WonText.full.of(0), style: rangeStyle),
+          Text('${WonText.full.of(kOnboardingIncomeMax)}+', style: rangeStyle),
         ]),
         const SizedBox(height: 30),
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [

@@ -3,8 +3,7 @@ import 'dart:async';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/core/ads/index.dart';
 import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
-import 'package:sedae_budget/core/http_client/auth_token_store.dart';
-import 'package:sedae_budget/core/local_storage/local_storage.dart';
+import 'package:sedae_budget/core/local_storage/secure_auth_token_store.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -30,11 +29,11 @@ Future<void> main() async {
 
       await initializeDateFormatting();
       await dotenv.load();
-      configureApiDependencies(SecureAuthTokenStore(await LocalStorage.getInstance()));
+      final prefs = await SharedPreferences.getInstance();
+      configureApiDependencies(await SecureAuthTokenStore.open(prefs));
       configureBudgetDependencies();
       configurePeerDependencies();
       configureUserDependencies();
-      final prefs = await SharedPreferences.getInstance();
       configureAdDependencies(prefs);
       configureThemeDependencies(prefs);
       configureAppStatusDependencies();
