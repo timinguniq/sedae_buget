@@ -60,6 +60,14 @@ void main() {
       expect(r.topPercent, 34);
     });
 
+    test('인원이 100으로 나눠떨어지지 않으면 올림한다: 3명 중 1등은 34%', () {
+      final three = PeerStats(
+        ageGroup: AgeGroup.thirties, avgMonthlyExpense: 500000, avgSavingsRate: 0.2,
+        avgByCategory: const {}, samples: const [100000, 200000]);
+      expect(three.rankOf(300000)!.topPercent, 34);
+      expect(three.rankOf(150000)!.topPercent, 67);
+    });
+
     // 이전에는 100 − (나보다 적게 쓴 비율)이라 가장 많이 쓰면 '1등 · 많이 쓰는 쪽 0%'였다.
     test('가장 많이 쓰면 1등이고 많이 쓰는 쪽 1%다', () {
       final top = stats.rankOf(100000000)!;

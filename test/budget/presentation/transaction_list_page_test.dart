@@ -86,6 +86,21 @@ void main() {
     expect(find.text('${_last.month}월 1.5만원 · 1건'), findsOneWidget);
   });
 
+  // 보고 있는 달은 2020년 1월보다 앞으로 가지 않는다. 월 칩도 그 앞 달을 고르지 못하게 한다.
+  testWidgets('2020년 1월에서는 월 칩의 이전 달을 고를 수 없다', (tester) async {
+    final c = await _pump(tester);
+    for (var i = 0; i < 12 * 20; i++) {
+      c.read(selectedMonthProvider.notifier).prev();
+    }
+    await tester.settle();
+    await tester.tap(find.byKey(const Key('month-chip')));
+    await tester.pumpAndSettle();
+
+    final previous = tester.widget<PopupMenuItem<int>>(find.ancestor(
+        of: find.text('이전 달 · 12월'), matching: find.byType(PopupMenuItem<int>)));
+    expect(previous.enabled, isFalse);
+  });
+
   // 또래 통계가 실패해도 내 내역은 보인다. 또래 초과 배지만 빠진다.
   testWidgets('또래 통계를 못 읽어도 내역이 보인다', (tester) async {
     await _pump(tester, faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server));

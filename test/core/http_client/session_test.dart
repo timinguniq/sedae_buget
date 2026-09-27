@@ -71,6 +71,20 @@ void main() {
     expect(headers['Authorization'], 'Bearer old');
   });
 
+  test('빈 토큰은 세션이 아니고 요청에 붙이지 않는다', () async {
+    tokens.token = '';
+    expect(await session.isActive, isFalse);
+    final headers = (await dioWith(_EchoHeaders()).get<Map<String, dynamic>>('/x')).data!;
+    expect(headers.containsKey('Authorization'), isFalse);
+  });
+
+  // 요청은 토큰을 읽어 보냈는데, 거부(401)가 올 때는 저장소를 읽지 못한다. 세션은 끝난 것이다.
+  test('401을 받을 때 저장소를 못 읽으면 세션이 끝났다고 알린다', () async {
+    tokens.token = 'abc';
+    await send(dioWith(_Reply(401, beforeReply: () async => tokens.failRead = true)));
+    expect(expiredCount, 1);
+  });
+
   test('no token → no Authorization header', () async {
     final headers = (await dioWith(_EchoHeaders()).get<Map<String, dynamic>>('/x')).data!;
     expect(headers.containsKey('Authorization'), isFalse);
