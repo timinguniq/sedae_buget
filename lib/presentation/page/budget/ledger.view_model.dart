@@ -15,7 +15,7 @@ import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 /// 로그인 중이면 true. 이것을 부른 provider는 세션이 바뀌면 다시 만들어진다.
 Future<bool> _signedIn(Ref ref) async => await ref.watch(authProvider.future) != null;
 
-/// 보고 있는 달. 모든 탭이 함께 본다. 이번 달보다 뒤로는 가지 않는다(규칙은 [YearMonth]).
+/// 보고 있는 달. 모든 탭이 함께 본다. 이번 달보다 뒤로, 2020년 1월보다 앞으로는 가지 않는다(규칙은 [YearMonth]).
 class SelectedMonthNotifier extends Notifier<YearMonth> {
   @override
   YearMonth build() => YearMonth.of(DateTime.now());
@@ -23,7 +23,12 @@ class SelectedMonthNotifier extends Notifier<YearMonth> {
   /// 다음 달로 갈 수 있는가(보고 있는 달이 이번 달보다 앞이다).
   bool get canGoNext => state.canGoNext(DateTime.now());
 
-  void prev() => state = state.previous;
+  /// 이전 달로 갈 수 있는가(보고 있는 달이 하한보다 뒤다).
+  bool get canGoPrevious => state.canGoPrevious;
+
+  void prev() {
+    if (canGoPrevious) state = state.previous;
+  }
 
   void next() {
     if (canGoNext) state = state.next;

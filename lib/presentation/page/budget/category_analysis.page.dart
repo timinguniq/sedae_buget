@@ -25,8 +25,10 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
       child: Column(children: [
         _Header(
           month: month,
-          onPrev: () => ref.read(selectedMonthProvider.notifier).prev(),
-          // 이번 달보다 뒤로는 가지 않는다.
+          // 2020년 1월보다 앞으로, 이번 달보다 뒤로는 가지 않는다.
+          onPrev: ref.read(selectedMonthProvider.notifier).canGoPrevious
+              ? () => ref.read(selectedMonthProvider.notifier).prev()
+              : null,
           onNext: ref.read(selectedMonthProvider.notifier).canGoNext
               ? () => ref.read(selectedMonthProvider.notifier).next()
               : null,
@@ -102,7 +104,8 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
 class _Header extends StatelessWidget {
   const _Header({required this.month, required this.onPrev, required this.onNext});
   final YearMonth month;
-  final VoidCallback onPrev;
+  /// 이전 달로 갈 수 없으면(보고 있는 달이 하한) null.
+  final VoidCallback? onPrev;
   /// 다음 달로 갈 수 없으면(보고 있는 달이 이번 달) null.
   final VoidCallback? onNext;
 

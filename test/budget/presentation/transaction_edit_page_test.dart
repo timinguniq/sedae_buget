@@ -209,6 +209,18 @@ void main() {
     expect(DateUtils.isSameDay(picker.lastDate, DateTime.now()), isTrue);
   });
 
+  // 이전에는 첫 날짜가 2020년으로 박혀 있어 그보다 이른 거래의 날짜를 누르면 assert로 멈췄다.
+  testWidgets('2020년보다 이른 거래도 날짜를 고를 수 있다', (tester) async {
+    final old = Transaction.create(
+        amount: 1000, categoryId: 1, date: DateTime(2019, 12, 27), type: TransactionType.expense);
+    await pumpEditPage(tester, existing: old);
+    await tester.tap(find.byIcon(Icons.calendar_today_outlined));
+    await tester.pumpAndSettle();
+
+    final picker = tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
+    expect(picker.firstDate, DateTime(2019, 12, 27));
+  });
+
   testWidgets('메모 필드는 전역 inputDecorationTheme의 outline 테두리를 받지 않는다', (tester) async {
     await pumpEditPage(tester);
     final memo = tester.widget<TextField>(

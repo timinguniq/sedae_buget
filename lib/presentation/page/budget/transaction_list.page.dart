@@ -117,14 +117,15 @@ class _MonthChip extends ConsumerWidget {
     final prev = month.previous;
     final next = month.next;
     final canGoNext = ref.read(selectedMonthProvider.notifier).canGoNext;
+    final canGoPrevious = ref.read(selectedMonthProvider.notifier).canGoPrevious;
     return PopupMenuButton<int>(
       key: const Key('month-chip'),
       onSelected: (d) => d < 0
           ? ref.read(selectedMonthProvider.notifier).prev()
           : ref.read(selectedMonthProvider.notifier).next(),
       itemBuilder: (_) => [
-        PopupMenuItem(value: -1, child: Text('이전 달 · ${prev.month}월')),
-        // 이번 달보다 뒤로는 가지 않는다.
+        // 2020년 1월보다 앞으로, 이번 달보다 뒤로는 가지 않는다.
+        PopupMenuItem(value: -1, enabled: canGoPrevious, child: Text('이전 달 · ${prev.month}월')),
         PopupMenuItem(value: 1, enabled: canGoNext, child: Text('다음 달 · ${next.month}월')),
       ],
       child: Container(

@@ -81,7 +81,7 @@ class _State extends ConsumerState<TransactionEditPage> {
   Future<void> _pickDate() async {
     final picked = await showDatePicker(
       context: context, initialDate: _draft.date,
-      firstDate: DateTime(2020), lastDate: _draft.latestDate(DateTime.now()));
+      firstDate: _draft.earliestDate, lastDate: _draft.latestDate(DateTime.now()));
     if (picked != null) setState(() => _draft = _draft.withDate(picked));
   }
 

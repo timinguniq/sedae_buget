@@ -31,6 +31,16 @@ Future<List<Transaction>> _saved(StubServer server) async =>
 int _reads(StubServer server) => server.faults.count('GET', '/v1/transactions');
 
 void main() {
+  test('보고 있는 달은 2020년 1월에서 더 앞으로 가지 않는다', () {
+    final c = fakeContainer();
+    final months = c.read(selectedMonthProvider.notifier);
+    for (var i = 0; i < 12 * 20; i++) {
+      months.prev();
+    }
+    expect(c.read(selectedMonthProvider), YearMonth.earliest);
+    expect(months.canGoPrevious, isFalse);
+  });
+
   test('거래를 추가하면 최근 6개월 추이에도 반영된다', () async {
     final c = fakeContainer(server: await _server());
     expect((await c.read(selfTrendProvider.future)).last.expense, 0);

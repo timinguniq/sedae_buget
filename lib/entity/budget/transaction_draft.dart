@@ -3,6 +3,7 @@ import 'package:sedae_budget/entity/budget/category_catalog.dart';
 import 'package:sedae_budget/entity/budget/custom_category.dart';
 import 'package:sedae_budget/entity/budget/transaction.dart';
 import 'package:sedae_budget/entity/budget/transaction_type.dart';
+import 'package:sedae_budget/entity/budget/year_month.dart';
 import 'package:uuid/uuid.dart';
 
 /// 입력 중인 거래. 거래 입력 화면의 규칙(카테고리 선택·저장 가능 여부·저장할 거래)을 가진다.
@@ -81,6 +82,15 @@ class TransactionDraft {
   DateTime latestDate(DateTime today) {
     final saved = existing?.date;
     return saved != null && saved.isAfter(today) ? saved : today;
+  }
+
+  /// 고를 수 있는 가장 이른 날짜. 보고 있는 달의 하한([YearMonth.earliest])의 1일이고,
+  /// 그보다 이른 거래를 고칠 때는 그 날짜까지다.
+  DateTime get earliestDate {
+    final floor = YearMonth.earliest.start;
+    final saved = existing?.date;
+    if (saved == null || !saved.isBefore(floor)) return floor;
+    return DateTime(saved.year, saved.month, saved.day);
   }
 
   /// 카테고리를 고르는가. 수입은 카테고리가 없다.
