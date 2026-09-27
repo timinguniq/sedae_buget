@@ -48,10 +48,23 @@ void main() {
       expect(high.topPercent, lessThan(low.topPercent));
     });
 
-    test('전체 인원은 표본에 나를 더한 수, 상위 %는 나보다 적게 쓴 비율의 보수', () {
-      final r = stats.rankOf(1500000)!;
+    // 디자인: '100명 중 34등 · 많이 쓰는 쪽 34%'. 등수와 N이 같은 뜻이다.
+    test('전체 인원은 표본에 나를 더한 수, 많이 쓰는 쪽 %는 등수 ÷ 인원을 올림한 값', () {
+      final samples = [for (var i = 1; i <= 99; i++) i * 10000];
+      final hundred = PeerStats(
+        ageGroup: AgeGroup.thirties, avgMonthlyExpense: 500000, avgSavingsRate: 0.2,
+        avgByCategory: const {}, samples: samples);
+      final r = hundred.rankOf(665000)!; // 67만~99만 33명이 더 많이 쓴다
       expect(r.total, 100);
-      expect(r.topPercent, 100 - r.percentBelow);
+      expect(r.rank, 34);
+      expect(r.topPercent, 34);
+    });
+
+    // 이전에는 100 − (나보다 적게 쓴 비율)이라 가장 많이 쓰면 '1등 · 많이 쓰는 쪽 0%'였다.
+    test('가장 많이 쓰면 1등이고 많이 쓰는 쪽 1%다', () {
+      final top = stats.rankOf(100000000)!;
+      expect(top.rank, 1);
+      expect(top.topPercent, 1);
     });
 
     // 이전에는 표본이 없어도 '또래 1명 중 1등 · 상위 100%'로 보였다.

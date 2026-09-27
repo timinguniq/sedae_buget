@@ -22,7 +22,8 @@ class PeerStats {
 /// 또래 중 내 지출 순위.
 ///
 /// [rank]는 많이 쓰는 순 등수(1 = 가장 많이 씀), [total]은 나를 포함한 인원,
-/// [percentBelow]는 또래 중 나보다 적게 쓴 비율(%), [topPercent]는 지출 상위 N%(그 보수).
+/// [percentBelow]는 또래 중 나보다 적게 쓴 비율(%, 분포 위 내 자리), [topPercent]는 많이 쓰는 쪽에서 N%
+/// (등수 ÷ 인원을 올림, 1~100 — '100명 중 34등'이면 34).
 typedef PeerRank = ({int rank, int total, int percentBelow, int topPercent});
 
 extension PeerStatsX on PeerStats {
@@ -39,12 +40,13 @@ extension PeerStatsX on PeerStats {
     if (samples.isEmpty) return null;
     final higher = samples.where((s) => s > myExpense).length;
     final below = samples.where((s) => s < myExpense).length;
-    final percentBelow = (below * 100 / samples.length).round();
+    final rank = higher + 1;
+    final total = samples.length + 1;
     return (
-      rank: higher + 1,
-      total: samples.length + 1,
-      percentBelow: percentBelow,
-      topPercent: 100 - percentBelow,
+      rank: rank,
+      total: total,
+      percentBelow: (below * 100 / samples.length).round(),
+      topPercent: (rank * 100 / total).ceil(),
     );
   }
 

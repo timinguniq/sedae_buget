@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/category_battle_row.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/distribution_histogram.dart';
@@ -27,7 +28,9 @@ class ComparePage extends ConsumerWidget {
           final peer = o.peer;
           if (peer == null) return const Center(child: Text(peerUnavailableText));
           final myExpense = o.month.expense;
-          if (o.isEmpty) {
+          final standing = o.standing;
+          // 또래 통계는 읽었으니 견주지 않은 것은 빈 달뿐이다.
+          if (standing is! PeerCompared) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
@@ -42,12 +45,8 @@ class ComparePage extends ConsumerWidget {
             );
           }
           final top6 = o.topCategories(6);
-          final total = o.total;
-          final totalBars = o.totalBars;
-          final rank = o.rank;
           // 소득이 없으면 내 저축률은 계산할 수 없다: 막대는 0, 값은 '—'.
-          final savings = o.savings!;
-          final savingsBars = o.savingsBars!;
+          final PeerCompared(:total, :totalBars, :rank, :savings, :savingsBars) = standing;
           final peerTop = o.peerTopCategory;
 
           return ListView(

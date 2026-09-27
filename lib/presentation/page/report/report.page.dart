@@ -36,7 +36,8 @@ class ReportPage extends ConsumerWidget {
           if (peer == null) return const Center(child: Text(peerUnavailableText));
           // '내 세대' 강조는 순위·인사이트를 계산한 또래 통계의 나이대를 따른다.
           final ageGroup = peer.ageGroup;
-          final peerTop = o.rank?.topPercent; // 많이 쓰는 쪽 N%. 빈 달이거나 표본이 없으면 null
+          // 빈 달이거나 표본이 없으면 순위가 없다.
+          final rank = switch (o.standing) { PeerCompared(:final rank) => rank, _ => null };
           // 소득이 없으면 저축률·소득 대비 지출 모두 '—'.
           final savingsRate = o.month.savingsRate;
           final incomeRatio = o.month.expenseRatio;
@@ -65,7 +66,7 @@ class ReportPage extends ConsumerWidget {
               // ── 3 stat tiles ─────────────────────────────────────
               Row(children: [
                 Expanded(child: _StatTile(
-                    label: '많이 쓰는 쪽', value: peerTop == null ? '—' : '$peerTop%', accent: true)),
+                    label: rankSideLabel, value: rank?.topPercentText ?? '—', accent: true)),
                 const SizedBox(width: 9),
                 Expanded(child: _StatTile(
                     label: '저축률', value: savingsRate == null ? '—' : '$savingsRate%')),

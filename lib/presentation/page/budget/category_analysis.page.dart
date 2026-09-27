@@ -71,7 +71,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
             )),
             const SizedBox(height: 16),
             // 또래 비교 토글 (디자인 42×24 코랄 토글 — 테마 Switch를 축소). 또래 통계가 없으면 뺀다.
-            if (o.hasPeer) ...[
+            if (o.standing is! PeerUnavailable) ...[
               Row(children: [
                 Text('또래 평균과 비교',
                     style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.normal)),

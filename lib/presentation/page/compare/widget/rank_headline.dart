@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/widget/common/peer_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 시안 A 대형 등수 블록: "또래 N명 중 내 지출은" / `N등`(800·46 코랄) / 잉크 배지 `많이 쓰는 쪽 N%`.
@@ -12,10 +13,9 @@ class RankHeadline extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = rank;
-    final top = r.topPercent; // 많이 쓰는 쪽에서 N%
     final coral = context.color.primary.normal;
     return Column(children: [
-      Text('또래 ${r.total}명 중 내 지출은',
+      Text(r.headlineLead,
         style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.alternative)),
       const SizedBox(height: 1),
       Row(
@@ -32,7 +32,7 @@ class RankHeadline extends StatelessWidget {
       Container(
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
         decoration: BoxDecoration(color: InkCard.colorOf(context), borderRadius: BorderRadius.circular(20)),
-        child: Text('많이 쓰는 쪽 $top%',
+        child: Text(r.sideText,
           style: context.typo.caption1W600.copyWith(fontSize: 11.5, fontWeight: context.typo.bold, color: context.color.static.white)),
       ),
     ]);

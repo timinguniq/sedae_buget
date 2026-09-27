@@ -1,16 +1,12 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/widget/common/peer_text.dart';
 import 'package:sedae_budget/presentation/widget/common/won_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-/// 히어로의 또래 비교 pill에 그릴 것: 빈 달인가, 이달 총지출과 또래 월평균의 비교(또래 값이 없으면 null).
-typedef HeroPeer = ({bool emptyMonth, PeerComparison? total});
-
 /// 코랄 히어로 카드: 달 총지출 + 또래 비교 pill + 소득/잔액 보조 + 우하단 마스코트 워터마크.
-/// [peer]가 있으면 또래 비교 pill을 그린다(또래 통계를 못 읽었으면 null — pill 생략).
+/// [peer]가 있으면 또래 비교 pill을 그린다(또래 통계를 못 읽었으면 null — pill 생략). 문구는 `PeerStanding.heroPill`.
 class SummaryHeroCard extends StatelessWidget {
   const SummaryHeroCard({
     super.key,
@@ -28,7 +24,7 @@ class SummaryHeroCard extends StatelessWidget {
   /// 소득과 잔액(저축률과 같은 기준). 소득이 없으면 둘 다 null이고 그 줄을 그리지 않는다.
   final int? income;
   final int? balance;
-  final HeroPeer? peer;
+  final PeerPill? peer;
 
   @override
   Widget build(BuildContext context) {
@@ -77,17 +73,12 @@ class SummaryHeroCard extends StatelessWidget {
 class _PeerPill extends StatelessWidget {
   const _PeerPill({required this.peer});
 
-  final HeroPeer peer;
+  final PeerPill peer;
 
   @override
   Widget build(BuildContext context) {
     final white = context.color.static.white;
-    final total = peer.total;
-    final (arrow, label) = peer.emptyMonth
-        ? (null, emptyMonthText)
-        : total == null
-            ? (null, peerPendingText)
-            : (total.arrow, total.heroSentence);
+    final (:arrow, text: label) = peer;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
