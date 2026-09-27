@@ -65,6 +65,10 @@ final class PeerCompared extends PeerStanding {
   final BarPair savingsBars;
 }
 
+/// 분석 화면 한 줄. [item]이 null이면 금액이 큰 줄들 밖을 묶은 나머지 줄이다.
+/// 또래 비교([peer])는 기본 분류 줄에만 붙는다(사용자 카테고리·나머지 줄, 또래 값이 없으면 null).
+typedef AnalysisRow = ({CategoryBreakdown? item, int amount, PeerComparison? peer});
+
 /// 이달 개요: 보고 있는 달([month])을 또래([peer])와 견준 결과.
 ///
 /// 달을 보여주는 화면(홈·비교·내역·리포트·분석)은 무엇을 또래와 견줄지, 무엇을 뺄지를 모두 여기서 읽는다.
@@ -102,9 +106,18 @@ class MonthOverview {
   PeerComparison? category(BudgetCategory category) =>
       _comparable?.compareCategory(category, month.byCategory[category] ?? 0);
 
-  /// 분석 화면 한 줄의 또래 비교. 또래 비교는 기본 분류로만 하므로 사용자 카테고리 행은 null이다.
-  PeerComparison? row(CategoryBreakdown row) =>
-      row.custom == null ? _comparable?.compareCategory(row.base, row.amount) : null;
+  /// 분석 화면의 줄: 금액이 큰 [n]개(내림차순)와, 그 밖이 있으면 나머지를 묶은 줄 하나(맨 끝).
+  /// 줄 금액의 합은 이달 지출이다.
+  List<AnalysisRow> analysisRows(int n) {
+    final rows = month.breakdown;
+    final rest = rows.skip(n).fold(0, (sum, e) => sum + e.amount);
+    return [
+      for (final e in rows.take(n))
+        // 또래 비교는 기본 분류로만 한다. 사용자 카테고리로 뗀 줄에는 붙이지 않는다.
+        (item: e, amount: e.amount, peer: e.custom == null ? _comparable?.compareCategory(e.base, e.amount) : null),
+      if (rest > 0) (item: null, amount: rest, peer: null),
+    ];
+  }
 
   /// 많이 쓴 기본 분류 [n]개(금액 내림차순)와 각 분류의 또래 비교.
   List<({BudgetCategory category, int amount, PeerComparison? peer})> topCategories(int n) => [

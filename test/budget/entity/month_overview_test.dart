@@ -103,11 +103,27 @@ void main() {
       peer: _peer(),
       customs: const [pet],
     );
-    final rows = o.month.breakdown;
-    final base = rows.singleWhere((r) => r.custom == null);
-    final custom = rows.singleWhere((r) => r.custom != null);
-    expect(o.row(base)?.mine, 100000);
-    expect(o.row(custom), isNull);
+    final rows = o.analysisRows(6);
+    expect(rows.map((r) => r.item?.label), [BudgetCategory.food.label, '반려동물']);
+    expect(rows.first.peer?.mine, 100000);
+    expect(rows.last.peer, isNull);
+  });
+
+  test('분석 행은 금액이 큰 n줄과 나머지를 묶은 줄이고, 합은 이달 지출이다', () {
+    final o = _overview([
+      for (final (i, c) in BudgetCategory.values.take(8).indexed) _expense(1000 * (8 - i), c),
+    ], peer: _peer());
+    final rows = o.analysisRows(6);
+    expect(rows.map((r) => r.amount), [8000, 7000, 6000, 5000, 4000, 3000, 2000 + 1000]);
+    expect(rows.last.item, isNull);
+    expect(rows.last.peer, isNull);
+    expect(rows.fold(0, (s, r) => s + r.amount), o.month.expense);
+    expect(_overview([_expense(1000, BudgetCategory.food)]).analysisRows(6).single.item?.base, BudgetCategory.food);
+  });
+
+  test('또래 통계를 못 읽었거나 빈 달이면 분석 행에 또래 비교가 없다', () {
+    expect(_overview([_expense(500000, BudgetCategory.food)]).analysisRows(6).single.peer, isNull);
+    expect(_overview([_income(1000)], peer: _peer()).analysisRows(6), isEmpty);
   });
 
   // 막대 길이는 큰 쪽을 1로 둔 비율이다. 이전에는 페이지가 clamp(1, 1 << 62)로 나눴고,

@@ -192,7 +192,7 @@ class _StatTile extends StatelessWidget {
 class _SelfTrendBars extends StatelessWidget {
   const _SelfTrendBars({required this.trend});
 
-  final List<({YearMonth month, int expense})> trend;
+  final List<MonthExpense> trend;
 
   @override
   Widget build(BuildContext context) {

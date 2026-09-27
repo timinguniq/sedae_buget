@@ -86,20 +86,15 @@ final monthlyTransactionsProvider =
     AsyncNotifierProvider<MonthlyTransactionsNotifier, List<Transaction>>(
         MonthlyTransactionsNotifier.new);
 
-/// 최근 6개월 자기 지출 추이 (oldest → newest).
-final selfTrendProvider =
-    FutureProvider<List<({YearMonth month, int expense})>>((ref) async {
-  final anchor = ref.watch(selectedMonthProvider);
+/// 보고 있는 달까지 최근 6개월 지출 추이(오래된 달 → 보고 있는 달). 규칙은 [SpendingTrend].
+final selfTrendProvider = FutureProvider<List<MonthExpense>>((ref) async {
+  final trend = SpendingTrend.ending(ref.watch(selectedMonthProvider));
   final transactions = ref.watch(transactionRepositoryProvider);
-  const n = 6;
-  final months = [for (var m = anchor, i = 0; i < n; m = m.previous, i++) m].reversed.toList();
   // 실패를 빈 목록으로 감추면 "지출 0"인 평탄한 추이로 보인다. 그대로 드러낸다.
   final txs = await _signedIn(ref)
-      ? (await transactions.getRange(months.first.start, anchor.end)).unwrap()
+      ? (await transactions.getRange(trend.start, trend.end)).unwrap()
       : const <Transaction>[];
-  return [
-    for (final m in months) (month: m, expense: ViewedMonth.expenseOf(txs.where((t) => m.contains(t.date)))),
-  ];
+  return trend.of(txs);
 });
 
 /// 보고 있는 달의 장부(합계·분류·소득·저축률). 이달 거래를 못 읽으면 오류고,

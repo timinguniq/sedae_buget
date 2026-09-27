@@ -106,12 +106,6 @@ class ViewedMonth {
     ]..sort((a, b) => b.amount.compareTo(a.amount));
   }();
 
-  /// 분석 도넛의 조각: [breakdown] 상위 [n]개와 나머지 합.
-  ({List<CategoryBreakdown> top, int rest}) slices(int n) => (
-        top: breakdown.take(n).toList(),
-        rest: breakdown.skip(n).fold(0, (sum, e) => sum + e.amount),
-      );
-
   /// 소득. 프로필 월소득이 있으면 그것, 없으면 이달 수입의 합계. 둘 다 없으면 null.
   late final int? income = () {
     final profile = _profileIncome ?? 0;

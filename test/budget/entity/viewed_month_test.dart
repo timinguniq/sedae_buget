@@ -110,16 +110,6 @@ void main() {
       expect(m.breakdown.single.custom, isNull);
       expect(m.breakdown.single.base, BudgetCategory.etc);
     });
-
-    test('도넛 조각은 상위 n개와 나머지 합이다', () {
-      final m = _month([
-        for (final (i, c) in BudgetCategory.values.take(8).indexed) _expense(1000 * (8 - i), c),
-      ]);
-      final s = m.slices(6);
-      expect(s.top.map((r) => r.amount), [8000, 7000, 6000, 5000, 4000, 3000]);
-      expect(s.rest, 2000 + 1000);
-      expect(_month([_expense(1000, BudgetCategory.food)]).slices(6).rest, 0);
-    });
   });
 
   test('거래 이름: 지출은 카테고리 이름, 수입은 수입', () {
