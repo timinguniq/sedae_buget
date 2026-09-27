@@ -48,10 +48,10 @@ void main() {
   });
 
   test('비교 탭 지출 비교: 차이 금액과 방향', () {
-    String won(int v) => '${v ~/ 10000}만';
-    expect(_c(1200000, 1000000).totalFooter(won), '또래보다 약 20만원 더 ▲');
-    expect(_c(800000, 1000000).totalFooter(won), '또래보다 약 20만원 덜 ▼');
-    expect(_c(1000000, 1000000).totalFooter(won), '또래와 비슷해요');
+    expect(_c(1200000, 1000000).totalFooter(), '또래보다 약 20만원 더 ▲');
+    expect(_c(800000, 1000000).totalFooter(), '또래보다 약 20만원 덜 ▼');
+    expect(_c(1015000, 1000000).totalFooter(), '또래보다 약 1.5만원 더 ▲');
+    expect(_c(1000000, 1000000).totalFooter(), '또래와 비슷해요');
   });
 
   test('저축률: 또래만큼 모으면 칭찬, 아니면 권유', () {

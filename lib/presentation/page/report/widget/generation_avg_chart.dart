@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/page/compare/widget/compare_format.dart';
+import 'package:sedae_budget/presentation/widget/common/won_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 세대별 월평균 지출 막대 차트: 막대 위 금액 라벨 + 하단 구분선 + 세대 라벨. 내 나이대(myGroup)는 코랄 800.
@@ -32,7 +32,7 @@ class GenerationAvgChart extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(manWon(v), style: context.typo.caption2W600.copyWith(
+                  Text(WonText.short.of(v), style: context.typo.caption2W600.copyWith(
                     fontSize: isMe ? 10 : 9, height: 1.2,
                     fontWeight: isMe ? context.typo.extraBold : context.typo.bold,
                     color: isMe ? coral : faint)),

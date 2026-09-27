@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/widget/common/won_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 또래 통계를 못 읽었을 때 보여줄 문구.
@@ -64,10 +65,10 @@ extension PeerText on PeerComparison {
         PeerDirection.similar => '비슷하게',
       };
 
-  /// 비교 탭 지출 비교 카드 아래 줄: '또래보다 약 20만원 더 ▲'. 금액은 [won]으로 쓴다.
-  String totalFooter(String Function(int amount) won) => switch (direction) {
-        PeerDirection.more => '또래보다 약 ${won(mine - peer)}원 더 ▲',
-        PeerDirection.less => '또래보다 약 ${won(peer - mine)}원 덜 ▼',
+  /// 비교 탭 지출 비교 카드 아래 줄: '또래보다 약 20만원 더 ▲'.
+  String totalFooter() => switch (direction) {
+        PeerDirection.more => '또래보다 약 ${WonText.shortWithUnit.of(mine - peer)} 더 ▲',
+        PeerDirection.less => '또래보다 약 ${WonText.shortWithUnit.of(peer - mine)} 덜 ▼',
         PeerDirection.similar => '또래와 비슷해요',
       };
 

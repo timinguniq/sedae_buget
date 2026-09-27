@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/category_battle_row.dart';
-import 'package:sedae_budget/presentation/page/compare/widget/compare_format.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/distribution_histogram.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/insight_banner.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/rank_headline.dart';
@@ -72,10 +71,10 @@ class ComparePage extends ConsumerWidget {
                   title: '$name 지출 비교',
                   mineFraction: totalBars.mine,
                   peerFraction: totalBars.peer,
-                  mineText: manWon(total.mine),
-                  peerText: manWon(total.peer),
+                  mineText: WonText.short.of(total.mine),
+                  peerText: WonText.short.of(total.peer),
                   footer: Text(
-                    total.totalFooter(manWon),
+                    total.totalFooter(),
                     style: context.typo.caption2W600.copyWith(fontSize: 11, color: total.tone(context)),
                   ),
                 ),

@@ -79,6 +79,12 @@ void main() {
     expect(find.text('장보기'), findsOneWidget);
   });
 
+  // 이전에는 내역 머리가 만 단위로 반올림해 '2만원', 분석 화면은 같은 달을 '1.5만'으로 썼다.
+  testWidgets('머리글의 달 지출은 짧게 쓰는 규칙(100만 미만 소수 한 자리)을 따른다', (tester) async {
+    await _pump(tester, transactions: [_expense(15000, 5)]);
+    expect(find.text('${_last.month}월 1.5만원 · 1건'), findsOneWidget);
+  });
+
   // 또래 통계가 실패해도 내 내역은 보인다. 또래 초과 배지만 빠진다.
   testWidgets('또래 통계를 못 읽어도 내역이 보인다', (tester) async {
     await _pump(tester, faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server));

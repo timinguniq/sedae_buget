@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_delta_badge.dart';
+import 'package:sedae_budget/presentation/widget/common/won_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 카테고리 분석 행. 디자인: 상단 구분선 / 라운드 사각 마커 10px·r3 /
@@ -13,7 +13,6 @@ class CategoryRow extends StatelessWidget {
   final PeerComparison? peer;
   @override
   Widget build(BuildContext context) {
-    final won = NumberFormat.decimalPattern('ko');
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 9),
       decoration: BoxDecoration(border: Border(top: BorderSide(color: context.color.line.alternative))),
@@ -27,7 +26,7 @@ class CategoryRow extends StatelessWidget {
             style: context.typo.caption2W500.copyWith(fontSize: 10.5, color: context.color.label.assistive)),
         ])),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-          Text(won.format(amount),
+          Text(WonText.plain.of(amount),
             style: context.typo.label2W600.copyWith(fontSize: 13, fontWeight: context.typo.extraBold, color: context.color.label.normal)),
           if (peer case final peer?) ...[
             const SizedBox(height: 2),

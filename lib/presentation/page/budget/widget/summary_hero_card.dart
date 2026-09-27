@@ -1,9 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/widget/common/peer_text.dart';
+import 'package:sedae_budget/presentation/widget/common/won_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 히어로의 또래 비교 pill에 그릴 것: 빈 달인가, 이달 총지출과 또래 월평균의 비교(또래 값이 없으면 null).
@@ -32,7 +32,6 @@ class SummaryHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final won = NumberFormat.decimalPattern('ko');
     final white = context.color.static.white;
     return Container(
       width: double.infinity,
@@ -57,14 +56,14 @@ class SummaryHeroCard extends StatelessWidget {
             Text('$label 총지출',
                 style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: white.withValues(alpha: 0.92))),
             const SizedBox(height: 3),
-            Text('₩${won.format(expense)}', style: context.typo.amountDisplay.copyWith(color: white)),
+            Text(WonText.full.of(expense), style: context.typo.amountDisplay.copyWith(color: white)),
             if (peer case final peer?) ...[
               const SizedBox(height: 11),
               _PeerPill(peer: peer),
             ],
             if ((income, balance) case (final income?, final balance?)) ...[
               const SizedBox(height: 10),
-              Text('소득 ₩${won.format(income)} · 잔액 ₩${won.format(balance)}',
+              Text('소득 ${WonText.full.of(income)} · 잔액 ${WonText.full.of(balance)}',
                   style: context.typo.caption1W500.copyWith(color: white.withValues(alpha: 0.85))),
             ],
           ]),

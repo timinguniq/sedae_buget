@@ -64,7 +64,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
                 Column(mainAxisSize: MainAxisSize.min, children: [
                   Text('${ref.watch(viewedMonthNameProvider)} 총지출',
                       style: context.typo.caption2W600.copyWith(fontSize: 11, color: context.color.label.assistive)),
-                  Text(_compactWon(total),
+                  Text(WonText.short.of(total),
                       style: context.typo.amountDisplaySmall.copyWith(fontSize: 23, color: context.color.label.normal)),
                 ]),
               ]),
@@ -134,15 +134,4 @@ class _Header extends StatelessWidget {
       ]),
     );
   }
-}
-
-/// 축약 원화: 1,920,000 → `192만`, 14,000 → `1.4만`, 9,300 → `9,300원`, 250,000,000 → `2.5억`.
-String _compactWon(int v) {
-  String trim(String s) => s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
-  if (v >= 100000000) return '${trim((v / 100000000).toStringAsFixed(1))}억';
-  if (v >= 10000) {
-    final man = v / 10000;
-    return '${man >= 100 ? man.round().toString() : trim(man.toStringAsFixed(1))}만';
-  }
-  return '${NumberFormat.decimalPattern('ko').format(v)}원';
 }

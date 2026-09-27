@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/report/widget/generation_avg_chart.dart';
@@ -37,7 +36,6 @@ class ReportPage extends ConsumerWidget {
           if (peer == null) return const Center(child: Text(peerUnavailableText));
           // '내 세대' 강조는 순위·인사이트를 계산한 또래 통계의 나이대를 따른다.
           final ageGroup = peer.ageGroup;
-          final won = NumberFormat.decimalPattern('ko');
           final peerTop = o.rank?.topPercent; // 많이 쓰는 쪽 N%. 빈 달이거나 표본이 없으면 null
           // 소득이 없으면 저축률·소득 대비 지출 모두 '—'.
           final savingsRate = o.month.savingsRate;
@@ -59,7 +57,7 @@ class ReportPage extends ConsumerWidget {
                 body: _insightBody(context, insight),
                 sub: insight == null
                     ? null
-                    : '한 달 ₩${won.format(insight.comparison.mine)} · 또래는 ₩${won.format(insight.comparison.peer)}',
+                    : '한 달 ${WonText.full.of(insight.comparison.mine)} · 또래는 ${WonText.full.of(insight.comparison.peer)}',
               ),
 
               const SizedBox(height: 13),

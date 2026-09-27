@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/widget/common/won_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 내역 타일. 디자인: 38px 라운드 사각 아바타(카테고리 첫 글자) / 제목 = memo 우선(없으면 카테고리) 600·13.5 /
@@ -23,7 +24,6 @@ class TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final won = NumberFormat.decimalPattern('ko');
     final isExpense = tx.type == TransactionType.expense;
     final memo = tx.memo?.trim() ?? '';
     final title = memo.isEmpty ? label : memo;
@@ -63,7 +63,7 @@ class TransactionTile extends StatelessWidget {
             ]),
           ),
           const SizedBox(width: 10),
-          Text('${isExpense ? '−' : '+'}${won.format(tx.amount)}',
+          Text(WonText.signed.of(isExpense ? -tx.amount : tx.amount),
               style: context.typo.label2W600.copyWith(
                   fontWeight: context.typo.bold,
                   color: isExpense ? context.color.label.normal : context.color.primary.normal)),

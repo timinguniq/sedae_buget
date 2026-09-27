@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_delta_badge.dart';
+import 'package:sedae_budget/presentation/widget/common/won_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 홈 "많이 쓴 카테고리" 카드: [top] 진행바(7px) + 또래 배지. 탭 시 [onTap].
@@ -38,7 +38,6 @@ class TopCategoryCard extends StatelessWidget {
   }
 
   Widget _row(BuildContext context, BudgetCategory cat, int amount, double fraction, PeerComparison? comparison) {
-    final won = NumberFormat.decimalPattern('ko');
     final notOver = comparison != null && comparison.direction != PeerDirection.more;
     final dark = context.theme.brightness == Brightness.dark;
     final bar = notOver
@@ -48,7 +47,7 @@ class TopCategoryCard extends StatelessWidget {
       Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
         Text(cat.label, style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.normal)),
         Row(mainAxisSize: MainAxisSize.min, children: [
-          Text('₩${won.format(amount)}',
+          Text(WonText.full.of(amount),
               style: context.typo.caption1W600.copyWith(fontSize: 12.5, fontWeight: context.typo.bold, color: context.color.label.normal)),
           if (comparison != null) ...[
             const SizedBox(width: 7),

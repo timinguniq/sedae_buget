@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
@@ -217,7 +216,6 @@ class _IncomeStep extends StatelessWidget {
   final double income; final ValueChanged<double> onChanged;
   @override
   Widget build(BuildContext context) {
-    final won = NumberFormat.decimalPattern('ko');
     final c = context.color;
     final rangeStyle = context.typo.caption2W500.copyWith(fontSize: 11, color: c.label.assistive);
     return SingleChildScrollView(
@@ -229,7 +227,7 @@ class _IncomeStep extends StatelessWidget {
           style: context.typo.caption1W500.copyWith(fontSize: 13, color: c.label.assistive)),
         const SizedBox(height: 38),
         Center(child: Column(children: [
-          Text('₩${won.format(income.round())}',
+          Text(WonText.full.of(income.round()),
             style: context.typo.amountDisplay.copyWith(fontSize: 38, letterSpacing: -1.2, color: c.label.normal)),
           const SizedBox(height: 5),
           Text('월 평균 실수령액', style: context.typo.caption1W600.copyWith(color: c.label.assistive)),
@@ -243,8 +241,8 @@ class _IncomeStep extends StatelessWidget {
         ),
         const SizedBox(height: 14),
         Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text('₩0', style: rangeStyle),
-          Text('₩${won.format(kOnboardingIncomeMax)}+', style: rangeStyle),
+          Text(WonText.full.of(0), style: rangeStyle),
+          Text('${WonText.full.of(kOnboardingIncomeMax)}+', style: rangeStyle),
         ]),
         const SizedBox(height: 30),
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
