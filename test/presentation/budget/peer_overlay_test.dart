@@ -42,14 +42,32 @@ void main() {
     expect(find.text('▼'), findsNothing);
   });
 
-  testWidgets('rank card shows 등 and 상위 with axis labels and 자세히', (t) async {
+  // 디자인: '상위 N%'는 좋은 뜻으로 읽혀 '많이 쓰는 쪽 N%'로 바뀌었다.
+  testWidgets('rank card shows 등 and 많이 쓰는 쪽 with axis labels and 자세히', (t) async {
     final stats = StubPeerData.forGroup(AgeGroup.thirties);
-    await t.pumpWidget(_wrap(PeerRankCard(rank: stats.rankOf(2600000)!)));
+    final rank = stats.rankOf(2600000)!;
+    await t.pumpWidget(_wrap(PeerRankCard(rank: rank)));
     await t.pump();
     expect(find.textContaining('등'), findsOneWidget);
-    expect(find.textContaining('상위'), findsOneWidget);
+    expect(find.text('많이 쓰는 쪽 ${rank.topPercent}%'), findsOneWidget);
+    expect(find.textContaining('상위'), findsNothing);
     expect(find.text('적게 씀'), findsOneWidget);
     expect(find.text('많이 씀'), findsOneWidget);
     expect(find.text('자세히 ›'), findsOneWidget);
+  });
+
+  // '많이 쓰는 쪽 N%'가 '상위 N%'보다 길어 좁은 화면에서 순위 줄이 넘쳤다(넘침은 테스트 실패로 잡힌다).
+  testWidgets('rank card fits a narrow phone', (t) async {
+    t.view.physicalSize = const Size(320, 640);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+    final stats = StubPeerData.forGroup(AgeGroup.thirties);
+    await t.pumpWidget(_wrap(Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: PeerRankCard(rank: stats.rankOf(2600000)!),
+    )));
+    await t.pump();
+    expect(find.textContaining('많이 쓰는 쪽'), findsOneWidget);
   });
 }

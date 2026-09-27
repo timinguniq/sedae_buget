@@ -38,7 +38,7 @@ class ReportPage extends ConsumerWidget {
           // '내 세대' 강조는 순위·인사이트를 계산한 또래 통계의 나이대를 따른다.
           final ageGroup = peer.ageGroup;
           final won = NumberFormat.decimalPattern('ko');
-          final peerTop = o.rank?.topPercent; // 또래 상위 N%. 빈 달이거나 표본이 없으면 null
+          final peerTop = o.rank?.topPercent; // 많이 쓰는 쪽 N%. 빈 달이거나 표본이 없으면 null
           // 소득이 없으면 저축률·소득 대비 지출 모두 '—'.
           final savingsRate = o.month.savingsRate;
           final incomeRatio = o.month.expenseRatio;
@@ -48,7 +48,7 @@ class ReportPage extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
             children: [
               // ── 헤더 ─────────────────────────────────────────────
-              Text('월간 리포트',
+              Text(_eyebrow(month, DateTime.now()),
                   style: context.typo.caption1W600.copyWith(color: context.color.label.assistive)),
               Text(month.fullName,
                   style: context.typo.pageTitle.copyWith(color: context.color.label.normal)),
@@ -67,13 +67,13 @@ class ReportPage extends ConsumerWidget {
               // ── 3 stat tiles ─────────────────────────────────────
               Row(children: [
                 Expanded(child: _StatTile(
-                    label: '또래 상위', value: peerTop == null ? '—' : '$peerTop%', accent: true)),
+                    label: '많이 쓰는 쪽', value: peerTop == null ? '—' : '$peerTop%', accent: true)),
                 const SizedBox(width: 9),
                 Expanded(child: _StatTile(
                     label: '저축률', value: savingsRate == null ? '—' : '$savingsRate%')),
                 const SizedBox(width: 9),
                 Expanded(child: _StatTile(
-                    label: '소득 대비', value: incomeRatio == null ? '—' : '$incomeRatio%')),
+                    label: '소득 대비 지출', value: incomeRatio == null ? '—' : '$incomeRatio%')),
               ]),
 
               const SizedBox(height: 14),
@@ -135,6 +135,10 @@ class ReportPage extends ConsumerWidget {
       ),
     );
   }
+
+  /// 헤더 윗줄. 이번 달은 아직 진행 중이라 오늘까지의 값임을 밝힌다('월간 리포트 · 27일 기준').
+  String _eyebrow(YearMonth month, DateTime today) =>
+      month.isCurrent(today) ? '월간 리포트 · ${today.day}일 기준' : '월간 리포트';
 
   /// "또래보다 [카테고리]에 / 1.5배 더 썼어요". 크게 넘으면(50%↑) 배율, 그 밖은 %로 말하고
   /// 차이가 반올림해 0%면 "또래와 [카테고리]에 / 비슷하게 썼어요".

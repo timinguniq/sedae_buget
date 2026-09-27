@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/report/report.page.dart';
 import 'package:sedae_budget/presentation/page/report/widget/generation_avg_chart.dart';
 import 'package:sedae_budget/theme/theme.dart';
@@ -30,17 +31,29 @@ void main() {
     await _pumpReport(tester);
 
     expect(find.text('이달의 발견'), findsOneWidget);
-    expect(find.text('월간 리포트'), findsOneWidget);
-    expect(find.text('또래 상위'), findsOneWidget);
+    expect(find.text('많이 쓰는 쪽'), findsOneWidget);
     expect(find.textContaining('저축률'), findsWidgets);
-    expect(find.text('소득 대비'), findsOneWidget);
+    expect(find.text('소득 대비 지출'), findsOneWidget);
     expect(find.text('세대별 월평균 지출'), findsOneWidget);
     expect(find.text('세대별 대표 소비'), findsOneWidget);
     expect(find.text('최근 6개월 내 지출'), findsOneWidget);
     expect(find.textContaining('또래보다'), findsWidgets);
   });
 
-  // 소득이 없으면 저축률도 소득 대비 지출도 계산할 수 없다. 두 칸이 같은 규칙을 따른다.
+  // 이번 달은 아직 끝나지 않아 오늘까지의 값이다. 지난 달은 끝난 달이라 기준일을 붙이지 않는다.
+  group('헤더의 기준일', () {
+    testWidgets('이번 달은 오늘 날짜를 기준일로 보인다', (tester) async {
+      await _pumpReport(tester);
+      expect(find.text('월간 리포트 · ${DateTime.now().day}일 기준'), findsOneWidget);
+    });
+
+    testWidgets('지난 달은 기준일 없이 보인다', (tester) async {
+      await _pumpReport(tester, lastMonth: true);
+      expect(find.text('월간 리포트'), findsOneWidget);
+      expect(find.textContaining('일 기준'), findsNothing);
+    });
+  });
+
   // 식료품 지출 60만 원을 또래 식료품 평균 [food]와 견준다.
   group('이달의 발견', () {
     Future<void> pumpWithPeerFood(WidgetTester tester, int food) async {
@@ -88,7 +101,8 @@ void main() {
     });
   });
 
-  testWidgets('소득이 없으면 저축률과 소득 대비가 모두 — 다', (tester) async {
+  // 소득이 없으면 저축률도 소득 대비 지출도 계산할 수 없다. 두 칸이 같은 규칙을 따른다.
+  testWidgets('소득이 없으면 저축률과 소득 대비 지출이 모두 — 다', (tester) async {
     await _pumpReport(tester, transactions: [
       Transaction.create(amount: 600000, categoryId: 1, date: _monthsAgo(0, 1), type: TransactionType.expense),
     ]);
@@ -103,7 +117,7 @@ void main() {
       Transaction.create(amount: 3000000, categoryId: 1, date: _monthsAgo(0, 1), type: TransactionType.income),
     ]);
 
-    // 또래 상위 칸만 '—'다(저축률 100%·소득 대비 0%는 내 값이라 남는다).
+    // 많이 쓰는 쪽 칸만 '—'다(저축률 100%·소득 대비 지출 0%는 내 값이라 남는다).
     expect(find.text('—'), findsOneWidget);
     expect(find.textContaining('아직 분석할 지출이'), findsOneWidget);
   });
@@ -142,12 +156,14 @@ void main() {
 }
 
 /// 리포트 화면을 띄운다. 서버는 [profile]과 [transactions](기본은 [_ledger])를 심고 또래 통계는 [peer]로 답한다.
+/// [lastMonth]면 지난 달을 보는 상태로 띄운다.
 Future<void> _pumpReport(
   WidgetTester tester, {
   PeerStats? peer,
   UserProfile? profile,
   List<Transaction>? transactions,
   void Function(ServerFaults faults)? faults,
+  bool lastMonth = false,
 }) async {
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1.0;
@@ -159,7 +175,9 @@ Future<void> _pumpReport(
     peerStats: peer == null ? null : (_) => peer,
   );
   faults?.call(server.faults);
-  await tester.pumpWidget(fakeScope(fakeContainer(server: server),
+  final container = fakeContainer(server: server);
+  if (lastMonth) container.read(selectedMonthProvider.notifier).prev();
+  await tester.pumpWidget(fakeScope(container,
         MaterialApp(theme: materialTheme(LightTheme()), home: const ReportPage())));
   await tester.settle();
 }

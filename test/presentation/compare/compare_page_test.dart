@@ -94,7 +94,7 @@ void main() {
   testWidgets('또래 표본이 없으면 순위를 보이지 않는다', (tester) async {
     await _pumpCompare(tester, peer: _peer(samples: const []));
     expect(find.textContaining('명 중'), findsNothing);
-    expect(find.textContaining('상위'), findsNothing);
+    expect(find.textContaining('많이 쓰는 쪽'), findsNothing);
     expect(find.text('항목별 차이'), findsOneWidget);
   });
 
@@ -107,6 +107,9 @@ void main() {
     expect(find.text('또래'), findsWidgets); // versus bar labels
     expect(find.text('나'), findsWidgets);   // versus bar labels + histogram marker
     expect(find.textContaining('등'), findsWidgets); // rank headline
+    // 디자인: 배지는 '상위 N% · 많이/적게 쓰는 편' 대신 '많이 쓰는 쪽 N%' 하나다.
+    expect(find.textContaining(RegExp(r'^많이 쓰는 쪽 \d+%$')), findsOneWidget);
+    expect(find.textContaining('쓰는 편'), findsNothing);
     expect(find.text('이번 달 지출 비교'), findsOneWidget);
     expect(find.text('소득 대비 저축률'), findsOneWidget);
     expect(find.text('항목별 차이'), findsOneWidget);
