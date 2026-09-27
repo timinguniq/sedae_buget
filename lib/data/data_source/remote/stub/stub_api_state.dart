@@ -2,16 +2,23 @@
 class StubApiState {
   final Map<String, StubUserData> _users = {};
 
+  /// 로그아웃한 토큰. 다시 쓰면 401이다.
+  final Set<String> revokedTokens = {};
+
   /// [user]의 데이터. 처음 보는 사용자면 빈 데이터를 만든다.
   StubUserData of(String user) => _users.putIfAbsent(user, StubUserData.new);
 
   Map<String, dynamic> toJson() => {
         'users': {for (final e in _users.entries) e.key: e.value.toJson()},
+        'revokedTokens': revokedTokens.toList(),
       };
 
   /// 사용자별로 나누기 전 형식(`users`가 없음)은 읽지 않고 버린다.
   void loadFrom(Map<String, dynamic> json) {
     _users.clear();
+    revokedTokens
+      ..clear()
+      ..addAll((json['revokedTokens'] as List<dynamic>? ?? const []).cast<String>());
     final users = json['users'] as Map<String, dynamic>?;
     if (users == null) return;
     users.forEach((user, data) => _users[user] = StubUserData()..loadFrom(data as Map<String, dynamic>));

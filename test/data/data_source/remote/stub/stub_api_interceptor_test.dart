@@ -59,6 +59,30 @@ void main() {
     expect((await after.send('GET', '/v1/categories', token: token)).list.single['name'], '반려동물');
   });
 
+  test('로그아웃한 토큰은 다시 켜도 거부하고, 저장하지 못한 로그아웃은 500이며 토큰도 그대로다', () async {
+    final store = _MemStore();
+    final before = _client(StubApiInterceptor(store: store));
+    final out = await before.login('kakao');
+    final kept = await before.login('kakao');
+    await before.send('POST', '/v1/auth/logout', token: out);
+
+    final after = _client(StubApiInterceptor(store: store));
+    expect((await after.send('GET', '/v1/me', token: out)).status, 401);
+    expect((await after.send('GET', '/v1/me', token: kept)).status, 200);
+
+    store.failSave = true;
+    expect((await after.send('POST', '/v1/auth/logout', token: kept)).status, 500);
+    expect((await after.send('GET', '/v1/me', token: kept)).status, 200);
+  });
+
+  // 로그인마다 새 토큰을 주기 전에 local 환경에 저장된 토큰이다. 업데이트 뒤에도 로그인이 풀리지 않게 한다.
+  test('예전 형식 토큰(stub.<provider>)도 그 사용자로 받는다', () async {
+    final api = _client(StubApiInterceptor());
+    final me = await api.send('GET', '/v1/me', token: 'stub.kakao');
+    expect(me.status, 200);
+    expect(me.json['provider'], 'kakao');
+  });
+
   test('사용자별로 나누기 전 형식으로 저장된 상태는 버린다', () async {
     final store = _MemStore()
       ..saved = jsonEncode({

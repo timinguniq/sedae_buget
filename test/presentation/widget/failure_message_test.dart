@@ -17,6 +17,7 @@ void main() {
       UserAction.delete: '삭제하지 못했어요.',
       UserAction.load: '불러오지 못했어요.',
       UserAction.signIn: '로그인하지 못했어요.',
+      UserAction.signOut: '로그아웃하지 못했어요.',
     };
     expect(heads.keys.toSet(), UserAction.values.toSet());
     for (final e in heads.entries) {

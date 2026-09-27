@@ -77,9 +77,17 @@ void apiContract(ContractTarget Function() target) {
       }
     });
 
-    test('로그아웃은 204', () async {
+    test('로그아웃은 204이고, 그 토큰은 더 쓸 수 없다', () async {
       final token = await api.login('kakao');
       expect((await api.send('POST', '/v1/auth/logout', token: token)).status, 204);
+      expect((await api.send('GET', '/v1/me', token: token)).status, 401);
+    });
+
+    test('로그아웃한 뒤 다시 로그인하면 새 토큰으로 쓸 수 있다', () async {
+      final old = await api.login('kakao');
+      await api.send('POST', '/v1/auth/logout', token: old);
+      final fresh = await api.login('kakao');
+      expect((await api.send('GET', '/v1/me', token: fresh)).status, 200);
     });
 
     test('오류 바디는 {code, message}', () async {

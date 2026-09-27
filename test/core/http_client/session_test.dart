@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/core/core.dart';
+import 'package:sedae_budget/entity/entity.dart';
 
 import '../../helper/stub_server.dart';
 
@@ -34,18 +35,18 @@ class _Reply extends Interceptor {
 
 void main() {
   late MemoryAuthTokenStore tokens;
-  late SessionExpiry expiry;
+  late Session session;
   late int expiredCount;
 
   setUp(() {
     tokens = MemoryAuthTokenStore();
-    expiry = SessionExpiry();
+    session = Session(tokens);
     expiredCount = 0;
-    expiry.expired.listen((_) => expiredCount++);
+    session.expired.listen((_) => expiredCount++);
   });
 
   Dio dioWith(Interceptor server) => Dio()
-    ..interceptors.add(AuthTokenInterceptor(tokens, expiry))
+    ..interceptors.add(session.interceptor)
     ..interceptors.add(server);
 
   Future<void> send(Dio dio) async {
@@ -73,6 +74,19 @@ void main() {
     expect(expiredCount, 1);
   });
 
+  // 이전에는 읽기 실패가 요청 오류가 되어 '인터넷에 연결되어 있지 않아요'로 보였다.
+  test('쓰는 중 토큰을 못 읽으면 세션 만료로 알리고, 지우기를 시도하고, 토큰 없이 보낸다', () async {
+    tokens
+      ..token = 'abc'
+      ..failRead = true;
+    final headers = (await dioWith(_EchoHeaders()).get<Map<String, dynamic>>('/x')).data!;
+    await Future<void>.delayed(Duration.zero);
+    expect(headers.containsKey('Authorization'), isFalse);
+    expect(expiredCount, 1);
+    tokens.failRead = false;
+    expect(tokens.token, isNull);
+  });
+
   test('토큰 없이 받은 401은 세션 만료가 아니다', () async {
     await send(dioWith(_Reply(401)));
     expect(expiredCount, 0);
@@ -91,5 +105,37 @@ void main() {
     await send(dioWith(_Reply(401, beforeReply: () async => tokens.token = 'new')));
     expect(tokens.token, 'new');
     expect(expiredCount, 0);
+  });
+
+  group('저장소', () {
+    test('저장된 토큰이 있으면 세션이 있다', () async {
+      expect(await session.isActive, isFalse);
+      expect((await session.start('abc')).failureOrNull, isNull);
+      expect(await session.isActive, isTrue);
+      expect((await session.end()).failureOrNull, isNull);
+      expect(await session.isActive, isFalse);
+    });
+
+    // 앱을 켤 때 확인하는 경로다. 로그인 화면으로 보내되 만료로 알리지는 않는다.
+    test('못 읽으면 세션이 없고, 지우기를 시도하고, 만료로 알리지 않는다', () async {
+      tokens
+        ..token = 'abc'
+        ..failRead = true;
+      expect(await session.isActive, isFalse);
+      await Future<void>.delayed(Duration.zero);
+      expect(expiredCount, 0);
+      tokens.failRead = false;
+      expect(tokens.token, isNull);
+    });
+
+    test('못 쓰거나 못 지우면 던지지 않고 unknown 실패다', () async {
+      tokens.failWrite = true;
+      expect((await session.start('abc')).failureOrNull?.reason, FailureReason.unknown);
+      tokens
+        ..token = 'abc'
+        ..failClear = true;
+      expect((await session.end()).failureOrNull?.reason, FailureReason.unknown);
+      expect(tokens.token, 'abc');
+    });
   });
 }

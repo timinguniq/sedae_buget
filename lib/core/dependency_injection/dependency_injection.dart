@@ -11,15 +11,13 @@ final locator = GetIt.instance;
 /// API 인프라. 다른 configure*보다 먼저 호출한다. 빌드 환경이 local이면 Stub API가 서버 대신 답한다.
 void configureApiDependencies(AuthTokenStore tokenStore) {
   if (locator.isRegistered<Dio>()) return;
-  final sessionExpiry = SessionExpiry();
+  final session = Session(tokenStore);
   locator
-    ..registerSingleton<AuthTokenStore>(tokenStore)
-    ..registerSingleton<SessionExpiry>(sessionExpiry)
+    ..registerSingleton<Session>(session)
     ..registerSingleton<Dio>(
       connectToServer(
         env: AppEnvironment.current,
-        tokenStore: tokenStore,
-        sessionExpiry: sessionExpiry,
+        session: session,
         localServer: () => StubApiInterceptor(store: SharedPrefsStubStateStore()),
       ),
     );
@@ -51,12 +49,7 @@ void configureUserDependencies() {
   if (locator.isRegistered<AuthRepository>()) return;
   locator
     ..registerSingleton<AuthRepository>(
-      AuthRepositoryImpl(
-        AuthApi(locator<Dio>()),
-        locator<AuthTokenStore>(),
-        locator<SessionExpiry>(),
-        StubSocialIdTokenProvider(),
-      ),
+      AuthRepositoryImpl(AuthApi(locator<Dio>()), locator<Session>(), StubSocialIdTokenProvider()),
     )
     ..registerSingleton<UserProfileRepository>(
       UserProfileRepositoryImpl(UserProfileApi(locator<Dio>())),

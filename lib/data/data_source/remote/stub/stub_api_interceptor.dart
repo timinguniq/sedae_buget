@@ -7,15 +7,16 @@ import 'package:sedae_budget/data/data_source/remote/stub/stub_api_state.dart';
 import 'package:sedae_budget/data/data_source/remote/stub/stub_peer_data.dart';
 import 'package:sedae_budget/data/dto/peer_stats_dto.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:uuid/uuid.dart';
 
 typedef _Json = Map<String, dynamic>;
 
 /// 서버 없이 계약(API 계약 v1, `docs/api-contract.md`)대로 응답하는 인프로세스 Stub. 네트워크로 나가지 않는다.
 /// 계약을 지키는지는 `test/contract/`가 본다.
 ///
-/// - 인증은 무상태: 토큰 `stub.<provider>`에서 사용자를 복원한다.
+/// - 토큰 `stub.<provider>.<무작위>`에서 사용자를 복원한다. 로그인할 때마다 새 토큰을 주고, 로그아웃한 토큰은 기억해 거부한다.
 /// - 프로필·거래·사용자 카테고리는 [StubApiState]에 사용자별로 보관하고 [StubStateStore]가 있으면 영속화한다.
-/// - 실제 서버 응답처럼 뒤따르는 응답·오류 인터셉터를 거친다(토큰 인터셉터가 401을 본다).
+/// - 실제 서버 응답처럼 뒤따르는 응답·오류 인터셉터를 거친다(세션 인터셉터가 401을 본다).
 /// - 기기에 저장하지 못했거나 Stub 자신의 결함이면 500이다(앱에 '인터넷 연결 없음'으로 보이지 않게).
 ///   저장하지 못한 변경은 메모리에도 남기지 않는다.
 /// - 요청은 온 순서대로 하나씩 처리한다. 한 요청의 변경·저장·되돌리기가 다른 요청과 섞이지 않는다.
@@ -68,9 +69,13 @@ class StubApiInterceptor extends Interceptor {
     final m = o.method, p = o.path;
     if (m == 'POST' && p == ApiPath.login) return (200, _login(_bodyOf(o.data)));
 
-    final provider = _authed(o); // 이하 전부 Bearer 필수
+    final token = _bearer(o); // 이하 전부 Bearer 필수
+    final provider = _authed(token);
     final db = _state.of(provider.name); // 로그인한 사용자의 데이터만 본다
-    if (m == 'POST' && p == ApiPath.logout) return (204, null);
+    if (m == 'POST' && p == ApiPath.logout) {
+      await _commitState(() => _state.revokedTokens.add(token), () => _state.revokedTokens.remove(token));
+      return (204, null);
+    }
     if (m == 'GET' && p == ApiPath.me) return (200, _user(provider));
     if (p == ApiPath.profile) return _profile(db, m, o.data);
     if (m == 'GET' && p == ApiPath.transactions) return (200, _listTx(db, o.queryParameters));
@@ -105,17 +110,22 @@ class StubApiInterceptor extends Interceptor {
     }
     final provider = _providerOrNull(body['provider'] as String?);
     if (provider == null) throw _StubError(400, 'VALIDATION', 'provider가 잘못되었습니다.');
-    return {'accessToken': '$_tokenPrefix${provider.name}', 'user': _user(provider)};
+    return {'accessToken': '$_tokenPrefix${provider.name}.${const Uuid().v4()}', 'user': _user(provider)};
   }
 
-  AuthProvider _authed(RequestOptions o) {
+  /// 요청의 Bearer 토큰. 없으면 401.
+  String _bearer(RequestOptions o) {
     final header = o.headers['Authorization'] as String?;
     if (header == null || !header.startsWith('Bearer ')) {
       throw _StubError(401, 'AUTH_002', '로그인이 필요합니다.');
     }
-    final token = header.substring('Bearer '.length);
-    final provider = token.startsWith(_tokenPrefix)
-        ? _providerOrNull(token.substring(_tokenPrefix.length))
+    return header.substring('Bearer '.length);
+  }
+
+  /// [token]의 사용자. 모르거나 로그아웃한 토큰이면 401.
+  AuthProvider _authed(String token) {
+    final provider = token.startsWith(_tokenPrefix) && !_state.revokedTokens.contains(token)
+        ? _providerOrNull(token.substring(_tokenPrefix.length).split('.').first)
         : null;
     if (provider == null) throw _StubError(401, 'AUTH_004', '잘못된 토큰입니다.');
     return provider;
@@ -305,6 +315,17 @@ class StubApiInterceptor extends Interceptor {
       if (raw != null) _state.loadFrom(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
       _loading = null; // 다음 요청이 다시 읽는다
+      rethrow;
+    }
+  }
+
+  /// 사용자 데이터 밖의 상태(로그아웃한 토큰)를 [change]로 바꾸고 기기에 저장한다. 저장하지 못하면 [undo]하고 던진다.
+  Future<void> _commitState(void Function() change, void Function() undo) async {
+    change();
+    try {
+      await _store?.save(jsonEncode(_state.toJson()));
+    } catch (_) {
+      undo();
       rethrow;
     }
   }

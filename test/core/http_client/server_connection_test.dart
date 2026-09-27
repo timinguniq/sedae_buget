@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/core/app_config/environment_config.dart';
 import 'package:sedae_budget/core/http_client/server_connection.dart';
-import 'package:sedae_budget/core/http_client/session_expiry.dart';
+import 'package:sedae_budget/core/http_client/session.dart';
 
 import '../../helper/stub_server.dart';
 
@@ -22,8 +22,7 @@ class _LocalServer extends Interceptor {
 Dio _connect(AppEnvironment env, {bool release = false, _LocalServer? local, String? token}) =>
     connectToServer(
       env: env,
-      tokenStore: MemoryAuthTokenStore(token),
-      sessionExpiry: SessionExpiry(),
+      session: Session(MemoryAuthTokenStore(token)),
       localServer: () => local ?? _LocalServer(),
       release: release,
     );

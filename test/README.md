@@ -21,7 +21,7 @@ flutter test test/architecture                  # 레이어 의존성 규칙만
 ## 테스트 대역
 
 - 모킹 라이브러리를 쓰지 않는다.
-- **서버는 Stub 하나다.** 화면·provider·저장소 테스트는 모두 `test/helper/stub_server.dart`의 `StubServer`를 거쳐 실제 저장소 구현 → 실제 retrofit 명세 → 앱이 local 환경에서 쓰는 `StubApiInterceptor`로 간다. 운영의 local 환경과 같은 배선(`connectToServer`: 토큰 인터셉터 → Stub)이다. 저장소 인터페이스를 손으로 구현한 fake는 두지 않는다.
+- **서버는 Stub 하나다.** 화면·provider·저장소 테스트는 모두 `test/helper/stub_server.dart`의 `StubServer`를 거쳐 실제 저장소 구현 → 실제 retrofit 명세 → 앱이 local 환경에서 쓰는 `StubApiInterceptor`로 간다. 운영의 local 환경과 같은 배선(`connectToServer`: 세션 인터셉터 → Stub)이다. 토큰 저장소는 `MemoryAuthTokenStore`이고 `failRead`·`failWrite`·`failClear`로 키 저장소 고장을 흉내 낸다. 저장소 인터페이스를 손으로 구현한 fake는 두지 않는다.
 - 준비는 실제 API로 한다: `server.seed(profile:, categories:, transactions:)`(kakao로 로그인한 뒤 심는다). Stub의 규칙(사용자 카테고리 검증·상위 분류 맞춤 등)을 지나므로 서버가 만들 수 없는 상태는 만들 수 없다 — 그런 상태의 규칙은 entity 테스트에서 본다.
 - 서버 장애·느린 응답은 Stub 앞의 `server.faults`(`test/helper/server_faults.dart`)로 흉내 낸다: `fail(method, pathPrefix, reason:, times:)`, `hold(...)`, 요청 수 `count(...)`. 또래 통계 값은 `StubServer(peerStats: …)`로 준다.
 - presentation 테스트는 `fakeContainer(server: …)`로 의존성 seam(`service/*_provider.dart`)을 그 서버의 저장소로 바꾼다. 서버 밖의 재료(광고·원격 설정·테마 저장소·앱 종료)만 `test/helper/fakes.dart`의 fake다. 전역 `get_it`은 쓰지 않는다.
