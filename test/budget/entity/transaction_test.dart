@@ -6,7 +6,7 @@ void main() {
   test('create sets uuid id and placeholder timestamps', () {
     final tx = Transaction.create(
       amount: 12000,
-      categoryId: 7,
+      categoryId: 10,
       date: DateTime(2026, 6, 21),
       type: TransactionType.expense,
       memo: '버스',

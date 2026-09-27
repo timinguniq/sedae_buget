@@ -22,7 +22,7 @@ DateTime _d(int day) => DateTime(_last.year, _last.month, day);
 /// 날짜 그룹 머리글('M월 D일').
 String _header(int day) => '${_last.month}월 $day일';
 
-Transaction _expense(int amount, int day, {int categoryId = 7, String? memo, String? customCategoryId}) =>
+Transaction _expense(int amount, int day, {int categoryId = 10, String? memo, String? customCategoryId}) =>
     Transaction.create(
         amount: amount, categoryId: categoryId, date: _d(day), type: TransactionType.expense,
         memo: memo, customCategoryId: customCategoryId);
@@ -66,18 +66,18 @@ void main() {
   // 수입은 카테고리가 없다. 이전에는 월급이 '식료품' 이름·식료품 필터로 보이고 머리글 건수에도 섞였다.
   testWidgets('수입은 이름이 수입이고 분류 필터·건수에 들지 않는다', (tester) async {
     await _pump(tester, transactions: [
-      _expense(5000, 5, categoryId: BudgetCategory.food.id, memo: '장보기'),
-      Transaction.create(amount: 3000000, categoryId: BudgetCategory.food.id, date: _d(1),
+      _expense(5000, 5, categoryId: BudgetCategory.groceries.id, memo: '마트'),
+      Transaction.create(amount: 3000000, categoryId: BudgetCategory.groceries.id, date: _d(1),
           type: TransactionType.income),
     ]);
 
     expect(find.text('${_last.month}월 5,000원 · 1건'), findsOneWidget);
     expect(find.text('수입'), findsWidgets);
 
-    await tester.tap(find.widgetWithText(DesignChip, BudgetCategory.food.label));
+    await tester.tap(find.widgetWithText(DesignChip, BudgetCategory.groceries.label));
     await tester.settle();
     expect(find.byType(TransactionTile), findsOneWidget);
-    expect(find.text('장보기'), findsOneWidget);
+    expect(find.text('마트'), findsOneWidget);
   });
 
   // 이전에는 내역 머리가 만 단위로 반올림해 '2만원', 분석 화면은 같은 달을 '1.5만'으로 썼다.
@@ -119,7 +119,7 @@ void main() {
   testWidgets('카테고리 칩은 사용자 카테고리 거래를 그 상위 분류로 거른다', (tester) async {
     await _pump(
       tester,
-      customs: const [CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 9)],
+      customs: const [CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 14)],
       transactions: [_expense(5000, 5, categoryId: BudgetCategory.recreation.id, customCategoryId: 'c2')],
     );
 
@@ -138,7 +138,7 @@ void main() {
     expect(find.text('전체'), findsOneWidget);
 
     // 카테고리 필터 칩(이달 지출 상위 카테고리)을 누르면 그 카테고리만 남는다.
-    final label = BudgetCategory.fromId(7).label;
+    final label = BudgetCategory.fromId(10).label;
     expect(find.byType(DesignChip), findsNWidgets(2));
     await tester.tap(find.widgetWithText(DesignChip, label));
     await tester.settle();
@@ -148,9 +148,9 @@ void main() {
   // 이전에는 고른 칩이 상위 4개 밖으로 밀려 사라져도 목록은 그 분류로 걸러진 채 남고, 어느 칩도 켜져 있지 않았다.
   testWidgets('고른 분류가 칩에서 빠지면 필터가 풀린다', (tester) async {
     final container = await _pump(tester, transactions: [
-      _expense(5000, 5, categoryId: BudgetCategory.food.id),
+      _expense(5000, 5, categoryId: BudgetCategory.groceries.id),
       _expense(4000, 4, categoryId: BudgetCategory.transport.id),
-      _expense(3000, 3, categoryId: BudgetCategory.clothing.id),
+      _expense(3000, 3, categoryId: BudgetCategory.shopping.id),
       _expense(2000, 2, categoryId: BudgetCategory.health.id),
     ]);
     final health = find.widgetWithText(DesignChip, BudgetCategory.health.label);

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-const _pet = CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12);
-const _study = CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 9);
+const _pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
+const _study = CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 14);
 
 final _day = DateTime(2026, 6, 5);
 
@@ -24,7 +24,7 @@ void main() {
       final d = TransactionDraft.create(_day);
       expect(d.isEdit, isFalse);
       expect(d.type, TransactionType.expense);
-      expect(d.base, BudgetCategory.food);
+      expect(d.base, BudgetCategory.groceries);
       expect(d.customCategoryId, isNull);
       expect(d.amount, 0);
       expect(d.canSave, isFalse);
@@ -102,7 +102,7 @@ void main() {
       final d = TransactionDraft.create(_day).pickCustom(_pet);
       expect(d.customCategoryId, 'c1');
       expect(d.base, BudgetCategory.etc);
-      expect(d.label(const CategoryCatalog([_pet])), '반려동물');
+      expect(d.label(const CategoryCatalog([_pet])), '반려식물');
     });
 
     test('기본 분류를 고르면 사용자 카테고리 선택이 풀린다', () {
@@ -163,15 +163,15 @@ void main() {
       final income = _saved(categoryId: 0).copyWith(type: TransactionType.income);
       final d = TransactionDraft.edit(income, const CategoryCatalog());
       expect(d.hasCategory, isFalse);
-      expect(d.base, BudgetCategory.food);
+      expect(d.base, BudgetCategory.groceries);
       expect(d.customCategoryId, isNull);
     });
 
     // 앱은 수입의 분류를 쓰지 않지만, 고치지 않은 값을 조용히 바꿔 보내지도 않는다.
     test('수입을 다시 저장해도 적힌 분류 id는 그대로다', () {
-      final income = _saved(categoryId: BudgetCategory.clothing.id).copyWith(type: TransactionType.income);
+      final income = _saved(categoryId: BudgetCategory.shopping.id).copyWith(type: TransactionType.income);
       final tx = TransactionDraft.edit(income, const CategoryCatalog()).toTransaction(const CategoryCatalog());
-      expect(tx.categoryId, BudgetCategory.clothing.id);
+      expect(tx.categoryId, BudgetCategory.shopping.id);
     });
 
     test('거래의 값으로 시작한다', () {
@@ -179,7 +179,7 @@ void main() {
       expect(d.isEdit, isTrue);
       expect(d.amount, 1000);
       expect(d.memo, '점심');
-      expect(d.base, BudgetCategory.food);
+      expect(d.base, BudgetCategory.groceries);
     });
 
     test('같은 거래(id·생성 시각)를 고친 값으로 저장한다', () {
@@ -192,7 +192,7 @@ void main() {
       expect(tx.amount, 2500);
     });
 
-    // 자기계발을 기타 → 오락·문화로 옮기기 전에 적힌 거래를 다시 저장해도 옛 분류가 되살아나지 않는다.
+    // 자기계발을 기타 → 취미·여가로 옮기기 전에 적힌 거래를 다시 저장해도 옛 분류가 되살아나지 않는다.
     test('사용자 카테고리의 현재 상위 분류를 따른다', () {
       const catalog = CategoryCatalog([_study]);
       final stale = _saved(categoryId: BudgetCategory.etc.id, customCategoryId: 'c2');
@@ -208,7 +208,7 @@ void main() {
       final tx = TransactionDraft.edit(_saved(customCategoryId: 'c1'), const CategoryCatalog())
           .toTransaction(null);
       expect(tx.customCategoryId, 'c1');
-      expect(tx.categoryId, BudgetCategory.food.id);
+      expect(tx.categoryId, BudgetCategory.groceries.id);
     });
 
     // 지워진 사용자 카테고리를 계속 가리키면 어디에도 보이지 않는 id가 남는다.

@@ -19,8 +19,8 @@ List<Transaction> _ledger() => [
       Transaction.create(amount: 600000, categoryId: 1, date: _monthsAgo(0, 1),
           type: TransactionType.expense, memo: '식료품'),
       Transaction.create(amount: 3000000, categoryId: 1, date: _monthsAgo(0, 1), type: TransactionType.income),
-      Transaction.create(amount: 450000, categoryId: 7, date: _monthsAgo(1, 15), type: TransactionType.expense),
-      Transaction.create(amount: 300000, categoryId: 11, date: _monthsAgo(2, 20), type: TransactionType.expense),
+      Transaction.create(amount: 450000, categoryId: 10, date: _monthsAgo(1, 15), type: TransactionType.expense),
+      Transaction.create(amount: 300000, categoryId: 2, date: _monthsAgo(2, 20), type: TransactionType.expense),
     ];
 
 void main() {
@@ -64,7 +64,7 @@ void main() {
           ageGroup: stub.ageGroup,
           avgMonthlyExpense: stub.avgMonthlyExpense,
           avgSavingsRate: stub.avgSavingsRate,
-          avgByCategory: {BudgetCategory.food: food},
+          avgByCategory: {BudgetCategory.groceries: food},
           samples: stub.samples,
         ),
       );

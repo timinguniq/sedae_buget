@@ -14,7 +14,7 @@ class TransactionCategory {
   String get label => custom?.name ?? base.label;
 }
 
-/// 기본 분류 12개와 사용자 카테고리를 함께 아는 목록. 거래의 카테고리는 여기서만 판정한다.
+/// 기본 분류와 사용자 카테고리를 함께 아는 목록. 거래의 카테고리는 여기서만 판정한다.
 class CategoryCatalog {
   const CategoryCatalog([this.customs = const []]);
 

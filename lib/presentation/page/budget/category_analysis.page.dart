@@ -42,7 +42,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
             return Center(child: Text('지출이 없어요',
                 style: context.typo.body2W400.copyWith(color: context.color.label.alternative)));
           }
-          // 금액이 큰 6줄과 나머지를 묶은 '기타' 줄. 또래 비교는 기본 분류 줄에만 붙는다.
+          // 금액이 큰 6줄과 나머지를 묶은 '그 외' 줄(기본 분류 '기타'와 구별한다). 또래 비교는 기본 분류 줄에만 붙는다.
           final rows = o.analysisRows(6);
           // 첫 조각은 코랄, 나머지는 밝기별 램프(다크는 darkRamp).
           final ramp = context.theme.brightness == Brightness.dark ? Palette.darkRamp : Palette.neutralRamp;
@@ -89,7 +89,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
             const SizedBox(height: 1),
             for (final (i, r) in rows.indexed)
               CategoryRow(
-                label: r.item?.label ?? '기타', amount: r.amount,
+                label: r.item?.label ?? '그 외', amount: r.amount,
                 color: colors[i], percent: r.amount / total,
                 peer: _showPeer ? r.peer : null),
           ]);

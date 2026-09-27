@@ -17,19 +17,19 @@ void main() {
       (r as Success<List<CustomCategory>>).data;
 
   test('upsert → getAll round-trips through the Stub contract', () async {
-    const pet = CustomCategory(id: 'c-pet', name: '반려동물', baseCategoryId: 12);
+    const pet = CustomCategory(id: 'c-pet', name: '반려식물', baseCategoryId: 19);
     final res = await repo.upsert(pet);
     expect(res, isA<Success<CustomCategory>>());
     expect((res as Success<CustomCategory>).data, pet);
 
     final all = unwrap(await repo.getAll());
-    expect(all.single.name, '반려동물');
+    expect(all.single.name, '반려식물');
     expect(all.single.base, BudgetCategory.etc);
   });
 
   test('duplicate name → Failure with the server code', () async {
-    await repo.upsert(const CustomCategory(id: 'c-pet', name: '반려동물', baseCategoryId: 12));
-    final res = await repo.upsert(const CustomCategory(id: 'c-pet2', name: '반려동물', baseCategoryId: 9));
+    await repo.upsert(const CustomCategory(id: 'c-pet', name: '반려식물', baseCategoryId: 19));
+    final res = await repo.upsert(const CustomCategory(id: 'c-pet2', name: '반려식물', baseCategoryId: 14));
     expect(res, isA<Error<CustomCategory>>());
     expect(res.failureOrNull?.code, 'CATEGORY_DUPLICATE');
     expect(res.failureOrNull?.reason, FailureReason.conflict);
@@ -43,7 +43,7 @@ void main() {
   });
 
   test('delete removes it and returns the deleted category', () async {
-    const pet = CustomCategory(id: 'c-pet', name: '반려동물', baseCategoryId: 12);
+    const pet = CustomCategory(id: 'c-pet', name: '반려식물', baseCategoryId: 19);
     await repo.upsert(pet);
     final res = await repo.delete(pet);
     expect((res as Success<CustomCategory>).data, pet);
