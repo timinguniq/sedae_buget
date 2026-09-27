@@ -10,7 +10,7 @@ void main() {
     avgMonthlyExpense: 2000000,
     avgSavingsRate: 0.2,
     avgByCategory: const {
-      BudgetCategory.food: 300000,
+      BudgetCategory.groceries: 300000,
       BudgetCategory.transport: 100000,
       BudgetCategory.education: 0, // 또래 평균이 없는 항목
     },
@@ -30,7 +30,7 @@ void main() {
   group('compareTotal · compareCategory', () {
     test('월 합계와 분류별 지출을 또래 평균과 비교한다', () {
       expect(stats.compareTotal(2200000)?.percent, 10);
-      expect(stats.compareCategory(BudgetCategory.food, 270000)?.percent, -10);
+      expect(stats.compareCategory(BudgetCategory.groceries, 270000)?.percent, -10);
     });
 
     // 또래 평균이 0이거나 빠진 분류를 '넘었다'고 읽으면 그 분류의 모든 지출에 배지가 붙었다.
@@ -119,17 +119,17 @@ void main() {
   group('largestCategoryGap', () {
     test('또래와 차이(%)가 가장 큰 항목을 고른다', () {
       final gap = stats.largestCategoryGap(const {
-        BudgetCategory.food: 600000, // +100%
+        BudgetCategory.groceries: 600000, // +100%
         BudgetCategory.transport: 90000, // -10%
       });
-      expect(gap?.category, BudgetCategory.food);
+      expect(gap?.category, BudgetCategory.groceries);
       expect(gap?.comparison.percent, 100);
       expect(gap?.comparison.mine, 600000);
       expect(gap?.comparison.peer, 300000);
     });
     test('덜 쓴 쪽이 더 크면 그쪽을 고른다', () {
       final gap = stats.largestCategoryGap(const {
-        BudgetCategory.food: 310000, // +3%
+        BudgetCategory.groceries: 310000, // +3%
         BudgetCategory.transport: 20000, // -80%
       });
       expect(gap?.category, BudgetCategory.transport);
@@ -139,15 +139,15 @@ void main() {
       expect(
         stats.largestCategoryGap(const {
           BudgetCategory.education: 500000, // 또래 평균 0
-          BudgetCategory.food: 0, // 내 지출 0
+          BudgetCategory.groceries: 0, // 내 지출 0
         }),
         isNull,
       );
     });
     // 차이가 없는 것도 발견이다('비슷하게 썼어요'). 비교할 항목이 없는 것과 다르다.
     test('모든 항목이 또래와 같으면 그중 첫 항목을 비슷하다고 고른다', () {
-      final gap = stats.largestCategoryGap(const {BudgetCategory.food: 300000});
-      expect(gap?.category, BudgetCategory.food);
+      final gap = stats.largestCategoryGap(const {BudgetCategory.groceries: 300000});
+      expect(gap?.category, BudgetCategory.groceries);
       expect(gap?.comparison.direction, PeerDirection.similar);
     });
     test('비교할 항목이 없으면 null', () {

@@ -8,7 +8,7 @@ import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
-const _pet = CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12);
+const _pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
 
 /// 이번 달 5일.
 DateTime _day() {
@@ -52,14 +52,14 @@ Future<List<CustomCategory>> _onServer(WidgetTester tester, StubServer server) a
 
 void main() {
 
-  testWidgets('view mode: 안내 카드 + 기본 12개 + 내 카테고리, 편집 링크로 편집 모드 전환', (tester) async {
+  testWidgets('view mode: 안내 카드 + 기본 19개 + 내 카테고리, 편집 링크로 편집 모드 전환', (tester) async {
     await pumpPage(tester);
 
     expect(find.text('카테고리 관리'), findsOneWidget);
     expect(find.textContaining('또래 비교 통계의 기준'), findsOneWidget);
     expect(find.text('기본 카테고리 ${BudgetCategory.values.length}'), findsOneWidget);
     expect(find.text('내 카테고리 1'), findsOneWidget);
-    expect(find.text('반려동물'), findsOneWidget);
+    expect(find.text('반려식물'), findsOneWidget);
     // 기본 카테고리에는 삭제 버튼이 없다.
     expect(find.byKey(const Key('category-delete-c1')), findsNothing);
 
@@ -78,7 +78,7 @@ void main() {
     await pumpPage(tester, month: [
       tx(),
       tx(),
-      tx(customCategoryId: 'c1'), // 반려동물 → 따로 센다
+      tx(customCategoryId: 'c1'), // 반려식물 → 따로 센다
     ]);
 
     expect(find.text('2건'), findsOneWidget);
@@ -87,7 +87,7 @@ void main() {
   // 이전에는 수입(기본값 식료품)이 식료품 건수에 섞였다.
   testWidgets('기본 카테고리 건수에 수입은 세지 않는다', (tester) async {
     Transaction tx(TransactionType type) => Transaction.create(
-          amount: 1000, categoryId: BudgetCategory.food.id, date: _day(), type: type);
+          amount: 1000, categoryId: BudgetCategory.groceries.id, date: _day(), type: type);
     await pumpPage(tester, month: [tx(TransactionType.expense), tx(TransactionType.income)]);
 
     expect(find.text('1건'), findsOneWidget);
@@ -99,7 +99,7 @@ void main() {
 
     expect(find.text('카테고리 편집'), findsOneWidget);
     expect(find.byKey(const Key('category-delete-c1')), findsOneWidget);
-    // 기본 분류 12개 중 어느 것에도 삭제 버튼이 붙지 않는다(총 1개뿐).
+    // 기본 분류 19개 중 어느 것에도 삭제 버튼이 붙지 않는다(총 1개뿐).
     expect(find.byIcon(Icons.remove), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('category-edit-done')));
@@ -117,7 +117,7 @@ void main() {
     await tester.settle();
 
     expect(await _onServer(tester, server), isEmpty);
-    expect(find.text('반려동물'), findsNothing);
+    expect(find.text('반려식물'), findsNothing);
   });
 
   testWidgets('추가 버튼 → 시트에서 이름 입력 후 저장하면 서버에 올라간다', (tester) async {
@@ -129,14 +129,14 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.byType(CategoryEditSheet), findsOneWidget);
-    await tester.enterText(find.byKey(const Key('category-name-field')), '반려동물');
+    await tester.enterText(find.byKey(const Key('category-name-field')), '반려식물');
     await tester.pump();
     // 상위 카테고리 기본값은 '기타'
     await tester.tap(find.byKey(const Key('category-submit-button')));
     await tester.settle();
 
     final saved = (await _onServer(tester, server)).single;
-    expect(saved.name, '반려동물');
+    expect(saved.name, '반려식물');
     expect(saved.base, BudgetCategory.etc);
   });
 
@@ -148,7 +148,7 @@ void main() {
     await tester.tap(find.byKey(const Key('category-add-button')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.enterText(find.byKey(const Key('category-name-field')), '반려동물');
+    await tester.enterText(find.byKey(const Key('category-name-field')), '반려식물');
     await tester.pump();
     await tester.tap(find.byKey(const Key('category-submit-button')));
     await tester.settle();
@@ -158,22 +158,22 @@ void main() {
     await tester.settle();
 
     expect(find.byType(CategoryEditSheet), findsNothing);
-    expect((await _onServer(tester, server)).map((c) => c.name), ['반려동물']);
+    expect((await _onServer(tester, server)).map((c) => c.name), ['반려식물']);
   });
 
   // 사용자가 고칠 수 있는 실패라 서버 문구를 이유로 보여준다.
   testWidgets('이름이 겹치면 시트에 이유를 보여주고 닫지 않는다', (tester) async {
-    await pumpPage(tester); // 서버에 이미 '반려동물'이 있다
+    await pumpPage(tester); // 서버에 이미 '반려식물'이 있다
 
     await tester.tap(find.byKey(const Key('category-add-button')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.enterText(find.byKey(const Key('category-name-field')), '반려동물');
+    await tester.enterText(find.byKey(const Key('category-name-field')), '반려식물');
     await tester.pump();
     await tester.tap(find.byKey(const Key('category-submit-button')));
     await tester.settle();
 
-    expect(find.text('저장하지 못했어요. 이미 있는 이름입니다: 반려동물'), findsOneWidget);
+    expect(find.text('저장하지 못했어요. 이미 있는 이름입니다: 반려식물'), findsOneWidget);
     expect(find.byType(CategoryEditSheet), findsOneWidget);
   });
 

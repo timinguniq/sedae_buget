@@ -5,7 +5,7 @@ import 'package:sedae_budget/data/dto/custom_category_dto.dart';
 
 part 'category_api.g.dart';
 
-/// 사용자 카테고리 엔드포인트(`/v1/categories`) 명세. 기본 분류(1~12)는 다루지 않는다.
+/// 사용자 카테고리 엔드포인트(`/v1/categories`) 명세. 기본 분류(1~19)는 다루지 않는다.
 @RestApi()
 abstract class CategoryApi {
   factory CategoryApi(Dio dio) = _CategoryApi;

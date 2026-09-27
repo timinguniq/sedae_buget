@@ -5,7 +5,7 @@ import 'package:sedae_budget/entity/entity.dart';
 import '../../helper/stub_server.dart';
 
 Transaction _tx(DateTime date, {int amount = 1000}) => Transaction.create(
-      amount: amount, categoryId: 7, date: date, type: TransactionType.expense, memo: 'm',
+      amount: amount, categoryId: 10, date: date, type: TransactionType.expense, memo: 'm',
     );
 
 /// [year]년 [month]월의 거래(보고 있는 달을 읽는 방식 그대로).

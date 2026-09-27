@@ -17,8 +17,8 @@ void main() {
     await t.pumpWidget(_wrap(TopCategoryCard(
       top: [
         (category: BudgetCategory.fromId(1), amount: 540000, peer: PeerComparison.of(mine: 540000, peer: 470000)),
-        (category: BudgetCategory.fromId(11), amount: 320000, peer: null),
-        (category: BudgetCategory.fromId(3), amount: 180000, peer: PeerComparison.of(mine: 180000, peer: 120000)),
+        (category: BudgetCategory.fromId(2), amount: 320000, peer: null),
+        (category: BudgetCategory.fromId(5), amount: 180000, peer: PeerComparison.of(mine: 180000, peer: 120000)),
       ],
       onTap: () => taps++,
     )));
@@ -26,8 +26,8 @@ void main() {
 
     expect(find.text('많이 쓴 카테고리'), findsOneWidget);
     expect(find.text(BudgetCategory.fromId(1).label), findsOneWidget);
-    expect(find.text(BudgetCategory.fromId(11).label), findsOneWidget);
-    expect(find.text(BudgetCategory.fromId(3).label), findsOneWidget);
+    expect(find.text(BudgetCategory.fromId(2).label), findsOneWidget);
+    expect(find.text(BudgetCategory.fromId(5).label), findsOneWidget);
     expect(find.text('또래▲15%'), findsOneWidget);
     expect(find.text('또래▲50%'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsNWidgets(3));
@@ -40,9 +40,9 @@ void main() {
   group('막대 색', () {
     final top = [
       (category: BudgetCategory.fromId(1), amount: 540000, peer: PeerComparison.of(mine: 540000, peer: 470000)),
-      (category: BudgetCategory.fromId(4), amount: 380000, peer: PeerComparison.of(mine: 380000, peer: 420000)),
-      (category: BudgetCategory.fromId(7), amount: 200000, peer: PeerComparison.of(mine: 200000, peer: 200000)),
-      (category: BudgetCategory.fromId(11), amount: 100000, peer: null),
+      (category: BudgetCategory.fromId(8), amount: 380000, peer: PeerComparison.of(mine: 380000, peer: 420000)),
+      (category: BudgetCategory.fromId(10), amount: 200000, peer: PeerComparison.of(mine: 200000, peer: 200000)),
+      (category: BudgetCategory.fromId(2), amount: 100000, peer: null),
     ];
 
     List<Color?> barColors(WidgetTester t) =>

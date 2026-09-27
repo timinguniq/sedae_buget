@@ -200,7 +200,7 @@ void apiContract(ContractTarget Function() target) {
         'amount 문자열': {...expense(), 'amount': '1000'},
         'type 모름': {...expense(), 'type': 'transfer'},
         '지출 categoryId 0': expense(categoryId: 0),
-        '지출 categoryId 13': expense(categoryId: 13),
+        '지출 categoryId 20': expense(categoryId: 20),
         'date 형식': {...expense(), 'date': 'not-a-date'},
         'date UTC 아님': {...expense(), 'date': '2026-09-02T00:00:00.000'},
         'memo 숫자': {...expense(), 'memo': 123},
@@ -230,59 +230,59 @@ void apiContract(ContractTarget Function() target) {
 
     test('만든 순서대로 주고, 새 id는 201·같은 id는 200', () async {
       expect(await categories(), isEmpty);
-      expect((await putCategory('c1', '반려동물', 12)).status, 201);
+      expect((await putCategory('c1', '반려동물', 19)).status, 201);
       expect((await putCategory('c2', '자기계발', 9)).status, 201);
-      expect((await putCategory('c1', '댕댕이', 12)).status, 200);
+      expect((await putCategory('c1', '댕댕이', 19)).status, 200);
       expect((await categories()).map((e) => e['name']), ['댕댕이', '자기계발']);
-      expect((await categories()).first, {'id': 'c1', 'name': '댕댕이', 'baseCategoryId': 12});
+      expect((await categories()).first, {'id': 'c1', 'name': '댕댕이', 'baseCategoryId': 19});
     });
 
-    test('이름 1~10자·상위 분류 1~12가 아니면 400 VALIDATION', () async {
-      for (final (name, base) in [('   ', 12), ('가나다라마바사아자차카', 12), ('반려동물', 0), ('반려동물', 13)]) {
+    test('이름 1~10자·상위 분류 1~19가 아니면 400 VALIDATION', () async {
+      for (final (name, base) in [('   ', 19), ('가나다라마바사아자차카', 19), ('반려동물', 0), ('반려동물', 20)]) {
         final res = await putCategory('c1', name, base);
         expect((res.status, res.code), (400, 'VALIDATION'), reason: '$name/$base');
       }
     });
 
     test('같은 사용자 안에서 이름이 겹치면(대소문자 무시) 409 CATEGORY_DUPLICATE', () async {
-      await putCategory('c1', 'Pet', 12);
+      await putCategory('c1', 'Pet', 19);
       final res = await putCategory('c2', 'pet', 9);
       expect((res.status, res.code), (409, 'CATEGORY_DUPLICATE'));
       expect((await putCategory('c1', 'Pet', 9)).status, 200); // 자기 자신은 겹침이 아니다
     });
 
     test('숫자 id(기본 분류)는 만들거나 지울 수 없다: 403 CATEGORY_IMMUTABLE', () async {
-      final put = await putCategory('12', '기타 바꾸기', 12);
+      final put = await putCategory('19', '기타 바꾸기', 19);
       expect((put.status, put.code), (403, 'CATEGORY_IMMUTABLE'));
       final del = await api.send('DELETE', '/v1/categories/1', token: token);
       expect((del.status, del.code), (403, 'CATEGORY_IMMUTABLE'));
     });
 
     test('사용자 카테고리 거래의 categoryId는 그 상위 분류다', () async {
-      await putCategory('c1', '반려동물', 12);
+      await putCategory('c1', '반려동물', 19);
       final res = await api.send('PUT', '/v1/transactions/t1',
           body: expense(categoryId: 1, customCategoryId: 'c1'), token: token);
-      expect(res.json['categoryId'], 12);
-      expect((await transaction('t1'))['categoryId'], 12);
+      expect(res.json['categoryId'], 19);
+      expect((await transaction('t1'))['categoryId'], 19);
     });
 
     test('상위 분류를 바꾸면 그 카테고리의 거래도 옮겨진다', () async {
-      await putCategory('c1', '반려동물', 12);
-      await api.send('PUT', '/v1/transactions/t1', body: expense(categoryId: 12, customCategoryId: 'c1'), token: token);
-      await api.send('PUT', '/v1/transactions/t2', body: expense(categoryId: 12), token: token);
+      await putCategory('c1', '반려동물', 19);
+      await api.send('PUT', '/v1/transactions/t1', body: expense(categoryId: 19, customCategoryId: 'c1'), token: token);
+      await api.send('PUT', '/v1/transactions/t2', body: expense(categoryId: 19), token: token);
       await putCategory('c1', '반려동물', 9);
       expect((await transaction('t1'))['categoryId'], 9);
-      expect((await transaction('t2'))['categoryId'], 12);
+      expect((await transaction('t2'))['categoryId'], 19);
     });
 
     test('지우면 204이고, 쓰던 거래는 상위 분류만 남는다. 없는 카테고리는 404', () async {
-      await putCategory('c1', '반려동물', 12);
-      await api.send('PUT', '/v1/transactions/t1', body: expense(categoryId: 12, customCategoryId: 'c1'), token: token);
+      await putCategory('c1', '반려동물', 19);
+      await api.send('PUT', '/v1/transactions/t1', body: expense(categoryId: 19, customCategoryId: 'c1'), token: token);
       expect((await api.send('DELETE', '/v1/categories/c1', token: token)).status, 204);
       expect(await categories(), isEmpty);
       final tx = await transaction('t1');
       expect(tx['customCategoryId'], isNull);
-      expect(tx['categoryId'], 12);
+      expect(tx['categoryId'], 19);
       final again = await api.send('DELETE', '/v1/categories/c1', token: token);
       expect((again.status, again.code), (404, 'NOT_FOUND'));
     });
@@ -300,7 +300,7 @@ void apiContract(ContractTarget Function() target) {
       expect(s['avgMonthlyExpense'], isA<int>());
       expect(s['avgSavingsRate'], isA<num>());
       final byCategory = s['avgByCategory'] as Map<String, dynamic>;
-      expect(byCategory.keys.every((k) => int.parse(k) >= 1 && int.parse(k) <= 12), isTrue);
+      expect(byCategory.keys.every((k) => int.parse(k) >= 1 && int.parse(k) <= 19), isTrue);
       expect(byCategory.values.every((v) => v is int), isTrue);
       final samples = (s['samples'] as List).cast<int>();
       expect(samples.length, lessThanOrEqualTo(99));
@@ -328,7 +328,7 @@ void apiContract(ContractTarget Function() target) {
     final kakao = await api.login('kakao');
     final google = await api.login('google');
     await api.send('PUT', '/v1/me/profile', body: {'ageGroup': 'thirties', 'monthlyIncome': 1}, token: kakao);
-    await api.send('PUT', '/v1/categories/c1', body: {'name': '반려동물', 'baseCategoryId': 12}, token: kakao);
+    await api.send('PUT', '/v1/categories/c1', body: {'name': '반려동물', 'baseCategoryId': 19}, token: kakao);
     await api.send('PUT', '/v1/transactions/t1', body: expense(), token: kakao);
 
     expect((await api.send('GET', '/v1/me/profile', token: google)).status, 404);

@@ -8,7 +8,7 @@ import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart
 
 import '../../helper/fakes.dart';
 
-const _pet = CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12);
+const _pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
 
 /// 서버에 저장된 이번 달 거래(새 초안의 날짜는 오늘이다).
 Future<List<Transaction>> _onServer(WidgetTester tester, StubServer server) async {
@@ -124,7 +124,7 @@ void main() {
           amount: 3000000, categoryId: 1, date: DateTime.now(), type: TransactionType.income));
       expect(find.text('수입 수정'), findsOneWidget);
       expect(find.byKey(const Key('category-add-chip')), findsNothing);
-      expect(find.text('반려동물'), findsNothing);
+      expect(find.text('반려식물'), findsNothing);
       expect(find.text(BudgetCategory.transport.label), findsNothing);
     });
   });
@@ -140,8 +140,8 @@ void main() {
   testWidgets('custom category chip stores base id + customCategoryId', (tester) async {
     final server = await pumpEditPage(tester, customs: const [_pet]);
 
-    await tester.ensureVisible(find.text('반려동물')); // 가로 스크롤 칩 행 끝
-    await tester.tap(find.text('반려동물'));
+    await tester.ensureVisible(find.text('반려식물')); // 가로 스크롤 칩 행 끝
+    await tester.tap(find.text('반려식물'));
     await tester.pump();
     for (final k in ['1', '0', '0', '0']) {
       await tester.tap(find.text(k));
@@ -165,7 +165,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('카테고리 추가'), findsOneWidget);
 
-    await tester.enterText(find.byKey(const Key('category-name-field')), '반려동물');
+    await tester.enterText(find.byKey(const Key('category-name-field')), '반려식물');
     await tester.pump();
     await tester.tap(find.byKey(const Key('category-submit-button')));
     await tester.settle();

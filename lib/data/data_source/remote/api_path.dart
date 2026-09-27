@@ -10,7 +10,7 @@ abstract class ApiPath {
   static const transactions = '/v1/transactions';
   static String transaction(String id) => '$transactions/$id';
 
-  /// 사용자 카테고리. 기본 분류(1~12)는 계약 상수라 이 경로로 다루지 않는다.
+  /// 사용자 카테고리. 기본 분류(1~19)는 계약 상수라 이 경로로 다루지 않는다.
   static const categories = '/v1/categories';
   static String category(String id) => '$categories/$id';
   static const peerStats = '/v1/peer/stats';

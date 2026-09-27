@@ -26,10 +26,10 @@ void main() {
   test('모르는 분류 키는 버리고 아는 키는 남긴다', () {
     final stats = PeerStatsDto.fromJson({
       'ageGroup': 'thirties', 'avgMonthlyExpense': 1000000, 'avgSavingsRate': 0.2,
-      'avgByCategory': {'1': 300000, '13': 5000, 'x': 1, '0': 2},
+      'avgByCategory': {'1': 300000, '20': 5000, 'x': 1, '0': 2},
       'samples': [1, 2, 3],
     }).toEntity(AgeGroup.thirties);
-    expect(stats.avgByCategory, {BudgetCategory.food: 300000});
+    expect(stats.avgByCategory, {BudgetCategory.groceries: 300000});
   });
 
   test('나이대의 API 값은 나이대마다 하나이고, 모르는 값은 null이다', () {

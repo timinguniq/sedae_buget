@@ -9,7 +9,7 @@ abstract class Transaction with _$Transaction {
   const factory Transaction({
     required String id,
     required int amount, // 원 단위 정수
-    required int categoryId, // 통계청 12분류 id. 커스텀 카테고리면 그 상위 분류
+    required int categoryId, // 기본 분류 id(BudgetCategory.id). 커스텀 카테고리면 그 상위 분류
     required DateTime date,
     required TransactionType type,
     String? memo,

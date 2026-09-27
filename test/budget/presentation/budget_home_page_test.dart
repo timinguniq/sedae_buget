@@ -15,7 +15,7 @@ const _profile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000
 List<Transaction> _taxi() {
   final now = DateTime.now();
   return [
-    Transaction.create(amount: 12000, categoryId: 7, date: DateTime(now.year, now.month, 10),
+    Transaction.create(amount: 12000, categoryId: 10, date: DateTime(now.year, now.month, 10),
         type: TransactionType.expense, memo: '택시'),
   ];
 }
@@ -34,7 +34,7 @@ void main() {
     expect(find.text('이번 달 요약'), findsOneWidget);
     expect(find.text('또래 중 내 지출 순위'), findsOneWidget);
     expect(find.text('많이 쓴 카테고리'), findsOneWidget);
-    expect(find.text(BudgetCategory.fromId(7).label), findsWidgets);
+    expect(find.text(BudgetCategory.fromId(10).label), findsWidgets);
     expect(find.text('최근 내역'), findsOneWidget);
   });
 
@@ -43,15 +43,15 @@ void main() {
     final now = DateTime.now();
     final server = await tester.seedServer(
       profile: _profile,
-      categories: const [CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12)],
+      categories: const [CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19)],
       transactions: [
-        Transaction.create(amount: 30000, categoryId: 12, date: DateTime(now.year, now.month, 3),
+        Transaction.create(amount: 30000, categoryId: 19, date: DateTime(now.year, now.month, 3),
             type: TransactionType.expense, customCategoryId: 'c1'),
       ],
     );
     await _pumpHome(tester, fakeContainer(server: server));
 
-    expect(find.text('반려동물'), findsWidgets);
+    expect(find.text('반려식물'), findsWidgets);
   });
 
   // 또래 통계 서버가 내려가도 내 장부는 보여야 한다(또래 부분만 빠진다).
@@ -75,7 +75,7 @@ void main() {
     final now = DateTime.now();
     final last = DateTime(now.year, now.month - 1);
     final server = await tester.seedServer(profile: _profile, transactions: [
-      Transaction.create(amount: 12000, categoryId: 7, date: DateTime(last.year, last.month, 10),
+      Transaction.create(amount: 12000, categoryId: 10, date: DateTime(last.year, last.month, 10),
           type: TransactionType.expense, memo: '택시'),
     ]);
     final container = fakeContainer(server: server);

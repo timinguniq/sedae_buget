@@ -56,7 +56,7 @@ void main() {
     expect(DateTime.parse(q), DateTime(2026, 9, 1).toUtc());
   });
 
-  // 서버가 새 분류를 늘리거나 수입에 아무 id(0 등)를 적어도, 앱 안쪽은 12개 기본 분류만 본다.
+  // 서버가 새 분류를 늘리거나 수입에 아무 id(0 등)를 적어도, 앱 안쪽은 기본 분류(1~19)만 본다.
   group('모르는 분류 id', () {
     Transaction read(int categoryId, String type) => TransactionDto.fromJson({
           'id': 'x', 'amount': 500, 'categoryId': categoryId,
@@ -65,7 +65,7 @@ void main() {
         }).toEntity();
 
     test('지출의 모르는 분류는 기타로 읽는다(돈이 합계에서 빠지지 않는다)', () {
-      expect(read(13, 'expense').categoryId, BudgetCategory.etc.id);
+      expect(read(20, 'expense').categoryId, BudgetCategory.etc.id);
       expect(read(0, 'expense').categoryId, BudgetCategory.etc.id);
     });
 

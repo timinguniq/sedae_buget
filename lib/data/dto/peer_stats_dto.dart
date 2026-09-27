@@ -4,7 +4,7 @@ import 'package:sedae_budget/entity/entity.dart';
 
 part 'peer_stats_dto.g.dart';
 
-/// `/v1/peer/stats` 응답. `avgByCategory` 키는 categoryId 문자열("1".."12").
+/// `/v1/peer/stats` 응답. `avgByCategory` 키는 categoryId 문자열("1".."19").
 @JsonSerializable()
 class PeerStatsDto {
   const PeerStatsDto({

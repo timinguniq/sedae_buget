@@ -194,7 +194,7 @@ class _CategoryPill extends StatelessWidget {
   }
 }
 
-/// 기본 분류 12개 + 사용자 카테고리 + '추가' 칩 — 가로 스크롤 한 줄.
+/// 기본 분류 + 사용자 카테고리 + '추가' 칩 — 가로 스크롤 한 줄.
 /// 사용자 카테고리를 고르면 상위 기본 분류가 함께 정해진다(또래 비교는 그 분류로 집계).
 class _CategoryChips extends StatelessWidget {
   const _CategoryChips({

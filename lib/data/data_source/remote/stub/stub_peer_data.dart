@@ -19,20 +19,27 @@ abstract class StubPeerData {
     AgeGroup.forties: 0.20,
     AgeGroup.fiftiesPlus: 0.25,
   };
-  // 12분류 평균 소비 비중(합=1.0).
+  // 기본 분류별 평균 소비 비중(합=1.0).
   static const _share = <BudgetCategory, double>{
-    BudgetCategory.food: 0.15,
-    BudgetCategory.alcoholTobacco: 0.02,
-    BudgetCategory.clothing: 0.06,
-    BudgetCategory.housing: 0.18,
-    BudgetCategory.household: 0.05,
-    BudgetCategory.health: 0.06,
-    BudgetCategory.transport: 0.12,
+    BudgetCategory.groceries: 0.10,
+    BudgetCategory.diningOut: 0.12,
+    BudgetCategory.cafe: 0.04,
+    BudgetCategory.drinks: 0.03,
+    BudgetCategory.shopping: 0.06,
+    BudgetCategory.beauty: 0.03,
+    BudgetCategory.household: 0.04,
+    BudgetCategory.housing: 0.16,
     BudgetCategory.communication: 0.05,
-    BudgetCategory.recreation: 0.08,
-    BudgetCategory.education: 0.05,
-    BudgetCategory.diningOut: 0.13,
-    BudgetCategory.etc: 0.05,
+    BudgetCategory.transport: 0.05,
+    BudgetCategory.car: 0.06,
+    BudgetCategory.health: 0.05,
+    BudgetCategory.education: 0.04,
+    BudgetCategory.recreation: 0.05,
+    BudgetCategory.travel: 0.04,
+    BudgetCategory.pet: 0.01,
+    BudgetCategory.gifts: 0.03,
+    BudgetCategory.finance: 0.03,
+    BudgetCategory.etc: 0.01,
   };
 
   static PeerStats forGroup(AgeGroup group) {

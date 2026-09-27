@@ -60,7 +60,7 @@ void main() {
 
   // 합계·분류·소득 규칙 자체는 ViewedMonth 테스트가 본다. 여기서는 재료가 모이는지만 본다.
   test('보고 있는 달을 이달 거래·사용자 카테고리·프로필 소득으로 만든다', () async {
-    const study = CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 9);
+    const study = CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 14);
     final c = fakeContainer(server: await _server(
       profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3500000),
       categories: const [study],
@@ -139,7 +139,7 @@ void main() {
     const lots = 50000000;
 
     test('거래가 속한 기본 분류의 이달 지출이 또래 평균보다 많으면 true', () async {
-      final big = _expense(lots, BudgetCategory.food);
+      final big = _expense(lots, BudgetCategory.groceries);
       final small = _expense(1, BudgetCategory.transport);
       final o = await _overview(await _container([big, small]));
       expect(o.overPeer(big), isTrue);
@@ -147,8 +147,8 @@ void main() {
     });
 
     test('또래 평균과 같으면 초과가 아니다', () async {
-      final avg = StubPeerData.forGroup(AgeGroup.thirties).avgByCategory[BudgetCategory.food]!;
-      final same = _expense(avg, BudgetCategory.food);
+      final avg = StubPeerData.forGroup(AgeGroup.thirties).avgByCategory[BudgetCategory.groceries]!;
+      final same = _expense(avg, BudgetCategory.groceries);
       expect((await _overview(await _container([same]))).overPeer(same), isFalse);
     });
 
@@ -170,9 +170,9 @@ void main() {
 
     test('수입 거래나 또래 통계가 없으면 false', () async {
       // 지출이 또래를 넘는 분류에 적힌 수입이라도 배지는 지출에만 붙는다.
-      final income = Transaction.create(amount: lots, categoryId: BudgetCategory.food.id,
+      final income = Transaction.create(amount: lots, categoryId: BudgetCategory.groceries.id,
           date: _day, type: TransactionType.income);
-      final big = _expense(lots, BudgetCategory.food);
+      final big = _expense(lots, BudgetCategory.groceries);
       expect((await _overview(await _container([income, big]))).overPeer(income), isFalse);
 
       final withoutPeer = await _server(transactions: [big]);

@@ -231,7 +231,7 @@ class StubApiInterceptor extends Interceptor {
       [for (final r in db.customCategories.values) Map<String, dynamic>.of(r)];
 
   Future<(int, Object?)> _category(StubUserData db, String method, String id, Object? body) async {
-    // 기본 분류(1~12)는 계약 상수 — 사용자 카테고리 경로로 만들거나 지울 수 없다.
+    // 기본 분류(1~19)는 계약 상수 — 사용자 카테고리 경로로 만들거나 지울 수 없다.
     if (int.tryParse(id) != null) {
       throw _StubError(403, 'CATEGORY_IMMUTABLE', '기본 카테고리는 수정하거나 삭제할 수 없습니다.');
     }
@@ -246,7 +246,7 @@ class StubApiInterceptor extends Interceptor {
           throw _StubError(
               400, 'VALIDATION', '이름은 1~${CustomCategory.maxNameLength}자여야 합니다.');
         }
-        if (baseId == null || baseId < 1 || baseId > 12) {
+        if (baseId == null || BudgetCategory.tryFromId(baseId) == null) {
           throw _StubError(400, 'VALIDATION', '상위 카테고리가 잘못되었습니다.');
         }
         final duplicated = db.customCategories.entries.any(
@@ -298,7 +298,7 @@ class StubApiInterceptor extends Interceptor {
       problem = 'type은 expense 또는 income입니다.';
     } else if (categoryId is! int ||
         (type == TransactionType.expense && BudgetCategory.tryFromId(categoryId) == null)) {
-      problem = '지출의 categoryId는 1~12입니다.';
+      problem = '지출의 categoryId는 1~19입니다.';
     } else if (_utcOrNull(b['date']) == null) {
       problem = 'date는 ISO-8601 UTC입니다.';
     } else if (memo != null && memo is! String) {

@@ -5,7 +5,7 @@ import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 
 import '../../helper/fakes.dart';
 
-const _pet = CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12);
+const _pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
 
 final _now = DateTime.now();
 final _thisMonth = DateTime(_now.year, _now.month, 1);
@@ -139,15 +139,15 @@ void main() {
     server.faults.loseResponse('PUT', '/v1/categories');
     final c = fakeContainer(server: server);
     final notifier = c.read(customCategoriesProvider.notifier);
-    final draft = CategoryDraft.create().withName('반려동물');
+    final draft = CategoryDraft.create().withName('반려식물');
 
     final first = await notifier.save(draft);
     final retry = await notifier.save(draft);
 
     expect(first.failureOrNull?.reason, FailureReason.timeout);
     expect(retry.failureOrNull, isNull);
-    expect((await server.categories.getAll()).unwrap().map((e) => e.name), ['반려동물']);
-    expect((await c.read(customCategoriesProvider.future)).map((e) => e.name), ['반려동물']);
+    expect((await server.categories.getAll()).unwrap().map((e) => e.name), ['반려식물']);
+    expect((await c.read(customCategoriesProvider.future)).map((e) => e.name), ['반려식물']);
   });
 
   test('저장이 실패하면 다시 읽지 않는다', () async {

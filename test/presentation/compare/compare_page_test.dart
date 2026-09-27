@@ -11,9 +11,9 @@ import '../../helper/fakes.dart';
 List<Transaction> _spending(DateTime month) => [
       Transaction.create(amount: 500000, categoryId: 1, date: DateTime(month.year, month.month, 5),
           type: TransactionType.expense, memo: '식료품'),
-      Transaction.create(amount: 200000, categoryId: 7, date: DateTime(month.year, month.month, 10),
+      Transaction.create(amount: 200000, categoryId: 10, date: DateTime(month.year, month.month, 10),
           type: TransactionType.expense, memo: '교통'),
-      Transaction.create(amount: 100000, categoryId: 11, date: DateTime(month.year, month.month, 15),
+      Transaction.create(amount: 100000, categoryId: 2, date: DateTime(month.year, month.month, 15),
           type: TransactionType.expense, memo: '외식'),
     ];
 
@@ -27,7 +27,7 @@ PeerStats _peer({int avg = 1000000, List<int> samples = const [700000, 900000, 1
       avgMonthlyExpense: avg,
       avgSavingsRate: 0.2,
       // 외식(11)은 또래 평균이 없다.
-      avgByCategory: {BudgetCategory.fromId(1): 400000, BudgetCategory.fromId(7): 250000},
+      avgByCategory: {BudgetCategory.fromId(1): 400000, BudgetCategory.fromId(10): 250000},
       samples: samples,
     );
 
@@ -72,8 +72,8 @@ void main() {
   testWidgets('또래 평균이 없는 항목은 항목별 차이에서 뺀다', (tester) async {
     await _pumpCompare(tester, peer: _peer());
     expect(find.text(BudgetCategory.fromId(1).label), findsOneWidget);
-    expect(find.text(BudgetCategory.fromId(7).label), findsOneWidget);
-    expect(find.text(BudgetCategory.fromId(11).label), findsNothing);
+    expect(find.text(BudgetCategory.fromId(10).label), findsOneWidget);
+    expect(find.text(BudgetCategory.fromId(2).label), findsNothing);
   });
 
   // 또래 값이 없으면 비교하지 않는다. 이전에는 또래 막대를 0원으로 그린 비교 카드가 남았다.
@@ -134,21 +134,21 @@ void main() {
     expect(find.text('항목별 차이'), findsNothing);
   });
 
-  // 또래 비교는 기본 분류(통계청 12분류)로만 이뤄진다. 커스텀 카테고리는 상위 분류에
+  // 또래 비교는 기본 분류로만 이뤄진다. 커스텀 카테고리는 상위 분류에
   // 합산될 뿐 별도 항목으로 나오지 않는다.
   testWidgets('항목별 비교는 기본 카테고리 이름만 쓴다', (tester) async {
-    // 지출 전액이 커스텀 카테고리('반려동물' → 기타)로 잡힌 달.
+    // 지출 전액이 커스텀 카테고리('반려식물' → 기타)로 잡힌 달.
     await _pumpCompare(
       tester,
       height: 844,
-      customs: const [CustomCategory(id: 'c1', name: '반려동물', baseCategoryId: 12)],
+      customs: const [CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19)],
       transactions: [
-        Transaction.create(amount: 300000, categoryId: 12, date: DateTime(_now.year, _now.month, 5),
+        Transaction.create(amount: 300000, categoryId: 19, date: DateTime(_now.year, _now.month, 5),
             type: TransactionType.expense, customCategoryId: 'c1'),
       ],
     );
 
-    expect(find.text('반려동물'), findsNothing);
+    expect(find.text('반려식물'), findsNothing);
     expect(find.text(BudgetCategory.etc.label), findsOneWidget);
   });
 }

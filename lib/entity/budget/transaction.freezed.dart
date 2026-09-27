@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 mixin _$Transaction {
 
  String get id; int get amount;// 원 단위 정수
- int get categoryId;// 통계청 12분류 id. 커스텀 카테고리면 그 상위 분류
+ int get categoryId;// 기본 분류 id(BudgetCategory.id). 커스텀 카테고리면 그 상위 분류
  DateTime get date; TransactionType get type; String? get memo;/// 사용자가 만든 카테고리(CustomCategory) id. null이면 기본 분류 그대로.
  String? get customCategoryId; DateTime get createdAt;// 서버가 정함
  DateTime get updatedAt;
@@ -225,7 +225,7 @@ class _Transaction implements Transaction {
 @override final  int amount;
 // 원 단위 정수
 @override final  int categoryId;
-// 통계청 12분류 id. 커스텀 카테고리면 그 상위 분류
+// 기본 분류 id(BudgetCategory.id). 커스텀 카테고리면 그 상위 분류
 @override final  DateTime date;
 @override final  TransactionType type;
 @override final  String? memo;
