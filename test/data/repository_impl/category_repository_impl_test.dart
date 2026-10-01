@@ -49,4 +49,16 @@ void main() {
     expect((res as Success<CustomCategory>).data, pet);
     expect(unwrap(await repo.getAll()), isEmpty);
   });
+
+  // 삭제 확인을 두 번 누르거나 응답을 잃은 뒤 다시 지우면 서버는 404다. 이미 없으니 지운 것이다.
+  test('이미 없는 카테고리를 지우면 지운 것으로 본다', () async {
+    const pet = CustomCategory(id: 'c-pet', name: '반려식물', baseCategoryId: 19);
+    await repo.upsert(pet);
+    await repo.delete(pet);
+
+    final again = await repo.delete(pet);
+
+    expect(again.failureOrNull, isNull);
+    expect(again.unwrap(), pet);
+  });
 }

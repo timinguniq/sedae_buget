@@ -63,6 +63,18 @@ void main() {
     expect((after as Success<List<Transaction>>).data, isEmpty);
   });
 
+  // 응답을 잃은 뒤 다시 지우거나 두 번 누르면 서버는 404다. 지우려던 거래는 이미 없으니 지운 것이다.
+  test('이미 없는 거래를 지우면 지운 것으로 본다', () async {
+    final tx = _tx(DateTime(2026, 9, 6));
+    await repo.upsert(tx);
+    await repo.delete(tx);
+
+    final again = await repo.delete(tx);
+
+    expect(again.failureOrNull, isNull);
+    expect(again.unwrap().id, tx.id);
+  });
+
   test('update via upsert keeps id and changes fields', () async {
     final tx = _tx(DateTime(2026, 9, 6));
     await repo.upsert(tx);

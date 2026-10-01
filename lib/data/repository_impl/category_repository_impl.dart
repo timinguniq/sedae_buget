@@ -21,8 +21,11 @@ class CategoryRepositoryImpl implements CategoryRepository {
       );
 
   @override
-  Future<Result<CustomCategory>> delete(CustomCategory category) => guardApi(() async {
-        await _api.delete(category.id);
-        return category;
-      });
+  Future<Result<CustomCategory>> delete(CustomCategory category) => guardApi(
+        () async {
+          await _api.delete(category.id);
+          return category;
+        },
+        recover: (f) => f.reason == FailureReason.notFound ? Result.success(category) : null,
+      );
 }

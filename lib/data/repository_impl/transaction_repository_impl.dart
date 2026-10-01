@@ -17,10 +17,13 @@ class TransactionRepositoryImpl implements TransactionRepository {
       );
 
   @override
-  Future<Result<Transaction>> delete(Transaction tx) => guardApi(() async {
-        await _api.delete(tx.id);
-        return tx;
-      });
+  Future<Result<Transaction>> delete(Transaction tx) => guardApi(
+        () async {
+          await _api.delete(tx.id);
+          return tx;
+        },
+        recover: (f) => f.reason == FailureReason.notFound ? Result.success(tx) : null,
+      );
 
   @override
   Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) => guardApi(

@@ -150,6 +150,32 @@ void main() {
     expect((await c.read(customCategoriesProvider.future)).map((e) => e.name), ['반려식물']);
   });
 
+  // 서버는 지웠는데 응답이 시간 초과로 사라지면, 장부가 지운 거래를 계속 보여줬다(그 거래를 저장하면 되살아났다).
+  test('응답을 잃은 거래 삭제 뒤에도 장부는 서버와 같다', () async {
+    final server = await _server(transactions: [_expense(1000)]);
+    server.faults.loseResponse('DELETE', '/v1/transactions');
+    final c = fakeContainer(server: server);
+    final shown = (await c.read(monthlyTransactionsProvider.future)).single;
+
+    final res = await c.read(monthlyTransactionsProvider.notifier).delete(shown);
+
+    expect(res.failureOrNull?.reason, FailureReason.timeout);
+    expect(await c.read(monthlyTransactionsProvider.future), isEmpty);
+  });
+
+  test('응답을 잃은 사용자 카테고리 삭제 뒤에도 목록은 서버와 같다', () async {
+    final server = await _server(categories: const [_pet]);
+    server.faults.loseResponse('DELETE', '/v1/categories');
+    final c = fakeContainer(server: server);
+    await c.read(customCategoriesProvider.future);
+
+    final res = await c.read(customCategoriesProvider.notifier).remove(_pet);
+
+    expect(res.failureOrNull?.reason, FailureReason.timeout);
+    expect(await c.read(customCategoriesProvider.future), isEmpty);
+  });
+
+  // 연결이 안 돼 요청이 서버에 가지 않았으면 바뀐 것이 없다. 다시 읽으면 뒤 화면까지 실패로 바뀐다.
   test('저장이 실패하면 다시 읽지 않는다', () async {
     final server = await _server(categories: const [_pet]);
     server.faults.fail('DELETE', '/v1/categories');
