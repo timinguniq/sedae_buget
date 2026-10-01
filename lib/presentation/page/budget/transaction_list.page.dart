@@ -30,7 +30,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
     return DefaultLayout(
       child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
+        error: (e, _) => LoadErrorView(error: e),
         data: (o) {
           final m = o.month;
           final topCats = m.topCategories(4).map((e) => e.key).toList();

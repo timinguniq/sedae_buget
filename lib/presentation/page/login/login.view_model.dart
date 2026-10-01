@@ -43,11 +43,7 @@ class AuthNotifier extends AsyncNotifier<AuthUser?> {
   }
 }
 
-/// 전역 가드가 기다리는 provider라 실패를 즉시 드러낸다(Riverpod 기본 자동 재시도 끔).
-final authProvider = AsyncNotifierProvider<AuthNotifier, AuthUser?>(
-  AuthNotifier.new,
-  retry: (_, _) => null,
-);
+final authProvider = AsyncNotifierProvider<AuthNotifier, AuthUser?>(AuthNotifier.new);
 
 /// 세션이 만료돼 로그아웃됐는지. 로그인 화면이 안내 문구를 띄운다.
 /// 다시 로그인하거나 직접 로그아웃하면 지운다.

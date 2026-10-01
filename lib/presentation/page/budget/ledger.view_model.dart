@@ -66,8 +66,8 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
 
   Future<Result<Transaction>> delete(Transaction tx) => _apply(() => _transactions.delete(tx));
 
-  /// 불러오기에 실패한 화면의 '다시 시도'. 달 화면이 읽는 서버 데이터
-  /// (이달 거래·추이·사용자 카테고리·또래 통계)를 모두 다시 읽는다.
+  /// 불러오기에 실패한 달 화면의 '다시 시도'(`LoadErrorView`). 달 화면이 읽는 서버 데이터
+  /// (이달 거래·추이·사용자 카테고리·또래 통계·세대별 평균)를 모두 다시 읽는다.
   void reload() {
     ref.invalidateSelf();
     ref.invalidate(selfTrendProvider);

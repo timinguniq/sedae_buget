@@ -20,11 +20,11 @@ class ReportPage extends ConsumerWidget {
     return DefaultLayout(
       child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
+        error: (e, _) => LoadErrorView(error: e),
         data: (o) {
           // 리포트는 또래 비교가 중심이라, 또래 통계를 못 읽으면 화면 전체를 안내로 바꾼다.
           final peer = o.peer;
-          if (peer == null) return const Center(child: Text(peerUnavailableText));
+          if (peer == null) return const LoadErrorView.peer();
           // '내 세대' 강조는 순위·인사이트를 계산한 또래 통계의 나이대를 따른다.
           final ageGroup = peer.ageGroup;
           // 빈 달이거나 표본이 없으면 순위가 없다.
@@ -77,7 +77,7 @@ class ReportPage extends ConsumerWidget {
                   const SizedBox(height: 14),
                   generationAvg.when(
                     loading: () => const SizedBox(height: 84),
-                    error: (e, _) => const SizedBox(height: 84),
+                    error: (e, _) => LoadErrorView(error: e),
                     data: (avgs) => GenerationAvgChart(myGroup: ageGroup, avgByGroup: avgs),
                   ),
                 ]),
@@ -114,7 +114,7 @@ class ReportPage extends ConsumerWidget {
                   selfTrend.when(
                     loading: () =>
                         const SizedBox(height: 96, child: Center(child: CircularProgressIndicator())),
-                    error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
+                    error: (e, _) => LoadErrorView(error: e),
                     data: (trend) => _SelfTrendBars(trend: trend),
                   ),
                 ]),

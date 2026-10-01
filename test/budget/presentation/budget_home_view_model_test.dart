@@ -110,6 +110,21 @@ void main() {
     expect(notifier.canGoNext, isTrue);
   });
 
+  // 이전에는 앱이 실패한 provider를 조용히 10번(약 38초) 다시 불러, 그동안 달 화면이 오류 대신 불러오는 중이었다.
+  test('이달 거래를 못 읽으면 이달 개요는 바로 오류다', () async {
+    final server = await _server();
+    server.faults.fail('GET', '/v1/transactions');
+    final c = fakeContainer(server: server);
+    final sub = c.listen(monthOverviewProvider, (_, _) {});
+    addTearDown(sub.close);
+
+    await c.read(monthlyTransactionsProvider.future)
+        .then((_) {}, onError: (_) {})
+        .timeout(const Duration(seconds: 5));
+    await c.read(peerStatsProvider.future); // 개요는 또래 통계를 처음 한 번 기다린다
+    expect(c.read(monthOverviewProvider).hasError, isTrue);
+  });
+
   group('또래 통계', () {
     test('실패하면 peer만 null이고 내 값은 그대로 낸다', () async {
       final server = await _server(transactions: [_expense(1200, BudgetCategory.transport)]);

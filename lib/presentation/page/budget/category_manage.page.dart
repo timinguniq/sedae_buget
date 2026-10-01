@@ -62,7 +62,7 @@ class _CategoryManagePageState extends ConsumerState<CategoryManagePage> {
         Expanded(
           child: asyncCustoms.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
+            error: (e, _) => LoadErrorView(error: e),
             data: (customs) {
               return ListView(
               padding: const EdgeInsets.fromLTRB(22, 0, 22, 22),

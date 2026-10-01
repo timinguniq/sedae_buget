@@ -127,11 +127,18 @@ void main() {
   });
 
   // 비교 화면은 또래 통계가 본질이라 실패하면 화면 전체가 안내로 바뀐다.
-  testWidgets('또래 통계를 못 읽으면 안내 문구를 보여준다', (tester) async {
-    await _pumpCompare(tester, faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server));
+  testWidgets('또래 통계를 못 읽으면 안내와 다시 시도를 보여주고, 다시 시도하면 읽는다', (tester) async {
+    await _pumpCompare(tester,
+        faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server, times: 1));
 
     expect(find.text('또래 통계를 불러오지 못했어요'), findsOneWidget);
     expect(find.text('항목별 차이'), findsNothing);
+
+    await tester.tap(find.text('다시 시도'));
+    await tester.settle();
+
+    expect(find.text('또래 통계를 불러오지 못했어요'), findsNothing);
+    expect(find.text('항목별 차이'), findsOneWidget);
   });
 
   // 또래 비교는 기본 분류로만 이뤄진다. 커스텀 카테고리는 상위 분류에

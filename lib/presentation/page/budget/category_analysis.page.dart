@@ -35,7 +35,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
         ),
         Expanded(child: overview.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
+        error: (e, _) => LoadErrorView(error: e),
         data: (o) {
           final breakdown = o.month.breakdown;
           if (breakdown.isEmpty) {
