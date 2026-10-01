@@ -9,6 +9,7 @@ import 'package:sedae_budget/core/local_storage/theme_mode_store.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/initial/app_status.view_model.dart';
 import 'package:sedae_budget/presentation/service/ad_provider.dart';
+import 'package:sedae_budget/presentation/service/app_container.dart';
 import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 import 'package:sedae_budget/presentation/service/theme_mode_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -75,8 +76,8 @@ Future<ThemeModeStore> fakeThemeModeStore() async {
   return ThemeModeStore(await SharedPreferences.getInstance());
 }
 
-/// 테스트용 ProviderContainer. 서버는 [server](Stub, 기본은 로그인 전의 빈 서버)이고,
-/// 서버 밖의 재료(광고·원격 설정·테마 저장소·앱 종료)만 fake로 바꾼다.
+/// 테스트용 ProviderContainer. 앱과 같은 [appContainer]로 만들어 같은 정책(재시도 등)으로 돈다.
+/// 서버는 [server](Stub, 기본은 로그인 전의 빈 서버)이고, 서버 밖의 재료(광고·원격 설정·테마 저장소·앱 종료)만 fake로 바꾼다.
 ///
 /// 전역 get_it을 등록·reset하는 대신 의존성 seam(`service/*_provider.dart`)을 override한다.
 /// 테스트가 끝나면 스스로 dispose한다.
@@ -89,9 +90,7 @@ ProviderContainer fakeContainer({
   void Function()? exitApp,
 }) {
   final s = server ?? StubServer();
-  final container = ProviderContainer(
-    // 실패한 provider를 자동 재시도하면 타이머가 테스트 끝까지 남는다. 테스트는 한 번만 본다.
-    retry: (_, _) => null,
+  final container = appContainer(
     overrides: [
       authRepositoryProvider.overrideWithValue(s.auth),
       userProfileRepositoryProvider.overrideWithValue(s.profiles),

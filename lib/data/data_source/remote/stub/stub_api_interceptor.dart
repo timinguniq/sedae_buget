@@ -239,12 +239,11 @@ class StubApiInterceptor extends Interceptor {
       case 'PUT':
         final b = _bodyOf(body);
         final rawName = b['name'];
-        final name = rawName is String ? rawName.trim() : '';
+        final name = rawName is String ? CategoryName.tryParse(rawName) : null;
         final rawBase = b['baseCategoryId'];
         final baseId = rawBase is int ? rawBase : null;
-        if (name.isEmpty || name.length > CustomCategory.maxNameLength) {
-          throw _StubError(
-              400, 'VALIDATION', '이름은 1~${CustomCategory.maxNameLength}자여야 합니다.');
+        if (name == null) {
+          throw _StubError(400, 'VALIDATION', '이름은 1~${CategoryName.maxLength}자여야 합니다.');
         }
         if (baseId == null || BudgetCategory.tryFromId(baseId) == null) {
           throw _StubError(400, 'VALIDATION', '상위 카테고리가 잘못되었습니다.');

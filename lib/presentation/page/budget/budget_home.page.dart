@@ -36,7 +36,7 @@ class BudgetHomePage extends ConsumerWidget {
           const SizedBox(height: 16),
           Expanded(child: overview.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => LoadErrorView(error: e, onRetry: ref.read(monthlyTransactionsProvider.notifier).reload),
+            error: (e, _) => LoadErrorView(error: e),
             data: (o) {
               final m = o.month;
               final savingsRate = m.savingsRate;
@@ -47,8 +47,7 @@ class BudgetHomePage extends ConsumerWidget {
                     peer: o.standing.heroPill),
                 if (o.standing is PeerUnavailable) ...[
                   const SizedBox(height: 13),
-                  SurfaceCard(child: Text(peerUnavailableText,
-                    style: context.typo.caption1W500.copyWith(color: context.color.label.assistive))),
+                  const SurfaceCard(child: LoadErrorView.peer()),
                 ] else if (o.standing case PeerCompared(:final rank?)) ...[
                   const SizedBox(height: 13),
                   PeerRankCard(rank: rank, onDetail: () => context.go(RoutePath.compare.path)),

@@ -41,7 +41,7 @@ class TransactionTile extends StatelessWidget {
               color: context.color.background.alternative,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Text(label.isEmpty ? '' : label.substring(0, 1),
+            child: Text(label.isEmpty ? '' : label.characters.first,
                 style: context.typo.label2W600.copyWith(
                     fontWeight: context.typo.bold, color: context.color.label.alternative)),
           ),

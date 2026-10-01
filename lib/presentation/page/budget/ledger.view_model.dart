@@ -15,6 +15,13 @@ import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 /// 로그인 중이면 true. 이것을 부른 provider는 세션이 바뀌면 다시 만들어진다.
 Future<bool> _signedIn(Ref ref) async => await ref.watch(authProvider.future) != null;
 
+/// 변경 뒤 서버의 장부가 바뀌었을 수 있는가: 성공했거나, 시간 초과라 서버에서 바뀌었는지 모를 때.
+/// 연결이 안 됐거나 서버가 거절했으면 바뀐 것이 없다(다시 읽어도 같고, 연결이 안 되면 뒤 화면까지 실패로 바뀐다).
+bool _mayHaveChanged(Result<Object?> res) {
+  final reason = res.failureOrNull?.reason;
+  return reason == null || reason == FailureReason.timeout;
+}
+
 /// 보고 있는 달. 모든 탭이 함께 본다. 이번 달보다 뒤로, 2020년 1월보다 앞으로는 가지 않는다(규칙은 [YearMonth]).
 class SelectedMonthNotifier extends Notifier<YearMonth> {
   @override
@@ -66,8 +73,8 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
 
   Future<Result<Transaction>> delete(Transaction tx) => _apply(() => _transactions.delete(tx));
 
-  /// 불러오기에 실패한 화면의 '다시 시도'. 달 화면이 읽는 서버 데이터
-  /// (이달 거래·추이·사용자 카테고리·또래 통계)를 모두 다시 읽는다.
+  /// 불러오기에 실패한 달 화면의 '다시 시도'(`LoadErrorView`). 달 화면이 읽는 서버 데이터
+  /// (이달 거래·추이·사용자 카테고리·또래 통계·세대별 평균)를 모두 다시 읽는다.
   void reload() {
     ref.invalidateSelf();
     ref.invalidate(selfTrendProvider);
@@ -76,10 +83,10 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
     ref.invalidate(generationAvgProvider);
   }
 
-  /// 거래가 바뀌면 이달 거래와 추이를 다시 읽는다.
+  /// 거래가 바뀌었을 수 있으면 이달 거래와 추이를 다시 읽는다.
   Future<Result<Transaction>> _apply(Future<Result<Transaction>> Function() run) async {
     final res = await run();
-    if (res.failureOrNull == null) {
+    if (_mayHaveChanged(res)) {
       ref.invalidateSelf();
       ref.invalidate(selfTrendProvider);
     }
@@ -141,12 +148,12 @@ class CustomCategoriesNotifier extends AsyncNotifier<List<CustomCategory>> {
   Future<Result<CustomCategory>> remove(CustomCategory category) =>
       _apply(() => _categories.delete(category));
 
-  /// 카테고리가 바뀌면 카테고리와 이달 거래를 다시 읽는다. 서버는 지운 카테고리의 거래를 기본 분류로
-  /// 되돌리고, 상위 분류를 바꾸면 거래를 새 분류로 옮긴다. 추이는 금액만 보므로 그대로 둔다.
+  /// 카테고리가 바뀌었을 수 있으면 카테고리와 이달 거래를 다시 읽는다. 서버는 지운 카테고리의 거래를
+  /// 기본 분류로 되돌리고, 상위 분류를 바꾸면 거래를 새 분류로 옮긴다. 추이는 금액만 보므로 그대로 둔다.
   Future<Result<CustomCategory>> _apply(
       Future<Result<CustomCategory>> Function() run) async {
     final res = await run();
-    if (res.failureOrNull == null) {
+    if (_mayHaveChanged(res)) {
       ref.invalidateSelf();
       ref.invalidate(monthlyTransactionsProvider);
     }

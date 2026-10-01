@@ -56,7 +56,7 @@ Future<void> main() async {
 
       //HttpOverrides.global = NoCheckCertificateHttpOverrides(); // 생성된 HttpOverrides 객체 등록
 
-      runApp(const ProviderScope(child: MyApp()));
+      runApp(UncontrolledProviderScope(container: appContainer(), child: const MyApp()));
     }, (e, s) {
       // 글로벌 에러 핸들링
       _logger.e('Unhandled Exception:', error: e, stackTrace: s);

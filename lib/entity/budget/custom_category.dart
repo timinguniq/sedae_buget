@@ -17,8 +17,5 @@ abstract class CustomCategory with _$CustomCategory {
 
   const CustomCategory._();
 
-  /// 이름 최대 길이. 클라이언트 입력 제한과 서버 검증이 같은 값을 쓴다.
-  static const maxNameLength = 10;
-
   BudgetCategory get base => BudgetCategory.fromId(baseCategoryId);
 }

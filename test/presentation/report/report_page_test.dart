@@ -122,10 +122,32 @@ void main() {
     expect(find.textContaining('아직 분석할 지출이'), findsOneWidget);
   });
 
-  testWidgets('또래 통계를 못 읽으면 안내 문구를 보여준다', (tester) async {
-    await _pumpReport(tester, faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server));
+  testWidgets('또래 통계를 못 읽으면 안내와 다시 시도를 보여주고, 다시 시도하면 읽는다', (tester) async {
+    await _pumpReport(tester,
+        faults: (f) => f.fail('GET', '/v1/peer/stats', reason: FailureReason.server, times: 1));
 
     expect(find.text('또래 통계를 불러오지 못했어요'), findsOneWidget);
+    expect(find.text('이달의 발견'), findsNothing);
+
+    await tester.tap(find.text('다시 시도'));
+    await tester.settle();
+
+    expect(find.text('또래 통계를 불러오지 못했어요'), findsNothing);
+    expect(find.text('이달의 발견'), findsOneWidget);
+  });
+
+  // 이전에는 세대별 평균을 못 읽으면 그 카드가 아무 말 없이 비었다.
+  testWidgets('세대별 평균을 못 읽으면 이유와 다시 시도를 보여주고, 다시 시도하면 그린다', (tester) async {
+    await _pumpReport(tester, faults: (f) => f.fail('GET', '/v1/peer/generations', times: 1));
+
+    expect(find.byType(GenerationAvgChart), findsNothing);
+    expect(find.text('불러오지 못했어요. 인터넷에 연결되어 있지 않아요'), findsOneWidget);
+
+    await tester.tap(find.text('다시 시도'));
+    await tester.settle();
+
+    expect(find.byType(GenerationAvgChart), findsOneWidget);
+    expect(find.text('다시 시도'), findsNothing);
   });
 
   // 세대 차트와 대표 소비 칩은 '내 세대' 하나만 강조한다.

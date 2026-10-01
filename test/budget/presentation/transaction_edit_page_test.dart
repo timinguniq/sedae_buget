@@ -129,6 +129,19 @@ void main() {
     });
   });
 
+  // 응답을 잃은 뒤 다시 지우면 서버는 404다. 이전에는 '이미 지워졌거나 찾을 수 없어요'를 띄우고 화면을 닫지 않았다.
+  testWidgets('이미 지워진 거래를 지우면 화면을 닫는다', (tester) async {
+    // 서버에 없는 거래다.
+    await pumpEditPage(tester, existing: Transaction.create(
+        amount: 1000, categoryId: 1, date: DateTime.now(), type: TransactionType.expense));
+
+    await tester.tap(find.byKey(const Key('delete-button')));
+    await tester.settle();
+
+    expect(find.byType(TransactionEditPage), findsNothing);
+    expect(find.textContaining('삭제하지 못했어요'), findsNothing);
+  });
+
   testWidgets('zero amount is blocked', (tester) async {
     final server = await pumpEditPage(tester);
     await tester.tap(find.byKey(const Key('save-button')));

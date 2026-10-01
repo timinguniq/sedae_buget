@@ -70,6 +70,21 @@ void main() {
     expect(find.textContaining('또래 평균'), findsNothing);
   });
 
+  // 이전에는 안내 문구만 있어서 다시 읽을 방법이 없었다.
+  testWidgets('또래 통계를 못 읽으면 다시 시도를 보여주고, 다시 시도하면 또래와 견준다', (tester) async {
+    final server = await tester.seedServer(profile: _profile, transactions: _taxi());
+    server.faults.fail('GET', '/v1/peer', reason: FailureReason.server, times: 1);
+    await _pumpHome(tester, fakeContainer(server: server));
+    expect(find.text('또래 통계를 불러오지 못했어요'), findsOneWidget);
+
+    await tester.tap(find.text('다시 시도'));
+    await tester.settle();
+
+    expect(find.text('또래 통계를 불러오지 못했어요'), findsNothing);
+    expect(find.text('또래 중 내 지출 순위'), findsOneWidget);
+    expect(find.text('택시'), findsOneWidget); // 다시 읽는 동안에도 내 장부는 그대로다
+  });
+
   // 이전에는 지난 달을 봐도 '이번 달 요약·이번 달 총지출·이번 달 저축률'로 보였다.
   testWidgets('지난 달을 보면 그 달 이름으로 보인다', (tester) async {
     final now = DateTime.now();

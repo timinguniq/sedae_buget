@@ -140,6 +140,24 @@ void main() {
     expect(saved.base, BudgetCategory.etc);
   });
 
+  // 입력 칸은 보이는 글자로 10자까지 받는다. 이전에는 글자 수를 UTF-16으로 세어 이모지 6개가 '12 / 10'이었고
+  // 추가하기가 이유 없이 꺼졌다.
+  testWidgets('이모지 이름도 보이는 글자로 세고 저장한다', (tester) async {
+    final server = await pumpPage(tester, customs: const []);
+
+    await tester.tap(find.byKey(const Key('category-add-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.enterText(find.byKey(const Key('category-name-field')), '🐶' * 6);
+    await tester.pump();
+    expect(find.text('6 / 10'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('category-submit-button')));
+    await tester.settle();
+
+    expect((await _onServer(tester, server)).single.name, '🐶' * 6);
+  });
+
   // 서버는 저장했는데 응답을 잃었다. 다시 누르면 같은 카테고리로 저장돼 이름이 겹친다고 막히지 않는다.
   testWidgets('응답을 잃은 뒤 다시 누르면 카테고리 하나로 저장하고 닫힌다', (tester) async {
     final server = await pumpPage(tester, customs: const []);

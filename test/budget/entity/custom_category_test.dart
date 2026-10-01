@@ -6,8 +6,4 @@ void main() {
     const c = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
     expect(c.base, BudgetCategory.etc);
   });
-
-  test('maxNameLength is the shared client/server limit', () {
-    expect(CustomCategory.maxNameLength, 10);
-  });
 }

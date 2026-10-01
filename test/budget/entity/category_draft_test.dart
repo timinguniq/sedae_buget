@@ -28,9 +28,17 @@ void main() {
   test('다듬은 이름이 비었거나 최대 길이를 넘으면 저장하지 않는다', () {
     final d = CategoryDraft.create();
     expect(d.withName('   ').canSave, isFalse);
-    expect(d.withName('a' * CategoryDraft.maxNameLength).canSave, isTrue);
-    expect(d.withName(' ${'a' * CategoryDraft.maxNameLength} ').canSave, isTrue);
-    expect(d.withName('a' * (CategoryDraft.maxNameLength + 1)).canSave, isFalse);
+    expect(d.withName('a' * CategoryName.maxLength).canSave, isTrue);
+    expect(d.withName(' ${'a' * CategoryName.maxLength} ').canSave, isTrue);
+    expect(d.withName('a' * (CategoryName.maxLength + 1)).canSave, isFalse);
+  });
+
+  // 입력 칸은 보이는 글자로 10자까지 받는다. 이전에는 초안이 UTF-16으로 세어 이모지 6개(12)를 막았다.
+  test('이름은 보이는 글자로 센다(이모지·이어 붙인 이모지도 한 자)', () {
+    final d = CategoryDraft.create();
+    expect(d.withName('🐶' * 10).canSave, isTrue);
+    expect(d.withName('👨‍👩‍👧' * 10).canSave, isTrue);
+    expect(d.withName('🐶' * 11).canSave, isFalse);
   });
 
   test('고치는 초안은 그 카테고리의 id·이름·상위 분류로 시작한다', () {

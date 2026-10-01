@@ -7,6 +7,6 @@ abstract class CategoryRepository {
 
   Future<Result<CustomCategory>> upsert(CustomCategory category);
 
-  /// 삭제한 카테고리를 그대로 돌려준다.
+  /// 삭제한 카테고리를 그대로 돌려준다. 이미 없으면(먼저 지웠거나 응답을 잃은 뒤 다시 지움) 지운 것이다.
   Future<Result<CustomCategory>> delete(CustomCategory category);
 }
