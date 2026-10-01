@@ -244,6 +244,14 @@ void apiContract(ContractTarget Function() target) {
       }
     });
 
+    // 1자는 보이는 글자다(이모지·이어 붙인 이모지도 한 자). 앱의 입력 칸도 이렇게 센다.
+    test('이름은 보이는 글자로 센다: 이모지 10자는 되고 11자는 400 VALIDATION', () async {
+      expect((await putCategory('c1', '🐶' * 10, 19)).status, 201);
+      expect((await putCategory('c2', '👨‍👩‍👧' * 10, 19)).status, 201);
+      final res = await putCategory('c3', '🐶' * 11, 19);
+      expect((res.status, res.code), (400, 'VALIDATION'));
+    });
+
     test('같은 사용자 안에서 이름이 겹치면(대소문자 무시) 409 CATEGORY_DUPLICATE', () async {
       await putCategory('c1', 'Pet', 19);
       final res = await putCategory('c2', 'pet', 9);

@@ -37,7 +37,7 @@ void main() {
 
   test('too long name → Failure VALIDATION', () async {
     final res = await repo.upsert(CustomCategory(
-        id: 'c-long', name: 'a' * (CustomCategory.maxNameLength + 1), baseCategoryId: 1));
+        id: 'c-long', name: 'a' * (CategoryName.maxLength + 1), baseCategoryId: 1));
     expect(res.failureOrNull?.code, 'VALIDATION');
     expect(res.failureOrNull?.reason, FailureReason.invalid);
   });

@@ -1,4 +1,5 @@
 import 'package:sedae_budget/entity/budget/budget_category.dart';
+import 'package:sedae_budget/entity/budget/category_name.dart';
 import 'package:sedae_budget/entity/budget/custom_category.dart';
 import 'package:uuid/uuid.dart';
 
@@ -27,18 +28,13 @@ class CategoryDraft {
 
   final bool isEdit;
 
-  /// 이름 최대 길이(서버 검증과 같은 값).
-  static const maxNameLength = CustomCategory.maxNameLength;
-
-  String get _trimmed => name.trim();
-
-  /// 다듬은 이름이 비었거나 너무 길면 저장하지 않는다.
-  bool get canSave => _trimmed.isNotEmpty && _trimmed.length <= maxNameLength;
+  /// 다듬은 이름이 비었거나 너무 길면 저장하지 않는다(규칙은 [CategoryName]).
+  bool get canSave => CategoryName.tryParse(name) != null;
 
   CategoryDraft withName(String name) => CategoryDraft._(id: id, name: name, base: base, isEdit: isEdit);
 
   CategoryDraft pickBase(BudgetCategory base) => CategoryDraft._(id: id, name: name, base: base, isEdit: isEdit);
 
   /// 저장할 카테고리(이름은 앞뒤 공백을 뗀다).
-  CustomCategory toCategory() => CustomCategory(id: id, name: _trimmed, baseCategoryId: base.id);
+  CustomCategory toCategory() => CustomCategory(id: id, name: name.trim(), baseCategoryId: base.id);
 }

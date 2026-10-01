@@ -2,6 +2,7 @@ export 'age_group.dart';
 export 'budget_category.dart';
 export 'category_catalog.dart';
 export 'category_draft.dart';
+export 'category_name.dart';
 export 'custom_category.dart';
 export 'month_overview.dart';
 export 'spending_trend.dart';
