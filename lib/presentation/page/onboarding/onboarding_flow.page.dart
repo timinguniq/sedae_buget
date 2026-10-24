@@ -207,7 +207,7 @@ class _IncomeStep extends StatelessWidget {
         Text('월 소득은\n어느 정도인가요?',
           style: context.typo.pageTitle.copyWith(height: 1.3, color: c.label.normal)),
         const SizedBox(height: 9),
-        Text('또래 평균과 비교할 때만 사용해요.',
+        Text('저축률 계산과 또래 비교에만 사용해요.',
           style: context.typo.caption1W500.copyWith(fontSize: 13, color: c.label.assistive)),
         const SizedBox(height: 38),
         Center(child: Column(children: [

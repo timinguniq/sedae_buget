@@ -8,7 +8,8 @@ final _logger = CustomLogger.create(tag: 'api');
 ///
 /// 모든 실패가 여기서 [ErrorResult]로 끝나고 repository는 던지지 않는다.
 /// - 응답을 못 받음: 연결한 뒤의 시간 초과(요청이 서버에 닿았을 수 있다)면 timeout, 그 밖(연결 시간 초과 포함)은 offline.
-/// - 오류 응답: 상태코드로 [FailureReason]을 정하고, 서버 바디 `{code, message}`의 도메인 코드와 문구만 옮긴다.
+/// - 오류 응답: 상태코드로 [FailureReason]을 정하고, 서버 바디 `{code, message}`의 도메인 코드와 문구만 옮긴다
+///   (계약 밖 422의 문구는 옮기지 않는다).
 ///   HTTP 상태·전송 오류 코드와 Dio의 개발자용 문구는 여기서 버린다.
 /// - 해석할 수 없는 성공 응답(빈 바디·빠진 필드·모르는 값): server.
 ///
@@ -36,11 +37,14 @@ ErrorResult _failureOf(DioException e) {
     case DioExceptionType.receiveTimeout:
       return const ErrorResult(reason: FailureReason.timeout, message: '');
     case DioExceptionType.badResponse:
+      final status = e.response?.statusCode;
       final data = e.response?.data;
       final body = data is Map && data['code'] is String ? data : null;
       return ErrorResult(
-        reason: _reasonOf(e.response?.statusCode),
-        message: (body?['message'] as String?) ?? '',
+        reason: _reasonOf(status),
+        // 422는 계약 밖이라(입력 오류는 400) 사용자에게 보일 문구라는 보장이 없다. invalid로만 두고
+        // 문구는 버려, 화면이 앱 문구('입력한 값을 확인해 주세요')를 쓰게 한다(docs/api-contract.md).
+        message: status == 422 ? '' : (body?['message'] as String?) ?? '',
         code: body?['code'] as String?,
       );
     default:

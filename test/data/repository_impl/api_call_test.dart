@@ -27,6 +27,26 @@ void main() {
     expect(f.message, '같은 이름의 카테고리가 있어요');
   });
 
+  // 계약의 입력 오류는 400(VALIDATION)이다. 이전에는 계약 밖 422의 문구도 옮겨, 화면이 그 서버 문구를 이유로 보였다.
+  test('422는 invalid지만 서버 문구를 옮기지 않는다(400은 옮긴다)', () async {
+    final unprocessable =
+        await _failure(FakeHttpAdapter.reply(422, errorBody('UNPROCESSABLE', 'Unprocessable Entity')));
+    expect(unprocessable.reason, FailureReason.invalid);
+    expect(unprocessable.message, isEmpty);
+    expect(unprocessable.code, 'UNPROCESSABLE');
+    final validation = await _failure(FakeHttpAdapter.reply(400, errorBody('VALIDATION', '이름은 1~10자여야 합니다.')));
+    expect(validation.reason, FailureReason.invalid);
+    expect(validation.message, '이름은 1~10자여야 합니다.');
+  });
+
+  // 문구를 버리는 것은 계약 밖 422뿐이다.
+  test('422가 아닌 오류 응답(429·500)의 서버 문구는 옮긴다', () async {
+    for (final status in [429, 500]) {
+      final f = await _failure(FakeHttpAdapter.reply(status, errorBody('X', '잠시 후 다시 시도해 주세요')));
+      expect(f.message, '잠시 후 다시 시도해 주세요', reason: '$status');
+    }
+  });
+
   test('상태코드를 도메인 분류로 바꾼다', () async {
     const table = [
       (400, FailureReason.invalid),
