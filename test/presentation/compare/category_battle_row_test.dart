@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/category_battle_row.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
-Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: SizedBox(width: 350, child: child)));
+Widget _wrap(Widget child) =>
+    MaterialApp(home: Scaffold(body: SizedBox(width: 350, child: child)), theme: materialTheme(LightTheme()));
 
 Widget _row(int mine, int peer) => _wrap(CategoryBattleRow(
     category: BudgetCategory.groceries, comparison: PeerComparison.of(mine: mine, peer: peer)!));
@@ -18,6 +20,14 @@ void main() {
   testWidgets('less than peer → −N%', (tester) async {
     await tester.pumpWidget(_row(90, 100));
     expect(find.text('−10%'), findsOneWidget);
+  });
+
+  // 덜 쓴 막대는 글자색(label.alternative)보다 흐린 label.disable이다.
+  testWidgets('덜 쓴 막대는 흐린 회색이다', (tester) async {
+    await tester.pumpWidget(_row(90, 100));
+    final bar = tester.widget<DecoratedBox>(
+        find.descendant(of: find.byType(CategoryBattleRow), matching: find.byType(DecoratedBox)));
+    expect((bar.decoration as BoxDecoration).color, Palette.labelDisable);
   });
 
   testWidgets('반올림해 0%면 비슷', (tester) async {

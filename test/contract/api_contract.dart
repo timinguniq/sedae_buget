@@ -2,6 +2,13 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'contract_target.dart';
 
+/// 계약의 일시: ISO-8601 UTC(`...Z`).
+final _isUtc = predicate<Object?>(
+    (v) => v is String && v.endsWith('Z') && DateTime.tryParse(v) != null, 'ISO-8601 UTC(...Z)');
+
+/// 거래 응답의 일시(`date`·`createdAt`·`updatedAt`)가 모두 [_isUtc]다.
+final _hasUtcDates = allOf([for (final key in ['date', 'createdAt', 'updatedAt']) containsPair(key, _isUtc)]);
+
 /// API 계약 v1 suite. 설명은 `docs/api-contract.md`, 기준은 이 파일이다(둘이 다르면 이 파일이 맞다).
 ///
 /// 경로·바디는 앱 코드(`ApiPath`·DTO)를 쓰지 않고 문자열 그대로 적는다. 그래서 앱과 Stub이 같은
@@ -42,15 +49,17 @@ void apiContract(ContractTarget Function() target) {
 
     test('idToken이 없거나 provider가 틀리면 400 VALIDATION', () async {
       expect((await api.send('POST', '/v1/auth/login', body: {'provider': 'kakao'})).code, 'VALIDATION');
-      final bad = await api.send('POST', '/v1/auth/login', body: {'provider': 'line', 'idToken': 'x'});
-      expect(bad.status, 400);
-      expect(bad.code, 'VALIDATION');
+      for (final provider in <Object>['line', 123]) {
+        final bad = await api.send('POST', '/v1/auth/login', body: {'provider': provider, 'idToken': 'x'});
+        expect((bad.status, bad.code), (400, 'VALIDATION'), reason: '$provider');
+      }
     });
 
-    test('/v1/me는 토큰의 사용자다', () async {
-      final token = await api.login('naver');
-      final me = await api.send('GET', '/v1/me', token: token);
+    test('/v1/me는 토큰의 사용자다(로그인 응답의 user와 같다)', () async {
+      final login = await api.send('POST', '/v1/auth/login', body: {'provider': 'naver', 'idToken': api.idToken});
+      final me = await api.send('GET', '/v1/me', token: login.json['accessToken'] as String);
       expect(me.status, 200);
+      expect(me.json, login.json['user']);
       expect(me.json['provider'], 'naver');
     });
 
@@ -90,7 +99,9 @@ void apiContract(ContractTarget Function() target) {
       final old = await api.login('kakao');
       await api.send('POST', '/v1/auth/logout', token: old);
       final fresh = await api.login('kakao');
+      expect(fresh, isNot(old));
       expect((await api.send('GET', '/v1/me', token: fresh)).status, 200);
+      expect((await api.send('GET', '/v1/me', token: old)).status, 401); // 다시 로그인해도 옛 토큰은 살아나지 않는다
     });
 
     test('오류 바디는 {code, message}', () async {
@@ -157,25 +168,35 @@ void apiContract(ContractTarget Function() target) {
       expect(created.json['id'], 't1');
       expect(created.json['amount'], 1000);
       expect(created.json['memo'], '점심');
-      expect(created.json['createdAt'], isA<String>());
-      expect(created.json['updatedAt'], isA<String>());
+      expect(created.json, _hasUtcDates);
 
       final updated = await put('t1', expense(amount: 2500, date: '2026-09-03T00:00:00.000Z'));
       expect(updated.status, 200);
       expect(updated.json['amount'], 2500);
       expect(updated.json['createdAt'], created.json['createdAt']);
+      expect(updated.json, _hasUtcDates);
     });
 
     test('기간 [from, to)의 거래를 날짜 최신순으로 준다', () async {
       await put('a', expense(date: '2026-09-01T00:00:00.000Z'));
       await put('b', expense(date: '2026-09-10T00:00:00.000Z'));
       await put('c', expense(date: '2026-10-01T00:00:00.000Z')); // to는 배타
-      expect((await list()).map((e) => e['id']), ['b', 'a']);
+      final items = await list();
+      expect(items.map((e) => e['id']), ['b', 'a']);
+      expect(items, everyElement(_hasUtcDates));
     });
 
-    test('from·to가 없으면 400 VALIDATION', () async {
-      final res = await api.send('GET', '/v1/transactions', query: {'from': september['from']}, token: token);
-      expect((res.status, res.code), (400, 'VALIDATION'));
+    test('from·to가 없거나 UTC(...Z)가 아니면 400 VALIDATION', () async {
+      final queries = [
+        {'from': september['from']},
+        {'to': september['to']},
+        {'from': '2026-09-01T09:00:00.000+09:00', 'to': september['to']},
+        {'from': september['from'], 'to': '2026-10-01T09:00:00.000+09:00'},
+      ];
+      for (final query in queries) {
+        final res = await api.send('GET', '/v1/transactions', query: query, token: token);
+        expect((res.status, res.code), (400, 'VALIDATION'), reason: '$query');
+      }
     });
 
     test('지우면 204, 없는 거래는 404 NOT_FOUND', () async {
@@ -203,6 +224,7 @@ void apiContract(ContractTarget Function() target) {
         '지출 categoryId 20': expense(categoryId: 20),
         'date 형식': {...expense(), 'date': 'not-a-date'},
         'date UTC 아님': {...expense(), 'date': '2026-09-02T00:00:00.000'},
+        'date 오프셋(...Z 아님)': {...expense(), 'date': '2026-09-02T09:00:00.000+09:00'},
         'memo 숫자': {...expense(), 'memo': 123},
         '없는 사용자 카테고리': expense(customCategoryId: 'nope'),
         '바디 없음': null,
@@ -242,6 +264,8 @@ void apiContract(ContractTarget Function() target) {
         final res = await putCategory('c1', name, base);
         expect((res.status, res.code), (400, 'VALIDATION'), reason: '$name/$base');
       }
+      final noBase = await api.send('PUT', '/v1/categories/c1', body: {'name': '반려동물'}, token: token);
+      expect((noBase.status, noBase.code), (400, 'VALIDATION'), reason: '상위 분류 없음');
     });
 
     // 1자는 보이는 글자다(이모지·이어 붙인 이모지도 한 자). 앱의 입력 칸도 이렇게 센다.

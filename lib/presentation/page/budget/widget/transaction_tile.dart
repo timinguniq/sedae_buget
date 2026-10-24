@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/widget/common/peer_text.dart';
 import 'package:sedae_budget/presentation/widget/common/won_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
@@ -73,7 +74,7 @@ class TransactionTile extends StatelessWidget {
   }
 }
 
-/// `또래보다 많이` 배지(700·8.5 코랄 / 코랄 tint 배경). 이 거래의 분류에서 이달 지출이 또래 평균을 넘었다.
+/// `또래보다 많이` 배지(700·8.5 코랄 / 코랄 tint 배경). 이 거래의 분류에서 보고 있는 달의 지출이 또래 평균을 넘었다.
 class _PeerBadge extends StatelessWidget {
   const _PeerBadge();
 
@@ -85,7 +86,7 @@ class _PeerBadge extends StatelessWidget {
         color: context.color.primary.tint,
         borderRadius: BorderRadius.circular(7),
       ),
-      child: Text('또래보다 많이',
+      child: Text(overPeerText,
           style: context.typo.caption2W600.copyWith(
               fontSize: 8.5, height: 1.3, fontWeight: context.typo.bold, color: context.color.primary.normal)),
     );

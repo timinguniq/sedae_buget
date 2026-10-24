@@ -70,6 +70,14 @@ void main() {
     expect(offline.message, isEmpty);
   });
 
+  // 이전에는 연결 시간 초과도 timeout이라, 장부가 서버에 가지 않은 변경 뒤에 다시 읽어 뒤 화면까지 실패로 바꿨다.
+  test('연결하지 못한 시간 초과는 offline, 연결한 뒤의 시간 초과는 timeout이다', () async {
+    expect((await _failure(FakeHttpAdapter.fail(DioExceptionType.connectionTimeout))).reason,
+        FailureReason.offline);
+    expect((await _failure(FakeHttpAdapter.fail(DioExceptionType.sendTimeout))).reason,
+        FailureReason.timeout);
+  });
+
   test('HTTP·전송 계층 사정은 domain seam을 넘지 않는다(서버 도메인 코드만 남는다)', () async {
     expect((await _failure(FakeHttpAdapter.reply(500, '<html>', contentType: 'text/html'))).code,
         isNull);

@@ -19,12 +19,19 @@ class _LocalServer extends Interceptor {
   }
 }
 
-Dio _connect(AppEnvironment env, {bool release = false, _LocalServer? local, String? token}) =>
+Dio _connect(
+  AppEnvironment env, {
+  bool release = false,
+  bool web = false,
+  _LocalServer? local,
+  String? token,
+}) =>
     connectToServer(
       env: env,
       session: Session(MemoryAuthTokenStore(token)),
       localServer: () => local ?? _LocalServer(),
       release: release,
+      web: web,
     );
 
 /// [body]가 print한 줄을 모은다.
@@ -57,6 +64,35 @@ void main() {
     for (final env in unset) {
       expect(() => _connect(env), throwsStateError, reason: env.name);
     }
+  });
+
+  group('시간 제한', () {
+    test('앱은 연결·보내기·받기 모두 15초다', () {
+      final o = _connect(AppEnvironment.local).options;
+      expect(o.connectTimeout, const Duration(seconds: 15));
+      expect(o.sendTimeout, const Duration(seconds: 15));
+      expect(o.receiveTimeout, const Duration(seconds: 15));
+    });
+
+    // 브라우저는 연결 중인지 응답을 기다리는지 구별하지 못한다. 연결 시간 제한을 두면 서버가 처리했는데
+    // 응답만 늦은 것도 연결 시간 초과(요청이 서버에 가지 않음)가 되어, 장부가 다시 읽지 않는다.
+    // 웹 어댑터는 연결+받기 시간을 요청 전체의 기한으로 쓴다. 이전에는 연결 제한을 빼면서 그 기한이 30초에서 15초로 줄었다.
+    test('웹은 연결 제한을 두지 않고 받기 30초로 전체 기한 30초를 지킨다', () {
+      final o = _connect(AppEnvironment.local, web: true).options;
+      expect(o.connectTimeout, isNull);
+      expect(o.receiveTimeout, const Duration(seconds: 30));
+    });
+
+    // web을 넘기지 않으면 kIsWeb을 따른다. VM 테스트에서는 false라 앱의 시간 제한이다.
+    test('web을 넘기지 않으면 실행 환경을 따른다(VM은 앱: 연결·받기 15초)', () {
+      final o = connectToServer(
+        env: AppEnvironment.local,
+        session: Session(MemoryAuthTokenStore()),
+        localServer: _LocalServer.new,
+      ).options;
+      expect(o.connectTimeout, const Duration(seconds: 15));
+      expect(o.receiveTimeout, const Duration(seconds: 15));
+    });
   });
 
   group('요청 로그', () {

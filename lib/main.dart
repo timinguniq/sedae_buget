@@ -84,6 +84,7 @@ class MyApp extends ConsumerWidget {
     });
     return MaterialApp.router(
       builder: (context, child) => MediaQuery(
+        // 글자 크기는 고정하고 기기의 글자 크기 설정을 따르지 않는다(사용자 결정 2026-10-24, docs/architecture.md 테마).
         data: MediaQuery.of(context).copyWith(textScaler: TextScaler.noScaling),
         child: child!,
       ),

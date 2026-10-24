@@ -68,10 +68,9 @@ List<TransactionFeedItem> buildTransactionFeed(
   return items;
 }
 
-/// 날짜 그룹 헤더 문구: 오늘 · M월 D일 / 어제 · M월 D일 / M월 D일.
-String dateGroupLabel(DateTime day, {DateTime? now}) {
-  final n = now ?? DateTime.now();
-  final today = DateTime(n.year, n.month, n.day);
+/// 날짜 그룹 헤더 문구: 오늘 · M월 D일 / 어제 · M월 D일 / M월 D일. [now]는 부르는 쪽이 정한다.
+String dateGroupLabel(DateTime day, {required DateTime now}) {
+  final today = DateTime(now.year, now.month, now.day);
   final md = '${day.month}월 ${day.day}일';
   final diff = today.difference(DateTime(day.year, day.month, day.day)).inDays;
   if (diff == 0) return '오늘 · $md';

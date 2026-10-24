@@ -1,23 +1,9 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sedae_budget/core/core.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 import '../../helper/stub_server.dart';
-
-/// 모든 요청을 500으로 떨어뜨린다(서버 장애 시뮬레이션).
-class _ServerDown extends Interceptor {
-  @override
-  void onRequest(RequestOptions o, RequestInterceptorHandler h) => h.reject(
-        DioException(
-          requestOptions: o,
-          type: DioExceptionType.badResponse,
-          response: Response(requestOptions: o, statusCode: 500),
-        ),
-      );
-}
 
 /// 요청받은 소셜 로그인을 기록하고 고정 토큰을 준다.
 class _FixedToken implements SocialIdTokenProvider {
@@ -103,15 +89,11 @@ void main() {
   });
 
   test('server error on /me → server 실패, 토큰은 그대로', () async {
-    final session = Session(tokens);
-    final dio = connectToServer(
-      env: AppEnvironment.local, session: session, localServer: () => _ServerDown(),
-    );
-    final down = AuthRepositoryImpl(AuthApi(dio), session, StubSocialIdTokenProvider());
-    tokens.token = 'stub.kakao.t';
-    expect((await down.currentUser()).failureOrNull?.reason, FailureReason.server);
-    expect(tokens.token, 'stub.kakao.t'); // 500은 토큰을 지우지 않는다
-
+    await server.signIn(AuthProvider.kakao);
+    final saved = tokens.token;
+    server.faults.fail('GET', '/v1/me', reason: FailureReason.server);
+    expect((await repo.currentUser()).failureOrNull?.reason, FailureReason.server);
+    expect(tokens.token, saved); // 500은 토큰을 지우지 않는다
   });
 
   group('토큰 저장소가 던져도 저장소는 던지지 않는다', () {

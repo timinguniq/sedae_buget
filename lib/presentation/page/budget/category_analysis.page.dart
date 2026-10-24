@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
@@ -121,7 +120,7 @@ class _Header extends StatelessWidget {
         Row(mainAxisSize: MainAxisSize.min, children: [
           GestureDetector(key: const Key('month-prev'), onTap: onPrev, behavior: HitTestBehavior.opaque,
               child: Padding(padding: const EdgeInsets.all(4), child: Text('‹', style: arrow))),
-          Text(DateFormat('yyyy.MM').format(month.start),
+          Text(month.dottedName,
               style: context.typo.caption1W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.normal)),
           GestureDetector(key: const Key('month-next'), onTap: onNext, behavior: HitTestBehavior.opaque,
               child: Padding(padding: const EdgeInsets.all(4), child: Text('›', style: arrow))),

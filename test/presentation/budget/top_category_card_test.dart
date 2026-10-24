@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/page/budget/widget/peer_delta_badge.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/top_category_card.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
@@ -60,6 +61,17 @@ void main() {
       expect(barColors(t),
           [Palette.primaryNormal, Palette.darkTextDisabled, Palette.darkTextDisabled, Palette.primaryNormal]);
     });
+  });
+
+  // 홈 카드의 배지는 바탕이 있는 pill이다: 더 쓴 분류는 코랄 틴트, 덜 쓴 분류는 회색 바탕.
+  testWidgets('배지 바탕: 더 씀은 코랄 틴트, 덜 씀은 회색', (t) async {
+    await t.pumpWidget(_wrap(TopCategoryCard(top: [
+      (category: BudgetCategory.fromId(1), amount: 540000, peer: PeerComparison.of(mine: 540000, peer: 470000)),
+      (category: BudgetCategory.fromId(8), amount: 380000, peer: PeerComparison.of(mine: 380000, peer: 420000)),
+    ])));
+    final badges = find.descendant(of: find.byType(PeerDeltaBadge), matching: find.byType(Container));
+    final bgs = t.widgetList<Container>(badges).map((c) => (c.decoration as BoxDecoration?)?.color).toList();
+    expect(bgs, [Palette.coralTint, Palette.backgroundAlternative]);
   });
 
   testWidgets('empty summary shows placeholder', (t) async {

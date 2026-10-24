@@ -54,6 +54,12 @@ void main() {
     });
   });
 
+  // 추이 막대는 달을 나란히 놓으므로 이번 달 막대도 '이번 달'이 아니라 'M월'이다.
+  testWidgets('최근 6개월 추이의 이번 달 막대는 M월로 보인다', (tester) async {
+    await _pumpReport(tester);
+    expect(find.text('${DateTime.now().month}월'), findsOneWidget);
+  });
+
   // 식료품 지출 60만 원을 또래 식료품 평균 [food]와 견준다.
   group('이달의 발견', () {
     Future<void> pumpWithPeerFood(WidgetTester tester, int food) async {
@@ -73,6 +79,11 @@ void main() {
     testWidgets('50% 이상 더 쓰면 배율로 말한다', (tester) async {
       await pumpWithPeerFood(tester, 400000); // +50%
       expect(find.textContaining('1.5배 더 썼어요'), findsOneWidget);
+    });
+
+    testWidgets('아랫줄에 한 달 지출과 또래 평균을 보인다', (tester) async {
+      await pumpWithPeerFood(tester, 400000);
+      expect(find.text('한 달 ₩600,000 · 또래는 ₩400,000'), findsOneWidget);
     });
 
     // 이전에는 1.96배가 '2.0배 더 썼어요'로 보였다(반올림 전에 정수인지 봤다).

@@ -9,7 +9,7 @@ import 'package:sedae_budget/entity/entity.dart';
 import '../../../../contract/contract_target.dart';
 
 /// 계약(경로·상태코드·검증)은 `test/contract/`가 본다. 여기서는 Stub만의 성질을 본다:
-/// 기기 저장(재시작), 옛 저장 형식, 저장 실패, 첫 읽기 경쟁, 테스트용 또래 통계.
+/// 기기 저장(재시작), 옛 저장 형식, 저장 실패, 첫 읽기 경쟁, 거래 목록 정렬, 테스트용 또래 통계.
 class _MemStore implements StubStateStore {
   String? saved;
   Completer<void>? loadGate;
@@ -173,6 +173,16 @@ void main() {
     final reopened = _client(StubApiInterceptor(store: store));
     expect((await reopened.send('GET', '/v1/transactions', query: _september, token: token)).list, hasLength(1));
     expect((await reopened.send('GET', '/v1/me/profile', token: token)).status, 200);
+  });
+
+  // 계약은 날짜 최신순만 정한다. Stub은 문자열이 아니라 시각으로 정렬한다(소수 초 자릿수가 달라도).
+  test('거래 목록은 시각 순서다: 소수 초 자릿수가 달라도 늦은 시각이 먼저다', () async {
+    final api = _client(StubApiInterceptor());
+    final token = await api.login('kakao');
+    await api.send('PUT', '/v1/transactions/a', body: {..._tx, 'date': '2026-09-10T00:00:00Z'}, token: token);
+    await api.send('PUT', '/v1/transactions/b', body: {..._tx, 'date': '2026-09-10T00:00:00.500Z'}, token: token);
+    final listed = await api.send('GET', '/v1/transactions', query: _september, token: token);
+    expect(listed.list.map((t) => t['id']), ['b', 'a']);
   });
 
   test('또래 통계는 기본이 고정표이고, 테스트는 나이대별 값을 줄 수 있다', () async {

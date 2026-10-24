@@ -104,7 +104,7 @@ void main() {
     expect(find.text('지출이 없어요'), findsOneWidget);
   });
 
-  // 카테고리 목록을 못 읽으면 커스텀 분리 없이 기본 분류로만 묶인다(합계는 그대로).
+  // 카테고리 목록을 못 읽으면 사용자 카테고리 분리 없이 기본 분류로만 묶인다(합계는 그대로).
   testWidgets('카테고리 조회 실패해도 기본 분류로 분석 화면이 그려진다', (tester) async {
     await _pump(tester, [_expense(10000, 19, 5), _expense(20000, 19, 6, customCategoryId: 'c1')],
         customs: const [_pet], faults: (f) => f.fail('GET', '/v1/categories'));
@@ -116,7 +116,7 @@ void main() {
     expect(find.text('카테고리 1개'), findsOneWidget);
   });
 
-  testWidgets('커스텀 카테고리는 별도 행으로 나오고 또래 배지는 기본 분류에만 붙는다', (tester) async {
+  testWidgets('사용자 카테고리는 별도 행으로 나오고 또래 배지는 기본 분류에만 붙는다', (tester) async {
     tester.view.physicalSize = const Size(390, 1200);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);

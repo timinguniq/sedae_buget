@@ -28,9 +28,10 @@ class _State extends ConsumerState<TransactionEditPage> {
   void initState() {
     super.initState();
     final e = widget.existing;
+    final today = ref.read(selectedMonthProvider.notifier).today;
     // 새 거래는 보고 있는 달에 적는다(지난 달을 보며 추가하면 그 달의 거래다).
     _draft = e == null
-        ? TransactionDraft.create(ref.read(selectedMonthProvider).draftDate(DateTime.now()))
+        ? TransactionDraft.create(ref.read(selectedMonthProvider).draftDate(today))
         : TransactionDraft.edit(e, CategoryCatalog(ref.read(customCategoriesProvider).value ?? const []));
     _memo = TextEditingController(text: _draft.memo);
   }
@@ -79,9 +80,10 @@ class _State extends ConsumerState<TransactionEditPage> {
   }
 
   Future<void> _pickDate() async {
+    final today = ref.read(selectedMonthProvider.notifier).today;
     final picked = await showDatePicker(
       context: context, initialDate: _draft.date,
-      firstDate: _draft.earliestDate, lastDate: _draft.latestDate(DateTime.now()));
+      firstDate: _draft.earliestDate, lastDate: _draft.latestDate(today));
     if (picked != null) setState(() => _draft = _draft.withDate(picked));
   }
 

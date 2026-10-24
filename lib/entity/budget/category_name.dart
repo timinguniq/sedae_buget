@@ -10,9 +10,12 @@ abstract final class CategoryName {
   /// [text]의 글자 수(보이는 글자).
   static int lengthOf(String text) => text.characters.length;
 
-  /// 저장할 이름([input]의 앞뒤 공백을 뗀 것). 비었거나 [maxLength]자를 넘으면 null.
+  /// [input]을 다듬은 이름(앞뒤 공백을 뗀 것). 길이는 따지지 않는다.
+  static String normalize(String input) => input.trim();
+
+  /// 저장할 이름([normalize]한 것). 비었거나 [maxLength]자를 넘으면 null.
   static String? tryParse(String input) {
-    final name = input.trim();
+    final name = normalize(input);
     final length = lengthOf(name);
     return length == 0 || length > maxLength ? null : name;
   }

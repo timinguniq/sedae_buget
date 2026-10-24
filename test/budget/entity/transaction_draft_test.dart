@@ -20,7 +20,7 @@ Transaction _saved({int categoryId = 1, String? customCategoryId, String? memo})
 
 void main() {
   group('새 거래', () {
-    test('지출·식비·금액 0으로 시작하고 저장할 수 없다', () {
+    test('지출·장보기·금액 0으로 시작하고 저장할 수 없다', () {
       final d = TransactionDraft.create(_day);
       expect(d.isEdit, isFalse);
       expect(d.type, TransactionType.expense);
@@ -157,13 +157,14 @@ void main() {
   });
 
   group('기존 거래 고치기', () {
-    // 수입은 카테고리가 없다. 서버가 수입에 어떤 분류 id를 적었든 사용자 카테고리로 판정하지 않고,
-    // 모르는 id면 새 거래처럼 식비로 둔다.
+    // 수입은 카테고리가 없다. 서버가 수입에 사용자 카테고리 id를 적었어도 목록으로 판정하지 않고
+    // 적힌 기본 분류 그대로 둔다(모르는 분류 id는 DTO가 기타로 읽어 여기 오지 않는다).
     test('수입을 고칠 때는 분류를 판정하지 않는다', () {
-      final income = _saved(categoryId: 0).copyWith(type: TransactionType.income);
-      final d = TransactionDraft.edit(income, const CategoryCatalog());
+      final income = _saved(categoryId: BudgetCategory.shopping.id, customCategoryId: 'c1')
+          .copyWith(type: TransactionType.income);
+      final d = TransactionDraft.edit(income, const CategoryCatalog([_pet]));
       expect(d.hasCategory, isFalse);
-      expect(d.base, BudgetCategory.groceries);
+      expect(d.base, BudgetCategory.shopping);
       expect(d.customCategoryId, isNull);
     });
 
