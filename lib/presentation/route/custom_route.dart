@@ -11,6 +11,8 @@ import 'package:sedae_budget/presentation/page/login/login.page.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
 import 'package:sedae_budget/presentation/page/report/report.page.dart';
+import 'package:sedae_budget/presentation/page/setting/profile_edit.page.dart';
+import 'package:sedae_budget/presentation/page/terms/terms.page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -54,7 +56,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: RoutePath.categoryManage.path, builder: (_, state) =>
           CategoryManagePage(initialEditing: state.extra as bool? ?? false)),
       GoRoute(path: RoutePath.setting.path, builder: (_, _) => const SettingPage()),
+      GoRoute(path: RoutePath.profileEdit.path, builder: (_, _) => const ProfileEditPage()),
       GoRoute(path: RoutePath.login.path, builder: (_, _) => const LoginPage()),
+      GoRoute(path: RoutePath.terms.path, builder: (_, _) => const TermsPage()),
       GoRoute(path: RoutePath.unreachable.path, builder: (_, _) => const UnreachablePage()),
     ],
     debugLogDiagnostics: true,

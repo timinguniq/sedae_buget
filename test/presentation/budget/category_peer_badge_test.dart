@@ -17,7 +17,7 @@ void main() {
       label: '식비',
       amount: 400000,
       color: Colors.red,
-      percent: 0.5,
+      share: 0.5,
       peer: PeerComparison.of(mine: 400000, peer: 300000),
     )));
     await tester.pump();
@@ -36,7 +36,7 @@ void main() {
       label: '식비',
       amount: 400000,
       color: Colors.red,
-      percent: 0.5,
+      share: 0.5,
     )));
     await tester.pump();
 
@@ -50,7 +50,7 @@ void main() {
       label: '식비',
       amount: 300000,
       color: Colors.red,
-      percent: 0.5,
+      share: 0.5,
       peer: PeerComparison.of(mine: 300000, peer: 300000),
     )));
     await tester.pump();

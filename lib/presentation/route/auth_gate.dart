@@ -29,11 +29,16 @@ final sessionGateProvider = Provider<SessionGate>(
 /// 세션이 준비되기 전에만 머무는 화면들.
 final _gatePaths = {RoutePath.login.path, RoutePath.onboarding.path, RoutePath.unreachable.path};
 
+/// 가드 면제 화면들.
+/// - 스플래시: 브랜딩과 세션 확인이 끝나면 스스로 떠나고, 그때 재평가.
+/// - 약관: 로그인 화면이 동의를 받으므로 로그인 전·온보딩 중에도 열린다. push로 열고, 닫으면 연 화면이다
+///   (웹에서 주소로 바로 열어 돌아갈 화면이 없으면 홈으로 보내고, 그때 재평가).
+final _exemptPaths = {RoutePath.splash.path, RoutePath.terms.path};
+
 /// 전역 가드의 순수 결정 함수. [gate]가 요구하는 화면으로 보낸다.
 /// 반환이 null이면 현재 위치 유지, 아니면 해당 경로로 리다이렉트.
 String? sessionRedirect(SessionGate gate, String location) {
-  // 스플래시는 가드 면제(브랜딩과 세션 확인이 끝나면 스스로 떠나고, 그때 재평가).
-  if (location == RoutePath.splash.path) return null;
+  if (_exemptPaths.contains(location)) return null;
   final required = switch (gate) {
     SessionGate.checking || SessionGate.ready => null,
     SessionGate.unreachable => RoutePath.unreachable.path,

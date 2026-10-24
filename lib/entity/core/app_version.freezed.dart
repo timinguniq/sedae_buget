@@ -11,7 +11,6 @@ part of 'app_version.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$AppVersion {
 
@@ -22,8 +21,6 @@ mixin _$AppVersion {
 @pragma('vm:prefer-inline')
 $AppVersionCopyWith<AppVersion> get copyWith => _$AppVersionCopyWithImpl<AppVersion>(this as AppVersion, _$identity);
 
-  /// Serializes this AppVersion to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -31,7 +28,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is AppVersion&&(identical(other.releaseVersion, releaseVersion) || other.releaseVersion == releaseVersion)&&(identical(other.minimumAvailableVersion, minimumAvailableVersion) || other.minimumAvailableVersion == minimumAvailableVersion)&&(identical(other.link, link) || other.link == link));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,releaseVersion,minimumAvailableVersion,link);
 
@@ -208,11 +205,11 @@ return $default(_that.releaseVersion,_that.minimumAvailableVersion,_that.link);c
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _AppVersion implements AppVersion {
   const _AppVersion({required this.releaseVersion, required this.minimumAvailableVersion, required this.link});
-  factory _AppVersion.fromJson(Map<String, dynamic> json) => _$AppVersionFromJson(json);
+  
 
 @override final  int releaseVersion;
 @override final  int minimumAvailableVersion;
@@ -224,17 +221,14 @@ class _AppVersion implements AppVersion {
 @pragma('vm:prefer-inline')
 _$AppVersionCopyWith<_AppVersion> get copyWith => __$AppVersionCopyWithImpl<_AppVersion>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$AppVersionToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppVersion&&(identical(other.releaseVersion, releaseVersion) || other.releaseVersion == releaseVersion)&&(identical(other.minimumAvailableVersion, minimumAvailableVersion) || other.minimumAvailableVersion == minimumAvailableVersion)&&(identical(other.link, link) || other.link == link));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,releaseVersion,minimumAvailableVersion,link);
 

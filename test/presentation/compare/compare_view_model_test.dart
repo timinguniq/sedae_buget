@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
+import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
 
 import '../../helper/fakes.dart';
 
@@ -37,5 +38,23 @@ void main() {
       expect(await c.read(generationAvgProvider.future), isEmpty);
       expect(server.faults.count('GET', '/v1/peer/generations'), 0);
     });
+  });
+
+  // 설정에서 나이대를 바꾸면 그 뒤의 또래 비교는 새 또래와 견줘야 한다.
+  test('프로필의 나이대를 바꿔 저장하면 또래 통계를 새 나이대로 다시 읽는다', () async {
+    final server = StubServer();
+    await server.seed(profile: noIncomeProfile); // 30대
+    final c = fakeContainer(server: server);
+    // 비교 화면처럼 계속 본다.
+    final sub = c.listen(peerStatsProvider, (_, _) {});
+    addTearDown(sub.close);
+    expect((await c.read(peerStatsProvider.future))?.ageGroup, AgeGroup.thirties);
+
+    (await c.read(userProfileProvider.notifier)
+            .save(const UserProfile(ageGroup: AgeGroup.twenties, monthlyIncome: 0)))
+        .unwrap();
+
+    expect((await c.read(peerStatsProvider.future))?.ageGroup, AgeGroup.twenties);
+    expect(server.faults.count('GET', '/v1/peer/stats'), 2);
   });
 }

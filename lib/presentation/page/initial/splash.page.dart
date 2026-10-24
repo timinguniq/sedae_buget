@@ -76,8 +76,14 @@ class _SplashPageState extends ConsumerState<SplashPage> {
       // 실패도 행선지가 있다(연결 안 됨 화면).
     }
     if (!mounted) return;
+    // 이 화면은 이동하면 사라져 ref를 쓸 수 없으므로, 광고를 기다린 뒤의 세션은 앱의 컨테이너에서 읽는다.
+    final container = ProviderScope.containerOf(context, listen: false);
+    bool sessionReady() => container.read(sessionGateProvider) == SessionGate.ready;
     // 어디로 갈지(로그인·온보딩·연결 안 됨·홈)는 전역 가드(sessionRedirect)가 정한다.
     context.go(RoutePath.budgetHome.path);
-    await launchAd.showIfDue();
+    // 전면 광고는 홈에 닿을 때(세션 준비됨)만, 로드를 기다린 뒤에도 세션이 준비됨일 때만 띄운다. 가드가 로그인·온보딩·
+    // 연결 안 됨으로 보내거나 기다리는 동안 세션이 끝나면 이번 실행에는 띄우지 않는다. 로드한 광고는 쓰이지 않은 채
+    // 광고 서비스에 남고(다음 로드가 정리한다), 실행 카운트는 이미 0으로 돌아가 다음 N번째 실행에 다시 띄운다.
+    if (sessionReady()) await launchAd.showIfDue(stillWanted: sessionReady);
   }
 }

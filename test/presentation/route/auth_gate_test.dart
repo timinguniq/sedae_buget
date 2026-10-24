@@ -44,6 +44,12 @@ void main() {
         expect(go(gate, '/splash'), isNull, reason: gate.name);
       }
     });
+    // 로그인 화면이 동의를 받는 약관을 로그인 전에도, 온보딩 중에도 읽을 수 있어야 한다.
+    test('약관 화면은 가드 면제', () {
+      for (final gate in SessionGate.values) {
+        expect(go(gate, '/terms'), isNull, reason: gate.name);
+      }
+    });
     test('확인 중에는 이동시키지 않는다', () {
       expect(go(SessionGate.checking, '/budget'), isNull);
       expect(go(SessionGate.checking, '/unreachable'), isNull);

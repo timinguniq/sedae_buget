@@ -11,20 +11,16 @@ part of 'app_service_status.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$AppServiceStatus {
 
- bool get available; String get noticeTitle; String get noticeContent;// ignore_for_file: invalid_annotation_target
-@JsonKey(fromJson: _formatStringToDateTime, toJson: _dateTimeToString) DateTime get expectedTimeToBeAvailable;
+ bool get available; String get noticeTitle; String get noticeContent; DateTime get expectedTimeToBeAvailable;
 /// Create a copy of AppServiceStatus
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
 @pragma('vm:prefer-inline')
 $AppServiceStatusCopyWith<AppServiceStatus> get copyWith => _$AppServiceStatusCopyWithImpl<AppServiceStatus>(this as AppServiceStatus, _$identity);
 
-  /// Serializes this AppServiceStatus to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -32,7 +28,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is AppServiceStatus&&(identical(other.available, available) || other.available == available)&&(identical(other.noticeTitle, noticeTitle) || other.noticeTitle == noticeTitle)&&(identical(other.noticeContent, noticeContent) || other.noticeContent == noticeContent)&&(identical(other.expectedTimeToBeAvailable, expectedTimeToBeAvailable) || other.expectedTimeToBeAvailable == expectedTimeToBeAvailable));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,available,noticeTitle,noticeContent,expectedTimeToBeAvailable);
 
@@ -49,7 +45,7 @@ abstract mixin class $AppServiceStatusCopyWith<$Res>  {
   factory $AppServiceStatusCopyWith(AppServiceStatus value, $Res Function(AppServiceStatus) _then) = _$AppServiceStatusCopyWithImpl;
 @useResult
 $Res call({
- bool available, String noticeTitle, String noticeContent,@JsonKey(fromJson: _formatStringToDateTime, toJson: _dateTimeToString) DateTime expectedTimeToBeAvailable
+ bool available, String noticeTitle, String noticeContent, DateTime expectedTimeToBeAvailable
 });
 
 
@@ -157,7 +153,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool available,  String noticeTitle,  String noticeContent, @JsonKey(fromJson: _formatStringToDateTime, toJson: _dateTimeToString)  DateTime expectedTimeToBeAvailable)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool available,  String noticeTitle,  String noticeContent,  DateTime expectedTimeToBeAvailable)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _AppServiceStatus() when $default != null:
 return $default(_that.available,_that.noticeTitle,_that.noticeContent,_that.expectedTimeToBeAvailable);case _:
@@ -178,7 +174,7 @@ return $default(_that.available,_that.noticeTitle,_that.noticeContent,_that.expe
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool available,  String noticeTitle,  String noticeContent, @JsonKey(fromJson: _formatStringToDateTime, toJson: _dateTimeToString)  DateTime expectedTimeToBeAvailable)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool available,  String noticeTitle,  String noticeContent,  DateTime expectedTimeToBeAvailable)  $default,) {final _that = this;
 switch (_that) {
 case _AppServiceStatus():
 return $default(_that.available,_that.noticeTitle,_that.noticeContent,_that.expectedTimeToBeAvailable);case _:
@@ -198,7 +194,7 @@ return $default(_that.available,_that.noticeTitle,_that.noticeContent,_that.expe
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool available,  String noticeTitle,  String noticeContent, @JsonKey(fromJson: _formatStringToDateTime, toJson: _dateTimeToString)  DateTime expectedTimeToBeAvailable)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool available,  String noticeTitle,  String noticeContent,  DateTime expectedTimeToBeAvailable)?  $default,) {final _that = this;
 switch (_that) {
 case _AppServiceStatus() when $default != null:
 return $default(_that.available,_that.noticeTitle,_that.noticeContent,_that.expectedTimeToBeAvailable);case _:
@@ -210,17 +206,16 @@ return $default(_that.available,_that.noticeTitle,_that.noticeContent,_that.expe
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _AppServiceStatus implements AppServiceStatus {
-  const _AppServiceStatus({required this.available, required this.noticeTitle, required this.noticeContent, @JsonKey(fromJson: _formatStringToDateTime, toJson: _dateTimeToString) required this.expectedTimeToBeAvailable});
-  factory _AppServiceStatus.fromJson(Map<String, dynamic> json) => _$AppServiceStatusFromJson(json);
+  const _AppServiceStatus({required this.available, required this.noticeTitle, required this.noticeContent, required this.expectedTimeToBeAvailable});
+  
 
 @override final  bool available;
 @override final  String noticeTitle;
 @override final  String noticeContent;
-// ignore_for_file: invalid_annotation_target
-@override@JsonKey(fromJson: _formatStringToDateTime, toJson: _dateTimeToString) final  DateTime expectedTimeToBeAvailable;
+@override final  DateTime expectedTimeToBeAvailable;
 
 /// Create a copy of AppServiceStatus
 /// with the given fields replaced by the non-null parameter values.
@@ -228,17 +223,14 @@ class _AppServiceStatus implements AppServiceStatus {
 @pragma('vm:prefer-inline')
 _$AppServiceStatusCopyWith<_AppServiceStatus> get copyWith => __$AppServiceStatusCopyWithImpl<_AppServiceStatus>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$AppServiceStatusToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppServiceStatus&&(identical(other.available, available) || other.available == available)&&(identical(other.noticeTitle, noticeTitle) || other.noticeTitle == noticeTitle)&&(identical(other.noticeContent, noticeContent) || other.noticeContent == noticeContent)&&(identical(other.expectedTimeToBeAvailable, expectedTimeToBeAvailable) || other.expectedTimeToBeAvailable == expectedTimeToBeAvailable));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,available,noticeTitle,noticeContent,expectedTimeToBeAvailable);
 
@@ -255,7 +247,7 @@ abstract mixin class _$AppServiceStatusCopyWith<$Res> implements $AppServiceStat
   factory _$AppServiceStatusCopyWith(_AppServiceStatus value, $Res Function(_AppServiceStatus) _then) = __$AppServiceStatusCopyWithImpl;
 @override @useResult
 $Res call({
- bool available, String noticeTitle, String noticeContent,@JsonKey(fromJson: _formatStringToDateTime, toJson: _dateTimeToString) DateTime expectedTimeToBeAvailable
+ bool available, String noticeTitle, String noticeContent, DateTime expectedTimeToBeAvailable
 });
 
 

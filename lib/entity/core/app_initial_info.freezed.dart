@@ -11,7 +11,6 @@ part of 'app_initial_info.dart';
 
 // dart format off
 T _$identity<T>(T value) => value;
-
 /// @nodoc
 mixin _$AppInitialInfo {
 
@@ -22,8 +21,6 @@ mixin _$AppInitialInfo {
 @pragma('vm:prefer-inline')
 $AppInitialInfoCopyWith<AppInitialInfo> get copyWith => _$AppInitialInfoCopyWithImpl<AppInitialInfo>(this as AppInitialInfo, _$identity);
 
-  /// Serializes this AppInitialInfo to a JSON map.
-  Map<String, dynamic> toJson();
 
 
 @override
@@ -31,7 +28,7 @@ bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is AppInitialInfo&&(identical(other.android, android) || other.android == android)&&(identical(other.ios, ios) || other.ios == ios)&&(identical(other.serviceStatus, serviceStatus) || other.serviceStatus == serviceStatus));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,android,ios,serviceStatus);
 
@@ -235,11 +232,11 @@ return $default(_that.android,_that.ios,_that.serviceStatus);case _:
 }
 
 /// @nodoc
-@JsonSerializable()
+
 
 class _AppInitialInfo implements AppInitialInfo {
   const _AppInitialInfo({required this.android, required this.ios, required this.serviceStatus});
-  factory _AppInitialInfo.fromJson(Map<String, dynamic> json) => _$AppInitialInfoFromJson(json);
+  
 
 @override final  AppVersion android;
 @override final  AppVersion ios;
@@ -251,17 +248,14 @@ class _AppInitialInfo implements AppInitialInfo {
 @pragma('vm:prefer-inline')
 _$AppInitialInfoCopyWith<_AppInitialInfo> get copyWith => __$AppInitialInfoCopyWithImpl<_AppInitialInfo>(this, _$identity);
 
-@override
-Map<String, dynamic> toJson() {
-  return _$AppInitialInfoToJson(this, );
-}
+
 
 @override
 bool operator ==(Object other) {
   return identical(this, other) || (other.runtimeType == runtimeType&&other is _AppInitialInfo&&(identical(other.android, android) || other.android == android)&&(identical(other.ios, ios) || other.ios == ios)&&(identical(other.serviceStatus, serviceStatus) || other.serviceStatus == serviceStatus));
 }
 
-@JsonKey(includeFromJson: false, includeToJson: false)
+
 @override
 int get hashCode => Object.hash(runtimeType,android,ios,serviceStatus);
 

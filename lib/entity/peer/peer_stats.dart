@@ -2,7 +2,7 @@ import 'package:sedae_budget/entity/budget/age_group.dart';
 import 'package:sedae_budget/entity/budget/budget_category.dart';
 import 'package:sedae_budget/entity/peer/peer_comparison.dart';
 
-/// 또래(같은 나이대) 집계 통계. 현재는 목업 — 추후 서버 응답으로 교체.
+/// 또래(같은 나이대) 집계 통계. 서버가 집계해 준 값이다(`/v1/peer/stats`).
 class PeerStats {
   const PeerStats({
     required this.ageGroup,

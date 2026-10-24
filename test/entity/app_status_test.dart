@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:intl/date_symbol_data_local.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 const _android = AppVersion(releaseVersion: 20, minimumAvailableVersion: 15, link: 'android-store');
@@ -20,8 +19,6 @@ AppStatus _of(AppInitialInfo? info, {int? build = 20, bool isIOS = false}) =>
     AppStatus.of(info, build: build, isIOS: isIOS);
 
 void main() {
-  setUpAll(initializeDateFormatting);
-
   test('원격 정보가 없으면(원격 설정을 못 읽음) 쓸 수 있다', () {
     expect(_of(null, build: 1), isA<AppAvailable>());
   });
@@ -57,17 +54,5 @@ void main() {
     final status = _of(_info(), build: 24, isIOS: true) as AppUpdateAvailable;
     expect(status.forced, isTrue);
     expect(status.version.link, 'ios-store');
-  });
-
-  // 읽기는 12시간제 형식(hh)으로도 23시를 받아 주지만, 쓰면 11시로 바뀐다. 형식은 24시간제(HH)다.
-  test('점검 예정 시각은 24시간제로 읽고 쓴다', () {
-    final parsed = AppServiceStatus.fromJson({
-      'available': false,
-      'noticeTitle': '점검 중',
-      'noticeContent': '곧 돌아올게요',
-      'expectedTimeToBeAvailable': '2026-09-24 23:59:59',
-    });
-    expect(parsed.expectedTimeToBeAvailable, DateTime(2026, 9, 24, 23, 59, 59));
-    expect(parsed.toJson()['expectedTimeToBeAvailable'], '2026-09-24 23:59:59');
   });
 }
