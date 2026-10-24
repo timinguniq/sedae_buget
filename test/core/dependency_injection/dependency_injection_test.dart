@@ -6,13 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helper/stub_server.dart';
 
-/// 앱과 같은 순서로 local(Stub) 환경을 조립한다. 광고는 SDK가 필요해 빼고 조립한다.
+/// 앱처럼 local(Stub) 환경의 서버 의존성을 조립한다. 광고는 SDK가 필요해 빼고 조립한다.
 MemoryAuthTokenStore _configure() {
   final tokens = MemoryAuthTokenStore();
-  configureApiDependencies(tokens);
-  configureBudgetDependencies();
-  configurePeerDependencies();
-  configureUserDependencies();
+  configureServerDependencies(tokens);
   return tokens;
 }
 

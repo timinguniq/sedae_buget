@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/core/core.dart';
+import 'package:sedae_budget/core/dependency_injection/server_repositories.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:sedae_budget/entity/entity.dart';
@@ -38,40 +39,45 @@ class MemoryAuthTokenStore implements AuthTokenStore {
   Future<void> clear() async => failClear ? _fail() : token = null;
 }
 
-/// 운영의 local 환경과 같은 배선(`connectToServer` = 세션 인터셉터 → 로거 → Stub)으로 만든 가짜 서버.
-/// 테스트가 쓰는 유일한 서버 adapter다.
+/// 앱과 같은 조립([ServerRepositories.connect], local 환경: 세션 인터셉터 → 고장 손잡이 → Stub)으로 만든
+/// 가짜 서버. 테스트가 쓰는 유일한 서버 adapter다.
 ///
 /// 저장소 구현은 모두 같은 [dio]·[session]을 쓴다. 그래서 로그인하면 다른 저장소도 그 사용자로 부르고,
 /// 서버가 토큰을 거부하면(401) [session]이 만료를 알린다. Stub 바로 앞의 [faults]로 장애·느린 응답을
 /// 흉내 내고 서버에 닿은 요청을 센다. [peerStats]를 주면 Stub이 그 또래 통계로 답한다.
+/// 요청 로그는 남기지 않는다. 디버깅할 때 [log]로 켠다.
 class StubServer {
-  factory StubServer({StubStateStore? store, PeerStats Function(AgeGroup)? peerStats}) {
+  factory StubServer({StubStateStore? store, PeerStats Function(AgeGroup)? peerStats, bool log = false}) {
     final tokens = MemoryAuthTokenStore();
-    return StubServer._(tokens, Session(tokens), ServerFaults(), store, peerStats);
+    final faults = ServerFaults();
+    return StubServer._(
+      tokens,
+      faults,
+      ServerRepositories.connect(
+        env: AppEnvironment.local,
+        tokenStore: tokens,
+        localServer: () => StubApiInterceptor(store: store, peerStats: peerStats),
+        beforeServer: [faults],
+        requestLog: log,
+      ),
+    );
   }
 
-  StubServer._(this.tokens, this.session, this.faults, StubStateStore? store,
-      PeerStats Function(AgeGroup)? peerStats)
-      : dio = connectToServer(
-          env: AppEnvironment.local,
-          session: session,
-          localServer: () => StubApiInterceptor(store: store, peerStats: peerStats),
-        ) {
-    dio.interceptors.insert(dio.interceptors.length - 1, faults);
-  }
+  StubServer._(this.tokens, this.faults, this._server);
 
-  final Dio dio;
+  final ServerRepositories _server;
 
   /// [session]이 쓰는 토큰 저장소. 테스트가 토큰을 바꾸거나 고장 낸다.
   final MemoryAuthTokenStore tokens;
-  final Session session;
   final ServerFaults faults;
 
-  AuthRepository get auth => AuthRepositoryImpl(AuthApi(dio), session, StubSocialIdTokenProvider());
-  UserProfileRepository get profiles => UserProfileRepositoryImpl(UserProfileApi(dio));
-  TransactionRepository get transactions => TransactionRepositoryImpl(TransactionApi(dio));
-  CategoryRepository get categories => CategoryRepositoryImpl(CategoryApi(dio));
-  PeerStatsRepository get peerStats => PeerStatsRepositoryImpl(PeerStatsApi(dio));
+  Dio get dio => _server.dio;
+  Session get session => _server.session;
+  AuthRepository get auth => _server.auth;
+  UserProfileRepository get profiles => _server.profiles;
+  TransactionRepository get transactions => _server.transactions;
+  CategoryRepository get categories => _server.categories;
+  PeerStatsRepository get peerStats => _server.peerStats;
 
   /// 실제 로그인 요청으로 [provider] 사용자가 된다.
   Future<void> signIn(AuthProvider provider) async =>

@@ -78,6 +78,8 @@ Future<ThemeModeStore> fakeThemeModeStore() async {
 
 /// 테스트용 ProviderContainer. 앱과 같은 [appContainer]로 만들어 같은 정책(재시도 등)으로 돈다.
 /// 서버는 [server](Stub, 기본은 로그인 전의 빈 서버)이고, 서버 밖의 재료(광고·원격 설정·테마 저장소·앱 종료)만 fake로 바꾼다.
+/// 광고는 기본으로 [FakeAdService](배너 없음)다. 전면 광고 정책·테마 저장소는 SharedPreferences를 기다려야 만들 수 있어,
+/// 그것을 읽는 화면(스플래시·설정·앱 테마)의 테스트가 [fakeLaunchInterstitial]·[fakeThemeModeStore]로 넘긴다.
 ///
 /// 전역 get_it을 등록·reset하는 대신 의존성 seam(`service/*_provider.dart`)을 override한다.
 /// 테스트가 끝나면 스스로 dispose한다.
@@ -97,7 +99,7 @@ ProviderContainer fakeContainer({
       transactionRepositoryProvider.overrideWithValue(s.transactions),
       categoryRepositoryProvider.overrideWithValue(s.categories),
       peerStatsRepositoryProvider.overrideWithValue(s.peerStats),
-      if (adService != null) adServiceProvider.overrideWithValue(adService),
+      adServiceProvider.overrideWithValue(adService ?? FakeAdService()),
       if (launchInterstitial != null)
         launchInterstitialProvider.overrideWithValue(launchInterstitial),
       appStatusSourceProvider.overrideWithValue(appStatusSource ?? FakeAppStatusSource()),

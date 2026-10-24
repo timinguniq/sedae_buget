@@ -21,16 +21,18 @@ class _LocalServer extends Interceptor {
 
 Dio _connect(
   AppEnvironment env, {
-  bool release = false,
+  bool requestLog = false,
   bool web = false,
   _LocalServer? local,
+  List<Interceptor> beforeServer = const [],
   String? token,
 }) =>
     connectToServer(
       env: env,
       session: Session(MemoryAuthTokenStore(token)),
       localServer: () => local ?? _LocalServer(),
-      release: release,
+      beforeServer: beforeServer,
+      requestLog: requestLog,
       web: web,
     );
 
@@ -56,6 +58,20 @@ void main() {
     final res = await _connect(AppEnvironment.local, local: local, token: 'stub.kakao').get('/v1/me');
     expect(res.data, {'ok': true});
     expect(local.requests.single.headers['Authorization'], 'Bearer stub.kakao');
+  });
+
+  // 테스트의 고장 손잡이 자리다. 이전에는 테스트가 interceptors.length - 1에 끼워, Stub이 마지막이라는 것을 알아야 했다.
+  test('beforeServer는 토큰을 붙인 요청을 local 서버 바로 앞에서 받는다', () async {
+    final local = _LocalServer();
+    final seen = <String?>[];
+    final before = InterceptorsWrapper(onRequest: (o, h) {
+      seen.add(o.headers['Authorization'] as String?);
+      expect(local.requests, isEmpty);
+      h.next(o);
+    });
+    await _connect(AppEnvironment.local, local: local, beforeServer: [before], token: 't').get('/v1/me');
+    expect(seen, ['Bearer t']);
+    expect(local.requests, hasLength(1));
   });
 
   // 이전에는 경고 로그만 남기고 모든 호출이 네트워크 오류('연결 안 됨')가 됐다.
@@ -89,6 +105,7 @@ void main() {
         env: AppEnvironment.local,
         session: Session(MemoryAuthTokenStore()),
         localServer: _LocalServer.new,
+        requestLog: false,
       ).options;
       expect(o.connectTimeout, const Duration(seconds: 15));
       expect(o.receiveTimeout, const Duration(seconds: 15));
@@ -96,18 +113,18 @@ void main() {
   });
 
   group('요청 로그', () {
-    Future<List<String>> signInLog({required bool release}) => _printed(() async {
-          await _connect(AppEnvironment.local, release: release)
+    Future<List<String>> signInLog({required bool requestLog}) => _printed(() async {
+          await _connect(AppEnvironment.local, requestLog: requestLog)
               .post('/v1/auth/login', data: {'provider': 'kakao', 'idToken': 'secret-id-token'});
         });
 
-    test('debug는 요청 바디까지 남긴다', () async {
-      expect((await signInLog(release: false)).join('\n'), contains('secret-id-token'));
+    test('켜면 요청 바디까지 남긴다', () async {
+      expect((await signInLog(requestLog: true)).join('\n'), contains('secret-id-token'));
     });
 
-    // 이전에는 release 빌드도 로그인 idToken·거래 금액·메모를 기기 로그에 남겼다.
-    test('release는 남기지 않는다', () async {
-      expect(await signInLog(release: true), isEmpty);
+    // 앱은 release 빌드에서 끈다(로그인 idToken·거래 금액·메모가 기기 로그에 남지 않게). 테스트도 끈다.
+    test('끄면 남기지 않는다', () async {
+      expect(await signInLog(requestLog: false), isEmpty);
     });
   });
 }
