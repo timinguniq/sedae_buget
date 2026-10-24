@@ -19,6 +19,7 @@ typedef _Json = Map<String, dynamic>;
 /// - 로그인할 때마다 새 토큰 `stub.<provider>.<무작위>`을 주고 기억한다. 준 토큰만 받고(바꾼 토큰은 401),
 ///   로그아웃하면 그 토큰을 잊는다(다시 쓰면 401). 사용자는 토큰의 provider로 복원한다.
 /// - 프로필·거래·사용자 카테고리는 [StubApiState]에 사용자별로 보관하고 [StubStateStore]가 있으면 영속화한다.
+///   저장된 상태의 못 읽는 부분은 버리고 나머지로 답한다(앱이 저장 형식 때문에 갇히지 않게).
 /// - 실제 서버 응답처럼 뒤따르는 응답·오류 인터셉터를 거친다(세션 인터셉터가 401을 본다).
 /// - 기기에 저장하지 못했거나 Stub 자신의 결함이면 500이다(앱에 '인터넷 연결 없음'으로 보이지 않게).
 ///   저장하지 못한 변경은 메모리에도 남기지 않는다.
@@ -315,21 +316,24 @@ class StubApiInterceptor extends Interceptor {
 
   Future<void> _ensureLoaded() => _loading ??= _load();
 
+  /// 기기 저장소를 읽지 못하면(잠깐의 실패일 수 있다) 던지고 다음 요청이 다시 읽는다.
+  /// 읽은 내용은 던지지 않고 해석한다(못 읽는 부분은 [StubApiState.decode]가 버린다).
   Future<void> _load() async {
+    final String? raw;
     try {
-      final raw = await _store?.load();
-      if (raw != null) _state.loadFrom(jsonDecode(raw) as Map<String, dynamic>);
+      raw = await _store?.load();
     } catch (_) {
       _loading = null; // 다음 요청이 다시 읽는다
       rethrow;
     }
+    if (raw != null) _state.decode(raw);
   }
 
   /// 사용자 데이터 밖의 상태(준 토큰)를 [change]로 바꾸고 기기에 저장한다. 저장하지 못하면 [undo]하고 던진다.
   Future<void> _commitState(void Function() change, void Function() undo) async {
     change();
     try {
-      await _store?.save(jsonEncode(_state.toJson()));
+      await _store?.save(_state.encode());
     } catch (_) {
       undo();
       rethrow;
@@ -341,7 +345,7 @@ class StubApiInterceptor extends Interceptor {
     final before = jsonEncode(userData.toJson());
     change();
     try {
-      await _store?.save(jsonEncode(_state.toJson()));
+      await _store?.save(_state.encode());
     } catch (_) {
       userData.loadFrom(jsonDecode(before) as Map<String, dynamic>);
       rethrow;
