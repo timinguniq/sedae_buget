@@ -22,9 +22,10 @@ DateTime _d(int day) => DateTime(_last.year, _last.month, day);
 /// 날짜 그룹 머리글('M월 D일').
 String _header(int day) => '${_last.month}월 $day일';
 
-Transaction _expense(int amount, int day, {int categoryId = 10, String? memo, String? customCategoryId}) =>
+Transaction _expense(int amount, int day,
+        {BudgetCategory base = BudgetCategory.transport, String? memo, String? customCategoryId}) =>
     Transaction.create(
-        amount: amount, categoryId: categoryId, date: _d(day), type: TransactionType.expense,
+        amount: amount, base: base, date: _d(day), type: TransactionType.expense,
         memo: memo, customCategoryId: customCategoryId);
 
 /// [transactions]·[customs]를 심은 서버로 지난 달 내역 화면을 띄우고 그 컨테이너를 돌려준다.
@@ -44,12 +45,8 @@ Future<ProviderContainer> _pump(
   final server = await tester.seedServer(
       profile: noIncomeProfile, categories: customs, transactions: transactions ?? [_expense(5000, 5)]);
   faults?.call(server.faults);
-  final ads = FakeAdService();
-  final container = fakeContainer(
-    server: server,
-    adService: ads,
-    launchInterstitial: await fakeLaunchInterstitial(ads),
-  );
+  // 하루 끝 배너는 fakeContainer의 기본 광고(배너 없음)를 쓴다.
+  final container = fakeContainer(server: server);
   if (!thisMonth) container.read(selectedMonthProvider.notifier).prev();
   await tester.pumpWidget(fakeScope(container, const MaterialApp(home: TransactionListPage())));
   await tester.settle();
@@ -67,8 +64,8 @@ void main() {
   // 수입은 카테고리가 없다. 이전에는 월급이 '식료품' 이름·식료품 필터로 보이고 머리글 건수에도 섞였다.
   testWidgets('수입은 이름이 수입이고 분류 필터·건수에 들지 않는다', (tester) async {
     await _pump(tester, transactions: [
-      _expense(5000, 5, categoryId: BudgetCategory.groceries.id, memo: '마트'),
-      Transaction.create(amount: 3000000, categoryId: BudgetCategory.groceries.id, date: _d(1),
+      _expense(5000, 5, base: BudgetCategory.groceries, memo: '마트'),
+      Transaction.create(amount: 3000000, base: BudgetCategory.groceries, date: _d(1),
           type: TransactionType.income),
     ]);
 
@@ -111,7 +108,7 @@ void main() {
   });
 
   testWidgets('이달 지출이 또래 평균을 넘는 분류의 거래에는 배지가 붙는다', (tester) async {
-    await _pump(tester, transactions: [_expense(50000000, 5, categoryId: 1)]);
+    await _pump(tester, transactions: [_expense(50000000, 5, base: BudgetCategory.groceries)]);
 
     expect(find.text('또래보다 많이'), findsOneWidget);
   });
@@ -120,8 +117,8 @@ void main() {
   testWidgets('카테고리 칩은 사용자 카테고리 거래를 그 상위 분류로 거른다', (tester) async {
     await _pump(
       tester,
-      customs: const [CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 14)],
-      transactions: [_expense(5000, 5, categoryId: BudgetCategory.recreation.id, customCategoryId: 'c2')],
+      customs: const [CustomCategory(id: 'c2', name: '자기계발', base: BudgetCategory.recreation)],
+      transactions: [_expense(5000, 5, base: BudgetCategory.recreation, customCategoryId: 'c2')],
     );
 
     await tester.tap(find.widgetWithText(DesignChip, BudgetCategory.recreation.label));
@@ -139,7 +136,7 @@ void main() {
     expect(find.text('전체'), findsOneWidget);
 
     // 카테고리 필터 칩(이달 지출 상위 카테고리)을 누르면 그 카테고리만 남는다.
-    final label = BudgetCategory.fromId(10).label;
+    final label = BudgetCategory.transport.label;
     expect(find.byType(DesignChip), findsNWidgets(2));
     await tester.tap(find.widgetWithText(DesignChip, label));
     await tester.settle();
@@ -154,7 +151,7 @@ void main() {
     final yesterday = DateTime(now.year, now.month, now.day - 1);
     final hasYesterday = yesterday.month == today.month;
     Transaction spent(DateTime date) =>
-        Transaction.create(amount: 5000, categoryId: 10, date: date, type: TransactionType.expense);
+        Transaction.create(amount: 5000, base: BudgetCategory.transport, date: date, type: TransactionType.expense);
 
     await _pump(tester, thisMonth: true, transactions: [spent(today), if (hasYesterday) spent(yesterday)]);
     if (!DateUtils.isSameDay(DateTime.now(), now)) {
@@ -169,10 +166,10 @@ void main() {
   // 이전에는 고른 칩이 상위 4개 밖으로 밀려 사라져도 목록은 그 분류로 걸러진 채 남고, 어느 칩도 켜져 있지 않았다.
   testWidgets('고른 분류가 칩에서 빠지면 필터가 풀린다', (tester) async {
     final container = await _pump(tester, transactions: [
-      _expense(5000, 5, categoryId: BudgetCategory.groceries.id),
-      _expense(4000, 4, categoryId: BudgetCategory.transport.id),
-      _expense(3000, 3, categoryId: BudgetCategory.shopping.id),
-      _expense(2000, 2, categoryId: BudgetCategory.health.id),
+      _expense(5000, 5, base: BudgetCategory.groceries),
+      _expense(4000, 4, base: BudgetCategory.transport),
+      _expense(3000, 3, base: BudgetCategory.shopping),
+      _expense(2000, 2, base: BudgetCategory.health),
     ]);
     final health = find.widgetWithText(DesignChip, BudgetCategory.health.label);
     await tester.ensureVisible(health); // 가로로 스크롤되는 칩 줄의 끝

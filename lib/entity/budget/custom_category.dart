@@ -12,10 +12,6 @@ abstract class CustomCategory with _$CustomCategory {
     required String name,
 
     /// 상위 기본 분류. 또래 비교 집계는 이 값으로만 이뤄진다.
-    required int baseCategoryId,
+    required BudgetCategory base,
   }) = _CustomCategory;
-
-  const CustomCategory._();
-
-  BudgetCategory get base => BudgetCategory.fromId(baseCategoryId);
 }

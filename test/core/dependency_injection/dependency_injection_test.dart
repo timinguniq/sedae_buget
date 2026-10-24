@@ -6,13 +6,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helper/stub_server.dart';
 
-/// 앱과 같은 순서로 local(Stub) 환경을 조립한다. 광고는 SDK가 필요해 빼고 조립한다.
+/// 앱처럼 local(Stub) 환경의 서버 의존성을 조립한다. 광고는 SDK가 필요해 빼고 조립한다.
 MemoryAuthTokenStore _configure() {
   final tokens = MemoryAuthTokenStore();
-  configureApiDependencies(tokens);
-  configureBudgetDependencies();
-  configurePeerDependencies();
-  configureUserDependencies();
+  configureServerDependencies(tokens);
   return tokens;
 }
 
@@ -28,7 +25,7 @@ void main() {
     expect(user.provider, AuthProvider.kakao);
 
     final tx = Transaction.create(
-        amount: 1000, categoryId: 1, date: DateTime(2026, 9, 3), type: TransactionType.expense);
+        amount: 1000, base: BudgetCategory.groceries, date: DateTime(2026, 9, 3), type: TransactionType.expense);
     (await locator<TransactionRepository>().upsert(tx)).unwrap();
     final september = YearMonth.of(DateTime(2026, 9));
     expect((await locator<TransactionRepository>().getRange(september.start, september.end)).unwrap().single.id,

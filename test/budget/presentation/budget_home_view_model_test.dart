@@ -14,11 +14,11 @@ final _day = DateTime(_now.year, _now.month, 5);
 
 Transaction _expense(int amount, BudgetCategory c, {String? customCategoryId}) =>
     Transaction.create(
-        amount: amount, categoryId: c.id, date: _day, type: TransactionType.expense,
+        amount: amount, base: c, date: _day, type: TransactionType.expense,
         customCategoryId: customCategoryId);
 
 Transaction _income(int amount) => Transaction.create(
-    amount: amount, categoryId: BudgetCategory.etc.id, date: _day, type: TransactionType.income);
+    amount: amount, base: BudgetCategory.etc, date: _day, type: TransactionType.income);
 
 /// 이달 개요를 다 읽을 때까지 기다린다(거래·또래 통계·사용자 카테고리·프로필이 모두 풀린 뒤의 값).
 Future<MonthOverview> _overview(ProviderContainer c) async {
@@ -60,7 +60,7 @@ void main() {
 
   // 합계·분류·소득 규칙 자체는 ViewedMonth 테스트가 본다. 여기서는 재료가 모이는지만 본다.
   test('보고 있는 달을 이달 거래·사용자 카테고리·프로필 소득으로 만든다', () async {
-    const study = CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 14);
+    const study = CustomCategory(id: 'c2', name: '자기계발', base: BudgetCategory.recreation);
     final c = fakeContainer(server: await _server(
       profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3500000),
       categories: const [study],
@@ -125,6 +125,21 @@ void main() {
     expect(c.read(monthOverviewProvider).hasError, isTrue);
   });
 
+  // 이전에는 또래 통계가 오는 중이면 이달 거래의 실패를 보지 않고 불러오는 중이었다(또래 통계가 느리면 최대 30초).
+  test('또래 통계를 기다리는 중에도 이달 거래를 못 읽으면 바로 오류다', () async {
+    final server = await _server();
+    server.faults.fail('GET', '/v1/transactions');
+    final peer = server.faults.hold('GET', '/v1/peer/stats');
+    final c = fakeContainer(server: server);
+    final sub = c.listen(monthOverviewProvider, (_, _) {});
+    addTearDown(sub.close);
+
+    await c.read(monthlyTransactionsProvider.future).then((_) {}, onError: (_) {});
+    expect(c.read(peerStatsProvider).isLoading, isTrue);
+    expect(c.read(monthOverviewProvider).hasError, isTrue);
+    peer.complete();
+  });
+
   group('또래 통계', () {
     test('실패하면 peer만 null이고 내 값은 그대로 낸다', () async {
       final server = await _server(transactions: [_expense(1200, BudgetCategory.transport)]);
@@ -185,7 +200,7 @@ void main() {
 
     test('수입 거래나 또래 통계가 없으면 false', () async {
       // 지출이 또래를 넘는 분류에 적힌 수입이라도 배지는 지출에만 붙는다.
-      final income = Transaction.create(amount: lots, categoryId: BudgetCategory.groceries.id,
+      final income = Transaction.create(amount: lots, base: BudgetCategory.groceries,
           date: _day, type: TransactionType.income);
       final big = _expense(lots, BudgetCategory.groceries);
       expect((await _overview(await _container([income, big]))).overPeer(income), isFalse);

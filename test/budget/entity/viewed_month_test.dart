@@ -2,16 +2,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 // 반려식물 → 기타(19), 자기계발 → 취미·여가(14)
-const _pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
-const _study = CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 14);
+const _pet = CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc);
+const _study = CustomCategory(id: 'c2', name: '자기계발', base: BudgetCategory.recreation);
 
 Transaction _expense(int amount, BudgetCategory c, {String? customCategoryId}) =>
     Transaction.create(
-        amount: amount, categoryId: c.id, date: DateTime(2026, 9, 5),
+        amount: amount, base: c, date: DateTime(2026, 9, 5),
         type: TransactionType.expense, customCategoryId: customCategoryId);
 
 Transaction _income(int amount) => Transaction.create(
-    amount: amount, categoryId: BudgetCategory.groceries.id, date: DateTime(2026, 9, 1),
+    amount: amount, base: BudgetCategory.groceries, date: DateTime(2026, 9, 1),
     type: TransactionType.income);
 
 ViewedMonth _month(

@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:sedae_budget/data/dto/category_wire.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 part 'transaction_dto.g.dart';
@@ -35,7 +36,7 @@ class TransactionDto {
   Transaction toEntity() => Transaction(
         id: id,
         amount: amount,
-        categoryId: (BudgetCategory.tryFromId(categoryId) ?? BudgetCategory.etc).id,
+        base: budgetCategoryFromWire(categoryId) ?? BudgetCategory.etc,
         date: date.toLocal(),
         type: type,
         memo: memo,
@@ -60,7 +61,7 @@ class TransactionBodyDto {
   /// 일시는 UTC로 보낸다.
   factory TransactionBodyDto.fromEntity(Transaction t) => TransactionBodyDto(
         amount: t.amount,
-        categoryId: t.categoryId,
+        categoryId: t.base.wire,
         date: t.date.toUtc(),
         type: t.type,
         memo: t.memo,

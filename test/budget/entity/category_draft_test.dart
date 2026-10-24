@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 void main() {
-  const pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
+  const pet = CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc);
 
   test('새 초안은 이름 없이 기타 아래에서 시작하고 저장할 수 없다', () {
     final d = CategoryDraft.create();
@@ -47,6 +47,6 @@ void main() {
     expect(d.name, '반려식물');
     expect(d.base, BudgetCategory.etc);
     expect(d.pickBase(BudgetCategory.groceries).toCategory(),
-        const CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 1));
+        const CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.groceries));
   });
 }

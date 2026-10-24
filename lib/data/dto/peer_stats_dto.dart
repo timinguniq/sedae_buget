@@ -1,5 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
 import 'package:sedae_budget/data/dto/age_group_wire.dart';
+import 'package:sedae_budget/data/dto/category_wire.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 part 'peer_stats_dto.g.dart';
@@ -21,7 +22,7 @@ class PeerStatsDto {
         ageGroup: s.ageGroup.wire,
         avgMonthlyExpense: s.avgMonthlyExpense,
         avgSavingsRate: s.avgSavingsRate,
-        avgByCategory: {for (final e in s.avgByCategory.entries) '${e.key.id}': e.value},
+        avgByCategory: {for (final e in s.avgByCategory.entries) '${e.key.wire}': e.value},
         samples: s.samples,
       );
 
@@ -41,7 +42,7 @@ class PeerStatsDto {
         avgMonthlyExpense: avgMonthlyExpense,
         avgSavingsRate: avgSavingsRate,
         avgByCategory: {
-          for (final e in avgByCategory.entries) ?BudgetCategory.tryFromId(int.tryParse(e.key) ?? 0): e.value,
+          for (final e in avgByCategory.entries) ?budgetCategoryFromWire(int.tryParse(e.key)): e.value,
         },
         samples: samples,
       );

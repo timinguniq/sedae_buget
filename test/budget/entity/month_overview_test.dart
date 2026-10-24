@@ -4,11 +4,11 @@ import 'package:sedae_budget/entity/entity.dart';
 final _september = YearMonth.of(DateTime(2026, 9));
 
 Transaction _expense(int amount, BudgetCategory c, {String? customCategoryId}) => Transaction.create(
-    amount: amount, categoryId: c.id, date: DateTime(2026, 9, 5), type: TransactionType.expense,
+    amount: amount, base: c, date: DateTime(2026, 9, 5), type: TransactionType.expense,
     customCategoryId: customCategoryId);
 
 Transaction _income(int amount) => Transaction.create(
-    amount: amount, categoryId: BudgetCategory.etc.id, date: DateTime(2026, 9, 1), type: TransactionType.income);
+    amount: amount, base: BudgetCategory.etc, date: DateTime(2026, 9, 1), type: TransactionType.income);
 
 /// 식료품 40만·교통 25만 평균, 월평균 100만, 저축률 20%, 표본 셋.
 PeerStats _peer({int avg = 1000000, List<int> samples = const [700000, 900000, 1200000]}) => PeerStats(
@@ -99,7 +99,7 @@ void main() {
   // 기본 분류 행은 사용자 카테고리까지 합친 금액으로 견준다(홈·비교와 같은 값). 이전에는 뗀 나머지로 견줘
   // 홈은 -63%, 분석은 -75%로 서로 달랐다.
   test('분석 행은 기본 분류 행만 사용자 카테고리까지 합친 금액으로 또래와 견준다', () {
-    const pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 1);
+    const pet = CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.groceries);
     final o = _overview(
       [_expense(100000, BudgetCategory.groceries), _expense(50000, BudgetCategory.groceries, customCategoryId: 'c1')],
       peer: _peer(),

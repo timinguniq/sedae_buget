@@ -9,11 +9,11 @@ import '../../helper/fakes.dart';
 
 /// [month]의 지출: 식료품 50만·교통 20만·외식 10만.
 List<Transaction> _spending(DateTime month) => [
-      Transaction.create(amount: 500000, categoryId: 1, date: DateTime(month.year, month.month, 5),
+      Transaction.create(amount: 500000, base: BudgetCategory.groceries, date: DateTime(month.year, month.month, 5),
           type: TransactionType.expense, memo: '식료품'),
-      Transaction.create(amount: 200000, categoryId: 10, date: DateTime(month.year, month.month, 10),
+      Transaction.create(amount: 200000, base: BudgetCategory.transport, date: DateTime(month.year, month.month, 10),
           type: TransactionType.expense, memo: '교통'),
-      Transaction.create(amount: 100000, categoryId: 2, date: DateTime(month.year, month.month, 15),
+      Transaction.create(amount: 100000, base: BudgetCategory.diningOut, date: DateTime(month.year, month.month, 15),
           type: TransactionType.expense, memo: '외식'),
     ];
 
@@ -27,7 +27,7 @@ PeerStats _peer({int avg = 1000000, List<int> samples = const [700000, 900000, 1
       avgMonthlyExpense: avg,
       avgSavingsRate: 0.2,
       // 외식(11)은 또래 평균이 없다.
-      avgByCategory: {BudgetCategory.fromId(1): 400000, BudgetCategory.fromId(10): 250000},
+      avgByCategory: {BudgetCategory.groceries: 400000, BudgetCategory.transport: 250000},
       samples: samples,
     );
 
@@ -71,9 +71,9 @@ void main() {
 
   testWidgets('또래 평균이 없는 항목은 항목별 차이에서 뺀다', (tester) async {
     await _pumpCompare(tester, peer: _peer());
-    expect(find.text(BudgetCategory.fromId(1).label), findsOneWidget);
-    expect(find.text(BudgetCategory.fromId(10).label), findsOneWidget);
-    expect(find.text(BudgetCategory.fromId(2).label), findsNothing);
+    expect(find.text(BudgetCategory.groceries.label), findsOneWidget);
+    expect(find.text(BudgetCategory.transport.label), findsOneWidget);
+    expect(find.text(BudgetCategory.diningOut.label), findsNothing);
   });
 
   // 또래 값이 없으면 비교하지 않는다. 이전에는 또래 막대를 0원으로 그린 비교 카드가 남았다.
@@ -148,9 +148,9 @@ void main() {
     await _pumpCompare(
       tester,
       height: 844,
-      customs: const [CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19)],
+      customs: const [CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc)],
       transactions: [
-        Transaction.create(amount: 300000, categoryId: 19, date: DateTime(_now.year, _now.month, 5),
+        Transaction.create(amount: 300000, base: BudgetCategory.etc, date: DateTime(_now.year, _now.month, 5),
             type: TransactionType.expense, customCategoryId: 'c1'),
       ],
     );

@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:uuid/uuid.dart';
+import 'package:sedae_budget/entity/budget/budget_category.dart';
 import 'package:sedae_budget/entity/budget/transaction_type.dart';
 
 part 'transaction.freezed.dart';
@@ -9,7 +10,9 @@ abstract class Transaction with _$Transaction {
   const factory Transaction({
     required String id,
     required int amount, // 원 단위 정수
-    required int categoryId, // 기본 분류 id(BudgetCategory.id). 사용자 카테고리면 그 상위 분류
+    /// 적어 둔 기본 분류. 사용자 카테고리면 그 상위 분류. 거래의 카테고리 판정은 `CategoryCatalog`로 한다.
+    /// 수입은 카테고리가 없다(서버에서 읽은 값을 그대로 두고 앱은 쓰지 않는다).
+    required BudgetCategory base,
     required DateTime date,
     required TransactionType type,
     String? memo,
@@ -25,7 +28,7 @@ abstract class Transaction with _$Transaction {
   factory Transaction.create({
     String? id,
     required int amount,
-    required int categoryId,
+    required BudgetCategory base,
     required DateTime date,
     required TransactionType type,
     String? memo,
@@ -35,7 +38,7 @@ abstract class Transaction with _$Transaction {
     return Transaction(
       id: id ?? const Uuid().v4(),
       amount: amount,
-      categoryId: categoryId,
+      base: base,
       date: date,
       type: type,
       memo: memo,

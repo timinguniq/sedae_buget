@@ -1,5 +1,6 @@
 export 'age_group_wire.dart';
 export 'auth_user_dto.dart';
+export 'category_wire.dart';
 export 'custom_category_dto.dart';
 export 'login_dto.dart';
 export 'peer_stats_dto.dart';

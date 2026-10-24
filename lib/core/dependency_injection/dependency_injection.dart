@@ -1,59 +1,28 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';
 import 'package:sedae_budget/core/core.dart';
+import 'package:sedae_budget/core/dependency_injection/server_repositories.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/domain/domain.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 final locator = GetIt.instance;
 
-/// API 인프라. 다른 configure*보다 먼저 호출한다. 빌드 환경이 local이면 Stub API가 서버 대신 답한다.
-void configureApiDependencies(AuthTokenStore tokenStore) {
-  if (locator.isRegistered<Dio>()) return;
-  final session = Session(tokenStore);
-  locator
-    ..registerSingleton<Session>(session)
-    ..registerSingleton<Dio>(
-      connectToServer(
-        env: AppEnvironment.current,
-        session: session,
-        localServer: () => StubApiInterceptor(store: SharedPrefsStubStateStore()),
-      ),
-    );
-}
-
-/// 거래·카테고리 의존성(서버). [configureApiDependencies]가 먼저 호출되어 있어야 한다.
-void configureBudgetDependencies() {
-  if (locator.isRegistered<TransactionRepository>()) return;
-  locator
-    ..registerSingleton<TransactionRepository>(
-      TransactionRepositoryImpl(TransactionApi(locator<Dio>())),
-    )
-    ..registerSingleton<CategoryRepository>(
-      CategoryRepositoryImpl(CategoryApi(locator<Dio>())),
-    );
-}
-
-/// 또래 통계 의존성(서버). [configureApiDependencies]가 먼저 호출되어 있어야 한다.
-void configurePeerDependencies() {
-  if (locator.isRegistered<PeerStatsRepository>()) return;
-  locator.registerSingleton<PeerStatsRepository>(
-    PeerStatsRepositoryImpl(PeerStatsApi(locator<Dio>())),
-  );
-}
-
-/// 인증·프로필 의존성. 둘 다 서버(AuthRepositoryImpl, UserProfileRepositoryImpl).
-/// [configureApiDependencies]가 먼저 호출되어 있어야 한다.
-void configureUserDependencies() {
+/// 서버에 닿는 저장소 다섯(인증·프로필·거래·카테고리·또래 통계). 조립은 [ServerRepositories]가 한다.
+/// 빌드 환경이 local이면 Stub API가 서버 대신 답한다.
+void configureServerDependencies(AuthTokenStore tokenStore) {
   if (locator.isRegistered<AuthRepository>()) return;
+  final server = ServerRepositories.connect(
+    env: AppEnvironment.current,
+    tokenStore: tokenStore,
+    localServer: () => StubApiInterceptor(store: SharedPrefsStubStateStore()),
+  );
   locator
-    ..registerSingleton<AuthRepository>(
-      AuthRepositoryImpl(AuthApi(locator<Dio>()), locator<Session>(), StubSocialIdTokenProvider()),
-    )
-    ..registerSingleton<UserProfileRepository>(
-      UserProfileRepositoryImpl(UserProfileApi(locator<Dio>())),
-    );
+    ..registerSingleton<AuthRepository>(server.auth)
+    ..registerSingleton<UserProfileRepository>(server.profiles)
+    ..registerSingleton<TransactionRepository>(server.transactions)
+    ..registerSingleton<CategoryRepository>(server.categories)
+    ..registerSingleton<PeerStatsRepository>(server.peerStats);
 }
 
 /// 앱 이용 가능 여부(점검·업데이트) 판정 재료. Firebase가 초기화되지 않았으면 재료가 없어 판정하지 않는다.

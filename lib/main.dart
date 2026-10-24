@@ -30,10 +30,7 @@ Future<void> main() async {
       await initializeDateFormatting();
       await dotenv.load();
       final prefs = await SharedPreferences.getInstance();
-      configureApiDependencies(await SecureAuthTokenStore.open(prefs));
-      configureBudgetDependencies();
-      configurePeerDependencies();
-      configureUserDependencies();
+      configureServerDependencies(await SecureAuthTokenStore.open(prefs));
       configureAdDependencies(prefs);
       configureThemeDependencies(prefs);
       configureAppStatusDependencies();

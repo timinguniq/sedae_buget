@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 Transaction _tx(int amount, DateTime date, {TransactionType type = TransactionType.expense}) =>
-    Transaction.create(amount: amount, categoryId: 1, date: date, type: type);
+    Transaction.create(amount: amount, base: BudgetCategory.groceries, date: date, type: type);
 
 void main() {
   test('보고 있는 달까지 6개월이고 해가 바뀌어도 이어진다', () {

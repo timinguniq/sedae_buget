@@ -15,12 +15,19 @@ class _MemStore implements StubStateStore {
   Completer<void>? loadGate;
   bool failSave = false;
 
+  /// 이만큼의 읽기가 던진다(기기 저장소 고장).
+  int failLoads = 0;
+
   /// 다음 저장 한 번만 이것을 먼저 기다린다(던지면 그 저장은 실패).
   Future<void> Function()? beforeNextSave;
 
   @override
   Future<String?> load() async {
     await loadGate?.future;
+    if (failLoads > 0) {
+      failLoads--;
+      throw StateError('disk read');
+    }
     return saved;
   }
 
@@ -99,6 +106,107 @@ void main() {
     final api = _client(StubApiInterceptor(store: store));
     final token = await api.login('kakao');
     expect((await api.send('GET', '/v1/me/profile', token: token)).status, 404);
+  });
+
+  group('저장 형식', () {
+    Map<String, dynamic> row(String id, {String date = '2026-09-03T00:00:00.000Z'}) =>
+        {..._tx, 'id': id, 'date': date, 'customCategoryId': null, 'createdAt': date, 'updatedAt': date};
+
+    test('저장할 때 형식 버전을 적는다', () async {
+      final store = _MemStore();
+      await _client(StubApiInterceptor(store: store)).login('kakao');
+      expect((jsonDecode(store.saved!) as Map<String, dynamic>)['version'], StubApiState.version);
+    });
+
+    test('버전을 적기 전에 저장한 지금 형식(users 있음)은 그대로 읽는다', () async {
+      const token = 'stub.kakao.saved';
+      final store = _MemStore()
+        ..saved = jsonEncode({
+          'users': {
+            'kakao': {
+              'profile': {'ageGroup': 'forties', 'monthlyIncome': 1},
+              'transactions': {'t1': row('t1')},
+              'customCategories': {
+                'c1': {'id': 'c1', 'name': '반려동물', 'baseCategoryId': 12},
+              },
+            },
+          },
+          'activeTokens': [token],
+        });
+      final api = _client(StubApiInterceptor(store: store));
+      expect((await api.send('GET', '/v1/me/profile', token: token)).json['ageGroup'], 'forties');
+      expect((await api.send('GET', '/v1/transactions', query: _september, token: token)).list.single['id'], 't1');
+      expect((await api.send('GET', '/v1/categories', token: token)).list.single['id'], 'c1');
+    });
+
+    test('모르는 버전은 읽지 않고 빈 상태로 시작한다', () async {
+      final store = _MemStore()
+        ..saved = jsonEncode({
+          'version': StubApiState.version + 1,
+          'users': {
+            'kakao': {'profile': {'ageGroup': 'forties', 'monthlyIncome': 1}},
+          },
+        });
+      final api = _client(StubApiInterceptor(store: store));
+      final token = await api.login('kakao');
+      expect((await api.send('GET', '/v1/me/profile', token: token)).status, 404);
+    });
+
+    // 이전에는 저장된 상태를 검사 없이 읽어, 형식이 한 번 어긋나면 모든 요청이 500이었다.
+    // release 빌드도 Stub을 쓰므로 앱이 '연결 안 됨'에 갇히고, 다시 시도해도 같은 데이터를 다시 읽었다.
+    test('JSON이 아닌 저장 상태는 빈 상태로 시작한다', () async {
+      final api = _client(StubApiInterceptor(store: _MemStore()..saved = '{oops'));
+      expect((await api.send('POST', '/v1/auth/login', body: {'provider': 'kakao', 'idToken': 't'})).status, 200);
+    });
+
+    test('못 읽는 부분만 버리고 나머지는 살린다', () async {
+      final store = _MemStore()
+        ..saved = jsonEncode({
+          'version': StubApiState.version,
+          'users': {
+            'kakao': {
+              'profile': {'ageGroup': 'forties', 'monthlyIncome': 1},
+              'transactions': {'t1': row('t1'), 't2': 'oops', 't3': row('t3', date: 'yesterday')},
+              'customCategories': {
+                'c1': {'id': 'c1', 'name': '반려동물', 'baseCategoryId': 12},
+                'c2': {'id': 'c2', 'name': 3, 'baseCategoryId': 12},
+              },
+            },
+            'naver': {'transactions': <dynamic>[]},
+            'google': 'oops',
+          },
+          'activeTokens': [1, 'x'],
+        });
+      final api = _client(StubApiInterceptor(store: store));
+
+      final kakao = await api.login('kakao');
+      expect((await api.send('GET', '/v1/me/profile', token: kakao)).json['ageGroup'], 'forties');
+      expect([for (final r in (await api.send('GET', '/v1/transactions', query: _september, token: kakao)).list) r['id']],
+          ['t1']);
+      expect([for (final r in (await api.send('GET', '/v1/categories', token: kakao)).list) r['id']], ['c1']);
+
+      final naver = await api.login('naver');
+      expect((await api.send('GET', '/v1/transactions', query: _september, token: naver)).list, isEmpty);
+      final google = await api.login('google');
+      expect((await api.send('GET', '/v1/me/profile', token: google)).status, 404);
+    });
+
+    // 기기 저장소를 읽지 못한 것은 잠깐의 실패일 수 있다. 버리지 않고 다음 요청이 다시 읽는다.
+    test('기기 저장소를 읽지 못하면 500이고 다음 요청이 다시 읽는다', () async {
+      final store = _MemStore()
+        ..saved = jsonEncode({
+          'version': StubApiState.version,
+          'users': {
+            'kakao': {'profile': {'ageGroup': 'forties', 'monthlyIncome': 1}},
+          },
+        })
+        ..failLoads = 1;
+      final api = _client(StubApiInterceptor(store: store));
+      expect((await api.send('POST', '/v1/auth/login', body: {'provider': 'kakao', 'idToken': 't'})).status, 500);
+
+      final token = await api.login('kakao');
+      expect((await api.send('GET', '/v1/me/profile', token: token)).json['ageGroup'], 'forties');
+    });
   });
 
   // 저장에 실패했는데 목록에 남으면, 앱을 다시 켰을 때 사라지는 거래를 보여주게 된다.
