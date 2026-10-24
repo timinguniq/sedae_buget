@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/entity/entity.dart';
@@ -49,6 +50,29 @@ Future<StubServer> pumpPage(
 /// 서버에 있는 사용자 카테고리.
 Future<List<CustomCategory>> _onServer(WidgetTester tester, StubServer server) async =>
     (await tester.untilDone(server.categories.getAll())).unwrap();
+
+final _nameField = find.byKey(const Key('category-name-field'));
+
+/// 카테고리 관리 화면에서 추가 시트를 연다.
+Future<void> _openAddSheet(WidgetTester tester) async {
+  await pumpPage(tester, customs: const []);
+  await tester.tap(find.byKey(const Key('category-add-button')));
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 400));
+}
+
+TextEditingController _nameController(WidgetTester tester) =>
+    tester.widget<TextField>(_nameField).controller!;
+
+/// 키보드(IME)가 이름 칸에 [text]를 보낸다. [composing]은 조합 중(한글 등)인 범위.
+Future<void> _imeSends(WidgetTester tester, String text, {TextRange composing = TextRange.empty}) async {
+  tester.testTextInput.updateEditingValue(TextEditingValue(
+    text: text,
+    selection: TextSelection.collapsed(offset: text.length),
+    composing: composing,
+  ));
+  await tester.pump();
+}
 
 void main() {
 
@@ -157,6 +181,120 @@ void main() {
 
     expect((await _onServer(tester, server)).single.name, '🐶' * 6);
   });
+
+  // 글자 수 표시와 입력 제한은 저장할 이름(앞뒤 공백을 뗀 것)으로 센다. 이전에는 공백까지 세어
+  // 10자 이름 앞뒤에 공백이 있으면 입력이 잘렸고, ' 반려식물 '이 '6 / 10'이었다.
+  testWidgets('앞뒤 공백은 글자 수에 넣지 않고, 10자 이름은 공백이 있어도 들어간다', (tester) async {
+    final server = await pumpPage(tester, customs: const []);
+    final field = find.byKey(const Key('category-name-field'));
+
+    await tester.tap(find.byKey(const Key('category-add-button')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.enterText(field, ' 반려식물 ');
+    await tester.pump();
+    expect(find.text('4 / 10'), findsOneWidget);
+
+    final spaced = '  ${'가' * 10}  ';
+    await tester.enterText(field, spaced);
+    await tester.pump();
+    expect(tester.widget<TextField>(field).controller!.text, spaced);
+    expect(find.text('10 / 10'), findsOneWidget);
+
+    // 11자째는 받지 않는다.
+    await tester.enterText(field, '$spaced가');
+    await tester.pump();
+    expect(tester.widget<TextField>(field).controller!.text, spaced);
+
+    await tester.tap(find.byKey(const Key('category-submit-button')));
+    await tester.settle();
+    expect((await _onServer(tester, server)).single.name, '가' * 10);
+  });
+
+  // 입력 제한은 LengthLimitingTextInputFormatter와 같게 막고, 글자 수만 CategoryName으로 센다.
+  // 이전에는 넘치는 입력을 통째로 거절해 붙여넣기가 아무것도 넣지 않았다.
+  testWidgets('10자가 넘는 이름을 붙여 넣으면 앞 10자만 들어간다', (tester) async {
+    await _openAddSheet(tester);
+    await tester.enterText(_nameField, '가나다라마바사아자차카타');
+    await tester.pump();
+    expect(_nameController(tester).text, '가나다라마바사아자차');
+    expect(find.text('10 / 10'), findsOneWidget);
+
+    // 앞 공백은 글자 수에 넣지 않으므로 공백 뒤로 10자가 들어간다.
+    await tester.enterText(_nameField, '');
+    await tester.enterText(_nameField, '  가나다라마바사아자차카타');
+    await tester.pump();
+    expect(_nameController(tester).text, '  가나다라마바사아자차');
+  }, variant: TargetPlatformVariant({TargetPlatform.android, TargetPlatform.iOS}));
+
+  // 고른 글자를 바꾸는 입력은 꽉 찬 칸에서도 받고 10자로 자른다(LengthLimitingTextInputFormatter와 같다).
+  testWidgets('꽉 찬 이름에서 고른 글자 위에 더 긴 글을 붙여 넣으면 앞 10자만 남는다', (tester) async {
+    await _openAddSheet(tester);
+    await tester.enterText(_nameField, '가나다라마바사아자차');
+    await tester.pump();
+    _nameController(tester).selection = const TextSelection(baseOffset: 0, extentOffset: 1); // '가'를 고른다
+    await tester.pump();
+
+    tester.testTextInput.updateEditingValue(const TextEditingValue(
+      text: 'XY나다라마바사아자차', selection: TextSelection.collapsed(offset: 2)));
+    await tester.pump();
+    expect(_nameController(tester).text, 'XY나다라마바사아자');
+  });
+
+  // 이전에는 넘친 값에서 지우는 입력도 그 전 값으로 되돌려 지울 수 없었다.
+  testWidgets('이미 넘친 이름에서도 지울 수 있다', (tester) async {
+    await _openAddSheet(tester);
+    _nameController(tester).value = TextEditingValue(
+      text: '가' * 12, selection: const TextSelection.collapsed(offset: 12)); // 입력 제한을 거치지 않은 값
+    await tester.pump();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+    await tester.pump();
+    expect(_nameController(tester).text, '가' * 10); // 11자로 지운 뒤 10자로 자른다
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.backspace); // 꽉 찬 이름에서도 지운다
+    await tester.pump();
+    expect(_nameController(tester).text, '가' * 9);
+  });
+
+  // 꽉 찬 칸에 끼워 넣은 글자가 끝 글자를 밀어내지 않는다(LengthLimitingTextInputFormatter와 같다).
+  testWidgets('꽉 찬 이름 가운데에 글자를 넣으면 받지 않는다', (tester) async {
+    await _openAddSheet(tester);
+    await tester.enterText(_nameField, '가나다라마바사아자차');
+    await tester.pump();
+
+    tester.testTextInput.updateEditingValue(const TextEditingValue(
+      text: '가나다라마X바사아자차', selection: TextSelection.collapsed(offset: 6)));
+    await tester.pump();
+    expect(_nameController(tester).text, '가나다라마바사아자차');
+  });
+
+  // iOS·macOS·웹은 조합(한글 등)이 끝난 뒤에 자른다(Flutter 기본). 이전에는 10자째를 조합하는 중에 친 다음 글자를
+  // 거절해, 그 자음이 10자째의 받침으로 붙었다.
+  testWidgets('iOS: 조합 중에는 넘쳐도 받고, 조합이 끝나면 10자로 자른다', (tester) async {
+    await _openAddSheet(tester);
+    final nine = '가' * 9;
+    await _imeSends(tester, '$nine간', composing: const TextRange(start: 9, end: 10)); // 10자째 조합 중
+    await _imeSends(tester, '$nine가나', composing: const TextRange(start: 10, end: 11)); // 'ㅏ' → '가나'
+    expect(_nameController(tester).text, '$nine가나');
+
+    await _imeSends(tester, '$nine가나'); // 조합이 끝났다
+    expect(_nameController(tester).text, '$nine가');
+
+    // 꽉 찬 칸에서는 새 조합을 시작하지 않는다.
+    await _imeSends(tester, '$nine가ㄴ', composing: const TextRange(start: 10, end: 11));
+    expect(_nameController(tester).text, '$nine가');
+  }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
+
+  // Android는 조합을 IME가 맡으므로 조합 중이어도 바로 자른다(Flutter 기본, 이전 동작).
+  testWidgets('Android: 조합 중이어도 넘치면 바로 자른다', (tester) async {
+    await _openAddSheet(tester);
+    final nine = '가' * 9;
+    await _imeSends(tester, nine);
+    await _imeSends(tester, '$nineにほ', composing: const TextRange(start: 9, end: 11));
+    expect(_nameController(tester).value.text, '$nineに');
+    expect(_nameController(tester).value.composing, const TextRange(start: 9, end: 10));
+  }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 
   // 서버는 저장했는데 응답을 잃었다. 다시 누르면 같은 카테고리로 저장돼 이름이 겹친다고 막히지 않는다.
   testWidgets('응답을 잃은 뒤 다시 누르면 카테고리 하나로 저장하고 닫힌다', (tester) async {

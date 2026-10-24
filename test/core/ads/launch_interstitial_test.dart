@@ -57,6 +57,24 @@ void main() {
     expect(ads.showInterstitialCalls, 0);
   });
 
+  // 로드를 기다리는 동안 상황이 바뀔 수 있다(세션 종료 등). 띄울지는 로드가 끝난 뒤에 묻는다.
+  test('로드가 끝난 뒤 stillWanted가 false면 띄우지 않고, 같은 실행에 다시 띄우지 않는다', () async {
+    final load = Completer<bool>();
+    final ads = FakeAdService(interstitial: load.future);
+    final launch = await build(ads, count: 4);
+    await launch.onAppLaunched();
+    var wanted = true;
+    final showing = launch.showIfDue(stillWanted: () => wanted);
+    await Future<void>.delayed(Duration.zero);
+    wanted = false; // 로드를 기다리는 동안 바뀌었다
+    load.complete(true);
+    await showing;
+    expect(ads.showInterstitialCalls, 0);
+
+    await launch.showIfDue();
+    expect(ads.showInterstitialCalls, 0);
+  });
+
   test('timeout 안에 로드가 안 끝나면 띄우지 않는다', () async {
     final ads = FakeAdService(interstitial: Completer<bool>().future);
     final launch = await build(ads, count: 4);

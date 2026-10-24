@@ -24,12 +24,16 @@ class LaunchInterstitial {
   }
 
   /// [onAppLaunched]가 로드를 시작했으면 로드가 끝나길(최대 [timeout]) 기다렸다가 띄운다.
-  /// 아니면 아무것도 안 한다. 한 번 띄우면 다음 [onAppLaunched] 전까지 다시 띄우지 않는다.
-  Future<void> showIfDue({Duration timeout = const Duration(seconds: 5)}) async {
+  /// 기다리는 동안 상황이 바뀔 수 있으므로 띄우기 직전에 [stillWanted]를 보고, false면 띄우지 않는다.
+  /// 아니면 아무것도 안 한다. 한 번 띄우면(띄우지 않기로 했어도) 다음 [onAppLaunched] 전까지 다시 띄우지 않는다.
+  Future<void> showIfDue({
+    Duration timeout = const Duration(seconds: 5),
+    bool Function()? stillWanted,
+  }) async {
     final loading = _loading;
     if (loading == null) return;
     _loading = null;
     final loaded = await loading.timeout(timeout, onTimeout: () => false);
-    if (loaded) await _ads.showInterstitial();
+    if (loaded && (stillWanted?.call() ?? true)) await _ads.showInterstitial();
   }
 }

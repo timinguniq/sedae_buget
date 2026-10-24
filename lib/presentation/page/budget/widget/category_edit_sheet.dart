@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -97,12 +99,12 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
               key: const Key('category-name-field'),
               controller: _name,
               autofocus: !_isEdit,
-              maxLength: CategoryName.maxLength,
-              inputFormatters: [LengthLimitingTextInputFormatter(CategoryName.maxLength)],
+              // TextField.maxLength는 앞뒤 공백까지 세므로 쓰지 않는다. 제한과 글자 수는 CategoryName으로 센다.
+              inputFormatters: const [_NameLengthLimit()],
               style: context.typo.body2W600.copyWith(color: context.color.label.normal),
               decoration: InputDecoration(
                 hintText: '예) 반려동물',
-                counterText: '${CategoryName.lengthOf(_name.text)} / ${CategoryName.maxLength}',
+                counterText: '${CategoryName.countOf(_name.text)} / ${CategoryName.maxLength}',
               ),
             ),
             const SizedBox(height: 12),
@@ -144,6 +146,47 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
           ]),
         ),
       ),
+    );
+  }
+}
+
+/// 이름 칸의 길이 제한. [LengthLimitingTextInputFormatter]가 플랫폼 기본 방식으로 막는 것과 같고, 글자 수만
+/// [CategoryName]으로 센다(앞뒤 공백은 세지 않는다). 넘치는 입력(붙여넣기 포함)은 [CategoryName.fittingPrefix]까지 남긴다.
+class _NameLengthLimit extends TextInputFormatter {
+  const _NameLengthLimit();
+
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    if (CategoryName.fits(newValue.text)) return newValue;
+    final full = CategoryName.countOf(oldValue.text) == CategoryName.maxLength;
+    switch (LengthLimitingTextInputFormatter.getDefaultMaxLengthEnforcement()) {
+      case MaxLengthEnforcement.none:
+        return newValue;
+      case MaxLengthEnforcement.enforced:
+        // 꽉 찬 칸에 더 넣으면 그 전 값을 둔다(자르면 가운데 넣은 글자가 끝 글자를 밀어낸다).
+        if (full && oldValue.selection.isCollapsed) return oldValue;
+      case MaxLengthEnforcement.truncateAfterCompositionEnds:
+        if (full && !oldValue.composing.isValid) return oldValue;
+        // 조합 중(한글 등)인 값은 넘쳐도 받고 조합이 끝나면 자른다. 조합 중에 막으면 다음 자음이 받침으로 붙는다.
+        if (newValue.composing.isValid) return newValue;
+    }
+    return _truncate(newValue);
+  }
+
+  /// [value]를 [CategoryName.fittingPrefix]로 자른다. 선택·조합 범위는 잘린 글 안으로 줄인다
+  /// ([LengthLimitingTextInputFormatter.truncate]와 같다).
+  static TextEditingValue _truncate(TextEditingValue value) {
+    final text = CategoryName.fittingPrefix(value.text);
+    final composing = value.composing;
+    return TextEditingValue(
+      text: text,
+      selection: value.selection.copyWith(
+        baseOffset: math.min(value.selection.start, text.length),
+        extentOffset: math.min(value.selection.end, text.length),
+      ),
+      composing: !composing.isCollapsed && text.length > composing.start
+          ? TextRange(start: composing.start, end: math.min(composing.end, text.length))
+          : TextRange.empty,
     );
   }
 }
