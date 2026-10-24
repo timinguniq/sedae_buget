@@ -208,9 +208,17 @@ void main() {
 
     test('목록을 모르면 고른 그대로 저장한다', () {
       final tx = TransactionDraft.edit(_saved(customCategoryId: 'c1'), const CategoryCatalog())
-          .toTransaction(null);
+          .toTransaction(const CategoryCatalog.unknown());
       expect(tx.customCategoryId, 'c1');
       expect(tx.base, BudgetCategory.groceries);
+    });
+
+    // 이전에는 '모름'을 null로, 다 읽은 빈 목록을 []로 나타내 두 값의 뜻이 반대였다.
+    // 화면이 만든 빈 목록이 저장으로 넘어가면 사용자 카테고리가 조용히 떨어졌다.
+    test('다 읽은 빈 목록이면 사용자 카테고리를 떼고, 모르면 남긴다', () {
+      final draft = TransactionDraft.edit(_saved(customCategoryId: 'c1'), const CategoryCatalog.unknown());
+      expect(draft.toTransaction(const CategoryCatalog()).customCategoryId, isNull);
+      expect(draft.toTransaction(const CategoryCatalog.unknown()).customCategoryId, 'c1');
     });
 
     // 지워진 사용자 카테고리를 계속 가리키면 어디에도 보이지 않는 id가 남는다.

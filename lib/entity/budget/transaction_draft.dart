@@ -111,15 +111,15 @@ class TransactionDraft {
 
   /// 저장할 거래. 사용자 카테고리는 [catalog]의 현재 상위 분류를 따르고,
   /// 목록에 없으면(지워졌으면) 사용자 카테고리를 떼고 [base]로 저장한다.
-  /// [catalog]가 null(목록을 읽지 못함)이면 판정하지 않고 고른 그대로 저장한다.
+  /// [catalog]가 목록을 모르면([CategoryCatalog.unknown]) 판정하지 않고 고른 그대로 저장한다.
   /// 수입은 사용자 카테고리 없이 저장한다(서버 계약상 기본 분류는 보내지만 앱은 쓰지 않는다).
-  Transaction toTransaction(CategoryCatalog? catalog) {
-    final custom = hasCategory ? catalog?.byId(customCategoryId) : null;
+  Transaction toTransaction(CategoryCatalog catalog) {
+    final custom = hasCategory ? catalog.byId(customCategoryId) : null;
     final customId = !hasCategory
         ? null
-        : catalog == null
-            ? customCategoryId
-            : custom?.id;
+        : catalog.isComplete
+            ? custom?.id
+            : customCategoryId;
     final recorded = custom?.base ?? base;
     final trimmed = memo.trim();
     final memoOrNull = trimmed.isEmpty ? null : trimmed;

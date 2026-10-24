@@ -79,6 +79,60 @@ void main() {
     expect((await _saved(server)).single.customCategoryId, _pet.id);
   });
 
+  test('사용자 카테고리 목록을 읽기 전이나 못 읽었으면 카탈로그는 모름이다', () async {
+    final server = await _server(categories: const [_pet]);
+    server.faults.fail('GET', '/v1/categories');
+    final c = fakeContainer(server: server);
+
+    expect(c.read(categoryCatalogProvider).isComplete, isFalse);
+    await expectLater(c.read(customCategoriesProvider.future), throwsA(anything));
+    expect(c.read(categoryCatalogProvider).isComplete, isFalse);
+  });
+
+  test('사용자 카테고리 목록을 읽으면 카탈로그는 그 목록이다', () async {
+    final c = fakeContainer(server: await _server(categories: const [_pet]));
+    await c.read(customCategoriesProvider.future);
+
+    final catalog = c.read(categoryCatalogProvider);
+    expect(catalog.isComplete, isTrue);
+    expect(catalog.customs, [_pet]);
+  });
+
+  // 다시 읽기가 실패했다고 보이던 사용자 카테고리 이름이 기본 분류 이름으로 바뀌지 않는다.
+  test('사용자 카테고리 목록을 다시 읽다 실패해도 카탈로그는 앞서 읽은 목록이다', () async {
+    final server = await _server(categories: const [_pet]);
+    final c = fakeContainer(server: server);
+    final sub = c.listen(categoryCatalogProvider, (_, _) {});
+    await c.read(customCategoriesProvider.future);
+
+    server.faults.fail('GET', '/v1/categories');
+    c.invalidate(customCategoriesProvider);
+    await expectLater(c.read(customCategoriesProvider.future), throwsA(anything));
+
+    expect(sub.read().customs, [_pet]);
+  });
+
+  test('새 거래 초안은 보고 있는 달에 적는다', () {
+    final c = fakeContainer();
+    c.read(selectedMonthProvider.notifier).prev();
+
+    final draft = c.read(monthlyTransactionsProvider.notifier).newDraft();
+    expect(YearMonth.of(draft.date), c.read(selectedMonthProvider));
+    expect(draft.isEdit, isFalse);
+  });
+
+  test('거래를 고치는 초안은 지금 아는 사용자 카테고리로 판정한다', () async {
+    final c = fakeContainer(server: await _server(categories: const [_pet]));
+    await c.read(customCategoriesProvider.future);
+    final tx = Transaction.create(
+        amount: 1000, base: BudgetCategory.groceries, date: _thisMonth, type: TransactionType.expense,
+        customCategoryId: _pet.id);
+
+    final draft = c.read(monthlyTransactionsProvider.notifier).editDraft(tx);
+    expect(draft.base, BudgetCategory.etc); // 사용자 카테고리의 지금 상위 분류
+    expect(draft.customCategoryId, _pet.id);
+  });
+
   // Stub 서버가 사용자마다 데이터를 따로 둔다(계약). 장부는 세션이 바뀌면 새 사용자로 다시 읽어야 한다.
   test('다른 사용자로 다시 로그인하면 이전 사용자의 장부가 남지 않는다', () async {
     final c = fakeContainer(server: await _server(categories: const [_pet], transactions: [_expense(1111)]));

@@ -28,11 +28,8 @@ class _State extends ConsumerState<TransactionEditPage> {
   void initState() {
     super.initState();
     final e = widget.existing;
-    final today = ref.read(selectedMonthProvider.notifier).today;
-    // 새 거래는 보고 있는 달에 적는다(지난 달을 보며 추가하면 그 달의 거래다).
-    _draft = e == null
-        ? TransactionDraft.create(ref.read(selectedMonthProvider).draftDate(today))
-        : TransactionDraft.edit(e, CategoryCatalog(ref.read(customCategoriesProvider).value ?? const []));
+    final ledger = ref.read(monthlyTransactionsProvider.notifier);
+    _draft = e == null ? ledger.newDraft() : ledger.editDraft(e);
     _memo = TextEditingController(text: _draft.memo);
   }
 
@@ -89,7 +86,7 @@ class _State extends ConsumerState<TransactionEditPage> {
 
   @override
   Widget build(BuildContext context) {
-    final customs = ref.watch(customCategoriesProvider).value ?? const <CustomCategory>[];
+    final catalog = ref.watch(categoryCatalogProvider);
     return DefaultLayout(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(22, 6, 22, 22),
@@ -111,7 +108,7 @@ class _State extends ConsumerState<TransactionEditPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 22),
-              Center(child: _CategoryPill(label: _draft.label(CategoryCatalog(customs)))),
+              Center(child: _CategoryPill(label: _draft.label(catalog))),
               const SizedBox(height: 14),
               Text(WonText.full.of(_draft.amount),
                   textAlign: TextAlign.center,
@@ -148,7 +145,7 @@ class _State extends ConsumerState<TransactionEditPage> {
                 _CategoryChips(
                   selected: _draft.base,
                   selectedCustomId: _draft.customCategoryId,
-                  customs: customs,
+                  customs: catalog.customs,
                   onPickBase: (c) => setState(() => _draft = _draft.pickBase(c)),
                   onPickCustom: (c) => setState(() => _draft = _draft.pickCustom(c)),
                   onAdd: _addCategory,

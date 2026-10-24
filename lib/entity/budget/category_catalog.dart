@@ -16,9 +16,19 @@ class TransactionCategory {
 
 /// 기본 분류와 사용자 카테고리를 함께 아는 목록. 거래의 카테고리는 여기서만 판정한다.
 class CategoryCatalog {
-  const CategoryCatalog([this.customs = const []]);
+  /// 다 읽은 사용자 카테고리 목록([customs]). 여기 없는 사용자 카테고리는 지워진 것이다.
+  const CategoryCatalog([this.customs = const []]) : isComplete = true;
+
+  /// 사용자 카테고리 목록을 모른다(읽는 중이거나 읽지 못했다). 사용자 카테고리를 가리키는 거래는
+  /// 적힌 기본 분류로 보이고, 그 카테고리가 지워졌는지는 판정하지 않는다.
+  const CategoryCatalog.unknown()
+      : customs = const [],
+        isComplete = false;
 
   final List<CustomCategory> customs;
+
+  /// 사용자 카테고리 목록을 다 읽었는가. false면 목록에 없는 사용자 카테고리가 지워졌는지 알 수 없다.
+  final bool isComplete;
 
   /// [tx]의 카테고리.
   ///

@@ -42,10 +42,17 @@ void main() {
     expect(c.label, BudgetCategory.etc.label);
   });
 
-  test('사용자 카테고리를 모르면(목록 없음) 기본 분류로만 판정한다', () {
-    final c = const CategoryCatalog().of(tx(customCategoryId: 'c1'));
+  test('사용자 카테고리를 모르면 기본 분류로만 판정한다', () {
+    const unknown = CategoryCatalog.unknown();
+    expect(unknown.isComplete, isFalse);
+    final c = unknown.of(tx(customCategoryId: 'c1'));
     expect(c.custom, isNull);
     expect(c.base, BudgetCategory.etc);
+  });
+
+  test('목록으로 만든 카탈로그는 다 읽은 것이다', () {
+    expect(catalog.isComplete, isTrue);
+    expect(const CategoryCatalog().isComplete, isTrue);
   });
 
   test('byId는 id로 찾고 null·없는 id는 null', () {
