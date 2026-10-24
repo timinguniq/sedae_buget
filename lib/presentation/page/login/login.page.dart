@@ -1,5 +1,7 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
@@ -62,8 +64,22 @@ class LoginPage extends ConsumerWidget {
 }
 
 /// "로그인 시 이용약관 및 개인정보처리방침에 / 동의하는 것으로 간주됩니다." (강조 2곳 600·alternative)
-class _TermsNotice extends StatelessWidget {
+/// 강조한 두 낱말을 누르면 약관 화면을 연다(push라 닫으면 로그인 화면).
+class _TermsNotice extends StatefulWidget {
   const _TermsNotice();
+
+  @override
+  State<_TermsNotice> createState() => _TermsNoticeState();
+}
+
+class _TermsNoticeState extends State<_TermsNotice> {
+  late final _openTerms = TapGestureRecognizer()..onTap = () => context.push(RoutePath.terms.path);
+
+  @override
+  void dispose() {
+    _openTerms.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,9 +89,9 @@ class _TermsNotice extends StatelessWidget {
         style: context.typo.caption2W500.copyWith(fontSize: 10.5, height: 1.55, color: context.color.label.disable),
         children: [
           const TextSpan(text: '로그인 시 '),
-          TextSpan(text: '이용약관', style: emphasis),
+          TextSpan(text: '이용약관', style: emphasis, recognizer: _openTerms),
           const TextSpan(text: ' 및 '),
-          TextSpan(text: '개인정보처리방침', style: emphasis),
+          TextSpan(text: '개인정보처리방침', style: emphasis, recognizer: _openTerms),
           const TextSpan(text: '에\n동의하는 것으로 간주됩니다.'),
         ],
       ),

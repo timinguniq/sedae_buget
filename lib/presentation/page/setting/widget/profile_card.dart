@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
@@ -7,7 +8,7 @@ import 'package:sedae_budget/theme/theme.dart';
 
 /// 프로필 카드. 디자인: 46px 마스코트 + 이름 700·15 + 나이대 500·11.5 + 우측 provider 배지.
 /// 세션 게이트가 로그아웃 상태에선 설정을 보여주지 않으므로, 로그아웃 직후 한 프레임은 그리지 않는다.
-/// 로그아웃은 화면 하단 [LogoutButton]에서.
+/// 누르면 프로필(나이대·월 소득) 수정을 연다. 로그아웃은 화면 하단 [LogoutButton]에서.
 class ProfileCard extends ConsumerWidget {
   const ProfileCard({super.key});
 
@@ -19,6 +20,7 @@ class ProfileCard extends ConsumerWidget {
     final subtitle = ageGroup?.label ?? '${user.provider.label} 로그인';
     return SurfaceCard(
       padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
+      onTap: () => context.push(RoutePath.profileEdit.path),
       child: Row(children: [
         const MascotDongle(size: 46),
         const SizedBox(width: 13),

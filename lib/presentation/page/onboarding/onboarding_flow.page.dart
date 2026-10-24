@@ -5,9 +5,6 @@ import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-/// 온보딩 소득 슬라이더 상한 (디자인 `₩6,000,000+`).
-const int kOnboardingIncomeMax = 6000000;
-
 class OnboardingFlowPage extends ConsumerStatefulWidget {
   const OnboardingFlowPage({super.key});
   @override
@@ -116,81 +113,8 @@ class _AgeStep extends StatelessWidget {
         Text('또래 비교를 위해 꼭 필요해요',
           style: context.typo.caption1W500.copyWith(fontSize: 13, color: context.color.label.assistive)),
         const SizedBox(height: 20),
-        for (final g in AgeGroup.values)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 9),
-            child: _AgeCard(group: g, selected: selected == g, onTap: () => onSelect(g)),
-          ),
+        AgeGroupPicker(selected: selected, onSelect: onSelect),
       ]),
-    );
-  }
-}
-
-/// 나이대 카드: 숫자 배지 36px + 라벨 700·14.5 + 설명 500·11 + 우측 라디오 21px.
-class _AgeCard extends StatelessWidget {
-  const _AgeCard({required this.group, required this.selected, required this.onTap});
-  final AgeGroup group; final bool selected; final VoidCallback onTap;
-
-  static const _selectedDescription = Color(0xFFC77E66);
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.color;
-    final badge = group.badge;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 15),
-        decoration: BoxDecoration(
-          color: selected ? c.primary.tint : c.background.surface,
-          borderRadius: BorderRadius.circular(17),
-          border: Border.all(color: selected ? c.primary.normal : c.line.normal, width: 1.5)),
-        child: Row(children: [
-          Container(
-            width: 36, height: 36,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: selected ? c.primary.normal : c.background.alternative),
-            child: Text(badge, style: context.typo.caption1W600.copyWith(
-              fontSize: badge.length > 2 ? 12 : 13, fontWeight: context.typo.extraBold,
-              color: selected ? c.static.white : c.label.alternative)),
-          ),
-          const SizedBox(width: 13),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(group.label, style: context.typo.label2W600.copyWith(
-              fontSize: 14.5, fontWeight: context.typo.bold, color: c.label.normal)),
-            const SizedBox(height: 2),
-            Text(group.lifeStage, style: context.typo.caption2W500.copyWith(
-              fontSize: 11, color: selected ? _selectedDescription : c.label.assistive)),
-          ])),
-          _Radio(selected: selected),
-        ]),
-      ),
-    );
-  }
-}
-
-/// 21px 라디오: 선택 시 코랄 채움 + 흰 점 7px, 아니면 2px 회색 링.
-class _Radio extends StatelessWidget {
-  const _Radio({required this.selected});
-  final bool selected;
-  @override
-  Widget build(BuildContext context) {
-    final c = context.color;
-    return Container(
-      width: 21, height: 21,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: selected ? c.primary.normal : null,
-        border: selected ? null : Border.all(color: c.line.neutral, width: 2)),
-      child: selected
-          ? Container(width: 7, height: 7,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: c.static.white))
-          : null,
     );
   }
 }
@@ -201,7 +125,6 @@ class _IncomeStep extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.color;
-    final rangeStyle = context.typo.caption2W500.copyWith(fontSize: 11, color: c.label.assistive);
     return SingleChildScrollView(
       child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
         Text('월 소득은\n어느 정도인가요?',
@@ -210,24 +133,7 @@ class _IncomeStep extends StatelessWidget {
         Text('저축률 계산과 또래 비교에만 사용해요.',
           style: context.typo.caption1W500.copyWith(fontSize: 13, color: c.label.assistive)),
         const SizedBox(height: 38),
-        Center(child: Column(children: [
-          Text(WonText.full.of(income.round()),
-            style: context.typo.amountDisplay.copyWith(fontSize: 38, letterSpacing: -1.2, color: c.label.normal)),
-          const SizedBox(height: 5),
-          Text('월 평균 실수령액', style: context.typo.caption1W600.copyWith(color: c.label.assistive)),
-        ])),
-        const SizedBox(height: 40),
-        SliderTheme(
-          data: SliderTheme.of(context).copyWith(padding: EdgeInsets.zero),
-          child: Slider(
-            min: 0, max: kOnboardingIncomeMax.toDouble(), divisions: 60,
-            value: income.clamp(0, kOnboardingIncomeMax.toDouble()), onChanged: onChanged),
-        ),
-        const SizedBox(height: 14),
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(WonText.full.of(0), style: rangeStyle),
-          Text('${WonText.full.of(kOnboardingIncomeMax)}+', style: rangeStyle),
-        ]),
+        IncomePicker(income: income, onChanged: onChanged),
         const SizedBox(height: 30),
         Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Padding(

@@ -47,7 +47,7 @@ class SettingPage extends ConsumerWidget {
                 _divider(context),
                 SettingsTile(label: '앱 버전', value: version == null ? '...' : 'v$version'),
                 _divider(context),
-                SettingsTile(label: '이용약관 · 개인정보', onTap: () {}),
+                SettingsTile(label: '이용약관 · 개인정보', onTap: () => context.push(RoutePath.terms.path)),
               ]),
             ),
             const SizedBox(height: 18),

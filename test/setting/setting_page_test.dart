@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
+import 'package:sedae_budget/presentation/page/terms/terms.page.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
@@ -49,6 +51,31 @@ void main() {
     await tester.settle();
 
     expect(find.text('...'), findsOneWidget);
+  });
+
+  testWidgets('이용약관 · 개인정보를 누르면 약관 화면이 열리고, 뒤로 가면 설정이다', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+    final router = GoRouter(routes: [
+      GoRoute(path: '/', builder: (_, _) => const SettingPage()),
+      GoRoute(path: RoutePath.terms.path, builder: (_, _) => const TermsPage()),
+    ]);
+    await tester.pumpWidget(fakeScope(
+      fakeContainer(themeModeStore: await fakeThemeModeStore()),
+      MaterialApp.router(routerConfig: router)));
+    await tester.settle();
+
+    await tester.tap(find.text('이용약관 · 개인정보'));
+    await tester.settle();
+    expect(find.byType(TermsPage), findsOneWidget);
+    expect(find.text('이용약관'), findsOneWidget);
+    expect(find.text('개인정보처리방침'), findsOneWidget);
+
+    await tester.tap(find.byType(RoundIconButton));
+    await tester.settle();
+    expect(find.byType(TermsPage), findsNothing);
+    expect(find.text('설정'), findsOneWidget);
   });
 
   testWidgets('logged in: bottom logout button is shown', (tester) async {
