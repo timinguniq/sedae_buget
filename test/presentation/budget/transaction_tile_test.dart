@@ -11,7 +11,7 @@ void main() {
   // 이전에는 첫 글자를 UTF-16 한 단위로 잘라, 이모지로 시작하는 사용자 카테고리의 거래를 그리지 못했다.
   testWidgets('이모지로 시작하는 카테고리도 첫 글자를 그린다', (tester) async {
     final tx = Transaction.create(
-        amount: 1000, categoryId: 19, date: DateTime(2026, 9, 5), type: TransactionType.expense);
+        amount: 1000, base: BudgetCategory.etc, date: DateTime(2026, 9, 5), type: TransactionType.expense);
 
     await tester.pumpWidget(MaterialApp(
       theme: materialTheme(LightTheme()),

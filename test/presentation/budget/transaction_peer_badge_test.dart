@@ -13,7 +13,7 @@ void main() {
 
   final tx = Transaction.create(
     amount: 400000,
-    categoryId: 1,
+    base: BudgetCategory.groceries,
     date: DateTime(2026, 6, 10),
     type: TransactionType.expense,
   );
@@ -49,7 +49,7 @@ void main() {
 
     final longTx = Transaction.create(
       amount: 400000,
-      categoryId: 1,
+      base: BudgetCategory.groceries,
       date: DateTime(2026, 6, 10),
       type: TransactionType.expense,
       memo: '오늘 마트에서 장 봤어요 그리고 또 다른 것도 많이 샀습니다 정말로',

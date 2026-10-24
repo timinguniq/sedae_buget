@@ -25,7 +25,7 @@ void main() {
     expect(user.provider, AuthProvider.kakao);
 
     final tx = Transaction.create(
-        amount: 1000, categoryId: 1, date: DateTime(2026, 9, 3), type: TransactionType.expense);
+        amount: 1000, base: BudgetCategory.groceries, date: DateTime(2026, 9, 3), type: TransactionType.expense);
     (await locator<TransactionRepository>().upsert(tx)).unwrap();
     final september = YearMonth.of(DateTime(2026, 9));
     expect((await locator<TransactionRepository>().getRange(september.start, september.end)).unwrap().single.id,

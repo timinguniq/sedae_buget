@@ -7,7 +7,7 @@ import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
 
 import '../../helper/fakes.dart';
 
-const _pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
+const _pet = CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc);
 
 /// 이번 달 [day]일.
 DateTime _d(int day) {
@@ -15,8 +15,8 @@ DateTime _d(int day) {
   return DateTime(now.year, now.month, day);
 }
 
-Transaction _expense(int amount, int categoryId, int day, {String? customCategoryId}) => Transaction.create(
-    amount: amount, categoryId: categoryId, date: _d(day), type: TransactionType.expense,
+Transaction _expense(int amount, BudgetCategory base, int day, {String? customCategoryId}) => Transaction.create(
+    amount: amount, base: base, date: _d(day), type: TransactionType.expense,
     customCategoryId: customCategoryId);
 
 /// [transactions]·[customs]를 심은 서버로 분석 화면을 띄운다. [faults]로 서버 장애를 건다.
@@ -35,7 +35,8 @@ Future<void> _pump(
 void main() {
 
   testWidgets('shows donut + rows when data', (tester) async {
-    await _pump(tester, [_expense(10000, 10, 5), _expense(4000, 2, 6)]);
+    await _pump(tester,
+        [_expense(10000, BudgetCategory.transport, 5), _expense(4000, BudgetCategory.diningOut, 6)]);
     expect(find.byType(CategoryDonut), findsOneWidget);
     expect(find.byType(CategoryRow), findsWidgets);
   });
@@ -45,7 +46,7 @@ void main() {
     tester.view.physicalSize = const Size(390, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
-    await _pump(tester, [for (var id = 1; id <= 8; id++) _expense(1000 * (9 - id), id, 5)]);
+    await _pump(tester, [for (var i = 0; i < 8; i++) _expense(1000 * (8 - i), BudgetCategory.values[i], 5)]);
 
     final rows = tester.widgetList<CategoryRow>(find.byType(CategoryRow)).toList();
     expect(rows.map((r) => r.amount), [8000, 7000, 6000, 5000, 4000, 3000, 2000 + 1000]);
@@ -59,8 +60,8 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
     await _pump(tester, [
-      _expense(9000, BudgetCategory.etc.id, 5),
-      for (var id = 1; id <= 7; id++) _expense(1000 * (9 - id), id, 5),
+      _expense(9000, BudgetCategory.etc, 5),
+      for (var i = 0; i < 7; i++) _expense(1000 * (8 - i), BudgetCategory.values[i], 5),
     ]);
 
     final labels = tester.widgetList<CategoryRow>(find.byType(CategoryRow)).map((r) => r.label).toList();
@@ -69,7 +70,7 @@ void main() {
   });
 
   testWidgets('custom header shows title, month total and month navigator', (tester) async {
-    await _pump(tester, [_expense(1920000, 10, 5)]);
+    await _pump(tester, [_expense(1920000, BudgetCategory.transport, 5)]);
     expect(find.text('카테고리 분석'), findsOneWidget);
     expect(find.byType(RoundIconButton), findsOneWidget);
     // 도넛 가운데는 보고 있는 달의 이름으로 부른다(이전에는 이번 달도 '9월 총지출'이었다).
@@ -91,7 +92,7 @@ void main() {
 
   // 또래 통계가 실패해도 내 분석은 보인다. 또래 비교 토글만 빠진다.
   testWidgets('또래 통계를 못 읽어도 분석이 보이고 또래 토글은 없다', (tester) async {
-    await _pump(tester, [_expense(10000, 10, 5)],
+    await _pump(tester, [_expense(10000, BudgetCategory.transport, 5)],
         faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server));
 
     expect(find.byType(CategoryDonut), findsOneWidget);
@@ -106,7 +107,8 @@ void main() {
 
   // 카테고리 목록을 못 읽으면 사용자 카테고리 분리 없이 기본 분류로만 묶인다(합계는 그대로).
   testWidgets('카테고리 조회 실패해도 기본 분류로 분석 화면이 그려진다', (tester) async {
-    await _pump(tester, [_expense(10000, 19, 5), _expense(20000, 19, 6, customCategoryId: 'c1')],
+    await _pump(tester,
+        [_expense(10000, BudgetCategory.etc, 5), _expense(20000, BudgetCategory.etc, 6, customCategoryId: 'c1')],
         customs: const [_pet], faults: (f) => f.fail('GET', '/v1/categories'));
 
     expect(find.byType(CategoryDonut), findsOneWidget);
@@ -122,7 +124,8 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await _pump(tester, [_expense(10000, 19, 5), _expense(20000, 19, 6, customCategoryId: 'c1')],
+    await _pump(tester,
+        [_expense(10000, BudgetCategory.etc, 5), _expense(20000, BudgetCategory.etc, 6, customCategoryId: 'c1')],
         customs: const [_pet]);
 
     expect(find.byType(CategoryRow), findsNWidgets(2));

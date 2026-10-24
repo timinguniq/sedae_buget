@@ -13,6 +13,6 @@ void main() {
   // 서버가 분류를 늘려도 이 카테고리의 지출은 기타로 모인다(화면이 멈추지 않는다).
   test('모르는 상위 분류는 기타로 읽는다', () {
     expect(read(20).base, BudgetCategory.etc);
-    expect(read(0).baseCategoryId, BudgetCategory.etc.id);
+    expect(read(0).base, BudgetCategory.etc);
   });
 }

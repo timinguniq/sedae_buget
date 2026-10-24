@@ -1,9 +1,0 @@
-import 'package:flutter_test/flutter_test.dart';
-import 'package:sedae_budget/entity/entity.dart';
-
-void main() {
-  test('상위 분류는 baseCategoryId의 기본 분류다', () {
-    const c = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
-    expect(c.base, BudgetCategory.etc);
-  });
-}

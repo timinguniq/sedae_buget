@@ -9,7 +9,7 @@ import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
-const _pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
+const _pet = CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc);
 
 /// 이번 달 5일.
 DateTime _day() {
@@ -97,7 +97,7 @@ void main() {
   // (지워진 카테고리를 가리키는 거래를 기본 분류로 세는 규칙은 ViewedMonth 테스트가 본다.)
   testWidgets('기본 카테고리 건수는 사용자 카테고리 거래를 빼고 센다', (tester) async {
     Transaction tx({String? customCategoryId}) => Transaction.create(
-          amount: 1000, categoryId: BudgetCategory.etc.id, date: _day(),
+          amount: 1000, base: BudgetCategory.etc, date: _day(),
           type: TransactionType.expense, customCategoryId: customCategoryId);
     await pumpPage(tester, month: [
       tx(),
@@ -111,7 +111,7 @@ void main() {
   // 이전에는 수입(기본값 식료품)이 식료품 건수에 섞였다.
   testWidgets('기본 카테고리 건수에 수입은 세지 않는다', (tester) async {
     Transaction tx(TransactionType type) => Transaction.create(
-          amount: 1000, categoryId: BudgetCategory.groceries.id, date: _day(), type: type);
+          amount: 1000, base: BudgetCategory.groceries, date: _day(), type: type);
     await pumpPage(tester, month: [tx(TransactionType.expense), tx(TransactionType.income)]);
 
     expect(find.text('1건'), findsOneWidget);

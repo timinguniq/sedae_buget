@@ -5,7 +5,7 @@ import 'package:sedae_budget/entity/entity.dart';
 void main() {
   test('body omits server-owned fields and sends UTC date', () {
     final tx = Transaction.create(
-      amount: 12000, categoryId: 7, date: DateTime(2026, 9, 6), // 로컬 자정
+      amount: 12000, base: BudgetCategory.household, date: DateTime(2026, 9, 6), // 로컬 자정
       type: TransactionType.expense, memo: '버스',
     );
     final body = TransactionBodyDto.fromEntity(tx).toJson();
@@ -37,7 +37,7 @@ void main() {
 
   test('customCategoryId round-trips', () {
     final body = TransactionBodyDto.fromEntity(Transaction.create(
-      amount: 3000, categoryId: 12, date: DateTime(2026, 9, 6),
+      amount: 3000, base: BudgetCategory.health, date: DateTime(2026, 9, 6),
       type: TransactionType.expense, customCategoryId: 'cat-1',
     )).toJson();
     expect(body['customCategoryId'], 'cat-1');
@@ -65,16 +65,18 @@ void main() {
         }).toEntity();
 
     test('지출의 모르는 분류는 기타로 읽는다(돈이 합계에서 빠지지 않는다)', () {
-      expect(read(20, 'expense').categoryId, BudgetCategory.etc.id);
-      expect(read(0, 'expense').categoryId, BudgetCategory.etc.id);
+      expect(read(20, 'expense').base, BudgetCategory.etc);
+      expect(read(0, 'expense').base, BudgetCategory.etc);
     });
 
+    // 수입의 분류는 앱이 쓰지 않는다. 아는 값은 그대로, 모르는 값은 기타로 읽어 다시 저장할 때 그대로 보낸다.
     test('수입은 분류 id가 무엇이든 읽는다', () {
-      expect(BudgetCategory.values.map((c) => c.id), contains(read(0, 'income').categoryId));
+      expect(read(0, 'income').base, BudgetCategory.etc);
+      expect(read(5, 'income').base, BudgetCategory.shopping);
     });
 
     test('아는 분류는 그대로다', () {
-      expect(read(7, 'expense').categoryId, 7);
+      expect(read(7, 'expense').base, BudgetCategory.household);
     });
   });
 }

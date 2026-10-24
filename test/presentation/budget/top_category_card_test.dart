@@ -17,18 +17,18 @@ void main() {
     var taps = 0;
     await t.pumpWidget(_wrap(TopCategoryCard(
       top: [
-        (category: BudgetCategory.fromId(1), amount: 540000, peer: PeerComparison.of(mine: 540000, peer: 470000)),
-        (category: BudgetCategory.fromId(2), amount: 320000, peer: null),
-        (category: BudgetCategory.fromId(5), amount: 180000, peer: PeerComparison.of(mine: 180000, peer: 120000)),
+        (category: BudgetCategory.groceries, amount: 540000, peer: PeerComparison.of(mine: 540000, peer: 470000)),
+        (category: BudgetCategory.diningOut, amount: 320000, peer: null),
+        (category: BudgetCategory.shopping, amount: 180000, peer: PeerComparison.of(mine: 180000, peer: 120000)),
       ],
       onTap: () => taps++,
     )));
     await t.pump();
 
     expect(find.text('많이 쓴 카테고리'), findsOneWidget);
-    expect(find.text(BudgetCategory.fromId(1).label), findsOneWidget);
-    expect(find.text(BudgetCategory.fromId(2).label), findsOneWidget);
-    expect(find.text(BudgetCategory.fromId(5).label), findsOneWidget);
+    expect(find.text(BudgetCategory.groceries.label), findsOneWidget);
+    expect(find.text(BudgetCategory.diningOut.label), findsOneWidget);
+    expect(find.text(BudgetCategory.shopping.label), findsOneWidget);
     expect(find.text('또래▲15%'), findsOneWidget);
     expect(find.text('또래▲50%'), findsOneWidget);
     expect(find.byType(LinearProgressIndicator), findsNWidgets(3));
@@ -40,10 +40,10 @@ void main() {
   // 디자인: 또래보다 더 쓴 분류만 코랄 막대, 덜 쓰거나 비슷하면 회색 막대. 또래 비교가 없으면 코랄 그대로.
   group('막대 색', () {
     final top = [
-      (category: BudgetCategory.fromId(1), amount: 540000, peer: PeerComparison.of(mine: 540000, peer: 470000)),
-      (category: BudgetCategory.fromId(8), amount: 380000, peer: PeerComparison.of(mine: 380000, peer: 420000)),
-      (category: BudgetCategory.fromId(10), amount: 200000, peer: PeerComparison.of(mine: 200000, peer: 200000)),
-      (category: BudgetCategory.fromId(2), amount: 100000, peer: null),
+      (category: BudgetCategory.groceries, amount: 540000, peer: PeerComparison.of(mine: 540000, peer: 470000)),
+      (category: BudgetCategory.housing, amount: 380000, peer: PeerComparison.of(mine: 380000, peer: 420000)),
+      (category: BudgetCategory.transport, amount: 200000, peer: PeerComparison.of(mine: 200000, peer: 200000)),
+      (category: BudgetCategory.diningOut, amount: 100000, peer: null),
     ];
 
     List<Color?> barColors(WidgetTester t) =>
@@ -66,8 +66,8 @@ void main() {
   // 홈 카드의 배지는 바탕이 있는 pill이다: 더 쓴 분류는 코랄 틴트, 덜 쓴 분류는 회색 바탕.
   testWidgets('배지 바탕: 더 씀은 코랄 틴트, 덜 씀은 회색', (t) async {
     await t.pumpWidget(_wrap(TopCategoryCard(top: [
-      (category: BudgetCategory.fromId(1), amount: 540000, peer: PeerComparison.of(mine: 540000, peer: 470000)),
-      (category: BudgetCategory.fromId(8), amount: 380000, peer: PeerComparison.of(mine: 380000, peer: 420000)),
+      (category: BudgetCategory.groceries, amount: 540000, peer: PeerComparison.of(mine: 540000, peer: 470000)),
+      (category: BudgetCategory.housing, amount: 380000, peer: PeerComparison.of(mine: 380000, peer: 420000)),
     ])));
     final badges = find.descendant(of: find.byType(PeerDeltaBadge), matching: find.byType(Container));
     final bgs = t.widgetList<Container>(badges).map((c) => (c.decoration as BoxDecoration?)?.color).toList();

@@ -16,11 +16,11 @@ DateTime _monthsAgo(int months, int day) => DateTime(_now.year, _now.month - mon
 
 /// 이달 식료품 지출 60만·수입 300만과, 지난 두 달의 지출(최근 6개월 추이용).
 List<Transaction> _ledger() => [
-      Transaction.create(amount: 600000, categoryId: 1, date: _monthsAgo(0, 1),
+      Transaction.create(amount: 600000, base: BudgetCategory.groceries, date: _monthsAgo(0, 1),
           type: TransactionType.expense, memo: '식료품'),
-      Transaction.create(amount: 3000000, categoryId: 1, date: _monthsAgo(0, 1), type: TransactionType.income),
-      Transaction.create(amount: 450000, categoryId: 10, date: _monthsAgo(1, 15), type: TransactionType.expense),
-      Transaction.create(amount: 300000, categoryId: 2, date: _monthsAgo(2, 20), type: TransactionType.expense),
+      Transaction.create(amount: 3000000, base: BudgetCategory.groceries, date: _monthsAgo(0, 1), type: TransactionType.income),
+      Transaction.create(amount: 450000, base: BudgetCategory.transport, date: _monthsAgo(1, 15), type: TransactionType.expense),
+      Transaction.create(amount: 300000, base: BudgetCategory.diningOut, date: _monthsAgo(2, 20), type: TransactionType.expense),
     ];
 
 void main() {
@@ -115,7 +115,7 @@ void main() {
   // 소득이 없으면 저축률도 소득 대비 지출도 계산할 수 없다. 두 칸이 같은 규칙을 따른다.
   testWidgets('소득이 없으면 저축률과 소득 대비 지출이 모두 — 다', (tester) async {
     await _pumpReport(tester, transactions: [
-      Transaction.create(amount: 600000, categoryId: 1, date: _monthsAgo(0, 1), type: TransactionType.expense),
+      Transaction.create(amount: 600000, base: BudgetCategory.groceries, date: _monthsAgo(0, 1), type: TransactionType.expense),
     ]);
 
     expect(find.text('저축률'), findsOneWidget);
@@ -125,7 +125,7 @@ void main() {
   // 이전에는 지출 0원인 달을 '또래 상위 100%'로 보였다.
   testWidgets('빈 달(지출 0원)은 또래 순위를 매기지 않는다', (tester) async {
     await _pumpReport(tester, transactions: [
-      Transaction.create(amount: 3000000, categoryId: 1, date: _monthsAgo(0, 1), type: TransactionType.income),
+      Transaction.create(amount: 3000000, base: BudgetCategory.groceries, date: _monthsAgo(0, 1), type: TransactionType.income),
     ]);
 
     // 많이 쓰는 쪽 칸만 '—'다(저축률 100%·소득 대비 지출 0%는 내 값이라 남는다).

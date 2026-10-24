@@ -4,7 +4,7 @@ import 'package:sedae_budget/presentation/page/budget/transaction_feed.dart';
 
 Transaction _tx(DateTime date, {int amount = 1000}) => Transaction.create(
       amount: amount,
-      categoryId: 10,
+      base: BudgetCategory.transport,
       date: date,
       type: TransactionType.expense,
     );

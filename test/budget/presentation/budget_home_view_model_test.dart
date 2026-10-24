@@ -14,11 +14,11 @@ final _day = DateTime(_now.year, _now.month, 5);
 
 Transaction _expense(int amount, BudgetCategory c, {String? customCategoryId}) =>
     Transaction.create(
-        amount: amount, categoryId: c.id, date: _day, type: TransactionType.expense,
+        amount: amount, base: c, date: _day, type: TransactionType.expense,
         customCategoryId: customCategoryId);
 
 Transaction _income(int amount) => Transaction.create(
-    amount: amount, categoryId: BudgetCategory.etc.id, date: _day, type: TransactionType.income);
+    amount: amount, base: BudgetCategory.etc, date: _day, type: TransactionType.income);
 
 /// 이달 개요를 다 읽을 때까지 기다린다(거래·또래 통계·사용자 카테고리·프로필이 모두 풀린 뒤의 값).
 Future<MonthOverview> _overview(ProviderContainer c) async {
@@ -60,7 +60,7 @@ void main() {
 
   // 합계·분류·소득 규칙 자체는 ViewedMonth 테스트가 본다. 여기서는 재료가 모이는지만 본다.
   test('보고 있는 달을 이달 거래·사용자 카테고리·프로필 소득으로 만든다', () async {
-    const study = CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 14);
+    const study = CustomCategory(id: 'c2', name: '자기계발', base: BudgetCategory.recreation);
     final c = fakeContainer(server: await _server(
       profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3500000),
       categories: const [study],
@@ -185,7 +185,7 @@ void main() {
 
     test('수입 거래나 또래 통계가 없으면 false', () async {
       // 지출이 또래를 넘는 분류에 적힌 수입이라도 배지는 지출에만 붙는다.
-      final income = Transaction.create(amount: lots, categoryId: BudgetCategory.groceries.id,
+      final income = Transaction.create(amount: lots, base: BudgetCategory.groceries,
           date: _day, type: TransactionType.income);
       final big = _expense(lots, BudgetCategory.groceries);
       expect((await _overview(await _container([income, big]))).overPeer(income), isFalse);

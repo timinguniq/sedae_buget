@@ -15,7 +15,7 @@ const _profile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000
 List<Transaction> _taxi() {
   final now = DateTime.now();
   return [
-    Transaction.create(amount: 12000, categoryId: 10, date: DateTime(now.year, now.month, 10),
+    Transaction.create(amount: 12000, base: BudgetCategory.transport, date: DateTime(now.year, now.month, 10),
         type: TransactionType.expense, memo: '택시'),
   ];
 }
@@ -34,7 +34,7 @@ void main() {
     expect(find.text('이번 달 요약'), findsOneWidget);
     expect(find.text('또래 중 내 지출 순위'), findsOneWidget);
     expect(find.text('많이 쓴 카테고리'), findsOneWidget);
-    expect(find.text(BudgetCategory.fromId(10).label), findsWidgets);
+    expect(find.text(BudgetCategory.transport.label), findsWidgets);
     expect(find.text('최근 내역'), findsOneWidget);
   });
 
@@ -43,9 +43,9 @@ void main() {
     final now = DateTime.now();
     final server = await tester.seedServer(
       profile: _profile,
-      categories: const [CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19)],
+      categories: const [CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc)],
       transactions: [
-        Transaction.create(amount: 30000, categoryId: 19, date: DateTime(now.year, now.month, 3),
+        Transaction.create(amount: 30000, base: BudgetCategory.etc, date: DateTime(now.year, now.month, 3),
             type: TransactionType.expense, customCategoryId: 'c1'),
       ],
     );
@@ -90,7 +90,7 @@ void main() {
     final now = DateTime.now();
     final last = DateTime(now.year, now.month - 1);
     final server = await tester.seedServer(profile: _profile, transactions: [
-      Transaction.create(amount: 12000, categoryId: 10, date: DateTime(last.year, last.month, 10),
+      Transaction.create(amount: 12000, base: BudgetCategory.transport, date: DateTime(last.year, last.month, 10),
           type: TransactionType.expense, memo: '택시'),
     ]);
     final container = fakeContainer(server: server);
@@ -161,7 +161,7 @@ void main() {
   testWidgets('빈 달(지출 0원)은 또래와 견주지 않는다', (tester) async {
     final now = DateTime.now();
     final server = await tester.seedServer(profile: _profile, transactions: [
-      Transaction.create(amount: 3000000, categoryId: 1, date: DateTime(now.year, now.month, 1),
+      Transaction.create(amount: 3000000, base: BudgetCategory.groceries, date: DateTime(now.year, now.month, 1),
           type: TransactionType.income),
     ]);
     await _pumpHome(tester, fakeContainer(server: server));

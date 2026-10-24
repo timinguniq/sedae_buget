@@ -5,13 +5,13 @@ import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 
 import '../../helper/fakes.dart';
 
-const _pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
+const _pet = CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc);
 
 final _now = DateTime.now();
 final _thisMonth = DateTime(_now.year, _now.month, 1);
 
 Transaction _expense(int amount) => Transaction.create(
-    amount: amount, categoryId: 1, date: _thisMonth, type: TransactionType.expense);
+    amount: amount, base: BudgetCategory.groceries, date: _thisMonth, type: TransactionType.expense);
 
 /// kakao로 로그인해 [categories]·[transactions]를 심은 서버.
 Future<StubServer> _server({
@@ -63,7 +63,7 @@ void main() {
 
     final saved = (await _saved(server)).single;
     expect(saved.customCategoryId, _pet.id);
-    expect(saved.categoryId, BudgetCategory.etc.id);
+    expect(saved.base, BudgetCategory.etc);
   });
 
   // 목록을 못 읽었다고 거래 저장까지 막지 않는다. 지워졌는지 판정할 수 없으니 고른 그대로 둔다.

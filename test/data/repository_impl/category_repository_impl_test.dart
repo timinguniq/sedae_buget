@@ -17,7 +17,7 @@ void main() {
       (r as Success<List<CustomCategory>>).data;
 
   test('upsert → getAll round-trips through the Stub contract', () async {
-    const pet = CustomCategory(id: 'c-pet', name: '반려식물', baseCategoryId: 19);
+    const pet = CustomCategory(id: 'c-pet', name: '반려식물', base: BudgetCategory.etc);
     final res = await repo.upsert(pet);
     expect(res, isA<Success<CustomCategory>>());
     expect((res as Success<CustomCategory>).data, pet);
@@ -28,8 +28,8 @@ void main() {
   });
 
   test('duplicate name → Failure with the server code', () async {
-    await repo.upsert(const CustomCategory(id: 'c-pet', name: '반려식물', baseCategoryId: 19));
-    final res = await repo.upsert(const CustomCategory(id: 'c-pet2', name: '반려식물', baseCategoryId: 14));
+    await repo.upsert(const CustomCategory(id: 'c-pet', name: '반려식물', base: BudgetCategory.etc));
+    final res = await repo.upsert(const CustomCategory(id: 'c-pet2', name: '반려식물', base: BudgetCategory.recreation));
     expect(res, isA<Error<CustomCategory>>());
     expect(res.failureOrNull?.code, 'CATEGORY_DUPLICATE');
     expect(res.failureOrNull?.reason, FailureReason.conflict);
@@ -37,13 +37,13 @@ void main() {
 
   test('too long name → Failure VALIDATION', () async {
     final res = await repo.upsert(CustomCategory(
-        id: 'c-long', name: 'a' * (CategoryName.maxLength + 1), baseCategoryId: 1));
+        id: 'c-long', name: 'a' * (CategoryName.maxLength + 1), base: BudgetCategory.groceries));
     expect(res.failureOrNull?.code, 'VALIDATION');
     expect(res.failureOrNull?.reason, FailureReason.invalid);
   });
 
   test('delete removes it and returns the deleted category', () async {
-    const pet = CustomCategory(id: 'c-pet', name: '반려식물', baseCategoryId: 19);
+    const pet = CustomCategory(id: 'c-pet', name: '반려식물', base: BudgetCategory.etc);
     await repo.upsert(pet);
     final res = await repo.delete(pet);
     expect((res as Success<CustomCategory>).data, pet);
@@ -52,7 +52,7 @@ void main() {
 
   // 삭제 확인을 두 번 누르거나 응답을 잃은 뒤 다시 지우면 서버는 404다. 이미 없으니 지운 것이다.
   test('이미 없는 카테고리를 지우면 지운 것으로 본다', () async {
-    const pet = CustomCategory(id: 'c-pet', name: '반려식물', baseCategoryId: 19);
+    const pet = CustomCategory(id: 'c-pet', name: '반려식물', base: BudgetCategory.etc);
     await repo.upsert(pet);
     await repo.delete(pet);
 

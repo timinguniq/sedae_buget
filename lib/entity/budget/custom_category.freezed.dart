@@ -15,7 +15,7 @@ T _$identity<T>(T value) => value;
 mixin _$CustomCategory {
 
  String get id; String get name;/// 상위 기본 분류. 또래 비교 집계는 이 값으로만 이뤄진다.
- int get baseCategoryId;
+ BudgetCategory get base;
 /// Create a copy of CustomCategory
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -26,16 +26,16 @@ $CustomCategoryCopyWith<CustomCategory> get copyWith => _$CustomCategoryCopyWith
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomCategory&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.baseCategoryId, baseCategoryId) || other.baseCategoryId == baseCategoryId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is CustomCategory&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.base, base) || other.base == base));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,baseCategoryId);
+int get hashCode => Object.hash(runtimeType,id,name,base);
 
 @override
 String toString() {
-  return 'CustomCategory(id: $id, name: $name, baseCategoryId: $baseCategoryId)';
+  return 'CustomCategory(id: $id, name: $name, base: $base)';
 }
 
 
@@ -46,7 +46,7 @@ abstract mixin class $CustomCategoryCopyWith<$Res>  {
   factory $CustomCategoryCopyWith(CustomCategory value, $Res Function(CustomCategory) _then) = _$CustomCategoryCopyWithImpl;
 @useResult
 $Res call({
- String id, String name, int baseCategoryId
+ String id, String name, BudgetCategory base
 });
 
 
@@ -63,12 +63,12 @@ class _$CustomCategoryCopyWithImpl<$Res>
 
 /// Create a copy of CustomCategory
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? baseCategoryId = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? name = null,Object? base = null,}) {
   return _then(_self.copyWith(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,baseCategoryId: null == baseCategoryId ? _self.baseCategoryId : baseCategoryId // ignore: cast_nullable_to_non_nullable
-as int,
+as String,base: null == base ? _self.base : base // ignore: cast_nullable_to_non_nullable
+as BudgetCategory,
   ));
 }
 
@@ -153,10 +153,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  int baseCategoryId)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String name,  BudgetCategory base)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _CustomCategory() when $default != null:
-return $default(_that.id,_that.name,_that.baseCategoryId);case _:
+return $default(_that.id,_that.name,_that.base);case _:
   return orElse();
 
 }
@@ -174,10 +174,10 @@ return $default(_that.id,_that.name,_that.baseCategoryId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  int baseCategoryId)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String name,  BudgetCategory base)  $default,) {final _that = this;
 switch (_that) {
 case _CustomCategory():
-return $default(_that.id,_that.name,_that.baseCategoryId);case _:
+return $default(_that.id,_that.name,_that.base);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -194,10 +194,10 @@ return $default(_that.id,_that.name,_that.baseCategoryId);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  int baseCategoryId)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String name,  BudgetCategory base)?  $default,) {final _that = this;
 switch (_that) {
 case _CustomCategory() when $default != null:
-return $default(_that.id,_that.name,_that.baseCategoryId);case _:
+return $default(_that.id,_that.name,_that.base);case _:
   return null;
 
 }
@@ -208,14 +208,14 @@ return $default(_that.id,_that.name,_that.baseCategoryId);case _:
 /// @nodoc
 
 
-class _CustomCategory extends CustomCategory {
-  const _CustomCategory({required this.id, required this.name, required this.baseCategoryId}): super._();
+class _CustomCategory implements CustomCategory {
+  const _CustomCategory({required this.id, required this.name, required this.base});
   
 
 @override final  String id;
 @override final  String name;
 /// 상위 기본 분류. 또래 비교 집계는 이 값으로만 이뤄진다.
-@override final  int baseCategoryId;
+@override final  BudgetCategory base;
 
 /// Create a copy of CustomCategory
 /// with the given fields replaced by the non-null parameter values.
@@ -227,16 +227,16 @@ _$CustomCategoryCopyWith<_CustomCategory> get copyWith => __$CustomCategoryCopyW
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomCategory&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.baseCategoryId, baseCategoryId) || other.baseCategoryId == baseCategoryId));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _CustomCategory&&(identical(other.id, id) || other.id == id)&&(identical(other.name, name) || other.name == name)&&(identical(other.base, base) || other.base == base));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,id,name,baseCategoryId);
+int get hashCode => Object.hash(runtimeType,id,name,base);
 
 @override
 String toString() {
-  return 'CustomCategory(id: $id, name: $name, baseCategoryId: $baseCategoryId)';
+  return 'CustomCategory(id: $id, name: $name, base: $base)';
 }
 
 
@@ -247,7 +247,7 @@ abstract mixin class _$CustomCategoryCopyWith<$Res> implements $CustomCategoryCo
   factory _$CustomCategoryCopyWith(_CustomCategory value, $Res Function(_CustomCategory) _then) = __$CustomCategoryCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String name, int baseCategoryId
+ String id, String name, BudgetCategory base
 });
 
 
@@ -264,12 +264,12 @@ class __$CustomCategoryCopyWithImpl<$Res>
 
 /// Create a copy of CustomCategory
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? baseCategoryId = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? name = null,Object? base = null,}) {
   return _then(_CustomCategory(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,name: null == name ? _self.name : name // ignore: cast_nullable_to_non_nullable
-as String,baseCategoryId: null == baseCategoryId ? _self.baseCategoryId : baseCategoryId // ignore: cast_nullable_to_non_nullable
-as int,
+as String,base: null == base ? _self.base : base // ignore: cast_nullable_to_non_nullable
+as BudgetCategory,
   ));
 }
 

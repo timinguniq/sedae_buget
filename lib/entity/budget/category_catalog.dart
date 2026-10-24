@@ -26,7 +26,7 @@ class CategoryCatalog {
   /// 지워졌거나 모르는 사용자 카테고리를 가리키면 거래에 적힌 기본 분류로 돌아간다.
   TransactionCategory of(Transaction tx) {
     final custom = byId(tx.customCategoryId);
-    return TransactionCategory(custom?.base ?? BudgetCategory.fromId(tx.categoryId), custom);
+    return TransactionCategory(custom?.base ?? tx.base, custom);
   }
 
   /// id로 찾기. [id]가 null이거나 없는 id면 null.

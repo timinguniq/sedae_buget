@@ -6,6 +6,7 @@ import 'package:sedae_budget/data/data_source/remote/api_path.dart';
 import 'package:sedae_budget/data/data_source/remote/stub/stub_api_state.dart';
 import 'package:sedae_budget/data/data_source/remote/stub/stub_peer_data.dart';
 import 'package:sedae_budget/data/dto/age_group_wire.dart';
+import 'package:sedae_budget/data/dto/category_wire.dart';
 import 'package:sedae_budget/data/dto/peer_stats_dto.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:uuid/uuid.dart';
@@ -247,7 +248,7 @@ class StubApiInterceptor extends Interceptor {
         if (name == null) {
           throw _StubError(400, 'VALIDATION', '이름은 1~${CategoryName.maxLength}자여야 합니다.');
         }
-        if (baseId == null || BudgetCategory.tryFromId(baseId) == null) {
+        if (budgetCategoryFromWire(baseId) == null) {
           throw _StubError(400, 'VALIDATION', '상위 카테고리가 잘못되었습니다.');
         }
         final duplicated = userData.customCategories.entries.any(
@@ -298,7 +299,7 @@ class StubApiInterceptor extends Interceptor {
     } else if (type == null) {
       problem = 'type은 expense 또는 income입니다.';
     } else if (categoryId is! int ||
-        (type == TransactionType.expense && BudgetCategory.tryFromId(categoryId) == null)) {
+        (type == TransactionType.expense && budgetCategoryFromWire(categoryId) == null)) {
       problem = '지출의 categoryId는 1~19입니다.';
     } else if (_utcOrNull(b['date']) == null) {
       problem = 'date는 ISO-8601 UTC입니다.';

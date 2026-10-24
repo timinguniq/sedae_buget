@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'package:sedae_budget/data/dto/category_wire.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 part 'custom_category_dto.g.dart';
@@ -19,7 +20,7 @@ class CustomCategoryDto {
   CustomCategory toEntity() => CustomCategory(
         id: id,
         name: name,
-        baseCategoryId: (BudgetCategory.tryFromId(baseCategoryId) ?? BudgetCategory.etc).id,
+        base: budgetCategoryFromWire(baseCategoryId) ?? BudgetCategory.etc,
       );
 }
 
@@ -29,7 +30,7 @@ class CustomCategoryBodyDto {
   const CustomCategoryBodyDto({required this.name, required this.baseCategoryId});
 
   factory CustomCategoryBodyDto.fromEntity(CustomCategory c) =>
-      CustomCategoryBodyDto(name: c.name, baseCategoryId: c.baseCategoryId);
+      CustomCategoryBodyDto(name: c.name, baseCategoryId: c.base.wire);
 
   final String name;
   final int baseCategoryId;

@@ -8,7 +8,7 @@ import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart
 
 import '../../helper/fakes.dart';
 
-const _pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
+const _pet = CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc);
 
 /// 서버에 저장된 이번 달 거래(새 초안의 날짜는 오늘이다).
 Future<List<Transaction>> _onServer(WidgetTester tester, StubServer server) async {
@@ -112,7 +112,7 @@ void main() {
 
     testWidgets('지출을 고치면 지출 수정이고 지울 수 있다', (tester) async {
       await pumpEditPage(tester, existing: Transaction.create(
-          amount: 1000, categoryId: 1, date: DateTime.now(), type: TransactionType.expense));
+          amount: 1000, base: BudgetCategory.groceries, date: DateTime.now(), type: TransactionType.expense));
       expect(find.text('지출 수정'), findsOneWidget);
       expect(find.byKey(const Key('delete-button')), findsOneWidget);
     });
@@ -121,7 +121,7 @@ void main() {
     // (이전에는 수입에도 지출 카테고리 칩을 보여 월급이 '식료품'으로 저장됐다).
     testWidgets('수입을 고치면 수입 수정이고 카테고리를 고르지 않는다', (tester) async {
       await pumpEditPage(tester, customs: const [_pet], existing: Transaction.create(
-          amount: 3000000, categoryId: 1, date: DateTime.now(), type: TransactionType.income));
+          amount: 3000000, base: BudgetCategory.groceries, date: DateTime.now(), type: TransactionType.income));
       expect(find.text('수입 수정'), findsOneWidget);
       expect(find.byKey(const Key('category-add-chip')), findsNothing);
       expect(find.text('반려식물'), findsNothing);
@@ -133,7 +133,7 @@ void main() {
   testWidgets('이미 지워진 거래를 지우면 화면을 닫는다', (tester) async {
     // 서버에 없는 거래다.
     await pumpEditPage(tester, existing: Transaction.create(
-        amount: 1000, categoryId: 1, date: DateTime.now(), type: TransactionType.expense));
+        amount: 1000, base: BudgetCategory.groceries, date: DateTime.now(), type: TransactionType.expense));
 
     await tester.tap(find.byKey(const Key('delete-button')));
     await tester.settle();
@@ -165,7 +165,7 @@ void main() {
 
     final saved = (await _onServer(tester, server)).single;
     expect(saved.customCategoryId, 'c1');
-    expect(saved.categoryId, BudgetCategory.etc.id);
+    expect(saved.base, BudgetCategory.etc);
   });
 
   // 추가 칩 → 시트에서 만든 카테고리가 곧바로 이 거래에 선택돼야 한다.
@@ -192,7 +192,7 @@ void main() {
 
     final saved = (await _onServer(tester, server)).single;
     expect(saved.customCategoryId, isNotNull);
-    expect(saved.categoryId, BudgetCategory.etc.id); // 시트 기본 상위 분류
+    expect(saved.base, BudgetCategory.etc); // 시트 기본 상위 분류
   });
 
   // 이전에는 지난 달을 보며 추가해도 오늘 날짜로 저장돼, 보고 있는 목록에 나타나지 않았다.
@@ -237,7 +237,7 @@ void main() {
   // 10일 전은 지난 달일 수 있다(월초). 고를 수 있는 날짜는 보고 있는 달과 상관없으므로 그래도 된다.
   testWidgets('지난 거래를 고칠 때도 날짜는 오늘까지 고를 수 있다', (tester) async {
     final now = DateTime.now();
-    await pumpEditPage(tester, existing: Transaction.create(amount: 1000, categoryId: 1,
+    await pumpEditPage(tester, existing: Transaction.create(amount: 1000, base: BudgetCategory.groceries,
         date: DateTime(now.year, now.month, now.day - 10), type: TransactionType.expense));
     await tester.tap(find.byIcon(Icons.calendar_today_outlined));
     await tester.pumpAndSettle();
@@ -253,7 +253,7 @@ void main() {
   // 이전에는 첫 날짜가 2020년으로 박혀 있어 그보다 이른 거래의 날짜를 누르면 assert로 멈췄다.
   testWidgets('2020년보다 이른 거래도 날짜를 고를 수 있다', (tester) async {
     final old = Transaction.create(
-        amount: 1000, categoryId: 1, date: DateTime(2019, 12, 27), type: TransactionType.expense);
+        amount: 1000, base: BudgetCategory.groceries, date: DateTime(2019, 12, 27), type: TransactionType.expense);
     await pumpEditPage(tester, existing: old);
     await tester.tap(find.byIcon(Icons.calendar_today_outlined));
     await tester.pumpAndSettle();

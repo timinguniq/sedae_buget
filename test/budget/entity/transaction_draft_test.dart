@@ -1,15 +1,16 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-const _pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 19);
-const _study = CustomCategory(id: 'c2', name: '자기계발', baseCategoryId: 14);
+const _pet = CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc);
+const _study = CustomCategory(id: 'c2', name: '자기계발', base: BudgetCategory.recreation);
 
 final _day = DateTime(2026, 6, 5);
 
-Transaction _saved({int categoryId = 1, String? customCategoryId, String? memo}) => Transaction(
+Transaction _saved({BudgetCategory base = BudgetCategory.groceries, String? customCategoryId, String? memo}) =>
+    Transaction(
       id: 't1',
       amount: 1000,
-      categoryId: categoryId,
+      base: base,
       date: _day,
       type: TransactionType.expense,
       memo: memo,
@@ -44,7 +45,7 @@ void main() {
       expect(tx.amount, 12000);
       expect(tx.type, TransactionType.expense);
       expect(tx.date, DateTime(2026, 6, 7));
-      expect(tx.categoryId, BudgetCategory.transport.id);
+      expect(tx.base, BudgetCategory.transport);
       expect(tx.customCategoryId, isNull);
       expect(tx.memo, '버스');
     });
@@ -121,7 +122,7 @@ void main() {
       final tx = TransactionDraft.create(_day).withAmount(1000).pickCustom(_pet)
           .toTransaction(const CategoryCatalog([_pet]));
       expect(tx.customCategoryId, 'c1');
-      expect(tx.categoryId, BudgetCategory.etc.id);
+      expect(tx.base, BudgetCategory.etc);
     });
   });
 
@@ -158,9 +159,9 @@ void main() {
 
   group('기존 거래 고치기', () {
     // 수입은 카테고리가 없다. 서버가 수입에 사용자 카테고리 id를 적었어도 목록으로 판정하지 않고
-    // 적힌 기본 분류 그대로 둔다(모르는 분류 id는 DTO가 기타로 읽어 여기 오지 않는다).
+    // 읽어 둔 분류 그대로 둔다(모르는 분류 id는 DTO가 기타로 읽는다).
     test('수입을 고칠 때는 분류를 판정하지 않는다', () {
-      final income = _saved(categoryId: BudgetCategory.shopping.id, customCategoryId: 'c1')
+      final income = _saved(base: BudgetCategory.shopping, customCategoryId: 'c1')
           .copyWith(type: TransactionType.income);
       final d = TransactionDraft.edit(income, const CategoryCatalog([_pet]));
       expect(d.hasCategory, isFalse);
@@ -168,11 +169,11 @@ void main() {
       expect(d.customCategoryId, isNull);
     });
 
-    // 앱은 수입의 분류를 쓰지 않지만, 고치지 않은 값을 조용히 바꿔 보내지도 않는다.
-    test('수입을 다시 저장해도 적힌 분류 id는 그대로다', () {
-      final income = _saved(categoryId: BudgetCategory.shopping.id).copyWith(type: TransactionType.income);
+    // 서버도 앱도 수입의 분류를 쓰지 않으므로 읽어 둔 값을 그대로 보낸다.
+    test('수입을 다시 저장해도 읽어 둔 분류 그대로다', () {
+      final income = _saved(base: BudgetCategory.shopping).copyWith(type: TransactionType.income);
       final tx = TransactionDraft.edit(income, const CategoryCatalog()).toTransaction(const CategoryCatalog());
-      expect(tx.categoryId, BudgetCategory.shopping.id);
+      expect(tx.base, BudgetCategory.shopping);
     });
 
     test('거래의 값으로 시작한다', () {
@@ -196,29 +197,29 @@ void main() {
     // 자기계발을 기타 → 취미·여가로 옮기기 전에 적힌 거래를 다시 저장해도 옛 분류가 되살아나지 않는다.
     test('사용자 카테고리의 현재 상위 분류를 따른다', () {
       const catalog = CategoryCatalog([_study]);
-      final stale = _saved(categoryId: BudgetCategory.etc.id, customCategoryId: 'c2');
+      final stale = _saved(base: BudgetCategory.etc, customCategoryId: 'c2');
       final d = TransactionDraft.edit(stale, catalog);
       expect(d.base, BudgetCategory.recreation);
 
       final tx = d.toTransaction(catalog);
       expect(tx.customCategoryId, 'c2');
-      expect(tx.categoryId, BudgetCategory.recreation.id);
+      expect(tx.base, BudgetCategory.recreation);
     });
 
     test('목록을 모르면 고른 그대로 저장한다', () {
       final tx = TransactionDraft.edit(_saved(customCategoryId: 'c1'), const CategoryCatalog())
           .toTransaction(null);
       expect(tx.customCategoryId, 'c1');
-      expect(tx.categoryId, BudgetCategory.groceries.id);
+      expect(tx.base, BudgetCategory.groceries);
     });
 
     // 지워진 사용자 카테고리를 계속 가리키면 어디에도 보이지 않는 id가 남는다.
     test('지워진 사용자 카테고리는 거래에 적힌 기본 분류로 되돌린다', () {
-      final orphan = _saved(categoryId: BudgetCategory.etc.id, customCategoryId: 'gone');
+      final orphan = _saved(base: BudgetCategory.etc, customCategoryId: 'gone');
       final tx = TransactionDraft.edit(orphan, const CategoryCatalog([_pet]))
           .toTransaction(const CategoryCatalog([_pet]));
       expect(tx.customCategoryId, isNull);
-      expect(tx.categoryId, BudgetCategory.etc.id);
+      expect(tx.base, BudgetCategory.etc);
     });
   });
 }
