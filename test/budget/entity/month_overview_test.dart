@@ -96,7 +96,9 @@ void main() {
   });
 
   // 또래 비교는 기본 분류로만 한다. 사용자 카테고리로 뗀 행에는 또래 값을 붙이지 않는다.
-  test('분석 행은 기본 분류 행만 또래와 견준다', () {
+  // 기본 분류 행은 사용자 카테고리까지 합친 금액으로 견준다(홈·비교와 같은 값). 이전에는 뗀 나머지로 견줘
+  // 홈은 -63%, 분석은 -75%로 서로 달랐다.
+  test('분석 행은 기본 분류 행만 사용자 카테고리까지 합친 금액으로 또래와 견준다', () {
     const pet = CustomCategory(id: 'c1', name: '반려식물', baseCategoryId: 1);
     final o = _overview(
       [_expense(100000, BudgetCategory.groceries), _expense(50000, BudgetCategory.groceries, customCategoryId: 'c1')],
@@ -105,7 +107,9 @@ void main() {
     );
     final rows = o.analysisRows(6);
     expect(rows.map((r) => r.item?.label), [BudgetCategory.groceries.label, '반려식물']);
-    expect(rows.first.peer?.mine, 100000);
+    expect(rows.first.amount, 100000);
+    expect(rows.first.peer?.mine, 150000);
+    expect(rows.first.peer?.percent, o.category(BudgetCategory.groceries)?.percent);
     expect(rows.last.peer, isNull);
   });
 

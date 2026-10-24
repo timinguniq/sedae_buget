@@ -45,6 +45,14 @@ void main() {
     expect(YearMonth.of(DateTime(2025, 12)).fullName, '2025년 12월');
   });
 
+  // 이전에는 화면마다 '${month}월'·DateFormat('yyyy.MM')으로 이름을 따로 만들었다.
+  test('짧은 이름은 이번 달이어도 M월이고, 점 이름은 yyyy.MM이다', () {
+    expect(YearMonth.of(today).shortName, '9월');
+    expect(YearMonth.of(DateTime(2025, 12)).shortName, '12월');
+    expect(YearMonth.of(DateTime(2026, 9)).dottedName, '2026.09');
+    expect(YearMonth.of(DateTime(2025, 12)).dottedName, '2025.12');
+  });
+
   // 지난 달을 보며 추가한 거래가 보고 있는 목록에 나타나게 한다.
   group('새 거래의 기본 날짜', () {
     test('이번 달이면 오늘이다', () {

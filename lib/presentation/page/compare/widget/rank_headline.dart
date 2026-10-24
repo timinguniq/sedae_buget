@@ -14,6 +14,7 @@ class RankHeadline extends StatelessWidget {
   Widget build(BuildContext context) {
     final r = rank;
     final coral = context.color.primary.normal;
+    final (:number, :unit) = r.headlinePlace;
     return Column(children: [
       Text(r.headlineLead,
         style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.alternative)),
@@ -23,9 +24,9 @@ class RankHeadline extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.baseline,
         textBaseline: TextBaseline.alphabetic,
         children: [
-          Text('${r.rank}', style: context.typo.amountDisplay.copyWith(fontSize: 46, height: 1.1, letterSpacing: -2, color: coral)),
+          Text(number, style: context.typo.amountDisplay.copyWith(fontSize: 46, height: 1.1, letterSpacing: -2, color: coral)),
           const SizedBox(width: 5),
-          Text('등', style: context.typo.heading2W700.copyWith(fontWeight: context.typo.extraBold, color: coral)),
+          Text(unit, style: context.typo.heading2W700.copyWith(fontWeight: context.typo.extraBold, color: coral)),
         ],
       ),
       const SizedBox(height: 3),

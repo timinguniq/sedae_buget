@@ -35,10 +35,16 @@ class YearMonth implements Comparable<YearMonth> {
   bool canGoNext(DateTime today) => compareTo(YearMonth.of(today)) < 0;
 
   /// 보고 있는 달을 부르는 이름: 이번 달이면 '이번 달', 아니면 'M월'.
-  String name(DateTime today) => isCurrent(today) ? '이번 달' : '$month월';
+  String name(DateTime today) => isCurrent(today) ? '이번 달' : shortName;
+
+  /// 이번 달이어도 달만 쓴 이름('9월'). 월 칩·추이 막대처럼 달을 나란히 놓을 때 쓴다.
+  String get shortName => '$month월';
 
   /// 연도까지 쓴 이름('2026년 9월').
   String get fullName => '$year년 $month월';
+
+  /// 숫자로 쓴 이름('2026.09').
+  String get dottedName => '$year.${month.toString().padLeft(2, '0')}';
 
   /// 이 달을 보며 새 거래를 적을 때의 기본 날짜. 이번 달이면 오늘이고, 지난 달이면 그 달의
   /// 오늘과 같은 날(그 달에 그날이 없으면 말일)이다 — 적은 거래가 보고 있는 목록에 나타나게.

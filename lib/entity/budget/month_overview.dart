@@ -67,6 +67,7 @@ final class PeerCompared extends PeerStanding {
 
 /// 분석 화면 한 줄. [item]이 null이면 금액이 큰 줄들 밖을 묶은 나머지 줄이다.
 /// 또래 비교([peer])는 기본 분류 줄에만 붙는다(사용자 카테고리·나머지 줄, 또래 값이 없으면 null).
+/// 그 비교는 줄 금액([amount])이 아니라 그 분류의 사용자 카테고리까지 합친 금액([MonthOverview.category])으로 한다.
 typedef AnalysisRow = ({CategoryBreakdown? item, int amount, PeerComparison? peer});
 
 /// 이달 개요: 보고 있는 달([month])을 또래([peer])와 견준 결과.
@@ -114,7 +115,8 @@ class MonthOverview {
     return [
       for (final e in rows.take(n))
         // 또래 비교는 기본 분류로만 한다. 사용자 카테고리로 뗀 줄에는 붙이지 않는다.
-        (item: e, amount: e.amount, peer: e.custom == null ? _comparable?.compareCategory(e.base, e.amount) : null),
+        // 기본 분류 줄은 뗀 나머지([amount])가 아니라 사용자 카테고리까지 합친 금액으로 견준다(홈·비교와 같은 값).
+        (item: e, amount: e.amount, peer: e.custom == null ? category(e.base) : null),
       if (rest > 0) (item: null, amount: rest, peer: null),
     ];
   }

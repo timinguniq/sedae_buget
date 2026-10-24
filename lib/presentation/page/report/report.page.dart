@@ -38,7 +38,7 @@ class ReportPage extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
             children: [
               // ── 헤더 ─────────────────────────────────────────────
-              Text(_eyebrow(month, DateTime.now()),
+              Text(_eyebrow(month, ref.read(selectedMonthProvider.notifier).today),
                   style: context.typo.caption1W600.copyWith(color: context.color.label.assistive)),
               Text(month.fullName,
                   style: context.typo.pageTitle.copyWith(color: context.color.label.normal)),
@@ -47,9 +47,7 @@ class ReportPage extends ConsumerWidget {
               // ── 이달의 발견 ──────────────────────────────────────
               MonthlyInsightCard(
                 body: _insightBody(context, insight),
-                sub: insight == null
-                    ? null
-                    : '한 달 ${WonText.full.of(insight.comparison.mine)} · 또래는 ${WonText.full.of(insight.comparison.peer)}',
+                sub: insight?.comparison.insightSub,
               ),
 
               const SizedBox(height: 13),
@@ -130,18 +128,17 @@ class ReportPage extends ConsumerWidget {
   String _eyebrow(YearMonth month, DateTime today) =>
       month.isCurrent(today) ? '월간 리포트 · ${today.day}일 기준' : '월간 리포트';
 
-  /// "또래보다 [카테고리]에 / 1.5배 더 썼어요". 크게 넘으면(50%↑) 배율, 그 밖은 %로 말하고
-  /// 차이가 반올림해 0%면 "또래와 [카테고리]에 / 비슷하게 썼어요".
+  /// "이달의 발견" 본문: [PeerText.insightLine]의 앞말·분류(강조)·뒷말을 잇는다.
   InlineSpan _insightBody(
     BuildContext context,
     ({BudgetCategory category, PeerComparison comparison})? i,
   ) {
-    if (i == null) return const TextSpan(text: '아직 분석할 지출이\n충분치 않아요');
-    final c = i.comparison;
+    if (i == null) return const TextSpan(text: noInsightText);
+    final (:prefix, :highlight, :suffix) = i.comparison.insightLine(i.category);
     return TextSpan(children: [
-      TextSpan(text: c.insightLead),
-      TextSpan(text: i.category.label, style: MonthlyInsightCard.highlightStyle(context)),
-      TextSpan(text: '에\n${c.insightHow} 썼어요'),
+      TextSpan(text: prefix),
+      TextSpan(text: highlight, style: MonthlyInsightCard.highlightStyle(context)),
+      TextSpan(text: suffix),
     ]);
   }
 }
@@ -210,7 +207,7 @@ class _SelfTrendBars extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${e.month.month}월',
+                    e.month.shortName,
                     style: context.typo.caption2W600
                         .copyWith(color: context.color.label.assistive),
                   ),

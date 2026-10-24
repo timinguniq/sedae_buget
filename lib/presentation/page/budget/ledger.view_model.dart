@@ -25,10 +25,15 @@ bool _mayHaveChanged(Result<Object?> res) {
 /// 보고 있는 달. 모든 탭이 함께 본다. 이번 달보다 뒤로, 2020년 1월보다 앞으로는 가지 않는다(규칙은 [YearMonth]).
 class SelectedMonthNotifier extends Notifier<YearMonth> {
   @override
-  YearMonth build() => YearMonth.of(DateTime.now());
+  YearMonth build() => YearMonth.of(today);
+
+  /// 오늘. 이 viewmodel은 시계를 여기서만 읽는다. 화면은 시계를 직접 읽지 않고, 오늘이 필요한 규칙에 이 값을 넘긴다.
+  /// 부를 때마다 읽으므로 자정을 넘겨도 새 오늘이다. 다만 보고 있는 달은 처음 만들 때 한 번 정하므로,
+  /// 앱을 켜 둔 채 달이 바뀌면 보고 있는 달과 그 이름은 새 달로 바뀌지 않는다.
+  DateTime get today => DateTime.now();
 
   /// 다음 달로 갈 수 있는가(보고 있는 달이 이번 달보다 앞이다).
-  bool get canGoNext => state.canGoNext(DateTime.now());
+  bool get canGoNext => state.canGoNext(today);
 
   /// 이전 달로 갈 수 있는가(보고 있는 달이 하한보다 뒤다).
   bool get canGoPrevious => state.canGoPrevious;
@@ -124,9 +129,9 @@ final viewedMonthProvider = Provider<AsyncValue<ViewedMonth>>((ref) {
       ));
 });
 
-/// 보고 있는 달을 화면에서 부르는 이름([YearMonth.name]). 오늘을 여기서만 정해 화면이 시계를 모르게 한다.
-final viewedMonthNameProvider =
-    Provider<String>((ref) => ref.watch(selectedMonthProvider).name(DateTime.now()));
+/// 보고 있는 달을 화면에서 부르는 이름([YearMonth.name]). 오늘은 [SelectedMonthNotifier.today]로 읽어 화면이 시계를 모르게 한다.
+final viewedMonthNameProvider = Provider<String>((ref) =>
+    ref.watch(selectedMonthProvider).name(ref.read(selectedMonthProvider.notifier).today));
 
 /// 사용자가 만든 카테고리 목록(서버). 기본 분류([BudgetCategory])는 계약 상수라 여기 없다.
 ///

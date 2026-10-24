@@ -54,7 +54,7 @@ void main() {
   });
 
   // 오류 규약: 실패를 Result로만 전달한다. throw/null/삼킴으로 갈라지지 않게 고정한다.
-  test('domain/repository의 메서드는 모두 Future<Result<...>>를 돌려준다', () {
+  test('domain/repository의 비동기(Future) 메서드는 모두 Future<Result<...>>를 돌려준다', () {
     final offenders = <String>[];
     for (final f in Directory('lib/domain/repository')
         .listSync()
@@ -132,7 +132,7 @@ void main() {
     expect(offenders, isEmpty);
   });
 
-  test('presentation은 data 구현체를 직접 import하지 않는다', () {
+  test('presentation은 data(repository_impl·dto·data_source)를 import하지 않는다', () {
     expect(violations('presentation', ['sedae_budget/data']), isEmpty);
   });
 

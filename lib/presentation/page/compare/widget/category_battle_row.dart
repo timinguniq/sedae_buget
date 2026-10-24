@@ -14,10 +14,11 @@ class CategoryBattleRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final diff = comparison.percent;
+    // 더 썼으면(+) 기준선 오른쪽, 덜 썼으면(−) 왼쪽.
     final more = comparison.direction == PeerDirection.more;
     // 디자인 스케일: +50% ≈ 한쪽 폭의 90%.
     final f = (diff.abs() / 55).clamp(0.0, 1.0);
-    final barColor = more ? context.color.primary.normal : context.color.label.disable;
+    final barColor = comparison.rowBarTone(context);
     final textColor = comparison.tone(context);
     final label = comparison.rowLabel;
     return Padding(
@@ -39,7 +40,7 @@ class CategoryBattleRow extends StatelessWidget {
                 Positioned(
                   left: half - 0.75, top: 0, bottom: 0, width: 1.5,
                   child: ColoredBox(color: context.color.line.neutral)),
-                if (diff != 0)
+                if (comparison.direction != PeerDirection.similar)
                   Positioned(
                     top: 2, height: 14,
                     left: more ? half : half - half * f,

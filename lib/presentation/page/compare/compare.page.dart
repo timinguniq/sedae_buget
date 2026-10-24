@@ -47,7 +47,7 @@ class ComparePage extends ConsumerWidget {
           final top6 = o.topCategories(6);
           // 소득이 없으면 내 저축률은 계산할 수 없다: 막대는 0, 값은 '—'.
           final PeerCompared(:total, :totalBars, :rank, :savings, :savingsBars) = standing;
-          final peerTop = o.peerTopCategory;
+          final topInsight = switch (o.peerTopCategory) { final top? => peer.topInsight(top), null => null };
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
@@ -98,13 +98,9 @@ class ComparePage extends ConsumerWidget {
               for (final e in top6)
                 if (e.peer case final comparison?)
                   CategoryBattleRow(category: e.category, comparison: comparison),
-              if (peerTop != null) ...[
+              if (topInsight case (:final prefix, :final highlight, :final suffix)?) ...[
                 const SizedBox(height: 2),
-                InsightBanner(
-                  prefix: '${peer.ageGroup.label}는 보통 ',
-                  highlight: peerTop.label,
-                  suffix: ' 지출이 또래 평균을 끌어올려요.',
-                ),
+                InsightBanner(prefix: prefix, highlight: highlight, suffix: suffix),
               ],
             ],
           );

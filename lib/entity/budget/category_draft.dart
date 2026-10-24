@@ -35,6 +35,6 @@ class CategoryDraft {
 
   CategoryDraft pickBase(BudgetCategory base) => CategoryDraft._(id: id, name: name, base: base, isEdit: isEdit);
 
-  /// 저장할 카테고리(이름은 앞뒤 공백을 뗀다).
-  CustomCategory toCategory() => CustomCategory(id: id, name: name.trim(), baseCategoryId: base.id);
+  /// 저장할 카테고리(이름은 [CategoryName.normalize]로 다듬는다).
+  CustomCategory toCategory() => CustomCategory(id: id, name: CategoryName.normalize(name), baseCategoryId: base.id);
 }

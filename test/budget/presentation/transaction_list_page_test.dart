@@ -28,12 +28,13 @@ Transaction _expense(int amount, int day, {int categoryId = 10, String? memo, St
         memo: memo, customCategoryId: customCategoryId);
 
 /// [transactions]·[customs]를 심은 서버로 지난 달 내역 화면을 띄우고 그 컨테이너를 돌려준다.
-/// [faults]로 서버 장애를 건다.
+/// [faults]로 서버 장애를 건다. [thisMonth]면 이번 달 내역 화면을 띄운다.
 Future<ProviderContainer> _pump(
   WidgetTester tester, {
   List<Transaction>? transactions,
   List<CustomCategory> customs = const [],
   void Function(ServerFaults faults)? faults,
+  bool thisMonth = false,
 }) async {
   tester.view.physicalSize = const Size(390, 844);
   tester.view.devicePixelRatio = 1.0;
@@ -49,7 +50,7 @@ Future<ProviderContainer> _pump(
     adService: ads,
     launchInterstitial: await fakeLaunchInterstitial(ads),
   );
-  container.read(selectedMonthProvider.notifier).prev();
+  if (!thisMonth) container.read(selectedMonthProvider.notifier).prev();
   await tester.pumpWidget(fakeScope(container, const MaterialApp(home: TransactionListPage())));
   await tester.settle();
   return container;
@@ -143,6 +144,26 @@ void main() {
     await tester.tap(find.widgetWithText(DesignChip, label));
     await tester.settle();
     expect(find.byType(TransactionTile), findsOneWidget);
+  });
+
+  // 머리글의 오늘·어제는 화면이 받은 오늘로 정한다. 1일이면 어제는 지난 달이라 이번 달 목록에 없으므로
+  // 오늘만 본다. 테스트 중에 자정을 넘기면 화면의 오늘이 기대와 달라지므로 건너뛴다.
+  testWidgets('이번 달 오늘·어제 거래의 날짜 머리글은 오늘·어제다', (tester) async {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+    final hasYesterday = yesterday.month == today.month;
+    Transaction spent(DateTime date) =>
+        Transaction.create(amount: 5000, categoryId: 10, date: date, type: TransactionType.expense);
+
+    await _pump(tester, thisMonth: true, transactions: [spent(today), if (hasYesterday) spent(yesterday)]);
+    if (!DateUtils.isSameDay(DateTime.now(), now)) {
+      markTestSkipped('테스트 중에 자정을 넘겼다');
+      return;
+    }
+
+    expect(find.text('오늘 · ${today.month}월 ${today.day}일'), findsOneWidget);
+    if (hasYesterday) expect(find.text('어제 · ${yesterday.month}월 ${yesterday.day}일'), findsOneWidget);
   });
 
   // 이전에는 고른 칩이 상위 4개 밖으로 밀려 사라져도 목록은 그 분류로 걸러진 채 남고, 어느 칩도 켜져 있지 않았다.

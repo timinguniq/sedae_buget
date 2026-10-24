@@ -1,8 +1,20 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/widget/common/peer_text.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 PeerComparison _c(int mine, [int peer = 100000]) => PeerComparison.of(mine: mine, peer: peer)!;
+
+/// [theme]의 화면에서 [read]로 색을 고른다.
+Future<T> _inTheme<T>(WidgetTester t, AppTheme theme, T Function(BuildContext) read) async {
+  late T value;
+  await t.pumpWidget(Theme(data: materialTheme(theme), child: Builder(builder: (context) {
+    value = read(context);
+    return const SizedBox();
+  })));
+  return value;
+}
 
 void main() {
   final more = _c(112000); // +12%
@@ -70,10 +82,76 @@ void main() {
     expect(r.topPercentText, '34%');
     expect(r.placeText, '100명 중 34등');
     expect(r.headlineLead, '또래 100명 중 내 지출은');
+    expect(r.headlinePlace, (number: '34', unit: '등'));
   });
 
   test('저축률: 또래만큼 모으면 칭찬, 아니면 권유', () {
     expect(const SavingsComparison(mine: 20, peer: 20).verdict, '잘 모으고 있어요');
     expect(const SavingsComparison(mine: 19, peer: 20).verdict, '조금 더 모아볼까요?');
+  });
+
+  test('홈 저축률 카드의 또래 줄: 또래 평균과 한마디', () {
+    expect(const SavingsComparison(mine: 20, peer: 20).peerLine, '또래 평균 20% · 잘 모으고 있어요');
+    expect(const SavingsComparison(mine: null, peer: 18).peerLine, '또래 평균 18% · 조금 더 모아볼까요?');
+  });
+
+  test('리포트 인사이트 본문: 앞말, 강조할 분류, 어떻게 썼는지', () {
+    expect(_c(150000).insightLine(BudgetCategory.groceries),
+        (prefix: '또래보다 ', highlight: '장보기', suffix: '에\n1.5배 더 썼어요'));
+    expect(less.insightLine(BudgetCategory.groceries),
+        (prefix: '또래보다 ', highlight: '장보기', suffix: '에\n10% 덜 썼어요'));
+    expect(similar.insightLine(BudgetCategory.groceries),
+        (prefix: '또래와 ', highlight: '장보기', suffix: '에\n비슷하게 썼어요'));
+    expect(noInsightText, '아직 분석할 지출이\n충분치 않아요');
+  });
+
+  test('리포트 인사이트 아랫줄: 내 금액과 또래 금액', () {
+    expect(_c(120000).insightSub, '한 달 ₩120,000 · 또래는 ₩100,000');
+  });
+
+  test('비교 탭 인사이트 배너: 나이대는 보통 [분류] 지출이 또래 평균을 끌어올린다', () {
+    const stats = PeerStats(
+        ageGroup: AgeGroup.twenties, avgMonthlyExpense: 1000000, avgSavingsRate: 0.2,
+        avgByCategory: {}, samples: []);
+    expect(stats.topInsight(BudgetCategory.groceries),
+        (prefix: '20대는 보통 ', highlight: '장보기', suffix: ' 지출이 또래 평균을 끌어올려요.'));
+  });
+
+  group('색조', () {
+    final strongMore = _c(150000); // +50% → 크게 넘음
+
+    testWidgets('비교 탭 항목별 행 막대: 더 썼으면 코랄, 덜 썼거나 비슷하면 흐리게', (t) async {
+      final colors = await _inTheme(t, LightTheme(), (c) => [more, less, similar].map((e) => e.rowBarTone(c)).toList());
+      expect(colors, [Palette.primaryNormal, Palette.labelDisable, Palette.labelDisable]);
+    });
+
+    testWidgets('홈 많이 쓴 카테고리 막대: 더 썼거나 비교가 없으면 코랄, 덜 썼거나 비슷하면 회색(다크는 다크 톤)', (t) async {
+      final comparisons = [more, less, similar, null];
+      final light = await _inTheme(t, LightTheme(), (c) => comparisons.map((e) => topCategoryBarTone(c, e)).toList());
+      expect(light, [Palette.primaryNormal, Palette.neutral400, Palette.neutral400, Palette.primaryNormal]);
+      final dark = await _inTheme(t, DarkTheme(), (c) => comparisons.map((e) => topCategoryBarTone(c, e)).toList());
+      expect(dark, [Palette.primaryNormal, Palette.darkTextDisabled, Palette.darkTextDisabled, Palette.primaryNormal]);
+    });
+
+    testWidgets('분류 배지: 크게 넘으면 코랄 바탕에 흰 글씨, 틴트면 더 씀만 코랄 틴트, 아니면 바탕 없음', (t) async {
+      final tones = await _inTheme(t, LightTheme(), (c) => [
+            strongMore.badgeTone(c, tinted: false),
+            strongMore.badgeTone(c, tinted: true),
+            more.badgeTone(c, tinted: true),
+            less.badgeTone(c, tinted: true),
+            similar.badgeTone(c, tinted: true),
+            more.badgeTone(c, tinted: false),
+            less.badgeTone(c, tinted: false),
+          ]);
+      expect(tones, [
+        (fg: Palette.staticWhite, bg: Palette.primaryNormal),
+        (fg: Palette.staticWhite, bg: Palette.primaryNormal),
+        (fg: Palette.primaryNormal, bg: Palette.coralTint),
+        (fg: Palette.labelAlternative, bg: Palette.backgroundAlternative),
+        (fg: Palette.labelAlternative, bg: Palette.backgroundAlternative),
+        (fg: Palette.primaryNormal, bg: null),
+        (fg: Palette.labelAlternative, bg: null),
+      ]);
+    });
   });
 }

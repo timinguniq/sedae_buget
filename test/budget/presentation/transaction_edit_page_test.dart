@@ -149,7 +149,7 @@ void main() {
     expect(server.faults.count('PUT', '/v1/transactions'), 0);
   });
 
-  // 커스텀 카테고리를 고르면 상위 기본 분류가 함께 저장돼 또래 비교 집계가 유지된다.
+  // 사용자 카테고리를 고르면 상위 기본 분류가 함께 저장돼 또래 비교 집계가 유지된다.
   testWidgets('custom category chip stores base id + customCategoryId', (tester) async {
     final server = await pumpEditPage(tester, customs: const [_pet]);
 
@@ -220,6 +220,34 @@ void main() {
 
     final picker = tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
     expect(DateUtils.isSameDay(picker.lastDate, DateTime.now()), isTrue);
+  });
+
+  // 아래 두 테스트는 화면이 받은 오늘을 본다. 테스트 중에 자정을 넘기면 화면의 오늘이 기대와 달라지므로 건너뛴다.
+  testWidgets('이번 달에 새 거래를 적으면 오늘 날짜로 시작한다', (tester) async {
+    final now = DateTime.now();
+    await pumpEditPage(tester);
+    if (!DateUtils.isSameDay(DateTime.now(), now)) {
+      markTestSkipped('테스트 중에 자정을 넘겼다');
+      return;
+    }
+
+    expect(find.text('${now.year}.${now.month}.${now.day}'), findsOneWidget);
+  });
+
+  // 10일 전은 지난 달일 수 있다(월초). 고를 수 있는 날짜는 보고 있는 달과 상관없으므로 그래도 된다.
+  testWidgets('지난 거래를 고칠 때도 날짜는 오늘까지 고를 수 있다', (tester) async {
+    final now = DateTime.now();
+    await pumpEditPage(tester, existing: Transaction.create(amount: 1000, categoryId: 1,
+        date: DateTime(now.year, now.month, now.day - 10), type: TransactionType.expense));
+    await tester.tap(find.byIcon(Icons.calendar_today_outlined));
+    await tester.pumpAndSettle();
+    if (!DateUtils.isSameDay(DateTime.now(), now)) {
+      markTestSkipped('테스트 중에 자정을 넘겼다');
+      return;
+    }
+
+    final picker = tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
+    expect(DateUtils.isSameDay(picker.lastDate, now), isTrue);
   });
 
   // 이전에는 첫 날짜가 2020년으로 박혀 있어 그보다 이른 거래의 날짜를 누르면 assert로 멈췄다.

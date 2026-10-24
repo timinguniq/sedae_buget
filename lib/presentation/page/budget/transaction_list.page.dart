@@ -38,6 +38,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
           if (!topCats.contains(_filter)) _filter = null;
           final filter = _filter;
           final filtered = filter == null ? m.transactions : m.inCategory(filter);
+          final today = ref.read(selectedMonthProvider.notifier).today;
           return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
@@ -81,7 +82,7 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
                           switch (item) {
                             FeedDayHeader(:final day, :final isFirst) => Padding(
                                 padding: EdgeInsets.only(top: isFirst ? 6 : 14, bottom: 2),
-                                child: Text(dateGroupLabel(day),
+                                child: Text(dateGroupLabel(day, now: today),
                                     style: context.typo.caption1W600
                                         .copyWith(color: context.color.label.assistive)),
                               ),
@@ -125,8 +126,8 @@ class _MonthChip extends ConsumerWidget {
           : ref.read(selectedMonthProvider.notifier).next(),
       itemBuilder: (_) => [
         // 2020년 1월보다 앞으로, 이번 달보다 뒤로는 가지 않는다.
-        PopupMenuItem(value: -1, enabled: canGoPrevious, child: Text('이전 달 · ${prev.month}월')),
-        PopupMenuItem(value: 1, enabled: canGoNext, child: Text('다음 달 · ${next.month}월')),
+        PopupMenuItem(value: -1, enabled: canGoPrevious, child: Text('이전 달 · ${prev.shortName}')),
+        PopupMenuItem(value: 1, enabled: canGoNext, child: Text('다음 달 · ${next.shortName}')),
       ],
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
@@ -136,7 +137,7 @@ class _MonthChip extends ConsumerWidget {
           borderRadius: BorderRadius.circular(18),
         ),
         child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text('${month.month}월', style: context.typo.caption1W600.copyWith(
+          Text(month.shortName, style: context.typo.caption1W600.copyWith(
               fontSize: 12.5, fontWeight: context.typo.bold, color: context.color.label.normal)),
           const SizedBox(width: 5),
           Text('▼', style: context.typo.caption2W600.copyWith(fontSize: 9, color: context.color.label.assistive)),

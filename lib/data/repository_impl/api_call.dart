@@ -7,7 +7,7 @@ final _logger = CustomLogger.create(tag: 'api');
 /// retrofit 호출([run])을 [Result]로 바꾼다. repository는 서버를 모두 이것으로 부른다.
 ///
 /// 모든 실패가 여기서 [ErrorResult]로 끝나고 repository는 던지지 않는다.
-/// - 응답을 못 받음: 시간 초과면 timeout, 그 밖은 offline.
+/// - 응답을 못 받음: 연결한 뒤의 시간 초과(요청이 서버에 닿았을 수 있다)면 timeout, 그 밖(연결 시간 초과 포함)은 offline.
 /// - 오류 응답: 상태코드로 [FailureReason]을 정하고, 서버 바디 `{code, message}`의 도메인 코드와 문구만 옮긴다.
 ///   HTTP 상태·전송 오류 코드와 Dio의 개발자용 문구는 여기서 버린다.
 /// - 해석할 수 없는 성공 응답(빈 바디·빠진 필드·모르는 값): server.
@@ -30,7 +30,8 @@ Future<Result<T>> guardApi<T>(
 
 ErrorResult _failureOf(DioException e) {
   switch (e.type) {
-    case DioExceptionType.connectionTimeout:
+    // 연결 시간 초과는 요청이 서버에 가지 않았으므로 아래 offline이다.
+    // 웹은 이것을 구별하지 못해 연결 시간 제한을 두지 않는다(core/http_client/server_connection.dart).
     case DioExceptionType.sendTimeout:
     case DioExceptionType.receiveTimeout:
       return const ErrorResult(reason: FailureReason.timeout, message: '');

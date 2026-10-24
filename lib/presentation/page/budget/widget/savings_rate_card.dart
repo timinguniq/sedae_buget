@@ -38,7 +38,7 @@ class SavingsRateCard extends StatelessWidget {
           Text('$label 저축률 $rate%', style: context.typo.sectionTitle.copyWith(color: context.color.label.normal)),
           if (peer != null) ...[
             const SizedBox(height: 2),
-            Text('또래 평균 ${peer.peer}% · ${peer.verdict}',
+            Text(peer.peerLine,
                 style: context.typo.caption1W500.copyWith(fontSize: 11.5, color: context.color.label.assistive)),
           ],
         ])),
