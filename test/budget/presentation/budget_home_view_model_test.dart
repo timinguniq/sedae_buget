@@ -125,6 +125,21 @@ void main() {
     expect(c.read(monthOverviewProvider).hasError, isTrue);
   });
 
+  // 이전에는 또래 통계가 오는 중이면 이달 거래의 실패를 보지 않고 불러오는 중이었다(또래 통계가 느리면 최대 30초).
+  test('또래 통계를 기다리는 중에도 이달 거래를 못 읽으면 바로 오류다', () async {
+    final server = await _server();
+    server.faults.fail('GET', '/v1/transactions');
+    final peer = server.faults.hold('GET', '/v1/peer/stats');
+    final c = fakeContainer(server: server);
+    final sub = c.listen(monthOverviewProvider, (_, _) {});
+    addTearDown(sub.close);
+
+    await c.read(monthlyTransactionsProvider.future).then((_) {}, onError: (_) {});
+    expect(c.read(peerStatsProvider).isLoading, isTrue);
+    expect(c.read(monthOverviewProvider).hasError, isTrue);
+    peer.complete();
+  });
+
   group('또래 통계', () {
     test('실패하면 peer만 null이고 내 값은 그대로 낸다', () async {
       final server = await _server(transactions: [_expense(1200, BudgetCategory.transport)]);
