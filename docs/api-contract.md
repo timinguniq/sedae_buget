@@ -38,10 +38,10 @@
 |---|---|---|---|
 | POST | `/v1/auth/login` | `{"provider":"kakao","idToken":"..."}` | 200 `{"accessToken":"...","user":{"id":"...","provider":"kakao","nickname":"..."}}`. `idToken`이 없거나 `provider`가 틀리면 400 |
 | POST | `/v1/auth/logout` | | 204. 그 토큰은 더는 쓸 수 없다(401). 다시 로그인하면 새 토큰을 준다. 준 적 없는 토큰(바꾼 토큰)도 401 |
-| GET | `/v1/me` | | 200 사용자(로그인 응답의 `user`와 같은 모양) |
+| GET | `/v1/me` | | 200 사용자(로그인 응답의 `user`와 같다) |
 | GET | `/v1/me/profile` | | 200 `{"ageGroup":"thirties","monthlyIncome":3000000}` / 404 `PROFILE_NOT_FOUND` |
 | PUT | `/v1/me/profile` | `{"ageGroup":"thirties","monthlyIncome":3000000}` | 200 같은 모양 |
-| GET | `/v1/transactions?from=<UTC>&to=<UTC>` | `[from, to)` 반개구간. 둘 다 필요 | 200 `[거래…]`(날짜 최신순) |
+| GET | `/v1/transactions?from=<UTC>&to=<UTC>` | `[from, to)` 반개구간. 둘 다 필요 | 200 `[거래…]`(날짜 최신순). `from`·`to`가 없거나 UTC(`...Z`)가 아니면 400 |
 | PUT | `/v1/transactions/{id}` | 거래 바디 | 201(새 id) / 200(같은 id) 거래 |
 | DELETE | `/v1/transactions/{id}` | | 204 / 404 |
 | GET | `/v1/categories` | | 200 `[사용자 카테고리…]`(만든 순서) |
@@ -97,7 +97,7 @@
   - `amount`: 1 이상 정수.
   - `type`: `expense` 또는 `income`.
   - `categoryId`: 지출이면 1~19. 수입은 카테고리가 없어서 정수이기만 하면 된다(앱은 보내지만 쓰지 않는다).
-  - `date`: ISO-8601 UTC.
+  - `date`: ISO-8601 UTC(`...Z`). `+09:00` 같은 오프셋은 같은 순간이라도 400이다.
   - `memo`: 문자열 또는 null. 길이 제한은 없다.
   - `customCategoryId`: null이거나 그 사용자의 사용자 카테고리 id. 없는 카테고리면 400.
 - `customCategoryId`가 있으면 서버가 `categoryId`를 그 카테고리의 상위 분류로 맞춘다.

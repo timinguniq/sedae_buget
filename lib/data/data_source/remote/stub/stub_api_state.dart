@@ -1,4 +1,4 @@
-/// Stub 서버의 "DB". 사용자(로그인 provider 이름)마다 따로 둔다 — 계약상 데이터는 사용자 것이다.
+/// Stub 서버가 보관하는 상태. 사용자(로그인 provider 이름)마다 따로 둔다 — 계약상 데이터는 사용자 것이다.
 class StubApiState {
   final Map<String, StubUserData> _users = {};
 
