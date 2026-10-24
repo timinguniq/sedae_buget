@@ -5,17 +5,15 @@ import 'package:sedae_budget/core/local_storage/theme_mode_store.dart';
 import 'package:sedae_budget/presentation/service/theme_mode_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../helper/fakes.dart';
+
 void main() {
   Future<ThemeModeStore> store(Map<String, Object> saved) async {
     SharedPreferences.setMockInitialValues(saved);
     return ThemeModeStore(await SharedPreferences.getInstance());
   }
 
-  ProviderContainer container(ThemeModeStore s) {
-    final c = ProviderContainer(overrides: [themeModeStoreProvider.overrideWithValue(s)]);
-    addTearDown(c.dispose);
-    return c;
-  }
+  ProviderContainer container(ThemeModeStore s) => fakeContainer(themeModeStore: s);
 
   test('고른 적이 없거나 모르는 값이면 시스템 모드', () async {
     expect(container(await store({})).read(themeModeProvider), ThemeMode.system);

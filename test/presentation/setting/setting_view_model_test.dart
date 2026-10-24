@@ -1,8 +1,9 @@
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sedae_budget/presentation/page/setting/setting.view_model.dart';
+
+import '../../helper/fakes.dart';
 
 PackageInfo _info(String version) =>
     PackageInfo(appName: 'sedae', packageName: 'com.sedae.budget', version: version, buildNumber: '1');
@@ -26,8 +27,7 @@ void main() {
   test('appVersionProvider도 빈 버전을 null로 준다', () async {
     PackageInfo.setMockInitialValues(
         appName: 'sedae', packageName: 'com.sedae.budget', version: '', buildNumber: '1', buildSignature: '');
-    final container = ProviderContainer();
-    addTearDown(container.dispose);
+    final container = fakeContainer();
     expect(await container.read(appVersionProvider.future), isNull);
   });
 }
