@@ -7,8 +7,10 @@ import 'package:sedae_budget/theme/theme.dart';
 /// 카테고리 분석 행. 디자인: 상단 구분선 / 라운드 사각 마커 10px·r3 /
 /// 이름 600·13 + 비율 500·10.5 / 우측 금액 800·13 + 또래 배지.
 class CategoryRow extends StatelessWidget {
-  const CategoryRow({super.key, required this.label, required this.amount, required this.color, required this.percent, this.peer});
-  final String label; final int amount; final Color color; final double percent;
+  const CategoryRow({super.key, required this.label, required this.amount, required this.color, required this.share, this.peer});
+  final String label; final int amount; final Color color;
+  /// 이달 지출에서 이 줄이 차지하는 몫(0–1, [AnalysisRow]의 share). 정수 %([PeerComparison.percent])가 아니다.
+  final double share;
   /// 또래 평균과의 비교. null이면(또래 값 없음·비교 끔) 배지를 그리지 않는다.
   final PeerComparison? peer;
   @override
@@ -22,7 +24,7 @@ class CategoryRow extends StatelessWidget {
         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(label, style: context.typo.label2W600.copyWith(fontSize: 13, color: context.color.label.normal)),
           const SizedBox(height: 2),
-          Text('${(percent * 100).round()}%',
+          Text('${(share * 100).round()}%',
             style: context.typo.caption2W500.copyWith(fontSize: 10.5, color: context.color.label.assistive)),
         ])),
         Column(crossAxisAlignment: CrossAxisAlignment.end, children: [

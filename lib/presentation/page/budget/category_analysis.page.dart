@@ -89,7 +89,7 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
             for (final (i, r) in rows.indexed)
               CategoryRow(
                 label: r.item?.label ?? '그 외', amount: r.amount,
-                color: colors[i], percent: r.amount / total,
+                color: colors[i], share: r.share,
                 peer: _showPeer ? r.peer : null),
           ]);
         },

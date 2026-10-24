@@ -125,6 +125,21 @@ void main() {
     expect(_overview([_expense(1000, BudgetCategory.groceries)]).analysisRows(6).single.item?.base, BudgetCategory.groceries);
   });
 
+  // 이전에는 분석 화면이 줄 금액을 이달 지출로 직접 나눴다.
+  test('분석 행의 비율은 이달 지출에서 그 줄이 차지하는 몫이고, 그 외 줄도 같다', () {
+    final o = _overview([
+      for (final (i, c) in BudgetCategory.values.take(8).indexed) _expense(1000 * (8 - i), c),
+    ]);
+    final rows = o.analysisRows(6);
+    expect(rows.first.share, 8000 / 36000);
+    expect(rows.last.share, 3000 / 36000); // '그 외' 줄
+    expect(rows.fold(0.0, (s, r) => s + r.share), closeTo(1, 1e-9));
+  });
+
+  test('이달 지출이 0원이면 분석 행의 비율은 0이다', () {
+    expect(_overview([_expense(0, BudgetCategory.groceries)]).analysisRows(6).single.share, 0);
+  });
+
   test('또래 통계를 못 읽었거나 빈 달이면 분석 행에 또래 비교가 없다', () {
     expect(_overview([_expense(500000, BudgetCategory.groceries)]).analysisRows(6).single.peer, isNull);
     expect(_overview([_income(1000)], peer: _peer()).analysisRows(6), isEmpty);

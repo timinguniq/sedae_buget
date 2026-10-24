@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:sedae_budget/core/app_config/initial_info_json.dart';
 import 'package:sedae_budget/core/util/logger/custom_logger.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
@@ -72,7 +73,7 @@ class FirebaseAppStatusSource implements AppStatusSource {
   AppInitialInfo? _parse(String raw) {
     if (raw.isEmpty) return null;
     try {
-      return AppInitialInfo.fromJson(jsonDecode(raw) as Map<String, dynamic>);
+      return initialInfoFromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (e, s) {
       _logger.e('_parse() : initialInfo 형식이 잘못됨: $raw', error: e, stackTrace: s);
       return null;
