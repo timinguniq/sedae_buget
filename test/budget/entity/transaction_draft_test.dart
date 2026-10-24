@@ -206,6 +206,18 @@ void main() {
       expect(tx.base, BudgetCategory.recreation);
     });
 
+    // 사용자 카테고리 목록을 읽는 중에 연 입력 화면은 '모름'으로 시작해 적힌 분류(기타)를 보이고,
+    // 저장할 때는 다 읽은 목록으로 판정한다. 그사이 자기계발이 취미·여가로 옮겨졌으면 그 분류로 저장한다.
+    test('저장할 때 사용자 카테고리의 그때 상위 분류를 따른다', () {
+      final d = TransactionDraft.edit(_saved(base: BudgetCategory.etc, customCategoryId: 'c2'),
+          const CategoryCatalog.unknown());
+      expect(d.base, BudgetCategory.etc);
+
+      final tx = d.toTransaction(const CategoryCatalog([_study]));
+      expect(tx.customCategoryId, 'c2');
+      expect(tx.base, BudgetCategory.recreation);
+    });
+
     test('목록을 모르면 고른 그대로 저장한다', () {
       final tx = TransactionDraft.edit(_saved(customCategoryId: 'c1'), const CategoryCatalog())
           .toTransaction(const CategoryCatalog.unknown());

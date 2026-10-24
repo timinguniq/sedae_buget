@@ -45,12 +45,8 @@ Future<ProviderContainer> _pump(
   final server = await tester.seedServer(
       profile: noIncomeProfile, categories: customs, transactions: transactions ?? [_expense(5000, 5)]);
   faults?.call(server.faults);
-  final ads = FakeAdService();
-  final container = fakeContainer(
-    server: server,
-    adService: ads,
-    launchInterstitial: await fakeLaunchInterstitial(ads),
-  );
+  // 하루 끝 배너는 fakeContainer의 기본 광고(배너 없음)를 쓴다.
+  final container = fakeContainer(server: server);
   if (!thisMonth) container.read(selectedMonthProvider.notifier).prev();
   await tester.pumpWidget(fakeScope(container, const MaterialApp(home: TransactionListPage())));
   await tester.settle();
