@@ -18,6 +18,7 @@ abstract class Palette {
   static const Color labelAlternative = Color(0xFF8C857D);
   static const Color labelAssistive = Color(0xFFA8A099);
   static const Color labelDisable = Color(0xFFB8B0A8);
+  static const Color labelFaint = Color(0xFFC2BAB2); // 목록 번호·화살표·입력 카운터(디자인 arrow)
   static const Color labelWhite = Color(0xFFFFFFFF);
 
   /// background ----------\\
@@ -82,6 +83,7 @@ abstract class Palette {
   static const Color darkBorder = Color(0xFF332C26);
   static const Color darkText = Color(0xFFF5F1EC);
   static const Color darkTextSecondary = Color(0xFFA9A199);
+  static const Color darkTextBody = Color(0xFFBDB5AC); // 긴 본문(약관) 글자
   static const Color darkTextMuted = Color(0xFF8C857D);
   static const Color darkTextFaint = Color(0xFF6E665E);
   static const Color darkTextDisabled = Color(0xFF5A534C);

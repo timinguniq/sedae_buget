@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
+import 'package:sedae_budget/presentation/page/legal/legal_content.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/page/login/widget/social_login_button.dart';
 import 'package:sedae_budget/theme/theme.dart';
@@ -63,8 +64,8 @@ class LoginPage extends ConsumerWidget {
   }
 }
 
-/// "로그인 시 이용약관 및 개인정보처리방침에 / 동의하는 것으로 간주됩니다." (강조 2곳 600·alternative)
-/// 강조한 두 낱말을 누르면 약관 화면을 연다(push라 닫으면 로그인 화면).
+/// "로그인 시 이용약관 및 개인정보처리방침에 / 동의하는 것으로 간주됩니다." (링크 2곳 600·alternative·밑줄, 나머지 500·10.5·disable)
+/// 밑줄 친 두 낱말을 누르면 약관 화면을 그 탭으로 연다(push라 닫으면 로그인 화면).
 class _TermsNotice extends StatefulWidget {
   const _TermsNotice();
 
@@ -73,25 +74,34 @@ class _TermsNotice extends StatefulWidget {
 }
 
 class _TermsNoticeState extends State<_TermsNotice> {
-  late final _openTerms = TapGestureRecognizer()..onTap = () => context.push(RoutePath.terms.path);
+  late final _openTerms = TapGestureRecognizer()..onTap = () => _open(LegalTab.terms);
+  late final _openPrivacy = TapGestureRecognizer()..onTap = () => _open(LegalTab.privacy);
+
+  void _open(LegalTab tab) => context.push(RoutePath.terms.path, extra: tab);
 
   @override
   void dispose() {
     _openTerms.dispose();
+    _openPrivacy.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final emphasis = TextStyle(fontWeight: context.typo.semiBold, color: context.color.label.alternative);
+    final link = TextStyle(
+      fontWeight: context.typo.semiBold,
+      color: context.color.label.alternative,
+      decoration: TextDecoration.underline,
+      decorationColor: context.color.label.alternative,
+    );
     return Text.rich(
       TextSpan(
         style: context.typo.caption2W500.copyWith(fontSize: 10.5, height: 1.55, color: context.color.label.disable),
         children: [
           const TextSpan(text: '로그인 시 '),
-          TextSpan(text: '이용약관', style: emphasis, recognizer: _openTerms),
+          TextSpan(text: '이용약관', style: link, recognizer: _openTerms),
           const TextSpan(text: ' 및 '),
-          TextSpan(text: '개인정보처리방침', style: emphasis, recognizer: _openTerms),
+          TextSpan(text: '개인정보처리방침', style: link, recognizer: _openPrivacy),
           const TextSpan(text: '에\n동의하는 것으로 간주됩니다.'),
         ],
       ),

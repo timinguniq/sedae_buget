@@ -54,6 +54,7 @@ flutter:
     - .env
     - asset/icon/
     - asset/icon/social/
+    - asset/legal/
     - asset/lottie/
 
   fonts:
