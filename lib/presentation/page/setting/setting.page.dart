@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/page/legal/legal_content.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
@@ -47,7 +48,9 @@ class SettingPage extends ConsumerWidget {
                 _divider(context),
                 SettingsTile(label: '앱 버전', value: version == null ? '...' : 'v$version'),
                 _divider(context),
-                SettingsTile(label: '이용약관 · 개인정보', onTap: () => context.push(RoutePath.terms.path)),
+                SettingsTile(
+                  label: '이용약관 · 개인정보',
+                  onTap: () => context.push(RoutePath.terms.path, extra: LegalTab.terms)),
               ]),
             ),
             const SizedBox(height: 18),

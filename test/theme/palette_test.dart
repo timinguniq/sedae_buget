@@ -24,6 +24,10 @@ void main() {
   test('coral soft present for dark badge text', () {
     expect(Palette.coralSoft, const Color(0xFFFF8A6B));
   });
+  test('legal handoff tokens: light arrow and dark body text', () {
+    expect(Palette.labelFaint, const Color(0xFFC2BAB2));
+    expect(Palette.darkTextBody, const Color(0xFFBDB5AC));
+  });
   test('dark tokens distinct from light', () {
     expect(Palette.darkBg, const Color(0xFF1A1714));
     expect(Palette.darkSurface, const Color(0xFF241F1B));

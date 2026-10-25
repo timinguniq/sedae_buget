@@ -10,7 +10,7 @@ import 'package:sedae_budget/presentation/page/main/main_shell.dart';
 import 'package:sedae_budget/presentation/page/setting/profile_edit.page.dart';
 import 'package:sedae_budget/presentation/page/setting/setting.page.dart';
 import 'package:sedae_budget/presentation/page/setting/widget/profile_card.dart';
-import 'package:sedae_budget/presentation/page/terms/terms.page.dart';
+import 'package:sedae_budget/presentation/page/legal/legal.page.dart';
 import 'package:sedae_budget/presentation/route/custom_route.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
@@ -105,16 +105,17 @@ void main() {
   });
 
   // 로그인하면 동의하는 것으로 보는 약관을 로그인 전에 읽을 수 있어야 한다.
-  testWidgets('로그인 화면의 이용약관·개인정보처리방침 링크 → 약관 화면, 뒤로 → 로그인 화면', (t) async {
+  testWidgets('로그인 화면의 이용약관·개인정보처리방침 링크 → 그 탭의 약관 화면, 뒤로 → 로그인 화면', (t) async {
     await _boot(t, await _container(await _server(t, signedIn: false))); // 로그인 화면 진입
-    for (final link in ['이용약관', '개인정보처리방침']) {
+    for (final (link, mark) in [('이용약관', '세대 가계부 이용약관'), ('개인정보처리방침', '한눈에 보기')]) {
       _tapNoticeLink(t, link);
       await t.settle(); // 가드가 로그인 화면으로 되돌리지 않는다
-      expect(find.byType(TermsPage), findsOneWidget, reason: link);
+      expect(find.byType(LegalPage), findsOneWidget, reason: link);
+      expect(find.text(mark), findsOneWidget, reason: '$link 링크는 그 탭으로 연다');
 
       await t.tap(find.byType(RoundIconButton));
       await t.settle();
-      expect(find.byType(TermsPage), findsNothing, reason: link);
+      expect(find.byType(LegalPage), findsNothing, reason: link);
       expect(find.text(_loginMark), findsOneWidget, reason: link);
     }
   });
@@ -124,11 +125,11 @@ void main() {
     await _boot(t, await _container(await _server(t, signedIn: false))); // 로그인 화면 진입
     _tapNoticeLink(t, '이용약관');
     await t.settle();
-    expect(find.byType(TermsPage), findsOneWidget);
+    expect(find.byType(LegalPage), findsOneWidget);
 
     await t.binding.handlePopRoute();
     await t.settle();
-    expect(find.byType(TermsPage), findsNothing);
+    expect(find.byType(LegalPage), findsNothing);
     expect(find.text(_loginMark), findsOneWidget);
   });
 
@@ -137,13 +138,14 @@ void main() {
     t.platformDispatcher.defaultRouteNameTestValue = RoutePath.terms.path; // 주소창에 /terms
     addTearDown(t.platformDispatcher.clearDefaultRouteNameTestValue);
     await _boot(t, await _container(await _server(t, signedIn: false)));
-    expect(find.byType(TermsPage), findsOneWidget);
-    expect(GoRouter.of(t.element(find.byType(TermsPage))).canPop(), isFalse);
+    expect(find.byType(LegalPage), findsOneWidget);
+    expect(find.text('세대 가계부 이용약관'), findsOneWidget); // 탭 인자가 없으면 이용약관
+    expect(GoRouter.of(t.element(find.byType(LegalPage))).canPop(), isFalse);
 
     await t.tap(find.byType(RoundIconButton));
     await t.settle();
     expect(t.takeException(), isNull);
-    expect(find.byType(TermsPage), findsNothing);
+    expect(find.byType(LegalPage), findsNothing);
     expect(find.text(_loginMark), findsOneWidget);
   });
 

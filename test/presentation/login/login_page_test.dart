@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
@@ -75,5 +76,33 @@ void main() {
     await t.tap(find.text('카카오로 시작하기'));
     await t.settle();
     expect(container.read(authProvider).value?.provider, AuthProvider.kakao);
+  });
+
+  // 핸드오프: 두 낱말은 밑줄 링크(600, #8C857D), 나머지 글자는 그대로(500·10.5, #B8B0A8).
+  testWidgets('고지문의 이용약관·개인정보처리방침은 밑줄 링크다', (t) async {
+    t.view.physicalSize = const Size(390, 844);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.reset);
+    await t.pumpWidget(fakeScope(
+      fakeContainer(),
+      MaterialApp(home: const LoginPage(), theme: materialTheme(LightTheme())),
+    ));
+    await t.pump();
+
+    final notice = t.widget<Text>(find.textContaining('동의하는 것으로 간주됩니다'));
+    expect(notice.textSpan!.style!.color, const Color(0xFFB8B0A8));
+    expect(notice.textSpan!.style!.fontSize, 10.5);
+    final links = <String, TextSpan>{};
+    notice.textSpan!.visitChildren((span) {
+      if (span is TextSpan && (span.text == '이용약관' || span.text == '개인정보처리방침')) links[span.text!] = span;
+      return true;
+    });
+    expect(links.keys, unorderedEquals(['이용약관', '개인정보처리방침']));
+    for (final MapEntry(key: link, value: span) in links.entries) {
+      expect(span.style!.decoration, TextDecoration.underline, reason: link);
+      expect(span.style!.fontWeight, FontWeight.w600, reason: link);
+      expect(span.style!.color, const Color(0xFF8C857D), reason: link);
+      expect(span.recognizer, isA<TapGestureRecognizer>(), reason: link);
+    }
   });
 }
