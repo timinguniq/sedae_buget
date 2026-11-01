@@ -21,21 +21,36 @@ class ProfileCard extends ConsumerWidget {
     return SurfaceCard(
       padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
       onTap: () => context.push(RoutePath.profileEdit.path),
-      child: Row(children: [
-        const MascotDongle(size: 46),
-        const SizedBox(width: 13),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(user.nickname,
-              style: context.typo.body2W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.normal)),
-            const SizedBox(height: 2),
-            Text(subtitle,
-              style: context.typo.caption1W500.copyWith(fontSize: 11.5, color: context.color.label.assistive)),
-          ])),
-        ProviderBadge(provider: user.provider),
-      ]),
+      child: Row(
+        children: [
+          const MascotDongle(size: 46),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  user.nickname,
+                  style: context.typo.body2W600.copyWith(
+                    fontWeight: context.typo.bold,
+                    color: context.color.label.normal,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: context.typo.caption1W500.copyWith(
+                    fontSize: 11.5,
+                    color: context.color.label.assistive,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ProviderBadge(provider: user.provider),
+        ],
+      ),
     );
   }
 }

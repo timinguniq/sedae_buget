@@ -25,4 +25,6 @@ class UserProfileNotifier extends AsyncNotifier<UserProfile?> {
 }
 
 final userProfileProvider =
-    AsyncNotifierProvider<UserProfileNotifier, UserProfile?>(UserProfileNotifier.new);
+    AsyncNotifierProvider<UserProfileNotifier, UserProfile?>(
+      UserProfileNotifier.new,
+    );

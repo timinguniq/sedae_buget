@@ -75,8 +75,26 @@ class LightTheme implements AppTheme {
 
   @override
   AppDeco deco = const AppDeco(
-    shadow: [BoxShadow(color: Color(0x122B2724), blurRadius: 34, offset: Offset(0, 12))],
-    cardShadow: [BoxShadow(color: Color(0x122B2724), blurRadius: 34, offset: Offset(0, 12))],
-    coralShadow: [BoxShadow(color: Color(0x42F2603C), blurRadius: 26, offset: Offset(0, 12))],
+    shadow: [
+      BoxShadow(
+        color: Color(0x122B2724),
+        blurRadius: 34,
+        offset: Offset(0, 12),
+      ),
+    ],
+    cardShadow: [
+      BoxShadow(
+        color: Color(0x122B2724),
+        blurRadius: 34,
+        offset: Offset(0, 12),
+      ),
+    ],
+    coralShadow: [
+      BoxShadow(
+        color: Color(0x42F2603C),
+        blurRadius: 26,
+        offset: Offset(0, 12),
+      ),
+    ],
   );
 }

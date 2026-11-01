@@ -34,13 +34,24 @@ class DesignChip extends StatelessWidget {
     final c = context.color;
     final (Color bg, Color fg, Color? border) = switch (style) {
       DesignChipStyle.ink => (c.label.normal, c.background.normal, null),
-      DesignChipStyle.outline => (c.background.surface, c.label.alternative, c.line.normal),
+      DesignChipStyle.outline => (
+        c.background.surface,
+        c.label.alternative,
+        c.line.normal,
+      ),
       DesignChipStyle.coral => (c.primary.normal, c.static.white, null),
     };
-    final text = Text(label, style: context.typo.caption1W600.copyWith(
-      fontSize: 11.5, height: 1.2, color: fg,
-      fontWeight: style == DesignChipStyle.outline ? context.typo.semiBold : context.typo.bold,
-    ));
+    final text = Text(
+      label,
+      style: context.typo.caption1W600.copyWith(
+        fontSize: 11.5,
+        height: 1.2,
+        color: fg,
+        fontWeight: style == DesignChipStyle.outline
+            ? context.typo.semiBold
+            : context.typo.bold,
+      ),
+    );
     final chip = Container(
       padding: padding,
       decoration: BoxDecoration(
@@ -50,9 +61,16 @@ class DesignChip extends StatelessWidget {
       ),
       child: leading == null
           ? text
-          : Row(mainAxisSize: MainAxisSize.min, children: [leading!, const SizedBox(width: 4), text]),
+          : Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [leading!, const SizedBox(width: 4), text],
+            ),
     );
     if (onTap == null) return chip;
-    return GestureDetector(onTap: onTap, behavior: HitTestBehavior.opaque, child: chip);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: chip,
+    );
   }
 }

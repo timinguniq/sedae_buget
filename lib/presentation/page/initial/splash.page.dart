@@ -20,7 +20,9 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(appInitialize()));
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => unawaited(appInitialize()),
+    );
   }
 
   @override
@@ -33,17 +35,28 @@ class _SplashPageState extends ConsumerState<SplashPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const LottieAsset(CLotties.splashIcon, width: 134, height: 134, repeat: false),
+                const LottieAsset(
+                  CLotties.splashIcon,
+                  width: 134,
+                  height: 134,
+                  repeat: false,
+                ),
                 const SizedBox(height: 28),
-                Text('세대 가계부', style: context.typo.title3.copyWith(
-                  fontWeight: context.typo.extraBold,
-                  letterSpacing: -0.6,
-                  color: context.color.label.normal,
-                )),
+                Text(
+                  '세대 가계부',
+                  style: context.typo.title3.copyWith(
+                    fontWeight: context.typo.extraBold,
+                    letterSpacing: -0.6,
+                    color: context.color.label.normal,
+                  ),
+                ),
                 const SizedBox(height: 7),
-                Text('내 또래는 얼마나 쓸까?', style: context.typo.caption1W600.copyWith(
-                  color: context.color.label.assistive,
-                )),
+                Text(
+                  '내 또래는 얼마나 쓸까?',
+                  style: context.typo.caption1W600.copyWith(
+                    color: context.color.label.assistive,
+                  ),
+                ),
               ],
             ),
           ),
@@ -68,7 +81,13 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     // 점검·강제 업데이트면 안내하고 끝낸다(선택 업데이트는 닫고 계속).
     final status = await appStatus;
     if (!mounted) return;
-    if (!await showAppStatusDialog(context, status, exitApp: ref.read(appExitProvider))) return;
+    if (!await showAppStatusDialog(
+      context,
+      status,
+      exitApp: ref.read(appExitProvider),
+    )) {
+      return;
+    }
     // 세션 확인(인증 → 프로필)이 끝날 때까지 기다린다. 실패해도 확인은 끝난 것이다.
     try {
       await ref.read(userProfileProvider.future);
@@ -78,7 +97,8 @@ class _SplashPageState extends ConsumerState<SplashPage> {
     if (!mounted) return;
     // 이 화면은 이동하면 사라져 ref를 쓸 수 없으므로, 광고를 기다린 뒤의 세션은 앱의 컨테이너에서 읽는다.
     final container = ProviderScope.containerOf(context, listen: false);
-    bool sessionReady() => container.read(sessionGateProvider) == SessionGate.ready;
+    bool sessionReady() =>
+        container.read(sessionGateProvider) == SessionGate.ready;
     // 어디로 갈지(로그인·온보딩·연결 안 됨·홈)는 전역 가드(sessionRedirect)가 정한다.
     context.go(RoutePath.budgetHome.path);
     // 전면 광고는 홈에 닿을 때(세션 준비됨)만, 로드를 기다린 뒤에도 세션이 준비됨일 때만 띄운다. 가드가 로그인·온보딩·

@@ -17,9 +17,7 @@ class DefaultLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor ?? context.color.background.normal,
-      body: SafeArea(
-        child: child,
-      ),
+      body: SafeArea(child: child),
       bottomNavigationBar: bottomNavigationBar,
     );
   }

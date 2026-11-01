@@ -16,32 +16,56 @@ const _failed = '저장하지 못했어요. 인터넷에 연결되어 있지 않
 final _saveButton = find.byKey(const Key('save-button'));
 
 /// 설정 화면을 띄우고 프로필 카드를 눌러 프로필 수정 화면을 연다.
-Future<ProviderContainer> _openFromSettings(WidgetTester t, StubServer server) async {
+Future<ProviderContainer> _openFromSettings(
+  WidgetTester t,
+  StubServer server,
+) async {
   t.view.physicalSize = const Size(390, 844);
   t.view.devicePixelRatio = 1.0;
   addTearDown(t.view.reset);
-  final container = fakeContainer(server: server, themeModeStore: await fakeThemeModeStore());
-  final router = GoRouter(routes: [
-    GoRoute(path: '/', builder: (_, _) => const SettingPage()),
-    GoRoute(path: RoutePath.profileEdit.path, builder: (_, _) => const ProfileEditPage()),
-  ]);
-  await t.pumpWidget(fakeScope(container,
-      MaterialApp.router(routerConfig: router, theme: materialTheme(LightTheme()))));
+  final container = fakeContainer(
+    server: server,
+    themeModeStore: await fakeThemeModeStore(),
+  );
+  final router = GoRouter(
+    routes: [
+      GoRoute(path: '/', builder: (_, _) => const SettingPage()),
+      GoRoute(
+        path: RoutePath.profileEdit.path,
+        builder: (_, _) => const ProfileEditPage(),
+      ),
+    ],
+  );
+  await t.pumpWidget(
+    fakeScope(
+      container,
+      MaterialApp.router(
+        routerConfig: router,
+        theme: materialTheme(LightTheme()),
+      ),
+    ),
+  );
   await t.settle();
   await t.tap(find.byType(ProfileCard));
   await t.settle();
   return container;
 }
 
-AgeGroup? _pickedAgeGroup(WidgetTester t) => t.widget<AgeGroupPicker>(find.byType(AgeGroupPicker)).selected;
+AgeGroup? _pickedAgeGroup(WidgetTester t) =>
+    t.widget<AgeGroupPicker>(find.byType(AgeGroupPicker)).selected;
 
-bool _canSave(WidgetTester t) => t.widget<FilledButton>(_saveButton).onPressed != null;
+bool _canSave(WidgetTester t) =>
+    t.widget<FilledButton>(_saveButton).onPressed != null;
 
 void main() {
   setUp(() {
     PackageInfo.setMockInitialValues(
-      appName: 'sedae', packageName: 'com.sedae.budget',
-      version: '1.0.0', buildNumber: '1', buildSignature: '');
+      appName: 'sedae',
+      packageName: 'com.sedae.budget',
+      version: '1.0.0',
+      buildNumber: '1',
+      buildSignature: '',
+    );
   });
 
   testWidgets('설정의 프로필 카드를 누르면 저장된 나이대·소득이 골라진 채로 열린다', (t) async {
@@ -68,7 +92,10 @@ void main() {
     await t.tap(_saveButton);
     await t.settle();
 
-    const edited = UserProfile(ageGroup: AgeGroup.twenties, monthlyIncome: 6000000);
+    const edited = UserProfile(
+      ageGroup: AgeGroup.twenties,
+      monthlyIncome: 6000000,
+    );
     expect(find.byType(ProfileEditPage), findsNothing);
     expect(find.byType(SettingPage), findsOneWidget);
     expect(find.text('20대'), findsOneWidget); // 설정의 프로필 카드

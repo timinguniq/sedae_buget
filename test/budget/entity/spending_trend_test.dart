@@ -1,15 +1,27 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-Transaction _tx(int amount, DateTime date, {TransactionType type = TransactionType.expense}) =>
-    Transaction.create(amount: amount, base: BudgetCategory.groceries, date: date, type: type);
+Transaction _tx(
+  int amount,
+  DateTime date, {
+  TransactionType type = TransactionType.expense,
+}) => Transaction.create(
+  amount: amount,
+  base: BudgetCategory.groceries,
+  date: date,
+  type: type,
+);
 
 void main() {
   test('보고 있는 달까지 6개월이고 해가 바뀌어도 이어진다', () {
     final t = SpendingTrend.ending(YearMonth.of(DateTime(2026, 2)));
     expect(t.months.map((m) => m.toString()), [
-      'YearMonth(2025-9)', 'YearMonth(2025-10)', 'YearMonth(2025-11)',
-      'YearMonth(2025-12)', 'YearMonth(2026-1)', 'YearMonth(2026-2)',
+      'YearMonth(2025-9)',
+      'YearMonth(2025-10)',
+      'YearMonth(2025-11)',
+      'YearMonth(2025-12)',
+      'YearMonth(2026-1)',
+      'YearMonth(2026-2)',
     ]);
     expect(t.start, DateTime(2025, 9));
     expect(t.end, DateTime(2026, 3));

@@ -9,15 +9,24 @@ List<double> donutSweeps(List<int> values) {
 }
 
 class CategoryDonut extends StatelessWidget {
-  const CategoryDonut({super.key, required this.values, required this.colors, this.size = 180, this.stroke = 26});
+  const CategoryDonut({
+    super.key,
+    required this.values,
+    required this.colors,
+    this.size = 180,
+    this.stroke = 26,
+  });
   final List<int> values;
   final List<Color> colors;
   final double size;
   final double stroke;
 
   @override
-  Widget build(BuildContext context) =>
-      SizedBox(width: size, height: size, child: CustomPaint(painter: _DonutPainter(values, colors, stroke)));
+  Widget build(BuildContext context) => SizedBox(
+    width: size,
+    height: size,
+    child: CustomPaint(painter: _DonutPainter(values, colors, stroke)),
+  );
 }
 
 class _DonutPainter extends CustomPainter {
@@ -29,7 +38,12 @@ class _DonutPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final sweeps = donutSweeps(values);
-    final rect = Rect.fromLTWH(stroke / 2, stroke / 2, size.width - stroke, size.height - stroke);
+    final rect = Rect.fromLTWH(
+      stroke / 2,
+      stroke / 2,
+      size.width - stroke,
+      size.height - stroke,
+    );
     var start = -math.pi / 2;
     for (var i = 0; i < sweeps.length; i++) {
       final p = Paint()
@@ -42,5 +56,6 @@ class _DonutPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_DonutPainter old) => old.values != values || old.colors != colors;
+  bool shouldRepaint(_DonutPainter old) =>
+      old.values != values || old.colors != colors;
 }

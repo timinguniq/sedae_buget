@@ -19,7 +19,8 @@ class _FixedToken implements SocialIdTokenProvider {
 /// 소셜 SDK 쪽에서 토큰을 받지 못하는 상황.
 class _FailingToken implements SocialIdTokenProvider {
   @override
-  Future<Result<String>> idToken(AuthProvider provider) async => const Result.failure(
+  Future<Result<String>> idToken(AuthProvider provider) async =>
+      const Result.failure(
         ErrorResult(reason: FailureReason.unknown, message: '소셜 로그인이 취소되었습니다.'),
       );
 }
@@ -39,23 +40,37 @@ void main() {
     expect((await repo.currentUser()).unwrap(), isNull);
   });
 
-  test('signIn stores token and returns user; currentUser round-trips', () async {
-    final u = (await repo.signIn(AuthProvider.naver)).unwrap();
-    expect(u.nickname, '네이버 사용자');
-    expect(u.provider, AuthProvider.naver);
-    expect(tokens.token, isNotEmpty);
-    expect((await repo.currentUser()).unwrap()?.provider, AuthProvider.naver);
-  });
+  test(
+    'signIn stores token and returns user; currentUser round-trips',
+    () async {
+      final u = (await repo.signIn(AuthProvider.naver)).unwrap();
+      expect(u.nickname, '네이버 사용자');
+      expect(u.provider, AuthProvider.naver);
+      expect(tokens.token, isNotEmpty);
+      expect((await repo.currentUser()).unwrap()?.provider, AuthProvider.naver);
+    },
+  );
 
   test('소셜 id_token을 받아 서버 세션으로 바꾼다', () async {
     final social = _FixedToken();
-    final auth = AuthRepositoryImpl(AuthApi(server.dio), server.session, social);
-    expect((await auth.signIn(AuthProvider.kakao)).unwrap().provider, AuthProvider.kakao);
+    final auth = AuthRepositoryImpl(
+      AuthApi(server.dio),
+      server.session,
+      social,
+    );
+    expect(
+      (await auth.signIn(AuthProvider.kakao)).unwrap().provider,
+      AuthProvider.kakao,
+    );
     expect(social.asked, [AuthProvider.kakao]);
   });
 
   test('id_token을 못 받으면 서버를 부르지 않고 그 실패를 돌려준다', () async {
-    final auth = AuthRepositoryImpl(AuthApi(server.dio), server.session, _FailingToken());
+    final auth = AuthRepositoryImpl(
+      AuthApi(server.dio),
+      server.session,
+      _FailingToken(),
+    );
     final res = await auth.signIn(AuthProvider.kakao);
     expect(res.failureOrNull?.message, '소셜 로그인이 취소되었습니다.');
     expect(server.faults.count('POST', '/v1/auth/login'), 0);
@@ -92,7 +107,10 @@ void main() {
     await server.signIn(AuthProvider.kakao);
     final saved = tokens.token;
     server.faults.fail('GET', '/v1/me', reason: FailureReason.server);
-    expect((await repo.currentUser()).failureOrNull?.reason, FailureReason.server);
+    expect(
+      (await repo.currentUser()).failureOrNull?.reason,
+      FailureReason.server,
+    );
     expect(tokens.token, saved); // 500은 토큰을 지우지 않는다
   });
 

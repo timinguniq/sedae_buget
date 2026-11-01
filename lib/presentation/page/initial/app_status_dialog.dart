@@ -40,14 +40,17 @@ Future<bool> showAppStatusDialog(
         barrierDismissible: false,
         builder: (_) => CDialog<bool>(
           title: '새 버전이 나왔어요',
-          description: forced ? '계속 쓰려면 최신 버전으로 업데이트해 주세요.' : '최신 버전으로 업데이트해 보세요.',
+          description: forced
+              ? '계속 쓰려면 최신 버전으로 업데이트해 주세요.'
+              : '최신 버전으로 업데이트해 보세요.',
           buttons: [
             if (!forced)
               CDialogButton(
-                  label: '닫기',
-                  result: false,
-                  color: context.color.fill.grey,
-                  labelColor: context.color.label.neutral),
+                label: '닫기',
+                result: false,
+                color: context.color.fill.grey,
+                labelColor: context.color.label.neutral,
+              ),
             CDialogButton(label: '업데이트', result: true),
           ],
         ),
@@ -68,5 +71,7 @@ void exitAppSoon() {
 
 Future<void> _openStore(String url) async {
   final uri = Uri.parse(url);
-  if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+  if (await canLaunchUrl(uri)) {
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
+  }
 }

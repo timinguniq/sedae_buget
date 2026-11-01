@@ -3,29 +3,42 @@ import 'package:sedae_budget/entity/entity.dart';
 
 // 반려식물 → 기타(19), 자기계발 → 취미·여가(14)
 const _pet = CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc);
-const _study = CustomCategory(id: 'c2', name: '자기계발', base: BudgetCategory.recreation);
+const _study = CustomCategory(
+  id: 'c2',
+  name: '자기계발',
+  base: BudgetCategory.recreation,
+);
 
-Transaction _expense(int amount, BudgetCategory c, {String? customCategoryId}) =>
-    Transaction.create(
-        amount: amount, base: c, date: DateTime(2026, 9, 5),
-        type: TransactionType.expense, customCategoryId: customCategoryId);
+Transaction _expense(
+  int amount,
+  BudgetCategory c, {
+  String? customCategoryId,
+}) => Transaction.create(
+  amount: amount,
+  base: c,
+  date: DateTime(2026, 9, 5),
+  type: TransactionType.expense,
+  customCategoryId: customCategoryId,
+);
 
 Transaction _income(int amount) => Transaction.create(
-    amount: amount, base: BudgetCategory.groceries, date: DateTime(2026, 9, 1),
-    type: TransactionType.income);
+  amount: amount,
+  base: BudgetCategory.groceries,
+  date: DateTime(2026, 9, 1),
+  type: TransactionType.income,
+);
 
 ViewedMonth _month(
   List<Transaction> txs, {
   List<CustomCategory> customs = const [],
   int? profileIncome,
   DateTime? month,
-}) =>
-    ViewedMonth(
-      month: YearMonth.of(month ?? DateTime(2026, 9)),
-      transactions: txs,
-      catalog: CategoryCatalog(customs),
-      profileIncome: profileIncome,
-    );
+}) => ViewedMonth(
+  month: YearMonth.of(month ?? DateTime(2026, 9)),
+  transactions: txs,
+  catalog: CategoryCatalog(customs),
+  profileIncome: profileIncome,
+);
 
 void main() {
   group('지출', () {
@@ -41,10 +54,13 @@ void main() {
 
     // 거래에 적힌 기본 분류가 낡아도 또래 비교는 사용자 카테고리의 현재 상위 분류로 모은다.
     test('기본 분류별 합계는 사용자 카테고리 지출을 그 현재 상위 분류로 모은다', () {
-      final m = _month([
-        _expense(1000, BudgetCategory.transport),
-        _expense(3000, BudgetCategory.etc, customCategoryId: 'c2'),
-      ], customs: const [_study]);
+      final m = _month(
+        [
+          _expense(1000, BudgetCategory.transport),
+          _expense(3000, BudgetCategory.etc, customCategoryId: 'c2'),
+        ],
+        customs: const [_study],
+      );
       expect(m.byCategory[BudgetCategory.transport], 1000);
       expect(m.byCategory[BudgetCategory.recreation], 3000);
       expect(m.byCategory[BudgetCategory.etc], isNull);
@@ -52,29 +68,44 @@ void main() {
 
     // 수입은 카테고리가 없다. 이전에는 입력 기본값(식료품)으로 잡혀 카테고리 관리 건수와 내역 필터에 섞였다.
     test('수입은 어떤 분류의 합계·건수·필터·분석에도 들지 않는다', () {
-      final m = _month([_income(3000000), _expense(1000, BudgetCategory.groceries)]);
+      final m = _month([
+        _income(3000000),
+        _expense(1000, BudgetCategory.groceries),
+      ]);
       expect(m.byCategory[BudgetCategory.groceries], 1000);
-      expect(m.inCategory(BudgetCategory.groceries).single.type, TransactionType.expense);
+      expect(
+        m.inCategory(BudgetCategory.groceries).single.type,
+        TransactionType.expense,
+      );
       expect(m.baseOnlyCount(BudgetCategory.groceries), 1);
       expect(m.breakdown.single.amount, 1000);
     });
 
     test('분류 필터는 사용자 카테고리 지출도 상위 분류로 모은다', () {
-      final m = _month([
-        _expense(1000, BudgetCategory.etc),
-        _expense(2000, BudgetCategory.etc, customCategoryId: 'c1'),
-        _expense(3000, BudgetCategory.transport),
-      ], customs: const [_pet]);
-      expect(m.inCategory(BudgetCategory.etc).map((t) => t.amount), [1000, 2000]);
+      final m = _month(
+        [
+          _expense(1000, BudgetCategory.etc),
+          _expense(2000, BudgetCategory.etc, customCategoryId: 'c1'),
+          _expense(3000, BudgetCategory.transport),
+        ],
+        customs: const [_pet],
+      );
+      expect(m.inCategory(BudgetCategory.etc).map((t) => t.amount), [
+        1000,
+        2000,
+      ]);
     });
 
     // 분석 화면과 같은 기준: 사용자 카테고리로 뗀 지출만 빼고, 지워진 카테고리를 가리키는 지출은 기본 분류로 센다.
     test('기본 분류 건수는 사용자 카테고리로 뗀 지출을 빼고 센다', () {
-      final m = _month([
-        _expense(1000, BudgetCategory.etc),
-        _expense(1000, BudgetCategory.etc, customCategoryId: 'c1'),
-        _expense(1000, BudgetCategory.etc, customCategoryId: 'gone'),
-      ], customs: const [_pet]);
+      final m = _month(
+        [
+          _expense(1000, BudgetCategory.etc),
+          _expense(1000, BudgetCategory.etc, customCategoryId: 'c1'),
+          _expense(1000, BudgetCategory.etc, customCategoryId: 'gone'),
+        ],
+        customs: const [_pet],
+      );
       expect(m.baseOnlyCount(BudgetCategory.etc), 2);
     });
 
@@ -84,19 +115,28 @@ void main() {
         _expense(300, BudgetCategory.transport),
         _expense(200, BudgetCategory.health),
       ]);
-      expect(m.topCategories(2).map((e) => e.key), [BudgetCategory.transport, BudgetCategory.health]);
+      expect(m.topCategories(2).map((e) => e.key), [
+        BudgetCategory.transport,
+        BudgetCategory.health,
+      ]);
     });
   });
 
   group('분석', () {
     test('사용자 카테고리를 기본 분류에서 떼어내 금액 내림차순으로 낸다', () {
-      final m = _month([
-        _expense(5000, BudgetCategory.etc),
-        _expense(9000, BudgetCategory.etc, customCategoryId: 'c1'),
-        _expense(1000, BudgetCategory.recreation, customCategoryId: 'c2'),
-      ], customs: const [_pet, _study]);
-      expect(m.breakdown.map((r) => r.custom?.name ?? r.base.label),
-          ['반려식물', BudgetCategory.etc.label, '자기계발']);
+      final m = _month(
+        [
+          _expense(5000, BudgetCategory.etc),
+          _expense(9000, BudgetCategory.etc, customCategoryId: 'c1'),
+          _expense(1000, BudgetCategory.recreation, customCategoryId: 'c2'),
+        ],
+        customs: const [_pet, _study],
+      );
+      expect(m.breakdown.map((r) => r.custom?.name ?? r.base.label), [
+        '반려식물',
+        BudgetCategory.etc.label,
+        '자기계발',
+      ]);
       expect(m.breakdown.map((r) => r.amount), [9000, 5000, 1000]);
       // 사용자 카테고리 행도 상위 기본 분류를 들고 있다(또래 비교 기준).
       expect(m.breakdown.first.base, BudgetCategory.etc);
@@ -105,8 +145,10 @@ void main() {
     });
 
     test('쓰지 않은 사용자 카테고리는 빼고, 지워진 카테고리 지출은 기본 분류로 낸다', () {
-      final m = _month([_expense(3000, BudgetCategory.etc, customCategoryId: 'gone')],
-          customs: const [_pet]);
+      final m = _month(
+        [_expense(3000, BudgetCategory.etc, customCategoryId: 'gone')],
+        customs: const [_pet],
+      );
       expect(m.breakdown.single.custom, isNull);
       expect(m.breakdown.single.base, BudgetCategory.etc);
     });
@@ -126,7 +168,10 @@ void main() {
 
   group('소득·잔액·저축률', () {
     test('소득은 프로필 월소득이고, 없으면 이달 수입의 합계다', () {
-      expect(_month([_income(1000000)], profileIncome: 3000000).income, 3000000);
+      expect(
+        _month([_income(1000000)], profileIncome: 3000000).income,
+        3000000,
+      );
       expect(_month([_income(1000000)], profileIncome: 0).income, 1000000);
       expect(_month([_income(1000000)]).income, 1000000);
       expect(_month([_expense(1000, BudgetCategory.groceries)]).income, isNull);
@@ -134,23 +179,58 @@ void main() {
 
     // 이전에는 홈 히어로가 거래 수입(₩0)을, 같은 화면의 저축률은 프로필 소득을 기준으로 했다.
     test('잔액은 소득에서 지출을 뺀 값이다', () {
-      expect(_month([_expense(700000, BudgetCategory.groceries)], profileIncome: 3500000).balance, 2800000);
-      expect(_month([_expense(700000, BudgetCategory.groceries)]).balance, isNull);
+      expect(
+        _month([
+          _expense(700000, BudgetCategory.groceries),
+        ], profileIncome: 3500000).balance,
+        2800000,
+      );
+      expect(
+        _month([_expense(700000, BudgetCategory.groceries)]).balance,
+        isNull,
+      );
     });
 
     test('저축률은 반올림하고, 소득이 없으면 null, 지출이 소득보다 많으면 음수다', () {
-      expect(_month([_expense(2100000, BudgetCategory.groceries)], profileIncome: 3000000).savingsRate, 30);
-      expect(_month([_expense(500000, BudgetCategory.groceries)]).savingsRate, isNull);
-      expect(_month([_expense(1200000, BudgetCategory.groceries)], profileIncome: 1000000).savingsRate, -20);
+      expect(
+        _month([
+          _expense(2100000, BudgetCategory.groceries),
+        ], profileIncome: 3000000).savingsRate,
+        30,
+      );
+      expect(
+        _month([_expense(500000, BudgetCategory.groceries)]).savingsRate,
+        isNull,
+      );
+      expect(
+        _month([
+          _expense(1200000, BudgetCategory.groceries),
+        ], profileIncome: 1000000).savingsRate,
+        -20,
+      );
     });
 
     test('소득 대비 지출(%)은 저축률의 보수다', () {
-      expect(_month([_expense(1200000, BudgetCategory.groceries)], profileIncome: 1000000).expenseRatio, 120);
-      expect(_month([_expense(1000, BudgetCategory.groceries)]).expenseRatio, isNull);
+      expect(
+        _month([
+          _expense(1200000, BudgetCategory.groceries),
+        ], profileIncome: 1000000).expenseRatio,
+        120,
+      );
+      expect(
+        _month([_expense(1000, BudgetCategory.groceries)]).expenseRatio,
+        isNull,
+      );
     });
   });
 
   test('expenseOf는 지출만 더한다', () {
-    expect(ViewedMonth.expenseOf([_expense(1000, BudgetCategory.groceries), _income(5000)]), 1000);
+    expect(
+      ViewedMonth.expenseOf([
+        _expense(1000, BudgetCategory.groceries),
+        _income(5000),
+      ]),
+      1000,
+    );
   });
 }

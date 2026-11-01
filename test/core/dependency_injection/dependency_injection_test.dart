@@ -21,17 +21,32 @@ void main() {
   test('조립한 의존성으로 로그인 → 거래 저장 → 조회가 된다', () async {
     _configure();
 
-    final user = (await locator<AuthRepository>().signIn(AuthProvider.kakao)).unwrap();
+    final user = (await locator<AuthRepository>().signIn(
+      AuthProvider.kakao,
+    )).unwrap();
     expect(user.provider, AuthProvider.kakao);
 
     final tx = Transaction.create(
-        amount: 1000, base: BudgetCategory.groceries, date: DateTime(2026, 9, 3), type: TransactionType.expense);
+      amount: 1000,
+      base: BudgetCategory.groceries,
+      date: DateTime(2026, 9, 3),
+      type: TransactionType.expense,
+    );
     (await locator<TransactionRepository>().upsert(tx)).unwrap();
     final september = YearMonth.of(DateTime(2026, 9));
-    expect((await locator<TransactionRepository>().getRange(september.start, september.end)).unwrap().single.id,
-        tx.id);
-    expect((await locator<PeerStatsRepository>().forGroup(AgeGroup.thirties)).unwrap().ageGroup,
-        AgeGroup.thirties);
+    expect(
+      (await locator<TransactionRepository>().getRange(
+        september.start,
+        september.end,
+      )).unwrap().single.id,
+      tx.id,
+    );
+    expect(
+      (await locator<PeerStatsRepository>().forGroup(
+        AgeGroup.thirties,
+      )).unwrap().ageGroup,
+      AgeGroup.thirties,
+    );
   });
 
   test('서버가 토큰을 거부하면 AuthRepository.sessionExpired로 알린다', () async {

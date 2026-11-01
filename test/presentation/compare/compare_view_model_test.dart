@@ -28,7 +28,10 @@ void main() {
 
       await c.read(authProvider.notifier).signIn(AuthProvider.kakao);
 
-      expect((await c.read(generationAvgProvider.future)).keys, AgeGroup.values);
+      expect(
+        (await c.read(generationAvgProvider.future)).keys,
+        AgeGroup.values,
+      );
     });
 
     test('로그인 전에는 서버를 부르지 않고 비어 있다', () async {
@@ -48,13 +51,22 @@ void main() {
     // 비교 화면처럼 계속 본다.
     final sub = c.listen(peerStatsProvider, (_, _) {});
     addTearDown(sub.close);
-    expect((await c.read(peerStatsProvider.future))?.ageGroup, AgeGroup.thirties);
+    expect(
+      (await c.read(peerStatsProvider.future))?.ageGroup,
+      AgeGroup.thirties,
+    );
 
-    (await c.read(userProfileProvider.notifier)
-            .save(const UserProfile(ageGroup: AgeGroup.twenties, monthlyIncome: 0)))
+    (await c
+            .read(userProfileProvider.notifier)
+            .save(
+              const UserProfile(ageGroup: AgeGroup.twenties, monthlyIncome: 0),
+            ))
         .unwrap();
 
-    expect((await c.read(peerStatsProvider.future))?.ageGroup, AgeGroup.twenties);
+    expect(
+      (await c.read(peerStatsProvider.future))?.ageGroup,
+      AgeGroup.twenties,
+    );
     expect(server.faults.count('GET', '/v1/peer/stats'), 2);
   });
 }

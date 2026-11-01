@@ -13,7 +13,8 @@ class TransactionListPage extends ConsumerStatefulWidget {
   const TransactionListPage({super.key});
 
   @override
-  ConsumerState<TransactionListPage> createState() => _TransactionListPageState();
+  ConsumerState<TransactionListPage> createState() =>
+      _TransactionListPageState();
 }
 
 class _TransactionListPageState extends ConsumerState<TransactionListPage> {
@@ -37,75 +38,121 @@ class _TransactionListPageState extends ConsumerState<TransactionListPage> {
           // 고른 분류가 칩에서 빠지면(더 큰 지출이 생겨 상위 4개 밖으로) 필터를 푼다.
           if (!topCats.contains(_filter)) _filter = null;
           final filter = _filter;
-          final filtered = filter == null ? m.transactions : m.inCategory(filter);
+          final filtered = filter == null
+              ? m.transactions
+              : m.inCategory(filter);
           final today = ref.read(selectedMonthProvider.notifier).today;
-          return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                  Text('내역', style: context.typo.pageTitle.copyWith(color: context.color.label.normal)),
-                  _MonthChip(month: month),
-                ]),
-                const SizedBox(height: 4),
-                Text('$name ${WonText.shortWithUnit.of(m.expense)} · ${m.expenseCount}건',
-                    style: context.typo.caption1W500.copyWith(color: context.color.label.assistive)),
-                const SizedBox(height: 13),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(children: [
-                    DesignChip(
-                      label: '전체',
-                      style: _filter == null ? DesignChipStyle.ink : DesignChipStyle.outline,
-                      onTap: () => setState(() => _filter = null),
-                    ),
-                    for (final c in topCats) ...[
-                      const SizedBox(width: 7),
-                      DesignChip(
-                        label: c.label,
-                        style: _filter == c ? DesignChipStyle.ink : DesignChipStyle.outline,
-                        onTap: () => setState(() => _filter = c),
-                      ),
-                    ],
-                  ]),
-                ),
-              ]),
-            ),
-            Expanded(
-              child: filtered.isEmpty
-                  ? Center(child: Text('내역이 없어요',
-                      style: context.typo.body2W400.copyWith(color: context.color.label.alternative)))
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        for (final item in buildTransactionFeed(filtered))
-                          switch (item) {
-                            FeedDayHeader(:final day, :final isFirst) => Padding(
-                                padding: EdgeInsets.only(top: isFirst ? 6 : 14, bottom: 2),
-                                child: Text(dateGroupLabel(day, now: today),
-                                    style: context.typo.caption1W600
-                                        .copyWith(color: context.color.label.assistive)),
-                              ),
-                            FeedDivider() => Divider(
-                                height: 1, thickness: 1, color: context.color.line.alternative),
-                            FeedAdSlot(:final day) => DayAdBanner(key: ValueKey(day)),
-                            FeedTransaction(:final transaction) => TransactionTile(
-                                tx: transaction,
-                                label: m.labelOf(transaction),
-                                onTap: () => context.push(RoutePath.transactionEdit.path,
-                                    extra: transaction),
-                                overPeer: o.overPeer(transaction),
-                              ),
-                          },
+                        Text(
+                          '내역',
+                          style: context.typo.pageTitle.copyWith(
+                            color: context.color.label.normal,
+                          ),
+                        ),
+                        _MonthChip(month: month),
                       ],
                     ),
-            ),
-          ]);
+                    const SizedBox(height: 4),
+                    Text(
+                      '$name ${WonText.shortWithUnit.of(m.expense)} · ${m.expenseCount}건',
+                      style: context.typo.caption1W500.copyWith(
+                        color: context.color.label.assistive,
+                      ),
+                    ),
+                    const SizedBox(height: 13),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          DesignChip(
+                            label: '전체',
+                            style: _filter == null
+                                ? DesignChipStyle.ink
+                                : DesignChipStyle.outline,
+                            onTap: () => setState(() => _filter = null),
+                          ),
+                          for (final c in topCats) ...[
+                            const SizedBox(width: 7),
+                            DesignChip(
+                              label: c.label,
+                              style: _filter == c
+                                  ? DesignChipStyle.ink
+                                  : DesignChipStyle.outline,
+                              onTap: () => setState(() => _filter = c),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: filtered.isEmpty
+                    ? Center(
+                        child: Text(
+                          '내역이 없어요',
+                          style: context.typo.body2W400.copyWith(
+                            color: context.color.label.alternative,
+                          ),
+                        ),
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                        children: [
+                          for (final item in buildTransactionFeed(filtered))
+                            switch (item) {
+                              FeedDayHeader(:final day, :final isFirst) =>
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                    top: isFirst ? 6 : 14,
+                                    bottom: 2,
+                                  ),
+                                  child: Text(
+                                    dateGroupLabel(day, now: today),
+                                    style: context.typo.caption1W600.copyWith(
+                                      color: context.color.label.assistive,
+                                    ),
+                                  ),
+                                ),
+                              FeedDivider() => Divider(
+                                height: 1,
+                                thickness: 1,
+                                color: context.color.line.alternative,
+                              ),
+                              FeedAdSlot(:final day) => DayAdBanner(
+                                key: ValueKey(day),
+                              ),
+                              FeedTransaction(:final transaction) =>
+                                TransactionTile(
+                                  tx: transaction,
+                                  label: m.labelOf(transaction),
+                                  onTap: () => context.push(
+                                    RoutePath.transactionEdit.path,
+                                    extra: transaction,
+                                  ),
+                                  overPeer: o.overPeer(transaction),
+                                ),
+                            },
+                        ],
+                      ),
+              ),
+            ],
+          );
         },
       ),
     );
   }
-
 }
 
 /// 헤더 우측 월 칩 `M월 ▼` — 탭하면 이전/다음 달 선택.
@@ -118,7 +165,9 @@ class _MonthChip extends ConsumerWidget {
     final prev = month.previous;
     final next = month.next;
     final canGoNext = ref.read(selectedMonthProvider.notifier).canGoNext;
-    final canGoPrevious = ref.read(selectedMonthProvider.notifier).canGoPrevious;
+    final canGoPrevious = ref
+        .read(selectedMonthProvider.notifier)
+        .canGoPrevious;
     return PopupMenuButton<int>(
       key: const Key('month-chip'),
       onSelected: (d) => d < 0
@@ -126,8 +175,16 @@ class _MonthChip extends ConsumerWidget {
           : ref.read(selectedMonthProvider.notifier).next(),
       itemBuilder: (_) => [
         // 2020년 1월보다 앞으로, 이번 달보다 뒤로는 가지 않는다.
-        PopupMenuItem(value: -1, enabled: canGoPrevious, child: Text('이전 달 · ${prev.shortName}')),
-        PopupMenuItem(value: 1, enabled: canGoNext, child: Text('다음 달 · ${next.shortName}')),
+        PopupMenuItem(
+          value: -1,
+          enabled: canGoPrevious,
+          child: Text('이전 달 · ${prev.shortName}'),
+        ),
+        PopupMenuItem(
+          value: 1,
+          enabled: canGoNext,
+          child: Text('다음 달 · ${next.shortName}'),
+        ),
       ],
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
@@ -136,12 +193,27 @@ class _MonthChip extends ConsumerWidget {
           border: Border.all(color: context.color.line.normal),
           borderRadius: BorderRadius.circular(18),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Text(month.shortName, style: context.typo.caption1W600.copyWith(
-              fontSize: 12.5, fontWeight: context.typo.bold, color: context.color.label.normal)),
-          const SizedBox(width: 5),
-          Text('▼', style: context.typo.caption2W600.copyWith(fontSize: 9, color: context.color.label.assistive)),
-        ]),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              month.shortName,
+              style: context.typo.caption1W600.copyWith(
+                fontSize: 12.5,
+                fontWeight: context.typo.bold,
+                color: context.color.label.normal,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              '▼',
+              style: context.typo.caption2W600.copyWith(
+                fontSize: 9,
+                color: context.color.label.assistive,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

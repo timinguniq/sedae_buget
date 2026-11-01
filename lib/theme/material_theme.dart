@@ -5,13 +5,14 @@ import 'package:sedae_budget/theme/theme.dart';
 ThemeData materialTheme(AppTheme theme) {
   return ThemeData(
     useMaterial3: true,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: theme.color.primary.normal,
-      brightness: theme.brightness,
-    ).copyWith(
-      primary: theme.color.primary.normal,
-      onPrimary: theme.color.static.white,
-    ),
+    colorScheme:
+        ColorScheme.fromSeed(
+          seedColor: theme.color.primary.normal,
+          brightness: theme.brightness,
+        ).copyWith(
+          primary: theme.color.primary.normal,
+          onPrimary: theme.color.static.white,
+        ),
     scaffoldBackgroundColor: theme.color.background.normal,
     iconTheme: _iconThemeData(theme),
     inputDecorationTheme: _inputDecorationTheme(theme),
@@ -31,12 +32,20 @@ ThemeData materialTheme(AppTheme theme) {
 
 InputDecorationTheme _inputDecorationTheme(AppTheme theme) {
   return InputDecorationTheme(
-    labelStyle: theme.typo.body1W500.copyWith(color: theme.color.primary.strong),
-    helperStyle: theme.typo.label2W400.copyWith(color: theme.color.label.alternative),
+    labelStyle: theme.typo.body1W500.copyWith(
+      color: theme.color.primary.strong,
+    ),
+    helperStyle: theme.typo.label2W400.copyWith(
+      color: theme.color.label.alternative,
+    ),
     helperMaxLines: 2,
-    hintStyle: theme.typo.body1W500.copyWith(color: theme.color.label.assistive),
+    hintStyle: theme.typo.body1W500.copyWith(
+      color: theme.color.label.assistive,
+    ),
     hintFadeDuration: const Duration(milliseconds: 100),
-    errorStyle: theme.typo.label2W400.copyWith(color: theme.color.primary.strong),
+    errorStyle: theme.typo.label2W400.copyWith(
+      color: theme.color.primary.strong,
+    ),
     errorMaxLines: 2,
     floatingLabelBehavior: FloatingLabelBehavior.never,
     contentPadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 17),
@@ -185,10 +194,14 @@ SliderThemeData _sliderThemeData(AppTheme theme) {
 SwitchThemeData _switchThemeData(AppTheme theme) {
   return SwitchThemeData(
     thumbColor: WidgetStateProperty.resolveWith(
-      (states) => states.contains(WidgetState.selected) ? theme.color.static.white : theme.color.label.assistive,
+      (states) => states.contains(WidgetState.selected)
+          ? theme.color.static.white
+          : theme.color.label.assistive,
     ),
     trackColor: WidgetStateProperty.resolveWith(
-      (states) => states.contains(WidgetState.selected) ? theme.color.primary.normal : theme.color.line.normal,
+      (states) => states.contains(WidgetState.selected)
+          ? theme.color.primary.normal
+          : theme.color.line.normal,
     ),
     trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
     trackOutlineWidth: const WidgetStatePropertyAll(0),
@@ -216,7 +229,8 @@ class _RingThumbShape extends SliderComponentShape {
   static const double border = 3.5;
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size.fromRadius(radius);
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
+      const Size.fromRadius(radius);
 
   @override
   void paint(

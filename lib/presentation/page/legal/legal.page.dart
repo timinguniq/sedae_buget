@@ -38,33 +38,59 @@ class _LegalPageState extends ConsumerState<LegalPage> {
     final colors = _LegalColors.of(context);
     final content = ref.watch(legalContentProvider).value;
     return DefaultLayout(
-      child: Column(children: [
-        // 헤더: 설정 화면과 같은 ‹ 원형 버튼 + "약관 및 정책" 800·20
-        Padding(
-          padding: const EdgeInsets.fromLTRB(22, 4, 22, 14),
-          child: Row(children: [
-            RoundIconButton(icon: Icons.chevron_left, onTap: context.popOrHome),
-            const SizedBox(width: 12),
-            Text('약관 및 정책', style: context.typo.pageTitle.copyWith(fontSize: 20, color: colors.text)),
-          ]),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(22, 0, 22, 8),
-          child: _SegmentedTabs(value: _tab, onChanged: _select, colors: colors),
-        ),
-        Expanded(
-          child: content == null
-              ? const SizedBox.shrink()
-              : _DocumentView(document: content.of(_tab), meta: content.meta, controller: _scroll, colors: colors),
-        ),
-      ]),
+      child: Column(
+        children: [
+          // 헤더: 설정 화면과 같은 ‹ 원형 버튼 + "약관 및 정책" 800·20
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 4, 22, 14),
+            child: Row(
+              children: [
+                RoundIconButton(
+                  icon: Icons.chevron_left,
+                  onTap: context.popOrHome,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  '약관 및 정책',
+                  style: context.typo.pageTitle.copyWith(
+                    fontSize: 20,
+                    color: colors.text,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 0, 22, 8),
+            child: _SegmentedTabs(
+              value: _tab,
+              onChanged: _select,
+              colors: colors,
+            ),
+          ),
+          Expanded(
+            child: content == null
+                ? const SizedBox.shrink()
+                : _DocumentView(
+                    document: content.of(_tab),
+                    meta: content.meta,
+                    controller: _scroll,
+                    colors: colors,
+                  ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 /// 세그먼트 탭: segBg r12 p3 / 아이템 세로 9 r9 / 선택 segActive + 그림자 0 1 3 rgba(43,39,36,.10) 700·12.5 / 비선택 600·12.5 textFaint
 class _SegmentedTabs extends StatelessWidget {
-  const _SegmentedTabs({required this.value, required this.onChanged, required this.colors});
+  const _SegmentedTabs({
+    required this.value,
+    required this.onChanged,
+    required this.colors,
+  });
 
   final LegalTab value;
   final ValueChanged<LegalTab> onChanged;
@@ -75,34 +101,52 @@ class _SegmentedTabs extends StatelessWidget {
     return Container(
       key: const Key('legal-tabs'),
       padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(color: colors.segBg, borderRadius: BorderRadius.circular(12)),
-      child: Row(children: [
-        for (final tab in LegalTab.values)
-          Expanded(
-            child: GestureDetector(
-              onTap: () => onChanged(tab),
-              behavior: HitTestBehavior.opaque,
-              child: Container(
-                key: Key('legal-tab-${tab.name}'),
-                padding: const EdgeInsets.symmetric(vertical: 9),
-                alignment: Alignment.center,
-                decoration: tab == value
-                    ? BoxDecoration(
-                        color: colors.segActive,
-                        borderRadius: BorderRadius.circular(9),
-                        boxShadow: const [BoxShadow(color: Color(0x1A2B2724), offset: Offset(0, 1), blurRadius: 3)],
-                      )
-                    : null,
-                child: Text(
-                  tab.label,
-                  style: tab == value
-                      ? context.typo.caption1W600.copyWith(fontSize: 12.5, fontWeight: context.typo.bold, color: colors.text)
-                      : context.typo.caption1W600.copyWith(fontSize: 12.5, color: colors.textFaint),
+      decoration: BoxDecoration(
+        color: colors.segBg,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          for (final tab in LegalTab.values)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => onChanged(tab),
+                behavior: HitTestBehavior.opaque,
+                child: Container(
+                  key: Key('legal-tab-${tab.name}'),
+                  padding: const EdgeInsets.symmetric(vertical: 9),
+                  alignment: Alignment.center,
+                  decoration: tab == value
+                      ? BoxDecoration(
+                          color: colors.segActive,
+                          borderRadius: BorderRadius.circular(9),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Color(0x1A2B2724),
+                              offset: Offset(0, 1),
+                              blurRadius: 3,
+                            ),
+                          ],
+                        )
+                      : null,
+                  child: Text(
+                    tab.label,
+                    style: tab == value
+                        ? context.typo.caption1W600.copyWith(
+                            fontSize: 12.5,
+                            fontWeight: context.typo.bold,
+                            color: colors.text,
+                          )
+                        : context.typo.caption1W600.copyWith(
+                            fontSize: 12.5,
+                            color: colors.textFaint,
+                          ),
+                  ),
                 ),
               ),
             ),
-          ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -131,155 +175,267 @@ class _DocumentView extends StatelessWidget {
         key: const Key('legal-body'),
         controller: controller,
         padding: const EdgeInsets.fromLTRB(22, 12, 22, 34),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(document.title, style: typo.pageTitle.copyWith(fontSize: 19, letterSpacing: -0.4, color: colors.text)),
-          const SizedBox(height: 5),
-          Text(meta, style: typo.caption1W500.copyWith(fontSize: 11.5, color: colors.textFaint)),
-          if (intro != null) ...[
-            const SizedBox(height: 14),
-            _paragraph(context, intro),
-          ],
-          if (document.summary.isEmpty)
-            const SizedBox(height: 22)
-          else ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(2, 18, 2, 8),
-              child: Text('한눈에 보기', style: typo.caption2W600.copyWith(
-                fontSize: 11, fontWeight: typo.bold, letterSpacing: 0.5, color: colors.textFaint)),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              document.title,
+              style: typo.pageTitle.copyWith(
+                fontSize: 19,
+                letterSpacing: -0.4,
+                color: colors.text,
+              ),
             ),
-            _summaryGrid(context, document.summary),
-            const SizedBox(height: 24),
+            const SizedBox(height: 5),
+            Text(
+              meta,
+              style: typo.caption1W500.copyWith(
+                fontSize: 11.5,
+                color: colors.textFaint,
+              ),
+            ),
+            if (intro != null) ...[
+              const SizedBox(height: 14),
+              _paragraph(context, intro),
+            ],
+            if (document.summary.isEmpty)
+              const SizedBox(height: 22)
+            else ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(2, 18, 2, 8),
+                child: Text(
+                  '한눈에 보기',
+                  style: typo.caption2W600.copyWith(
+                    fontSize: 11,
+                    fontWeight: typo.bold,
+                    letterSpacing: 0.5,
+                    color: colors.textFaint,
+                  ),
+                ),
+              ),
+              _summaryGrid(context, document.summary),
+              const SizedBox(height: 24),
+            ],
+            for (final (i, section) in document.sections.indexed) ...[
+              if (i > 0) const SizedBox(height: 22),
+              _section(context, section),
+            ],
           ],
-          for (final (i, section) in document.sections.indexed) ...[
-            if (i > 0) const SizedBox(height: 22),
-            _section(context, section),
-          ],
-        ]),
+        ),
       ),
     );
   }
 
   /// p: 500·12.5 h1.7 body
-  Widget _paragraph(BuildContext context, String text) =>
-      Text(text, style: context.typo.caption1W500.copyWith(fontSize: 12.5, height: 1.7, color: colors.body));
+  Widget _paragraph(BuildContext context, String text) => Text(
+    text,
+    style: context.typo.caption1W500.copyWith(
+      fontSize: 12.5,
+      height: 1.7,
+      color: colors.body,
+    ),
+  );
 
   /// 2×2 그리드, gap 8. 타일: surface + 1px border + r14, padding 11/12.
   Widget _summaryGrid(BuildContext context, List<LegalSummaryItem> items) {
     Widget tile(LegalSummaryItem item) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
-          decoration: BoxDecoration(
-            color: colors.surface,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: colors.border),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            item.label,
+            style: context.typo.caption2W600.copyWith(
+              fontSize: 10.5,
+              color: colors.textFaint,
+            ),
           ),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(item.label, style: context.typo.caption2W600.copyWith(fontSize: 10.5, color: colors.textFaint)),
-            const SizedBox(height: 4),
-            Text(item.value, style: context.typo.caption1W600.copyWith(
-              fontSize: 12.5, fontWeight: context.typo.bold, height: 1.4, color: colors.text)),
-          ]),
-        );
-    return Column(children: [
-      for (var i = 0; i < items.length; i += 2) ...[
-        if (i > 0) const SizedBox(height: 8),
-        // 한 줄의 두 타일을 같은 높이로(스크롤 안이라 높이가 무한해서 IntrinsicHeight로 재야 stretch가 된다).
-        IntrinsicHeight(
-          child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Expanded(child: tile(items[i])),
-            const SizedBox(width: 8),
-            Expanded(child: i + 1 < items.length ? tile(items[i + 1]) : const SizedBox.shrink()),
-          ]),
-        ),
+          const SizedBox(height: 4),
+          Text(
+            item.value,
+            style: context.typo.caption1W600.copyWith(
+              fontSize: 12.5,
+              fontWeight: context.typo.bold,
+              height: 1.4,
+              color: colors.text,
+            ),
+          ),
+        ],
+      ),
+    );
+    return Column(
+      children: [
+        for (var i = 0; i < items.length; i += 2) ...[
+          if (i > 0) const SizedBox(height: 8),
+          // 한 줄의 두 타일을 같은 높이로(스크롤 안이라 높이가 무한해서 IntrinsicHeight로 재야 stretch가 된다).
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: tile(items[i])),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: i + 1 < items.length
+                      ? tile(items[i + 1])
+                      : const SizedBox.shrink(),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
-    ]);
+    );
   }
 
   /// 제목 700·13.5 + 블록들(사이 8)
   Widget _section(BuildContext context, LegalSection section) => Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(section.heading, style: context.typo.sectionTitle.copyWith(color: colors.text)),
-          for (final block in section.blocks) ...[
-            const SizedBox(height: 8),
-            switch (block) {
-              LegalParagraph(:final text) => _paragraph(context, text),
-              LegalNumberedList(:final items) => _numberedList(context, items),
-              LegalTable(:final rows) => _card([for (final r in rows) _tableRow(context, r)]),
-              LegalKeyValues(:final rows) => _card([for (final r in rows) _keyValueRow(context, r)]),
-            },
-          ],
-        ],
-      );
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        section.heading,
+        style: context.typo.sectionTitle.copyWith(color: colors.text),
+      ),
+      for (final block in section.blocks) ...[
+        const SizedBox(height: 8),
+        switch (block) {
+          LegalParagraph(:final text) => _paragraph(context, text),
+          LegalNumberedList(:final items) => _numberedList(context, items),
+          LegalTable(:final rows) => _card([
+            for (final r in rows) _tableRow(context, r),
+          ]),
+          LegalKeyValues(:final rows) => _card([
+            for (final r in rows) _keyValueRow(context, r),
+          ]),
+        },
+      ],
+    ],
+  );
 
   /// ol: 항목 사이 5, 번호(폭 12, 700 arrow) + 8 + 글(500·12.5 h1.65 body)
   Widget _numberedList(BuildContext context, List<String> items) {
     final number = context.typo.caption1W600.copyWith(
-      fontSize: 12.5, fontWeight: context.typo.bold, height: 1.65, color: colors.arrow);
-    final text = context.typo.caption1W500.copyWith(fontSize: 12.5, height: 1.65, color: colors.body);
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      for (final (i, item) in items.indexed) ...[
-        if (i > 0) const SizedBox(height: 5),
-        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(width: 12, child: Text('${i + 1}.', style: number)),
-          const SizedBox(width: 8),
-          Expanded(child: Text(item, style: text)),
-        ]),
+      fontSize: 12.5,
+      fontWeight: context.typo.bold,
+      height: 1.65,
+      color: colors.arrow,
+    );
+    final text = context.typo.caption1W500.copyWith(
+      fontSize: 12.5,
+      height: 1.65,
+      color: colors.body,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final (i, item) in items.indexed) ...[
+          if (i > 0) const SizedBox(height: 5),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(width: 12, child: Text('${i + 1}.', style: number)),
+              const SizedBox(width: 8),
+              Expanded(child: Text(item, style: text)),
+            ],
+          ),
+        ],
       ],
-    ]);
+    );
   }
 
   /// table·kv 공통 카드: surface + 1px border + r16, 둘째 행부터 위에 1px divider
   Widget _card(List<Widget> rows) => Container(
-        clipBehavior: Clip.antiAlias,
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: colors.border),
-        ),
-        child: Column(children: [
-          for (final (i, row) in rows.indexed) ...[
-            if (i > 0) Container(height: 1, color: colors.divider),
-            row,
-          ],
-        ]),
-      );
+    clipBehavior: Clip.antiAlias,
+    decoration: BoxDecoration(
+      color: colors.surface,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(color: colors.border),
+    ),
+    child: Column(
+      children: [
+        for (final (i, row) in rows.indexed) ...[
+          if (i > 0) Container(height: 1, color: colors.divider),
+          row,
+        ],
+      ],
+    ),
+  );
 
   /// table 행: padding 11/14, 왼쪽(폭 58: 이름 700·12 + 4 + 배지) + 10 + 오른쪽(500·12 h1.55 body)
   Widget _tableRow(BuildContext context, LegalTableRow row) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          SizedBox(
-            width: 58,
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(row.name, style: context.typo.caption1W600.copyWith(fontWeight: context.typo.bold, color: colors.text)),
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 58,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                row.name,
+                style: context.typo.caption1W600.copyWith(
+                  fontWeight: context.typo.bold,
+                  color: colors.text,
+                ),
+              ),
               const SizedBox(height: 4),
               _badge(context, row),
-            ]),
+            ],
           ),
-          const SizedBox(width: 10),
-          Expanded(child: Text(row.detail, style: context.typo.caption1W500.copyWith(height: 1.55, color: colors.body))),
-        ]),
-      );
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            row.detail,
+            style: context.typo.caption1W500.copyWith(
+              height: 1.55,
+              color: colors.body,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
 
   /// 배지 700·9.5, padding 2/6, r20. 필수: coral + coralTint / 자동: textFaint + segBg
   Widget _badge(BuildContext context, LegalTableRow row) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-        decoration: BoxDecoration(
-          color: row.isRequired ? colors.coralTint : colors.segBg,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(row.badge, style: context.typo.caption2W600.copyWith(
-          fontSize: 9.5, fontWeight: context.typo.bold, color: row.isRequired ? colors.coral : colors.textFaint)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: BoxDecoration(
+      color: row.isRequired ? colors.coralTint : colors.segBg,
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Text(
+      row.badge,
+      style: context.typo.caption2W600.copyWith(
+        fontSize: 9.5,
+        fontWeight: context.typo.bold,
+        color: row.isRequired ? colors.coral : colors.textFaint,
+      ),
+    ),
+  );
 
   /// kv 행: spaceBetween, padding 11/14, 라벨 600·12 textFaint / 값 600·12 arrow
   Widget _keyValueRow(BuildContext context, LegalKeyValue row) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-          Text(row.label, style: context.typo.caption1W600.copyWith(color: colors.textFaint)),
-          Text(row.value, style: context.typo.caption1W600.copyWith(color: colors.arrow)),
-        ]),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          row.label,
+          style: context.typo.caption1W600.copyWith(color: colors.textFaint),
+        ),
+        Text(
+          row.value,
+          style: context.typo.caption1W600.copyWith(color: colors.arrow),
+        ),
+      ],
+    ),
+  );
 }
 
 /// 핸드오프 색 표를 앱 테마에 맞춘 것. 값이 같은 테마 토큰은 그대로 쓰고,

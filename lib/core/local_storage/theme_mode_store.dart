@@ -11,8 +11,10 @@ class ThemeModeStore {
   final SharedPreferences _prefs;
 
   /// 고른 적이 없거나 알 수 없는 값이면 시스템 설정을 따른다.
-  ThemeMode read() =>
-      ThemeMode.values.firstWhere((m) => m.name == _prefs.getString(_key), orElse: () => ThemeMode.system);
+  ThemeMode read() => ThemeMode.values.firstWhere(
+    (m) => m.name == _prefs.getString(_key),
+    orElse: () => ThemeMode.system,
+  );
 
   Future<void> write(ThemeMode mode) => _prefs.setString(_key, mode.name);
 }

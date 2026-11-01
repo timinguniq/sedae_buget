@@ -22,57 +22,121 @@ class BudgetHomePage extends ConsumerWidget {
     return DefaultLayout(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 6, 20, 0),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(month.fullName,
-                  style: context.typo.caption1W600.copyWith(color: context.color.label.assistive)),
-              Text('$name 요약', style: context.typo.pageTitle.copyWith(color: context.color.label.normal)),
-            ]),
-            GestureDetector(
-              onTap: () => context.push(RoutePath.setting.path),
-              child: const MascotDongle(ring: false)),
-          ]),
-          const SizedBox(height: 16),
-          Expanded(child: overview.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => LoadErrorView(error: e),
-            data: (o) {
-              final m = o.month;
-              final savingsRate = m.savingsRate;
-              final txs = m.transactions;
-              return ListView(children: [
-                SummaryHeroCard(
-                    label: name, expense: m.expense, income: m.income, balance: m.balance,
-                    peer: o.standing.heroPill),
-                if (o.standing is PeerUnavailable) ...[
-                  const SizedBox(height: 13),
-                  const SurfaceCard(child: LoadErrorView.peer()),
-                ] else if (o.standing case PeerCompared(:final rank?)) ...[
-                  const SizedBox(height: 13),
-                  PeerRankCard(rank: rank, onDetail: () => context.go(RoutePath.compare.path)),
-                ],
-                const SizedBox(height: 13),
-                TopCategoryCard(top: o.topCategories(3),
-                  onTap: () => context.push(RoutePath.categoryAnalysis.path)),
-                if (savingsRate != null) ...[
-                  const SizedBox(height: 13),
-                  SavingsRateCard(label: name, rate: savingsRate,
-                    peer: switch (o.standing) { PeerCompared(:final savings) => savings, _ => null }),
-                ],
-                const SizedBox(height: 13),
-                Text('최근 내역', style: context.typo.sectionTitle.copyWith(color: context.color.label.normal)),
-                if (txs.isEmpty)
-                  Padding(padding: const EdgeInsets.symmetric(vertical: 24),
-                    child: Center(child: Text('내역이 없어요. + 로 추가하세요',
-                      style: context.typo.body2W400.copyWith(color: context.color.label.alternative))))
-                else
-                  ...txs.take(5).map((t) => TransactionTile(tx: t, label: m.labelOf(t),
-                    onTap: () => context.push(RoutePath.transactionEdit.path, extra: t))),
-              ]);
-            },
-          )),
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      month.fullName,
+                      style: context.typo.caption1W600.copyWith(
+                        color: context.color.label.assistive,
+                      ),
+                    ),
+                    Text(
+                      '$name 요약',
+                      style: context.typo.pageTitle.copyWith(
+                        color: context.color.label.normal,
+                      ),
+                    ),
+                  ],
+                ),
+                GestureDetector(
+                  onTap: () => context.push(RoutePath.setting.path),
+                  child: const MascotDongle(ring: false),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: overview.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => LoadErrorView(error: e),
+                data: (o) {
+                  final m = o.month;
+                  final savingsRate = m.savingsRate;
+                  final txs = m.transactions;
+                  return ListView(
+                    children: [
+                      SummaryHeroCard(
+                        label: name,
+                        expense: m.expense,
+                        income: m.income,
+                        balance: m.balance,
+                        peer: o.standing.heroPill,
+                      ),
+                      if (o.standing is PeerUnavailable) ...[
+                        const SizedBox(height: 13),
+                        const SurfaceCard(child: LoadErrorView.peer()),
+                      ] else if (o.standing case PeerCompared(
+                        :final rank?,
+                      )) ...[
+                        const SizedBox(height: 13),
+                        PeerRankCard(
+                          rank: rank,
+                          onDetail: () => context.go(RoutePath.compare.path),
+                        ),
+                      ],
+                      const SizedBox(height: 13),
+                      TopCategoryCard(
+                        top: o.topCategories(3),
+                        onTap: () =>
+                            context.push(RoutePath.categoryAnalysis.path),
+                      ),
+                      if (savingsRate != null) ...[
+                        const SizedBox(height: 13),
+                        SavingsRateCard(
+                          label: name,
+                          rate: savingsRate,
+                          peer: switch (o.standing) {
+                            PeerCompared(:final savings) => savings,
+                            _ => null,
+                          },
+                        ),
+                      ],
+                      const SizedBox(height: 13),
+                      Text(
+                        '최근 내역',
+                        style: context.typo.sectionTitle.copyWith(
+                          color: context.color.label.normal,
+                        ),
+                      ),
+                      if (txs.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 24),
+                          child: Center(
+                            child: Text(
+                              '내역이 없어요. + 로 추가하세요',
+                              style: context.typo.body2W400.copyWith(
+                                color: context.color.label.alternative,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ...txs
+                            .take(5)
+                            .map(
+                              (t) => TransactionTile(
+                                tx: t,
+                                label: m.labelOf(t),
+                                onTap: () => context.push(
+                                  RoutePath.transactionEdit.path,
+                                  extra: t,
+                                ),
+                              ),
+                            ),
+                    ],
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

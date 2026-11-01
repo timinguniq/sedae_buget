@@ -49,36 +49,52 @@ class _DayAdBannerState extends ConsumerState<DayAdBanner> {
     final height = ad.height.toDouble();
     return Padding(
       padding: const EdgeInsets.only(top: 16),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                decoration: BoxDecoration(
+                  color: context.color.background.alternative,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '광고',
+                  style: context.typo.caption2W600.copyWith(
+                    fontSize: 8.5,
+                    letterSpacing: 0.4,
+                    fontWeight: context.typo.bold,
+                    color: context.color.label.alternative,
+                  ),
+                ),
+              ),
+              Text(
+                'AdMob · ${ad.width}×${ad.height}',
+                style: context.typo.caption2W500.copyWith(
+                  fontSize: 9,
+                  color: context.color.label.disable,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+            height: height + 2, // 1px 테두리가 광고를 가리지 않게
+            clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
-              color: context.color.background.alternative,
-              borderRadius: BorderRadius.circular(6),
+              color: context.color.background.surface,
+              border: Border.all(color: context.color.line.neutral),
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Text('광고',
-                style: context.typo.caption2W600.copyWith(
-                    fontSize: 8.5, letterSpacing: 0.4,
-                    fontWeight: context.typo.bold, color: context.color.label.alternative)),
+            child: Center(
+              child: SizedBox(width: width, height: height, child: ad.view),
+            ),
           ),
-          Text('AdMob · ${ad.width}×${ad.height}',
-              style: context.typo.caption2W500.copyWith(fontSize: 9, color: context.color.label.disable)),
-        ]),
-        const SizedBox(height: 6),
-        Container(
-          height: height + 2, // 1px 테두리가 광고를 가리지 않게
-          clipBehavior: Clip.antiAlias,
-          decoration: BoxDecoration(
-            color: context.color.background.surface,
-            border: Border.all(color: context.color.line.neutral),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Center(
-            child: SizedBox(width: width, height: height, child: ad.view),
-          ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }

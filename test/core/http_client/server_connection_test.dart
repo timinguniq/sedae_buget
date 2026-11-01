@@ -26,22 +26,23 @@ Dio _connect(
   _LocalServer? local,
   List<Interceptor> beforeServer = const [],
   String? token,
-}) =>
-    connectToServer(
-      env: env,
-      session: Session(MemoryAuthTokenStore(token)),
-      localServer: () => local ?? _LocalServer(),
-      beforeServer: beforeServer,
-      requestLog: requestLog,
-      web: web,
-    );
+}) => connectToServer(
+  env: env,
+  session: Session(MemoryAuthTokenStore(token)),
+  localServer: () => local ?? _LocalServer(),
+  beforeServer: beforeServer,
+  requestLog: requestLog,
+  web: web,
+);
 
 /// [body]가 print한 줄을 모은다.
 Future<List<String>> _printed(Future<void> Function() body) async {
   final lines = <String>[];
   await runZoned(
     body,
-    zoneSpecification: ZoneSpecification(print: (_, _, _, line) => lines.add(line)),
+    zoneSpecification: ZoneSpecification(
+      print: (_, _, _, line) => lines.add(line),
+    ),
   );
   return lines;
 }
@@ -55,7 +56,11 @@ void main() {
 
   test('local이면 토큰을 붙인 요청에 서버 대신 local 서버가 답한다', () async {
     final local = _LocalServer();
-    final res = await _connect(AppEnvironment.local, local: local, token: 'stub.kakao').get('/v1/me');
+    final res = await _connect(
+      AppEnvironment.local,
+      local: local,
+      token: 'stub.kakao',
+    ).get('/v1/me');
     expect(res.data, {'ok': true});
     expect(local.requests.single.headers['Authorization'], 'Bearer stub.kakao');
   });
@@ -64,19 +69,28 @@ void main() {
   test('beforeServer는 토큰을 붙인 요청을 local 서버 바로 앞에서 받는다', () async {
     final local = _LocalServer();
     final seen = <String?>[];
-    final before = InterceptorsWrapper(onRequest: (o, h) {
-      seen.add(o.headers['Authorization'] as String?);
-      expect(local.requests, isEmpty);
-      h.next(o);
-    });
-    await _connect(AppEnvironment.local, local: local, beforeServer: [before], token: 't').get('/v1/me');
+    final before = InterceptorsWrapper(
+      onRequest: (o, h) {
+        seen.add(o.headers['Authorization'] as String?);
+        expect(local.requests, isEmpty);
+        h.next(o);
+      },
+    );
+    await _connect(
+      AppEnvironment.local,
+      local: local,
+      beforeServer: [before],
+      token: 't',
+    ).get('/v1/me');
     expect(seen, ['Bearer t']);
     expect(local.requests, hasLength(1));
   });
 
   // 이전에는 경고 로그만 남기고 모든 호출이 네트워크 오류('연결 안 됨')가 됐다.
   test('local이 아닌데 서버 주소가 비었으면 시작할 때 멈춘다', () {
-    final unset = AppEnvironment.values.where((e) => e != AppEnvironment.local && e.server.isEmpty);
+    final unset = AppEnvironment.values.where(
+      (e) => e != AppEnvironment.local && e.server.isEmpty,
+    );
     for (final env in unset) {
       expect(() => _connect(env), throwsStateError, reason: env.name);
     }
@@ -113,13 +127,19 @@ void main() {
   });
 
   group('요청 로그', () {
-    Future<List<String>> signInLog({required bool requestLog}) => _printed(() async {
-          await _connect(AppEnvironment.local, requestLog: requestLog)
-              .post('/v1/auth/login', data: {'provider': 'kakao', 'idToken': 'secret-id-token'});
+    Future<List<String>> signInLog({required bool requestLog}) =>
+        _printed(() async {
+          await _connect(AppEnvironment.local, requestLog: requestLog).post(
+            '/v1/auth/login',
+            data: {'provider': 'kakao', 'idToken': 'secret-id-token'},
+          );
         });
 
     test('켜면 요청 바디까지 남긴다', () async {
-      expect((await signInLog(requestLog: true)).join('\n'), contains('secret-id-token'));
+      expect(
+        (await signInLog(requestLog: true)).join('\n'),
+        contains('secret-id-token'),
+      );
     });
 
     // 앱은 release 빌드에서 끈다(로그인 idToken·거래 금액·메모가 기기 로그에 남지 않게). 테스트도 끈다.

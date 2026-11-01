@@ -18,13 +18,19 @@ class SecureAuthTokenStore implements AuthTokenStore {
     SharedPreferences prefs, {
     FlutterSecureStorage storage = _secure,
   }) async {
-    if (!(prefs.getBool(_firstRunKey) ?? true)) return SecureAuthTokenStore._(storage, true);
+    if (!(prefs.getBool(_firstRunKey) ?? true)) {
+      return SecureAuthTokenStore._(storage, true);
+    }
     try {
       await storage.deleteAll();
       await prefs.setBool(_firstRunKey, false);
       return SecureAuthTokenStore._(storage, true);
     } catch (e, s) {
-      _logger.e('설치 뒤 보안 저장소를 비우지 못했어요. 이번 실행은 남은 토큰을 쓰지 않아요', error: e, stackTrace: s);
+      _logger.e(
+        '설치 뒤 보안 저장소를 비우지 못했어요. 이번 실행은 남은 토큰을 쓰지 않아요',
+        error: e,
+        stackTrace: s,
+      );
       return SecureAuthTokenStore._(storage, false);
     }
   }

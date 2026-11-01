@@ -18,11 +18,11 @@ class LegalContent {
   });
 
   factory LegalContent.fromJson(Map<String, dynamic> json) => LegalContent(
-        version: json['version'] as String,
-        effectiveDate: json['effectiveDate'] as String,
-        terms: LegalDocument.fromJson(json['terms'] as Map<String, dynamic>),
-        privacy: LegalDocument.fromJson(json['privacy'] as Map<String, dynamic>),
-      );
+    version: json['version'] as String,
+    effectiveDate: json['effectiveDate'] as String,
+    terms: LegalDocument.fromJson(json['terms'] as Map<String, dynamic>),
+    privacy: LegalDocument.fromJson(json['privacy'] as Map<String, dynamic>),
+  );
 
   final String version;
   final String effectiveDate;
@@ -33,9 +33,9 @@ class LegalContent {
   String get meta => '시행 $effectiveDate · 버전 $version';
 
   LegalDocument of(LegalTab tab) => switch (tab) {
-        LegalTab.terms => terms,
-        LegalTab.privacy => privacy,
-      };
+    LegalTab.terms => terms,
+    LegalTab.privacy => privacy,
+  };
 }
 
 /// 문서 하나. 개인정보처리방침만 소개 문단과 "한눈에 보기" 요약을 가진다.
@@ -48,13 +48,17 @@ class LegalDocument {
   });
 
   factory LegalDocument.fromJson(Map<String, dynamic> json) => LegalDocument(
-        title: json['title'] as String,
-        intro: json['intro'] as String?,
-        summary: [
-          for (final s in json['summary'] as List? ?? const []) LegalSummaryItem.fromJson(s as Map<String, dynamic>),
-        ],
-        sections: [for (final s in json['sections'] as List) LegalSection.fromJson(s as Map<String, dynamic>)],
-      );
+    title: json['title'] as String,
+    intro: json['intro'] as String?,
+    summary: [
+      for (final s in json['summary'] as List? ?? const [])
+        LegalSummaryItem.fromJson(s as Map<String, dynamic>),
+    ],
+    sections: [
+      for (final s in json['sections'] as List)
+        LegalSection.fromJson(s as Map<String, dynamic>),
+    ],
+  );
 
   final String title;
   final String? intro;
@@ -66,7 +70,10 @@ class LegalSummaryItem {
   const LegalSummaryItem({required this.label, required this.value});
 
   factory LegalSummaryItem.fromJson(Map<String, dynamic> json) =>
-      LegalSummaryItem(label: json['label'] as String, value: json['value'] as String);
+      LegalSummaryItem(
+        label: json['label'] as String,
+        value: json['value'] as String,
+      );
 
   final String label;
   final String value;
@@ -76,9 +83,12 @@ class LegalSection {
   const LegalSection({required this.heading, required this.blocks});
 
   factory LegalSection.fromJson(Map<String, dynamic> json) => LegalSection(
-        heading: json['heading'] as String,
-        blocks: [for (final b in json['blocks'] as List) LegalBlock.fromJson(b as Map<String, dynamic>)],
-      );
+    heading: json['heading'] as String,
+    blocks: [
+      for (final b in json['blocks'] as List)
+        LegalBlock.fromJson(b as Map<String, dynamic>),
+    ],
+  );
 
   final String heading;
   final List<LegalBlock> blocks;
@@ -88,11 +98,20 @@ class LegalSection {
 sealed class LegalBlock {
   const LegalBlock();
 
-  factory LegalBlock.fromJson(Map<String, dynamic> json) => switch (json['type']) {
+  factory LegalBlock.fromJson(Map<String, dynamic> json) =>
+      switch (json['type']) {
         'p' => LegalParagraph(json['text'] as String),
-        'ol' => LegalNumberedList([for (final i in json['items'] as List) i as String]),
-        'table' => LegalTable([for (final r in json['rows'] as List) LegalTableRow.fromJson(r as Map<String, dynamic>)]),
-        'kv' => LegalKeyValues([for (final r in json['rows'] as List) LegalKeyValue.fromJson(r as Map<String, dynamic>)]),
+        'ol' => LegalNumberedList([
+          for (final i in json['items'] as List) i as String,
+        ]),
+        'table' => LegalTable([
+          for (final r in json['rows'] as List)
+            LegalTableRow.fromJson(r as Map<String, dynamic>),
+        ]),
+        'kv' => LegalKeyValues([
+          for (final r in json['rows'] as List)
+            LegalKeyValue.fromJson(r as Map<String, dynamic>),
+        ]),
         final type => throw FormatException('모르는 약관 블록 타입: $type'),
       };
 }
@@ -116,13 +135,17 @@ class LegalTable extends LegalBlock {
 }
 
 class LegalTableRow {
-  const LegalTableRow({required this.name, required this.badge, required this.detail});
+  const LegalTableRow({
+    required this.name,
+    required this.badge,
+    required this.detail,
+  });
 
   factory LegalTableRow.fromJson(Map<String, dynamic> json) => LegalTableRow(
-        name: json['name'] as String,
-        badge: json['badge'] as String,
-        detail: json['detail'] as String,
-      );
+    name: json['name'] as String,
+    badge: json['badge'] as String,
+    detail: json['detail'] as String,
+  );
 
   final String name;
 
@@ -142,8 +165,10 @@ class LegalKeyValues extends LegalBlock {
 class LegalKeyValue {
   const LegalKeyValue({required this.label, required this.value});
 
-  factory LegalKeyValue.fromJson(Map<String, dynamic> json) =>
-      LegalKeyValue(label: json['label'] as String, value: json['value'] as String);
+  factory LegalKeyValue.fromJson(Map<String, dynamic> json) => LegalKeyValue(
+    label: json['label'] as String,
+    value: json['value'] as String,
+  );
 
   final String label;
   final String value;

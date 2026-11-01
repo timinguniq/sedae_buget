@@ -21,9 +21,7 @@ class CategoryCatalog {
 
   /// 사용자 카테고리 목록을 모른다(읽는 중이거나 읽지 못했다). 사용자 카테고리를 가리키는 거래는
   /// 적힌 기본 분류로 보이고, 그 카테고리가 지워졌는지는 판정하지 않는다.
-  const CategoryCatalog.unknown()
-      : customs = const [],
-        isComplete = false;
+  const CategoryCatalog.unknown() : customs = const [], isComplete = false;
 
   final List<CustomCategory> customs;
 

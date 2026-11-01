@@ -5,28 +5,28 @@ import 'package:sedae_budget/entity/entity.dart';
 extension AgeGroupText on AgeGroup {
   /// 나이대 카드(온보딩·프로필 수정)의 숫자 배지: '10'·'50+'.
   String get badge => switch (this) {
-        AgeGroup.teens => '10',
-        AgeGroup.twenties => '20',
-        AgeGroup.thirties => '30',
-        AgeGroup.forties => '40',
-        AgeGroup.fiftiesPlus => '50+',
-      };
+    AgeGroup.teens => '10',
+    AgeGroup.twenties => '20',
+    AgeGroup.thirties => '30',
+    AgeGroup.forties => '40',
+    AgeGroup.fiftiesPlus => '50+',
+  };
 
   /// 나이대 카드(온보딩·프로필 수정)의 설명: '학생 · 첫 용돈 관리'.
   String get lifeStage => switch (this) {
-        AgeGroup.teens => '학생 · 첫 용돈 관리',
-        AgeGroup.twenties => '사회초년생 · 첫 독립',
-        AgeGroup.thirties => '결혼 · 내 집 마련',
-        AgeGroup.forties => '자녀 교육 · 안정기',
-        AgeGroup.fiftiesPlus => '노후 · 건강 관리',
-      };
+    AgeGroup.teens => '학생 · 첫 용돈 관리',
+    AgeGroup.twenties => '사회초년생 · 첫 독립',
+    AgeGroup.thirties => '결혼 · 내 집 마련',
+    AgeGroup.forties => '자녀 교육 · 안정기',
+    AgeGroup.fiftiesPlus => '노후 · 건강 관리',
+  };
 
   /// 리포트 세대별 대표 소비 칩(디자인 문구 — 또래 통계에 대표 항목이 없다): '간식'.
   String get signatureSpend => switch (this) {
-        AgeGroup.teens => '간식',
-        AgeGroup.twenties => '카페·모임',
-        AgeGroup.thirties => '육아·주거',
-        AgeGroup.forties => '자녀교육',
-        AgeGroup.fiftiesPlus => '건강',
-      };
+    AgeGroup.teens => '간식',
+    AgeGroup.twenties => '카페·모임',
+    AgeGroup.thirties => '육아·주거',
+    AgeGroup.forties => '자녀교육',
+    AgeGroup.fiftiesPlus => '건강',
+  };
 }

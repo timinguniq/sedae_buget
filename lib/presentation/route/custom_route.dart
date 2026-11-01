@@ -37,30 +37,86 @@ final routerProvider = Provider<GoRouter>((ref) {
     navigatorKey: rootNavigatorKey,
     initialLocation: RoutePath.splash.path,
     refreshListenable: refresh,
-    redirect: (context, state) => sessionRedirect(ref.read(sessionGateProvider), state.matchedLocation),
+    redirect: (context, state) =>
+        sessionRedirect(ref.read(sessionGateProvider), state.matchedLocation),
     routes: [
-      GoRoute(path: RoutePath.splash.path, builder: (_, _) => const SplashPage()),
-      GoRoute(path: RoutePath.onboarding.path, builder: (_, _) => const OnboardingFlowPage()),
+      GoRoute(
+        path: RoutePath.splash.path,
+        builder: (_, _) => const SplashPage(),
+      ),
+      GoRoute(
+        path: RoutePath.onboarding.path,
+        builder: (_, _) => const OnboardingFlowPage(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => MainShell(navigationShell: shell),
         branches: [
-          StatefulShellBranch(routes: [GoRoute(path: RoutePath.budgetHome.path, builder: (_, _) => const BudgetHomePage())]),
-          StatefulShellBranch(routes: [GoRoute(path: RoutePath.compare.path, builder: (_, _) => const ComparePage())]),
-          StatefulShellBranch(routes: [GoRoute(path: RoutePath.history.path, builder: (_, _) => const TransactionListPage())]),
-          StatefulShellBranch(routes: [GoRoute(path: RoutePath.report.path, builder: (_, _) => const ReportPage())]),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePath.budgetHome.path,
+                builder: (_, _) => const BudgetHomePage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePath.compare.path,
+                builder: (_, _) => const ComparePage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePath.history.path,
+                builder: (_, _) => const TransactionListPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePath.report.path,
+                builder: (_, _) => const ReportPage(),
+              ),
+            ],
+          ),
         ],
       ),
-      GoRoute(path: RoutePath.transactionEdit.path, builder: (_, state) =>
-          TransactionEditPage(existing: state.extra as Transaction?)),
-      GoRoute(path: RoutePath.categoryAnalysis.path, builder: (_, _) => const CategoryAnalysisPage()),
-      GoRoute(path: RoutePath.categoryManage.path, builder: (_, state) =>
-          CategoryManagePage(initialEditing: state.extra as bool? ?? false)),
-      GoRoute(path: RoutePath.setting.path, builder: (_, _) => const SettingPage()),
-      GoRoute(path: RoutePath.profileEdit.path, builder: (_, _) => const ProfileEditPage()),
+      GoRoute(
+        path: RoutePath.transactionEdit.path,
+        builder: (_, state) =>
+            TransactionEditPage(existing: state.extra as Transaction?),
+      ),
+      GoRoute(
+        path: RoutePath.categoryAnalysis.path,
+        builder: (_, _) => const CategoryAnalysisPage(),
+      ),
+      GoRoute(
+        path: RoutePath.categoryManage.path,
+        builder: (_, state) =>
+            CategoryManagePage(initialEditing: state.extra as bool? ?? false),
+      ),
+      GoRoute(
+        path: RoutePath.setting.path,
+        builder: (_, _) => const SettingPage(),
+      ),
+      GoRoute(
+        path: RoutePath.profileEdit.path,
+        builder: (_, _) => const ProfileEditPage(),
+      ),
       GoRoute(path: RoutePath.login.path, builder: (_, _) => const LoginPage()),
-      GoRoute(path: RoutePath.terms.path, builder: (_, state) =>
-          LegalPage(initialTab: state.extra as LegalTab? ?? LegalTab.terms)),
-      GoRoute(path: RoutePath.unreachable.path, builder: (_, _) => const UnreachablePage()),
+      GoRoute(
+        path: RoutePath.terms.path,
+        builder: (_, state) =>
+            LegalPage(initialTab: state.extra as LegalTab? ?? LegalTab.terms),
+      ),
+      GoRoute(
+        path: RoutePath.unreachable.path,
+        builder: (_, _) => const UnreachablePage(),
+      ),
     ],
     debugLogDiagnostics: true,
   );

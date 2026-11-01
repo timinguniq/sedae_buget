@@ -16,7 +16,10 @@ const testUser = AuthUser(provider: AuthProvider.kakao, nickname: '카카오 사
 
 /// 또래 통계를 읽으려면 프로필(나이대)이 있어야 한다. 소득을 정하지 않는 테스트가 심는 프로필:
 /// 30대, 월소득 0(소득은 그 달 수입의 합계가 된다).
-const noIncomeProfile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 0);
+const noIncomeProfile = UserProfile(
+  ageGroup: AgeGroup.thirties,
+  monthlyIncome: 0,
+);
 
 /// 테스트용 인메모리 토큰 저장소. [failRead]·[failWrite]·[failClear]를 켜면 그 작업이 보안 저장소처럼 던진다.
 class MemoryAuthTokenStore implements AuthTokenStore {
@@ -33,7 +36,8 @@ class MemoryAuthTokenStore implements AuthTokenStore {
   Future<String?> read() async => failRead ? _fail() : token;
 
   @override
-  Future<void> write(String token) async => failWrite ? _fail() : this.token = token;
+  Future<void> write(String token) async =>
+      failWrite ? _fail() : this.token = token;
 
   @override
   Future<void> clear() async => failClear ? _fail() : token = null;
@@ -47,7 +51,11 @@ class MemoryAuthTokenStore implements AuthTokenStore {
 /// 흉내 내고 서버에 닿은 요청을 센다. [peerStats]를 주면 Stub이 그 또래 통계로 답한다.
 /// 요청 로그는 남기지 않는다. 디버깅할 때 [log]로 켠다.
 class StubServer {
-  factory StubServer({StubStateStore? store, PeerStats Function(AgeGroup)? peerStats, bool log = false}) {
+  factory StubServer({
+    StubStateStore? store,
+    PeerStats Function(AgeGroup)? peerStats,
+    bool log = false,
+  }) {
     final tokens = MemoryAuthTokenStore();
     final faults = ServerFaults();
     return StubServer._(
@@ -56,7 +64,8 @@ class StubServer {
       ServerRepositories.connect(
         env: AppEnvironment.local,
         tokenStore: tokens,
-        localServer: () => StubApiInterceptor(store: store, peerStats: peerStats),
+        localServer: () =>
+            StubApiInterceptor(store: store, peerStats: peerStats),
         beforeServer: [faults],
         requestLog: log,
       ),
@@ -143,12 +152,14 @@ extension StubServerInWidgetTest on WidgetTester {
   }) async {
     final server = StubServer(peerStats: peerStats);
     if (provider != null) {
-      await untilDone(server.seed(
-        provider: provider,
-        profile: profile,
-        categories: categories,
-        transactions: transactions,
-      ));
+      await untilDone(
+        server.seed(
+          provider: provider,
+          profile: profile,
+          categories: categories,
+          transactions: transactions,
+        ),
+      );
     }
     return server;
   }

@@ -11,9 +11,15 @@ void main() {
     expect(find.text('›'), findsNothing); // 탭 없으면 chevron 없음
   });
 
-  testWidgets('SettingsTile with onTap shows value and chevron, fires tap', (tester) async {
+  testWidgets('SettingsTile with onTap shows value and chevron, fires tap', (
+    tester,
+  ) async {
     var taps = 0;
-    await tester.pumpWidget(_wrap(SettingsTile(label: '카테고리 관리', value: '기본 12', onTap: () => taps++)));
+    await tester.pumpWidget(
+      _wrap(
+        SettingsTile(label: '카테고리 관리', value: '기본 12', onTap: () => taps++),
+      ),
+    );
     expect(find.text('기본 12'), findsOneWidget);
     expect(find.text('›'), findsOneWidget);
     await tester.tap(find.text('카테고리 관리'));

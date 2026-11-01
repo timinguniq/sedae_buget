@@ -6,5 +6,6 @@ import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart
 final adServiceProvider = Provider<AdService>((_) => locator<AdService>());
 
 /// N번째 실행 전면 광고 정책.
-final launchInterstitialProvider =
-    Provider<LaunchInterstitial>((_) => locator<LaunchInterstitial>());
+final launchInterstitialProvider = Provider<LaunchInterstitial>(
+  (_) => locator<LaunchInterstitial>(),
+);

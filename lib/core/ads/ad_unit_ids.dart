@@ -10,7 +10,8 @@ import 'package:flutter/foundation.dart';
 /// 무효 트래픽으로 계정이 정지될 수 있다. 릴리즈 빌드는 자동으로 실제 단위를 쓴다.
 abstract final class AdUnitIds {
   static String get banner => kDebugMode ? _demoBanner : _banner;
-  static String get interstitial => kDebugMode ? _demoInterstitial : _interstitial;
+  static String get interstitial =>
+      kDebugMode ? _demoInterstitial : _interstitial;
 
   // AdMob 앱은 플랫폼별로 따로 등록한다. 아래는 발급받은 한 세트를 양쪽에 같이 쓴다.
   // iOS 앱을 AdMob에 별도 등록했다면 _demo*처럼 플랫폼으로 분기해 iOS 단위를 넣는다.

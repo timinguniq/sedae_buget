@@ -41,13 +41,22 @@ class _State extends ConsumerState<TransactionEditPage> {
   Future<void> _save() async {
     final draft = _draft.withMemo(_memo.text);
     if (!draft.canSave) return;
-    await _send(() => ref.read(monthlyTransactionsProvider.notifier).save(draft), UserAction.save);
+    await _send(
+      () => ref.read(monthlyTransactionsProvider.notifier).save(draft),
+      UserAction.save,
+    );
   }
 
   Future<void> _delete() => _send(
-      () => ref.read(monthlyTransactionsProvider.notifier).delete(widget.existing!), UserAction.delete);
+    () =>
+        ref.read(monthlyTransactionsProvider.notifier).delete(widget.existing!),
+    UserAction.delete,
+  );
 
-  Future<void> _send(Future<Result<Transaction>> Function() request, UserAction action) async {
+  Future<void> _send(
+    Future<Result<Transaction>> Function() request,
+    UserAction action,
+  ) async {
     if (_busy) return;
     setState(() => _busy = true);
     final res = await request();
@@ -63,9 +72,9 @@ class _State extends ConsumerState<TransactionEditPage> {
       context.popOrHome();
       return;
     }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(failureMessage(action, error))),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(failureMessage(action, error))));
   }
 
   /// 방금 만든 카테고리를 바로 선택한다(이 지출을 분류하려고 만든 것이므로).
@@ -78,8 +87,11 @@ class _State extends ConsumerState<TransactionEditPage> {
   Future<void> _pickDate() async {
     final today = ref.read(selectedMonthProvider.notifier).today;
     final picked = await showDatePicker(
-      context: context, initialDate: _draft.date,
-      firstDate: _draft.earliestDate, lastDate: _draft.latestDate(today));
+      context: context,
+      initialDate: _draft.date,
+      firstDate: _draft.earliestDate,
+      lastDate: _draft.latestDate(today),
+    );
     if (picked != null) setState(() => _draft = _draft.withDate(picked));
   }
 
@@ -91,85 +103,149 @@ class _State extends ConsumerState<TransactionEditPage> {
         padding: const EdgeInsets.fromLTRB(22, 6, 22, 22),
         // 화면이 모자라면(작은 폰에서 메모 키보드가 올라올 때) 전체가 세로로 스크롤되고,
         // 남으면 키패드·저장 버튼이 아래에 붙는다.
-        child: LayoutBuilder(builder: (context, constraints) => SingleChildScrollView(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: constraints.maxHeight),
-            child: IntrinsicHeight(child: Column(children: [
-              Row(children: [
-                RoundIconButton(icon: Icons.close, onTap: context.popOrHome),
-                Expanded(child: Text(
-                  '${_draft.type == TransactionType.income ? '수입' : '지출'} ${_draft.isEdit ? '수정' : '입력'}',
-                  textAlign: TextAlign.center,
-                  style: context.typo.label1W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.normal),
-                )),
-                // 제목이 가운데 오도록 오른쪽도 ✕와 같은 폭을 차지한다.
-                if (_draft.isEdit)
-                  RoundIconButton(key: const Key('delete-button'), icon: Icons.delete_outline, onTap: _delete)
-                else
-                  const SizedBox(width: 30),
-              ]),
-              Expanded(child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const SizedBox(height: 22),
-                  Center(child: _CategoryPill(label: _draft.label(catalog))),
-                  const SizedBox(height: 14),
-                  Text(WonText.full.of(_draft.amount),
-                      textAlign: TextAlign.center,
-                      style: context.typo.amountHero.copyWith(color: context.color.label.normal)),
-                  const SizedBox(height: 5),
-                  // 가맹점/메모: 디자인의 금액 아래 한 줄이 곧 입력 필드.
-                  TextField(
-                    controller: _memo,
-                    textAlign: TextAlign.center,
-                    style: context.typo.caption1W500.copyWith(color: context.color.label.normal),
-                    // 전역 inputDecorationTheme의 outline 테두리가 collapsed에도 적용되므로 명시적으로 끈다.
-                    decoration: InputDecoration.collapsed(
-                      hintText: '메모 (선택)',
-                      hintStyle: context.typo.caption1W500.copyWith(color: context.color.label.assistive),
-                    ).copyWith(enabledBorder: InputBorder.none, focusedBorder: InputBorder.none),
-                  ),
-                  const SizedBox(height: 8),
-                  Center(child: InkWell(
-                    onTap: _pickDate,
-                    borderRadius: BorderRadius.circular(CSize.pill.radius),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      child: Row(mainAxisSize: MainAxisSize.min, children: [
-                        Icon(Icons.calendar_today_outlined, size: 14, color: context.color.label.assistive),
-                        const SizedBox(width: 6),
-                        Text(DateFormat('yyyy.M.d', 'ko').format(_draft.date),
-                            style: context.typo.caption1W600.copyWith(color: context.color.label.alternative)),
-                      ]),
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        RoundIconButton(
+                          icon: Icons.close,
+                          onTap: context.popOrHome,
+                        ),
+                        Expanded(
+                          child: Text(
+                            '${_draft.type == TransactionType.income ? '수입' : '지출'} ${_draft.isEdit ? '수정' : '입력'}',
+                            textAlign: TextAlign.center,
+                            style: context.typo.label1W600.copyWith(
+                              fontWeight: context.typo.bold,
+                              color: context.color.label.normal,
+                            ),
+                          ),
+                        ),
+                        // 제목이 가운데 오도록 오른쪽도 ✕와 같은 폭을 차지한다.
+                        if (_draft.isEdit)
+                          RoundIconButton(
+                            key: const Key('delete-button'),
+                            icon: Icons.delete_outline,
+                            onTap: _delete,
+                          )
+                        else
+                          const SizedBox(width: 30),
+                      ],
                     ),
-                  )),
-                  // 수입은 카테고리가 없다.
-                  if (_draft.hasCategory) ...[
-                    const SizedBox(height: 14),
-                    _CategoryChips(
-                      selected: _draft.base,
-                      selectedCustomId: _draft.customCategoryId,
-                      customs: catalog.customs,
-                      onPickBase: (c) => setState(() => _draft = _draft.pickBase(c)),
-                      onPickCustom: (c) => setState(() => _draft = _draft.pickCustom(c)),
-                      onAdd: _addCategory,
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: 22),
+                          Center(
+                            child: _CategoryPill(label: _draft.label(catalog)),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            WonText.full.of(_draft.amount),
+                            textAlign: TextAlign.center,
+                            style: context.typo.amountHero.copyWith(
+                              color: context.color.label.normal,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          // 가맹점/메모: 디자인의 금액 아래 한 줄이 곧 입력 필드.
+                          TextField(
+                            controller: _memo,
+                            textAlign: TextAlign.center,
+                            style: context.typo.caption1W500.copyWith(
+                              color: context.color.label.normal,
+                            ),
+                            // 전역 inputDecorationTheme의 outline 테두리가 collapsed에도 적용되므로 명시적으로 끈다.
+                            decoration:
+                                InputDecoration.collapsed(
+                                  hintText: '메모 (선택)',
+                                  hintStyle: context.typo.caption1W500.copyWith(
+                                    color: context.color.label.assistive,
+                                  ),
+                                ).copyWith(
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                ),
+                          ),
+                          const SizedBox(height: 8),
+                          Center(
+                            child: InkWell(
+                              onTap: _pickDate,
+                              borderRadius: BorderRadius.circular(
+                                CSize.pill.radius,
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_outlined,
+                                      size: 14,
+                                      color: context.color.label.assistive,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      DateFormat(
+                                        'yyyy.M.d',
+                                        'ko',
+                                      ).format(_draft.date),
+                                      style: context.typo.caption1W600.copyWith(
+                                        color: context.color.label.alternative,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                          // 수입은 카테고리가 없다.
+                          if (_draft.hasCategory) ...[
+                            const SizedBox(height: 14),
+                            _CategoryChips(
+                              selected: _draft.base,
+                              selectedCustomId: _draft.customCategoryId,
+                              customs: catalog.customs,
+                              onPickBase: (c) =>
+                                  setState(() => _draft = _draft.pickBase(c)),
+                              onPickCustom: (c) =>
+                                  setState(() => _draft = _draft.pickCustom(c)),
+                              onAdd: _addCategory,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    AmountKeypad(
+                      value: KeypadInput(_draft.amount),
+                      onChanged: (v) =>
+                          setState(() => _draft = _draft.withAmount(v.amount)),
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        key: const Key('save-button'),
+                        onPressed: _busy ? null : _save,
+                        child: const Text('저장하기'),
+                      ),
                     ),
                   ],
-                ],
-              )),
-              const SizedBox(height: 12),
-              AmountKeypad(
-                value: KeypadInput(_draft.amount),
-                onChanged: (v) => setState(() => _draft = _draft.withAmount(v.amount)),
+                ),
               ),
-              const SizedBox(height: 12),
-              SizedBox(width: double.infinity, child: FilledButton(
-                key: const Key('save-button'),
-                onPressed: _busy ? null : _save,
-                child: const Text('저장하기'))),
-            ])),
+            ),
           ),
-        )),
+        ),
       ),
     );
   }
@@ -188,13 +264,27 @@ class _CategoryPill extends StatelessWidget {
         color: context.color.primary.tint,
         borderRadius: BorderRadius.circular(CSize.pill.radius),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Container(width: 7, height: 7,
-            decoration: BoxDecoration(color: context.color.primary.normal, shape: BoxShape.circle)),
-        const SizedBox(width: 6),
-        Text(label, style: context.typo.caption1W600.copyWith(
-            fontWeight: context.typo.bold, color: context.color.primary.normal)),
-      ]),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              color: context.color.primary.normal,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: context.typo.caption1W600.copyWith(
+              fontWeight: context.typo.bold,
+              color: context.color.primary.normal,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -224,45 +314,66 @@ class _CategoryChips extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
-      child: Row(children: [
-        for (final c in BudgetCategory.values) ...[
-          DesignChip(
-            label: c.label,
-            padding: _chipPadding,
-            style: selectedCustomId == null && c == selected ? DesignChipStyle.coral : DesignChipStyle.outline,
-            onTap: () => onPickBase(c),
-          ),
-          const SizedBox(width: 7),
-        ],
-        for (final c in customs) ...[
-          DesignChip(
-            label: c.name,
-            padding: _chipPadding,
-            style: selectedCustomId == c.id ? DesignChipStyle.coral : DesignChipStyle.outline,
-            onTap: () => onPickCustom(c),
-          ),
-          const SizedBox(width: 7),
-        ],
-        GestureDetector(
-          key: const Key('category-add-chip'),
-          onTap: onAdd,
-          behavior: HitTestBehavior.opaque,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-            decoration: BoxDecoration(
-              color: context.color.primary.tint,
-              border: Border.all(color: context.color.primary.normal.withValues(alpha: 0.45)),
-              borderRadius: BorderRadius.circular(CSize.pill.radius),
+      child: Row(
+        children: [
+          for (final c in BudgetCategory.values) ...[
+            DesignChip(
+              label: c.label,
+              padding: _chipPadding,
+              style: selectedCustomId == null && c == selected
+                  ? DesignChipStyle.coral
+                  : DesignChipStyle.outline,
+              onTap: () => onPickBase(c),
             ),
-            child: Row(mainAxisSize: MainAxisSize.min, children: [
-              Icon(Icons.add, size: 12, color: context.color.primary.normal),
-              const SizedBox(width: 4),
-              Text('추가', style: context.typo.caption1W600.copyWith(
-                  fontSize: 11.5, fontWeight: context.typo.bold, color: context.color.primary.normal)),
-            ]),
+            const SizedBox(width: 7),
+          ],
+          for (final c in customs) ...[
+            DesignChip(
+              label: c.name,
+              padding: _chipPadding,
+              style: selectedCustomId == c.id
+                  ? DesignChipStyle.coral
+                  : DesignChipStyle.outline,
+              onTap: () => onPickCustom(c),
+            ),
+            const SizedBox(width: 7),
+          ],
+          GestureDetector(
+            key: const Key('category-add-chip'),
+            onTap: onAdd,
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+              decoration: BoxDecoration(
+                color: context.color.primary.tint,
+                border: Border.all(
+                  color: context.color.primary.normal.withValues(alpha: 0.45),
+                ),
+                borderRadius: BorderRadius.circular(CSize.pill.radius),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.add,
+                    size: 12,
+                    color: context.color.primary.normal,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '추가',
+                    style: context.typo.caption1W600.copyWith(
+                      fontSize: 11.5,
+                      fontWeight: context.typo.bold,
+                      color: context.color.primary.normal,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }

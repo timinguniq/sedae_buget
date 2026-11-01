@@ -9,7 +9,10 @@ void main() {
     expect(a.avgMonthlyExpense, b.avgMonthlyExpense);
     expect(a.samples, b.samples);
     final catSum = a.avgByCategory.values.fold(0, (s, v) => s + v);
-    expect((catSum - a.avgMonthlyExpense).abs() < a.avgMonthlyExpense * 0.02, isTrue);
+    expect(
+      (catSum - a.avgMonthlyExpense).abs() < a.avgMonthlyExpense * 0.02,
+      isTrue,
+    );
     expect(a.samples.length, 99);
   });
 

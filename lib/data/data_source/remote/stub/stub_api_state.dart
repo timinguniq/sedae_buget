@@ -25,10 +25,10 @@ class StubApiState {
 
   /// 기기에 저장할 문자열.
   String encode() => jsonEncode({
-        'version': version,
-        'users': {for (final e in _users.entries) e.key: e.value.toJson()},
-        'activeTokens': activeTokens.toList(),
-      });
+    'version': version,
+    'users': {for (final e in _users.entries) e.key: e.value.toJson()},
+    'activeTokens': activeTokens.toList(),
+  });
 
   /// 기기에 저장된 [raw]로 바꾼다. 던지지 않는다.
   ///
@@ -49,9 +49,14 @@ class StubApiState {
     if (v != version) return _drop('모르는 형식(version $v)이라 빈 상태로 시작해요');
 
     final tokens = json['activeTokens'];
-    final readable = tokens is List ? tokens.whereType<String>() : const <String>[];
+    final readable = tokens is List
+        ? tokens.whereType<String>()
+        : const <String>[];
     activeTokens.addAll(readable);
-    if (tokens != null && (tokens is! List || readable.length != tokens.length)) _drop('읽지 못한 토큰을 버려요');
+    if (tokens != null &&
+        (tokens is! List || readable.length != tokens.length)) {
+      _drop('읽지 못한 토큰을 버려요');
+    }
 
     final users = json['users'];
     if (users is! _Json) return _drop('사용자 데이터를 읽지 못해 버려요');
@@ -72,10 +77,10 @@ class StubUserData {
   final Map<String, Map<String, dynamic>> customCategories = {};
 
   Map<String, dynamic> toJson() => {
-        'profile': profile,
-        'transactions': transactions,
-        'customCategories': customCategories,
-      };
+    'profile': profile,
+    'transactions': transactions,
+    'customCategories': customCategories,
+  };
 
   /// [json]으로 바꾼다. 던지지 않는다: 못 읽는 프로필·행은 버린다. 행은 Stub이 읽는 값
   /// (거래의 `date`, 사용자 카테고리의 `name`)을 읽을 수 있어야 한다. 그 밖의 값만 어긋난 행은 남고,
@@ -86,16 +91,24 @@ class StubUserData {
     if (p != null && profile == null) _drop('읽지 못한 프로필을 버려요');
     transactions
       ..clear()
-      ..addAll(_rows('거래', json['transactions'], (r) {
-        final date = r['date'];
-        return date is String && DateTime.tryParse(date) != null;
-      }));
+      ..addAll(
+        _rows('거래', json['transactions'], (r) {
+          final date = r['date'];
+          return date is String && DateTime.tryParse(date) != null;
+        }),
+      );
     customCategories
       ..clear()
-      ..addAll(_rows('사용자 카테고리', json['customCategories'], (r) => r['name'] is String));
+      ..addAll(
+        _rows('사용자 카테고리', json['customCategories'], (r) => r['name'] is String),
+      );
   }
 
-  Map<String, Map<String, dynamic>> _rows(String what, Object? raw, bool Function(_Json) readable) {
+  Map<String, Map<String, dynamic>> _rows(
+    String what,
+    Object? raw,
+    bool Function(_Json) readable,
+  ) {
     if (raw == null) return {};
     if (raw is! _Json) {
       _drop('$what 목록을 읽지 못해 버려요');

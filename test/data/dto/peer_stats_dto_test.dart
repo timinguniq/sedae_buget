@@ -4,7 +4,9 @@ import 'package:sedae_budget/entity/entity.dart';
 
 void main() {
   test('toJson uses categoryId string keys and enum names', () {
-    final json = PeerStatsDto.fromEntity(StubPeerData.forGroup(AgeGroup.twenties)).toJson();
+    final json = PeerStatsDto.fromEntity(
+      StubPeerData.forGroup(AgeGroup.twenties),
+    ).toJson();
     expect(json['ageGroup'], 'twenties');
     final byCat = json['avgByCategory'] as Map<String, dynamic>;
     expect(byCat.keys, containsAll(['1', '12']));
@@ -13,8 +15,9 @@ void main() {
 
   test('fromJson(toJson(x)) round-trips every field', () {
     final original = StubPeerData.forGroup(AgeGroup.fiftiesPlus);
-    final back =
-        PeerStatsDto.fromJson(PeerStatsDto.fromEntity(original).toJson()).toEntity(original.ageGroup);
+    final back = PeerStatsDto.fromJson(
+      PeerStatsDto.fromEntity(original).toJson(),
+    ).toEntity(original.ageGroup);
     expect(back.ageGroup, original.ageGroup);
     expect(back.avgMonthlyExpense, original.avgMonthlyExpense);
     expect(back.avgSavingsRate, original.avgSavingsRate);
@@ -25,7 +28,9 @@ void main() {
   // 서버가 분류를 늘려도 또래 부분 전체가 실패하지 않는다. 모르는 키만 버린다.
   test('모르는 분류 키는 버리고 아는 키는 남긴다', () {
     final stats = PeerStatsDto.fromJson({
-      'ageGroup': 'thirties', 'avgMonthlyExpense': 1000000, 'avgSavingsRate': 0.2,
+      'ageGroup': 'thirties',
+      'avgMonthlyExpense': 1000000,
+      'avgSavingsRate': 0.2,
       'avgByCategory': {'1': 300000, '20': 5000, 'x': 1, '0': 2},
       'samples': [1, 2, 3],
     }).toEntity(AgeGroup.thirties);
@@ -33,7 +38,10 @@ void main() {
   });
 
   test('나이대의 API 값은 나이대마다 하나이고, 모르는 값은 null이다', () {
-    expect(AgeGroup.values.map((g) => g.wire).toSet(), hasLength(AgeGroup.values.length));
+    expect(
+      AgeGroup.values.map((g) => g.wire).toSet(),
+      hasLength(AgeGroup.values.length),
+    );
     for (final g in AgeGroup.values) {
       expect(ageGroupFromWire(g.wire), g);
     }

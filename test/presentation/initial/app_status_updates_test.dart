@@ -7,7 +7,10 @@ import 'package:sedae_budget/presentation/page/main/main_shell.dart';
 
 import '../../helper/fakes.dart';
 
-const _profile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000);
+const _profile = UserProfile(
+  ageGroup: AgeGroup.thirties,
+  monthlyIncome: 3000000,
+);
 
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
@@ -27,10 +30,7 @@ void main() {
       launchInterstitial: await fakeLaunchInterstitial(ads),
       appStatusSource: source,
     );
-    await t.pumpWidget(fakeScope(
-      container,
-      const MyApp(),
-    ));
+    await t.pumpWidget(fakeScope(container, const MyApp()));
     await t.pump(); // splash + postFrameCallback
     await t.pump(const Duration(milliseconds: 2100)); // splash 2초 경과
     await t.pump(); // 가드 → 홈
@@ -38,16 +38,26 @@ void main() {
     await t.settle();
     expect(find.byType(MainShell), findsOneWidget);
 
-    source.updates.add(AppInitialInfo(
-      android: const AppVersion(releaseVersion: 1, minimumAvailableVersion: 1, link: 'a'),
-      ios: const AppVersion(releaseVersion: 1, minimumAvailableVersion: 1, link: 'i'),
-      serviceStatus: AppServiceStatus(
-        available: false,
-        noticeTitle: '점검 중이에요',
-        noticeContent: '곧 돌아올게요',
-        expectedTimeToBeAvailable: DateTime(2026, 9, 24, 23),
+    source.updates.add(
+      AppInitialInfo(
+        android: const AppVersion(
+          releaseVersion: 1,
+          minimumAvailableVersion: 1,
+          link: 'a',
+        ),
+        ios: const AppVersion(
+          releaseVersion: 1,
+          minimumAvailableVersion: 1,
+          link: 'i',
+        ),
+        serviceStatus: AppServiceStatus(
+          available: false,
+          noticeTitle: '점검 중이에요',
+          noticeContent: '곧 돌아올게요',
+          expectedTimeToBeAvailable: DateTime(2026, 9, 24, 23),
+        ),
       ),
-    ));
+    );
     await t.pump(); // 갱신 판정
     await t.pump(const Duration(milliseconds: 300)); // 대화상자 등장
 

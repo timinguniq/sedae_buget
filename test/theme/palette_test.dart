@@ -16,10 +16,18 @@ void main() {
   test('design neutral ramp order (300·400·500·600·700·200) and dark ramp', () {
     expect(Palette.neutral400, const Color(0xFFC9C1B8));
     expect(Palette.neutralRamp, const [
-      Color(0xFFDCD5CC), Color(0xFFC9C1B8), Color(0xFFB8B0A8),
-      Color(0xFFA29A92), Color(0xFF8C857D), Color(0xFFE6E1D8),
+      Color(0xFFDCD5CC),
+      Color(0xFFC9C1B8),
+      Color(0xFFB8B0A8),
+      Color(0xFFA29A92),
+      Color(0xFF8C857D),
+      Color(0xFFE6E1D8),
     ]);
-    expect(Palette.darkRamp, const [Color(0xFF3A332C), Color(0xFF4A433C), Color(0xFF5A534C)]);
+    expect(Palette.darkRamp, const [
+      Color(0xFF3A332C),
+      Color(0xFF4A433C),
+      Color(0xFF5A534C),
+    ]);
   });
   test('coral soft present for dark badge text', () {
     expect(Palette.coralSoft, const Color(0xFFFF8A6B));

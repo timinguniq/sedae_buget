@@ -55,10 +55,12 @@ class YearMonth implements Comparable<YearMonth> {
   }
 
   @override
-  int compareTo(YearMonth other) => year != other.year ? year - other.year : month - other.month;
+  int compareTo(YearMonth other) =>
+      year != other.year ? year - other.year : month - other.month;
 
   @override
-  bool operator ==(Object other) => other is YearMonth && other.year == year && other.month == month;
+  bool operator ==(Object other) =>
+      other is YearMonth && other.year == year && other.month == month;
 
   @override
   int get hashCode => Object.hash(year, month);

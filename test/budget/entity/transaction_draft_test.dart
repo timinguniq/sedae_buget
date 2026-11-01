@@ -2,22 +2,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 const _pet = CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc);
-const _study = CustomCategory(id: 'c2', name: '자기계발', base: BudgetCategory.recreation);
+const _study = CustomCategory(
+  id: 'c2',
+  name: '자기계발',
+  base: BudgetCategory.recreation,
+);
 
 final _day = DateTime(2026, 6, 5);
 
-Transaction _saved({BudgetCategory base = BudgetCategory.groceries, String? customCategoryId, String? memo}) =>
-    Transaction(
-      id: 't1',
-      amount: 1000,
-      base: base,
-      date: _day,
-      type: TransactionType.expense,
-      memo: memo,
-      customCategoryId: customCategoryId,
-      createdAt: DateTime(2026, 6, 5, 9),
-      updatedAt: DateTime(2026, 6, 5, 9),
-    );
+Transaction _saved({
+  BudgetCategory base = BudgetCategory.groceries,
+  String? customCategoryId,
+  String? memo,
+}) => Transaction(
+  id: 't1',
+  amount: 1000,
+  base: base,
+  date: _day,
+  type: TransactionType.expense,
+  memo: memo,
+  customCategoryId: customCategoryId,
+  createdAt: DateTime(2026, 6, 5, 9),
+  updatedAt: DateTime(2026, 6, 5, 9),
+);
 
 void main() {
   group('새 거래', () {
@@ -52,13 +59,16 @@ void main() {
 
     // 이전에는 날짜 선택이 시각을 00:00으로 지워, 타일의 시각이 사라지고 같은 날의 맨 아래로 갔다.
     test('날짜를 바꿔도 시각은 그대로다', () {
-      final d = TransactionDraft.create(DateTime(2026, 6, 5, 14, 30)).withDate(DateTime(2026, 6, 7));
+      final d = TransactionDraft.create(
+        DateTime(2026, 6, 5, 14, 30),
+      ).withDate(DateTime(2026, 6, 7));
       expect(d.date, DateTime(2026, 6, 7, 14, 30));
     });
 
     test('빈 메모는 저장하지 않는다', () {
-      final tx = TransactionDraft.create(_day).withAmount(1).withMemo('   ')
-          .toTransaction(const CategoryCatalog());
+      final tx = TransactionDraft.create(
+        _day,
+      ).withAmount(1).withMemo('   ').toTransaction(const CategoryCatalog());
       expect(tx.memo, isNull);
     });
   });
@@ -69,14 +79,20 @@ void main() {
     test('같은 초안은 몇 번 저장해도 같은 id다', () {
       final d = TransactionDraft.create(_day).withAmount(1000);
       final first = d.toTransaction(const CategoryCatalog());
-      final again = d.withMemo('점심').pickBase(BudgetCategory.transport)
+      final again = d
+          .withMemo('점심')
+          .pickBase(BudgetCategory.transport)
           .toTransaction(const CategoryCatalog());
       expect(again.id, first.id);
     });
 
     test('다른 초안은 다른 id다', () {
-      final a = TransactionDraft.create(_day).toTransaction(const CategoryCatalog());
-      final b = TransactionDraft.create(_day).toTransaction(const CategoryCatalog());
+      final a = TransactionDraft.create(
+        _day,
+      ).toTransaction(const CategoryCatalog());
+      final b = TransactionDraft.create(
+        _day,
+      ).toTransaction(const CategoryCatalog());
       expect(a.id, isNot(b.id));
     });
   });
@@ -98,7 +114,10 @@ void main() {
     });
 
     test('수입은 사용자 카테고리 없이 저장한다', () {
-      final tx = TransactionDraft.edit(income, catalog).pickCustom(_pet).toTransaction(catalog);
+      final tx = TransactionDraft.edit(
+        income,
+        catalog,
+      ).pickCustom(_pet).toTransaction(catalog);
       expect(tx.type, TransactionType.income);
       expect(tx.customCategoryId, isNull);
     });
@@ -113,10 +132,15 @@ void main() {
     });
 
     test('기본 분류를 고르면 사용자 카테고리 선택이 풀린다', () {
-      final d = TransactionDraft.create(_day).pickCustom(_pet).pickBase(BudgetCategory.transport);
+      final d = TransactionDraft.create(
+        _day,
+      ).pickCustom(_pet).pickBase(BudgetCategory.transport);
       expect(d.customCategoryId, isNull);
       expect(d.base, BudgetCategory.transport);
-      expect(d.label(const CategoryCatalog([_pet])), BudgetCategory.transport.label);
+      expect(
+        d.label(const CategoryCatalog([_pet])),
+        BudgetCategory.transport.label,
+      );
     });
 
     test('목록에 아직 없는 사용자 카테고리는 상위 분류 이름으로 보인다', () {
@@ -125,7 +149,9 @@ void main() {
     });
 
     test('고른 사용자 카테고리와 상위 분류를 함께 저장한다', () {
-      final tx = TransactionDraft.create(_day).withAmount(1000).pickCustom(_pet)
+      final tx = TransactionDraft.create(_day)
+          .withAmount(1000)
+          .pickCustom(_pet)
           .toTransaction(const CategoryCatalog([_pet]));
       expect(tx.customCategoryId, 'c1');
       expect(tx.base, BudgetCategory.etc);
@@ -143,23 +169,41 @@ void main() {
     // 이미 미래로 적힌 거래를 고칠 때 그 날짜를 고를 수 없으면 날짜 선택기가 열리지 않는다.
     test('이미 미래로 적힌 거래를 고칠 때는 그 날짜까지다', () {
       final future = _saved().copyWith(date: DateTime(2026, 10, 5));
-      expect(TransactionDraft.edit(future, const CategoryCatalog()).latestDate(today), DateTime(2026, 10, 5));
+      expect(
+        TransactionDraft.edit(
+          future,
+          const CategoryCatalog(),
+        ).latestDate(today),
+        DateTime(2026, 10, 5),
+      );
     });
 
     test('지난 날짜로 적힌 거래를 고칠 때는 오늘까지다', () {
-      expect(TransactionDraft.edit(_saved(), const CategoryCatalog()).latestDate(today), today);
+      expect(
+        TransactionDraft.edit(
+          _saved(),
+          const CategoryCatalog(),
+        ).latestDate(today),
+        today,
+      );
     });
   });
 
   group('고를 수 있는 가장 이른 날짜', () {
     test('보고 있는 달의 하한(2020년 1월 1일)이다', () {
-      expect(TransactionDraft.create(DateTime(2026, 9, 5)).earliestDate, DateTime(2020, 1, 1));
+      expect(
+        TransactionDraft.create(DateTime(2026, 9, 5)).earliestDate,
+        DateTime(2020, 1, 1),
+      );
     });
 
     // 이전에는 날짜 선택이 2020년부터라 그보다 이른 거래를 고치면 날짜 선택이 assert로 멈췄다.
     test('그보다 이른 거래를 고칠 때는 그 날짜까지다', () {
       final old = _saved().copyWith(date: DateTime(2019, 12, 27, 13, 5));
-      expect(TransactionDraft.edit(old, const CategoryCatalog()).earliestDate, DateTime(2019, 12, 27));
+      expect(
+        TransactionDraft.edit(old, const CategoryCatalog()).earliestDate,
+        DateTime(2019, 12, 27),
+      );
     });
   });
 
@@ -167,8 +211,10 @@ void main() {
     // 수입은 카테고리가 없다. 서버가 수입에 사용자 카테고리 id를 적었어도 목록으로 판정하지 않고
     // 읽어 둔 분류 그대로 둔다(모르는 분류 id는 DTO가 기타로 읽는다).
     test('수입을 고칠 때는 분류를 판정하지 않는다', () {
-      final income = _saved(base: BudgetCategory.shopping, customCategoryId: 'c1')
-          .copyWith(type: TransactionType.income);
+      final income = _saved(
+        base: BudgetCategory.shopping,
+        customCategoryId: 'c1',
+      ).copyWith(type: TransactionType.income);
       final d = TransactionDraft.edit(income, const CategoryCatalog([_pet]));
       expect(d.hasCategory, isFalse);
       expect(d.base, BudgetCategory.shopping);
@@ -177,13 +223,21 @@ void main() {
 
     // 서버도 앱도 수입의 분류를 쓰지 않으므로 읽어 둔 값을 그대로 보낸다.
     test('수입을 다시 저장해도 읽어 둔 분류 그대로다', () {
-      final income = _saved(base: BudgetCategory.shopping).copyWith(type: TransactionType.income);
-      final tx = TransactionDraft.edit(income, const CategoryCatalog()).toTransaction(const CategoryCatalog());
+      final income = _saved(
+        base: BudgetCategory.shopping,
+      ).copyWith(type: TransactionType.income);
+      final tx = TransactionDraft.edit(
+        income,
+        const CategoryCatalog(),
+      ).toTransaction(const CategoryCatalog());
       expect(tx.base, BudgetCategory.shopping);
     });
 
     test('거래의 값으로 시작한다', () {
-      final d = TransactionDraft.edit(_saved(memo: '점심'), const CategoryCatalog());
+      final d = TransactionDraft.edit(
+        _saved(memo: '점심'),
+        const CategoryCatalog(),
+      );
       expect(d.isEdit, isTrue);
       expect(d.amount, 1000);
       expect(d.memo, '점심');
@@ -192,9 +246,10 @@ void main() {
 
     test('같은 거래(id·생성 시각)를 고친 값으로 저장한다', () {
       final original = _saved();
-      final tx = TransactionDraft.edit(original, const CategoryCatalog())
-          .withAmount(2500)
-          .toTransaction(const CategoryCatalog());
+      final tx = TransactionDraft.edit(
+        original,
+        const CategoryCatalog(),
+      ).withAmount(2500).toTransaction(const CategoryCatalog());
       expect(tx.id, original.id);
       expect(tx.createdAt, original.createdAt);
       expect(tx.amount, 2500);
@@ -215,8 +270,10 @@ void main() {
     // 사용자 카테고리 목록을 읽는 중에 연 입력 화면은 '모름'으로 시작해 적힌 분류(기타)를 보이고,
     // 저장할 때는 다 읽은 목록으로 판정한다. 그사이 자기계발이 취미·여가로 옮겨졌으면 그 분류로 저장한다.
     test('저장할 때 사용자 카테고리의 그때 상위 분류를 따른다', () {
-      final d = TransactionDraft.edit(_saved(base: BudgetCategory.etc, customCategoryId: 'c2'),
-          const CategoryCatalog.unknown());
+      final d = TransactionDraft.edit(
+        _saved(base: BudgetCategory.etc, customCategoryId: 'c2'),
+        const CategoryCatalog.unknown(),
+      );
       expect(d.base, BudgetCategory.etc);
 
       final tx = d.toTransaction(const CategoryCatalog([_study]));
@@ -225,8 +282,10 @@ void main() {
     });
 
     test('목록을 모르면 고른 그대로 저장한다', () {
-      final tx = TransactionDraft.edit(_saved(customCategoryId: 'c1'), const CategoryCatalog())
-          .toTransaction(const CategoryCatalog.unknown());
+      final tx = TransactionDraft.edit(
+        _saved(customCategoryId: 'c1'),
+        const CategoryCatalog(),
+      ).toTransaction(const CategoryCatalog.unknown());
       expect(tx.customCategoryId, 'c1');
       expect(tx.base, BudgetCategory.groceries);
     });
@@ -234,16 +293,27 @@ void main() {
     // 이전에는 '모름'을 null로, 다 읽은 빈 목록을 []로 나타내 두 값의 뜻이 반대였다.
     // 화면이 만든 빈 목록이 저장으로 넘어가면 사용자 카테고리가 조용히 떨어졌다.
     test('다 읽은 빈 목록이면 사용자 카테고리를 떼고, 모르면 남긴다', () {
-      final draft = TransactionDraft.edit(_saved(customCategoryId: 'c1'), const CategoryCatalog.unknown());
-      expect(draft.toTransaction(const CategoryCatalog()).customCategoryId, isNull);
-      expect(draft.toTransaction(const CategoryCatalog.unknown()).customCategoryId, 'c1');
+      final draft = TransactionDraft.edit(
+        _saved(customCategoryId: 'c1'),
+        const CategoryCatalog.unknown(),
+      );
+      expect(
+        draft.toTransaction(const CategoryCatalog()).customCategoryId,
+        isNull,
+      );
+      expect(
+        draft.toTransaction(const CategoryCatalog.unknown()).customCategoryId,
+        'c1',
+      );
     });
 
     // 지워진 사용자 카테고리를 계속 가리키면 어디에도 보이지 않는 id가 남는다.
     test('지워진 사용자 카테고리는 거래에 적힌 기본 분류로 되돌린다', () {
       final orphan = _saved(base: BudgetCategory.etc, customCategoryId: 'gone');
-      final tx = TransactionDraft.edit(orphan, const CategoryCatalog([_pet]))
-          .toTransaction(const CategoryCatalog([_pet]));
+      final tx = TransactionDraft.edit(
+        orphan,
+        const CategoryCatalog([_pet]),
+      ).toTransaction(const CategoryCatalog([_pet]));
       expect(tx.customCategoryId, isNull);
       expect(tx.base, BudgetCategory.etc);
     });

@@ -6,7 +6,9 @@ Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child));
 
 void main() {
   testWidgets('BudgetBottomNav renders', (tester) async {
-    await tester.pumpWidget(_wrap(BudgetBottomNav(currentIndex: 0, onTap: (_) {}, onFabTap: () {})));
+    await tester.pumpWidget(
+      _wrap(BudgetBottomNav(currentIndex: 0, onTap: (_) {}, onFabTap: () {})),
+    );
     expect(find.byType(BudgetBottomNav), findsOneWidget);
   });
 }

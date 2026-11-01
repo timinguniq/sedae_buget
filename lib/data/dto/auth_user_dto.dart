@@ -8,7 +8,8 @@ part 'auth_user_dto.g.dart';
 class AuthUserDto {
   const AuthUserDto({required this.provider, required this.nickname});
 
-  factory AuthUserDto.fromJson(Map<String, dynamic> json) => _$AuthUserDtoFromJson(json);
+  factory AuthUserDto.fromJson(Map<String, dynamic> json) =>
+      _$AuthUserDtoFromJson(json);
 
   final AuthProvider provider;
   final String nickname;

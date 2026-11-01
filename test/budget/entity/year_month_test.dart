@@ -5,14 +5,23 @@ void main() {
   final today = DateTime(2026, 9, 26, 14, 30);
 
   test('날짜의 연·월만 본다', () {
-    expect(YearMonth.of(DateTime(2026, 9, 26, 10)), YearMonth.of(DateTime(2026, 9, 1)));
+    expect(
+      YearMonth.of(DateTime(2026, 9, 26, 10)),
+      YearMonth.of(DateTime(2026, 9, 1)),
+    );
     expect(YearMonth.of(DateTime(2026, 9, 1)).year, 2026);
     expect(YearMonth.of(DateTime(2026, 9, 1)).month, 9);
   });
 
   test('이전·다음 달은 해를 넘는다', () {
-    expect(YearMonth.of(DateTime(2026, 1)).previous, YearMonth.of(DateTime(2025, 12)));
-    expect(YearMonth.of(DateTime(2025, 12)).next, YearMonth.of(DateTime(2026, 1)));
+    expect(
+      YearMonth.of(DateTime(2026, 1)).previous,
+      YearMonth.of(DateTime(2025, 12)),
+    );
+    expect(
+      YearMonth.of(DateTime(2025, 12)).next,
+      YearMonth.of(DateTime(2026, 1)),
+    );
   });
 
   test('달은 1일 0시부터 다음 달 1일 0시 전까지다', () {
@@ -60,12 +69,18 @@ void main() {
     });
 
     test('지난 달이면 그 달의 오늘과 같은 날이다', () {
-      expect(YearMonth.of(DateTime(2026, 8)).draftDate(today), DateTime(2026, 8, 26));
+      expect(
+        YearMonth.of(DateTime(2026, 8)).draftDate(today),
+        DateTime(2026, 8, 26),
+      );
     });
 
     test('그 달에 그날이 없으면 말일이다', () {
       final march31 = DateTime(2026, 3, 31);
-      expect(YearMonth.of(DateTime(2026, 2)).draftDate(march31), DateTime(2026, 2, 28));
+      expect(
+        YearMonth.of(DateTime(2026, 2)).draftDate(march31),
+        DateTime(2026, 2, 28),
+      );
     });
   });
 }

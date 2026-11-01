@@ -4,15 +4,27 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/widget/common/peer_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-PeerComparison _c(int mine, [int peer = 100000]) => PeerComparison.of(mine: mine, peer: peer)!;
+PeerComparison _c(int mine, [int peer = 100000]) =>
+    PeerComparison.of(mine: mine, peer: peer)!;
 
 /// [theme]의 화면에서 [read]로 색을 고른다.
-Future<T> _inTheme<T>(WidgetTester t, AppTheme theme, T Function(BuildContext) read) async {
+Future<T> _inTheme<T>(
+  WidgetTester t,
+  AppTheme theme,
+  T Function(BuildContext) read,
+) async {
   late T value;
-  await t.pumpWidget(Theme(data: materialTheme(theme), child: Builder(builder: (context) {
-    value = read(context);
-    return const SizedBox();
-  })));
+  await t.pumpWidget(
+    Theme(
+      data: materialTheme(theme),
+      child: Builder(
+        builder: (context) {
+          value = read(context);
+          return const SizedBox();
+        },
+      ),
+    ),
+  );
   return value;
 }
 
@@ -68,12 +80,22 @@ void main() {
 
   test('홈 pill: 못 읽으면 없고, 빈 달·또래 평균 없음·비교를 각각 말한다', () {
     PeerCompared compared(PeerComparison? total) => PeerCompared(
-        total: total, rank: null, savings: const SavingsComparison(mine: null, peer: 20),
-        totalBars: null, savingsBars: (mine: 0, peer: 1));
+      total: total,
+      rank: null,
+      savings: const SavingsComparison(mine: null, peer: 20),
+      totalBars: null,
+      savingsBars: (mine: 0, peer: 1),
+    );
     expect(const PeerUnavailable().heroPill, isNull);
-    expect(const PeerEmptyMonth().heroPill, (arrow: null, text: '내역을 추가하면 비교가 시작돼요'));
+    expect(const PeerEmptyMonth().heroPill, (
+      arrow: null,
+      text: '내역을 추가하면 비교가 시작돼요',
+    ));
     expect(compared(null).heroPill, (arrow: null, text: '또래 평균 집계 중'));
-    expect(compared(_c(88000)).heroPill, (arrow: '▼', text: '또래 평균보다 12% 덜 썼어요'));
+    expect(compared(_c(88000)).heroPill, (
+      arrow: '▼',
+      text: '또래 평균보다 12% 덜 썼어요',
+    ));
   });
 
   test('순위: 많이 쓰는 쪽 N%와 N명 중 M등', () {
@@ -91,17 +113,32 @@ void main() {
   });
 
   test('홈 저축률 카드의 또래 줄: 또래 평균과 한마디', () {
-    expect(const SavingsComparison(mine: 20, peer: 20).peerLine, '또래 평균 20% · 잘 모으고 있어요');
-    expect(const SavingsComparison(mine: null, peer: 18).peerLine, '또래 평균 18% · 조금 더 모아볼까요?');
+    expect(
+      const SavingsComparison(mine: 20, peer: 20).peerLine,
+      '또래 평균 20% · 잘 모으고 있어요',
+    );
+    expect(
+      const SavingsComparison(mine: null, peer: 18).peerLine,
+      '또래 평균 18% · 조금 더 모아볼까요?',
+    );
   });
 
   test('리포트 인사이트 본문: 앞말, 강조할 분류, 어떻게 썼는지', () {
-    expect(_c(150000).insightLine(BudgetCategory.groceries),
-        (prefix: '또래보다 ', highlight: '장보기', suffix: '에\n1.5배 더 썼어요'));
-    expect(less.insightLine(BudgetCategory.groceries),
-        (prefix: '또래보다 ', highlight: '장보기', suffix: '에\n10% 덜 썼어요'));
-    expect(similar.insightLine(BudgetCategory.groceries),
-        (prefix: '또래와 ', highlight: '장보기', suffix: '에\n비슷하게 썼어요'));
+    expect(_c(150000).insightLine(BudgetCategory.groceries), (
+      prefix: '또래보다 ',
+      highlight: '장보기',
+      suffix: '에\n1.5배 더 썼어요',
+    ));
+    expect(less.insightLine(BudgetCategory.groceries), (
+      prefix: '또래보다 ',
+      highlight: '장보기',
+      suffix: '에\n10% 덜 썼어요',
+    ));
+    expect(similar.insightLine(BudgetCategory.groceries), (
+      prefix: '또래와 ',
+      highlight: '장보기',
+      suffix: '에\n비슷하게 썼어요',
+    ));
     expect(noInsightText, '아직 분석할 지출이\n충분치 않아요');
   });
 
@@ -111,38 +148,79 @@ void main() {
 
   test('비교 탭 인사이트 배너: 나이대는 보통 [분류] 지출이 또래 평균을 끌어올린다', () {
     const stats = PeerStats(
-        ageGroup: AgeGroup.twenties, avgMonthlyExpense: 1000000, avgSavingsRate: 0.2,
-        avgByCategory: {}, samples: []);
-    expect(stats.topInsight(BudgetCategory.groceries),
-        (prefix: '20대는 보통 ', highlight: '장보기', suffix: ' 지출이 또래 평균을 끌어올려요.'));
+      ageGroup: AgeGroup.twenties,
+      avgMonthlyExpense: 1000000,
+      avgSavingsRate: 0.2,
+      avgByCategory: {},
+      samples: [],
+    );
+    expect(stats.topInsight(BudgetCategory.groceries), (
+      prefix: '20대는 보통 ',
+      highlight: '장보기',
+      suffix: ' 지출이 또래 평균을 끌어올려요.',
+    ));
   });
 
   group('색조', () {
     final strongMore = _c(150000); // +50% → 크게 넘음
 
     testWidgets('비교 탭 항목별 행 막대: 더 썼으면 코랄, 덜 썼거나 비슷하면 흐리게', (t) async {
-      final colors = await _inTheme(t, LightTheme(), (c) => [more, less, similar].map((e) => e.rowBarTone(c)).toList());
-      expect(colors, [Palette.primaryNormal, Palette.labelDisable, Palette.labelDisable]);
+      final colors = await _inTheme(
+        t,
+        LightTheme(),
+        (c) => [more, less, similar].map((e) => e.rowBarTone(c)).toList(),
+      );
+      expect(colors, [
+        Palette.primaryNormal,
+        Palette.labelDisable,
+        Palette.labelDisable,
+      ]);
     });
 
-    testWidgets('홈 많이 쓴 카테고리 막대: 더 썼거나 비교가 없으면 코랄, 덜 썼거나 비슷하면 회색(다크는 다크 톤)', (t) async {
+    testWidgets('홈 많이 쓴 카테고리 막대: 더 썼거나 비교가 없으면 코랄, 덜 썼거나 비슷하면 회색(다크는 다크 톤)', (
+      t,
+    ) async {
       final comparisons = [more, less, similar, null];
-      final light = await _inTheme(t, LightTheme(), (c) => comparisons.map((e) => topCategoryBarTone(c, e)).toList());
-      expect(light, [Palette.primaryNormal, Palette.neutral400, Palette.neutral400, Palette.primaryNormal]);
-      final dark = await _inTheme(t, DarkTheme(), (c) => comparisons.map((e) => topCategoryBarTone(c, e)).toList());
-      expect(dark, [Palette.primaryNormal, Palette.darkTextDisabled, Palette.darkTextDisabled, Palette.primaryNormal]);
+      final light = await _inTheme(
+        t,
+        LightTheme(),
+        (c) => comparisons.map((e) => topCategoryBarTone(c, e)).toList(),
+      );
+      expect(light, [
+        Palette.primaryNormal,
+        Palette.neutral400,
+        Palette.neutral400,
+        Palette.primaryNormal,
+      ]);
+      final dark = await _inTheme(
+        t,
+        DarkTheme(),
+        (c) => comparisons.map((e) => topCategoryBarTone(c, e)).toList(),
+      );
+      expect(dark, [
+        Palette.primaryNormal,
+        Palette.darkTextDisabled,
+        Palette.darkTextDisabled,
+        Palette.primaryNormal,
+      ]);
     });
 
-    testWidgets('분류 배지: 크게 넘으면 코랄 바탕에 흰 글씨, 틴트면 더 씀만 코랄 틴트, 아니면 바탕 없음', (t) async {
-      final tones = await _inTheme(t, LightTheme(), (c) => [
-            strongMore.badgeTone(c, tinted: false),
-            strongMore.badgeTone(c, tinted: true),
-            more.badgeTone(c, tinted: true),
-            less.badgeTone(c, tinted: true),
-            similar.badgeTone(c, tinted: true),
-            more.badgeTone(c, tinted: false),
-            less.badgeTone(c, tinted: false),
-          ]);
+    testWidgets('분류 배지: 크게 넘으면 코랄 바탕에 흰 글씨, 틴트면 더 씀만 코랄 틴트, 아니면 바탕 없음', (
+      t,
+    ) async {
+      final tones = await _inTheme(
+        t,
+        LightTheme(),
+        (c) => [
+          strongMore.badgeTone(c, tinted: false),
+          strongMore.badgeTone(c, tinted: true),
+          more.badgeTone(c, tinted: true),
+          less.badgeTone(c, tinted: true),
+          similar.badgeTone(c, tinted: true),
+          more.badgeTone(c, tinted: false),
+          less.badgeTone(c, tinted: false),
+        ],
+      );
       expect(tones, [
         (fg: Palette.staticWhite, bg: Palette.primaryNormal),
         (fg: Palette.staticWhite, bg: Palette.primaryNormal),

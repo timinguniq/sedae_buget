@@ -8,7 +8,10 @@ import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 final peerStatsProvider = FutureProvider<PeerStats?>((ref) async {
   final profile = await ref.watch(userProfileProvider.future);
   if (profile == null) return null;
-  return (await ref.watch(peerStatsRepositoryProvider).forGroup(profile.ageGroup)).unwrap();
+  return (await ref
+          .watch(peerStatsRepositoryProvider)
+          .forGroup(profile.ageGroup))
+      .unwrap();
 });
 
 /// 세대별 월평균 지출(리포트 '세대별' 차트용). 서버 세션에 묶여 있다. 미로그인이면 요청 없이 비어 있고,
@@ -16,5 +19,6 @@ final peerStatsProvider = FutureProvider<PeerStats?>((ref) async {
 final generationAvgProvider = FutureProvider<Map<AgeGroup, int>>((ref) async {
   final user = await ref.watch(authProvider.future);
   if (user == null) return const {};
-  return (await ref.watch(peerStatsRepositoryProvider).generationAverages()).unwrap();
+  return (await ref.watch(peerStatsRepositoryProvider).generationAverages())
+      .unwrap();
 });

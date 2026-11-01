@@ -16,7 +16,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helper/fakes.dart';
 
-const _profile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000);
+const _profile = UserProfile(
+  ageGroup: AgeGroup.thirties,
+  monthlyIncome: 3000000,
+);
 
 void main() {
   late FakeAdService ads;
@@ -30,30 +33,32 @@ void main() {
     StubServer? server,
     AppStatusSource? appStatusSource,
     void Function()? exitApp,
-  }) async =>
-      fakeContainer(
-        server: server ?? await t.seedServer(profile: _profile),
-        appStatusSource: appStatusSource,
-        exitApp: exitApp,
-        adService: ads,
-        launchInterstitial: await fakeLaunchInterstitial(ads),
-      );
+  }) async => fakeContainer(
+    server: server ?? await t.seedServer(profile: _profile),
+    appStatusSource: appStatusSource,
+    exitApp: exitApp,
+    adService: ads,
+    launchInterstitial: await fakeLaunchInterstitial(ads),
+  );
 
   Widget buildApp(ProviderContainer c, GoRouter router) => fakeScope(
-        c,
-        MaterialApp.router(
-            routerConfig: router,
-            theme: materialTheme(LightTheme()),
-          ),
-      );
+    c,
+    MaterialApp.router(
+      routerConfig: router,
+      theme: materialTheme(LightTheme()),
+    ),
+  );
 
   GoRouter buildRouter() => GoRouter(
-        initialLocation: '/splash',
-        routes: [
-          GoRoute(path: '/splash', builder: (_, _) => const SplashPage()),
-          GoRoute(path: '/budget', builder: (_, _) => const Scaffold(body: Text('HOME'))),
-        ],
-      );
+    initialLocation: '/splash',
+    routes: [
+      GoRoute(path: '/splash', builder: (_, _) => const SplashPage()),
+      GoRoute(
+        path: '/budget',
+        builder: (_, _) => const Scaffold(body: Text('HOME')),
+      ),
+    ],
+  );
 
   Future<void> boot(WidgetTester t, ProviderContainer c) async {
     t.view.physicalSize = const Size(390, 844);
@@ -82,8 +87,11 @@ void main() {
   for (final (name, seed) in [
     ('로그아웃', (WidgetTester t) => t.seedServer(provider: null)),
     ('프로필 필요', (WidgetTester t) => t.seedServer()),
-    ('연결 안 됨', (WidgetTester t) async =>
-        (await t.seedServer(profile: _profile))..faults.fail('GET', '/v1/me')),
+    (
+      '연결 안 됨',
+      (WidgetTester t) async =>
+          (await t.seedServer(profile: _profile))..faults.fail('GET', '/v1/me'),
+    ),
   ]) {
     testWidgets('5번째 실행이어도 $name 상태면 전면 광고를 띄우지 않는다', (t) async {
       final c = await container(t, server: await seed(t));
@@ -142,15 +150,28 @@ void main() {
     expect(find.text('HOME'), findsOneWidget);
     expect(ads.loadInterstitialCalls, 0);
     expect(ads.showInterstitialCalls, 0);
-    expect((await SharedPreferences.getInstance()).getInt(LaunchInterstitial.prefsKey), 1);
+    expect(
+      (await SharedPreferences.getInstance()).getInt(
+        LaunchInterstitial.prefsKey,
+      ),
+      1,
+    );
   });
 
   // 점검 중이면 세션·광고로 넘어가지 않고, 확인하면 앱을 끝낸다.
   testWidgets('점검 중이면 스플래시에서 안내하고, 확인하면 이동 없이 앱을 끝낸다', (t) async {
     var exited = 0;
     final maintenance = AppInitialInfo(
-      android: const AppVersion(releaseVersion: 1, minimumAvailableVersion: 1, link: 'a'),
-      ios: const AppVersion(releaseVersion: 1, minimumAvailableVersion: 1, link: 'i'),
+      android: const AppVersion(
+        releaseVersion: 1,
+        minimumAvailableVersion: 1,
+        link: 'a',
+      ),
+      ios: const AppVersion(
+        releaseVersion: 1,
+        minimumAvailableVersion: 1,
+        link: 'i',
+      ),
       serviceStatus: AppServiceStatus(
         available: false,
         noticeTitle: '점검 중이에요',
@@ -158,11 +179,14 @@ void main() {
         expectedTimeToBeAvailable: DateTime(2026, 9, 24, 23),
       ),
     );
-    await boot(t, await container(
+    await boot(
       t,
-      appStatusSource: FakeAppStatusSource(info: maintenance),
-      exitApp: () => exited++,
-    ));
+      await container(
+        t,
+        appStatusSource: FakeAppStatusSource(info: maintenance),
+        exitApp: () => exited++,
+      ),
+    );
     expect(find.text('점검 중이에요'), findsOneWidget);
 
     await t.tap(find.text('확인'));

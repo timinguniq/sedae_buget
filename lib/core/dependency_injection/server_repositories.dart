@@ -32,11 +32,15 @@ class ServerRepositories {
   }
 
   ServerRepositories._(this.session, this.dio)
-      : auth = AuthRepositoryImpl(AuthApi(dio), session, StubSocialIdTokenProvider()),
-        profiles = UserProfileRepositoryImpl(UserProfileApi(dio)),
-        transactions = TransactionRepositoryImpl(TransactionApi(dio)),
-        categories = CategoryRepositoryImpl(CategoryApi(dio)),
-        peerStats = PeerStatsRepositoryImpl(PeerStatsApi(dio));
+    : auth = AuthRepositoryImpl(
+        AuthApi(dio),
+        session,
+        StubSocialIdTokenProvider(),
+      ),
+      profiles = UserProfileRepositoryImpl(UserProfileApi(dio)),
+      transactions = TransactionRepositoryImpl(TransactionApi(dio)),
+      categories = CategoryRepositoryImpl(CategoryApi(dio)),
+      peerStats = PeerStatsRepositoryImpl(PeerStatsApi(dio));
 
   final Session session;
   final Dio dio;

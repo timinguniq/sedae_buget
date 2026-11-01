@@ -25,8 +25,12 @@ void main() {
   setUpAll(() => initializeDateFormatting('ko')); // 거래 입력의 날짜 표기
   setUp(() {
     PackageInfo.setMockInitialValues(
-      appName: 'sedae', packageName: 'com.sedae.budget',
-      version: '1.0.0', buildNumber: '1', buildSignature: '');
+      appName: 'sedae',
+      packageName: 'com.sedae.budget',
+      version: '1.0.0',
+      buildNumber: '1',
+      buildSignature: '',
+    );
   });
 
   // 이전에는 웹에서 주소로 바로 연 화면(돌아갈 화면 없음)의 닫기가 go_router의 "nothing to pop" 오류였다.
@@ -37,12 +41,23 @@ void main() {
       t.view.devicePixelRatio = 1.0;
       addTearDown(t.view.reset);
       final server = await t.seedServer(profile: noIncomeProfile);
-      final container = fakeContainer(server: server, themeModeStore: await fakeThemeModeStore());
-      final router = GoRouter(initialLocation: '/page', routes: [
-        GoRoute(path: '/page', builder: (_, _) => page),
-        GoRoute(path: RoutePath.budgetHome.path, builder: (_, _) => const Scaffold(body: Text('HOME'))),
-      ]);
-      await t.pumpWidget(fakeScope(container, MaterialApp.router(routerConfig: router)));
+      final container = fakeContainer(
+        server: server,
+        themeModeStore: await fakeThemeModeStore(),
+      );
+      final router = GoRouter(
+        initialLocation: '/page',
+        routes: [
+          GoRoute(path: '/page', builder: (_, _) => page),
+          GoRoute(
+            path: RoutePath.budgetHome.path,
+            builder: (_, _) => const Scaffold(body: Text('HOME')),
+          ),
+        ],
+      );
+      await t.pumpWidget(
+        fakeScope(container, MaterialApp.router(routerConfig: router)),
+      );
       await t.settle();
 
       await t.tap(find.byIcon(icon));

@@ -19,8 +19,8 @@ class CButton extends StatelessWidget {
     CButtonType? type,
     CButtonSize? size,
     this.onTap,
-  })  : type = type ?? CButtonType.fill,
-        size = size ?? CButtonSize.md;
+  }) : type = type ?? CButtonType.fill,
+       size = size ?? CButtonSize.md;
 
   /// 텍스트 & 아이콘
   final Widget? leadingIcon;
@@ -50,14 +50,23 @@ class CButton extends StatelessWidget {
 
     /// 라벨 색상 & 스타일
     final _labelColor = type._getLabelColor(context, isDisabled, color);
-    final _labelStyle = (labelStyle ?? size._getLabelStyle(context)).copyWith(color: _labelColor);
+    final _labelStyle = (labelStyle ?? size._getLabelStyle(context)).copyWith(
+      color: _labelColor,
+    );
 
     /// 버튼 스타일
-    final buttonStyle = type._getButtonStyle(_labelColor, _buttonColor, buttonColor ?? color ?? _buttonColor, size);
+    final buttonStyle = type._getButtonStyle(
+      _labelColor,
+      _buttonColor,
+      buttonColor ?? color ?? _buttonColor,
+      size,
+    );
 
     /// 버튼 넓이, 높이, 수직 패딩
     final width = size == CButtonSize.sm ? null : double.infinity;
-    final height = size.padding.vertical + (_labelStyle.fontSize! * (_labelStyle.height ?? 1.0));
+    final height =
+        size.padding.vertical +
+        (_labelStyle.fontSize! * (_labelStyle.height ?? 1.0));
 
     return SizedBox(
       width: width,
@@ -67,29 +76,50 @@ class CButton extends StatelessWidget {
         child: (leadingIcon == null && trailingIcon == null)
             ? Text(label, style: labelStyle, textAlign: TextAlign.center)
             : Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            /// 리딩 아이콘
-            if (leadingIcon != null)
-              Padding(padding: EdgeInsets.only(right: iconSpacing ?? 10), child: leadingIcon),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  /// 리딩 아이콘
+                  if (leadingIcon != null)
+                    Padding(
+                      padding: EdgeInsets.only(right: iconSpacing ?? 10),
+                      child: leadingIcon,
+                    ),
 
-            /// 라벨
-            Text(label, style: labelStyle),
+                  /// 라벨
+                  Text(label, style: labelStyle),
 
-            /// 트레일링 아이콘
-            if (trailingIcon != null)
-              Padding(padding: EdgeInsets.only(left: iconSpacing ?? 10), child: trailingIcon),
-          ],
-        ),
+                  /// 트레일링 아이콘
+                  if (trailingIcon != null)
+                    Padding(
+                      padding: EdgeInsets.only(left: iconSpacing ?? 10),
+                      child: trailingIcon,
+                    ),
+                ],
+              ),
       ),
     );
   }
 
-  ButtonStyleButton button({required ButtonStyle buttonStyle, required Widget child}) {
+  ButtonStyleButton button({
+    required ButtonStyle buttonStyle,
+    required Widget child,
+  }) {
     return switch (type) {
-      CButtonType.fill => ElevatedButton(style: buttonStyle, onPressed: onTap, child: child),
-      CButtonType.flat => TextButton(style: buttonStyle, onPressed: onTap, child: child),
-      CButtonType.outline => OutlinedButton(style: buttonStyle, onPressed: onTap, child: child),
+      CButtonType.fill => ElevatedButton(
+        style: buttonStyle,
+        onPressed: onTap,
+        child: child,
+      ),
+      CButtonType.flat => TextButton(
+        style: buttonStyle,
+        onPressed: onTap,
+        child: child,
+      ),
+      CButtonType.outline => OutlinedButton(
+        style: buttonStyle,
+        onPressed: onTap,
+        child: child,
+      ),
     };
   }
 }

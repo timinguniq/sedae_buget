@@ -18,7 +18,9 @@ abstract class Palette {
   static const Color labelAlternative = Color(0xFF8C857D);
   static const Color labelAssistive = Color(0xFFA8A099);
   static const Color labelDisable = Color(0xFFB8B0A8);
-  static const Color labelFaint = Color(0xFFC2BAB2); // 목록 번호·화살표·입력 카운터(디자인 arrow)
+  static const Color labelFaint = Color(
+    0xFFC2BAB2,
+  ); // 목록 번호·화살표·입력 카운터(디자인 arrow)
   static const Color labelWhite = Color(0xFFFFFFFF);
 
   /// background ----------\\
@@ -67,13 +69,19 @@ abstract class Palette {
 
   /// neutral ramp (차트/도넛/바) — 디자인 램프 300·400·500·600·700·200 순 ----------\\
   static const List<Color> neutralRamp = [
-    Color(0xFFDCD5CC), Color(0xFFC9C1B8), Color(0xFFB8B0A8),
-    Color(0xFFA29A92), Color(0xFF8C857D), Color(0xFFE6E1D8),
+    Color(0xFFDCD5CC),
+    Color(0xFFC9C1B8),
+    Color(0xFFB8B0A8),
+    Color(0xFFA29A92),
+    Color(0xFF8C857D),
+    Color(0xFFE6E1D8),
   ];
 
   /// dark chart ramp (다크 도넛/바) ----------\\
   static const List<Color> darkRamp = [
-    Color(0xFF3A332C), Color(0xFF4A433C), Color(0xFF5A534C),
+    Color(0xFF3A332C),
+    Color(0xFF4A433C),
+    Color(0xFF5A534C),
   ];
 
   /// dark ----------\\
@@ -89,10 +97,10 @@ abstract class Palette {
   static const Color darkTextDisabled = Color(0xFF5A534C);
   static const Color coralTintDark = Color(0xFF3A241C);
 
-//------------------------- gradient -------------------------\\
-// static const Gradient yellowCoralGradient = LinearGradient(
-//   colors: <Color>[yellow400, coral400],
-//   begin: Alignment.topCenter,
-//   end: Alignment.bottomCenter,
-// );
+  //------------------------- gradient -------------------------\\
+  // static const Gradient yellowCoralGradient = LinearGradient(
+  //   colors: <Color>[yellow400, coral400],
+  //   begin: Alignment.topCenter,
+  //   end: Alignment.bottomCenter,
+  // );
 }

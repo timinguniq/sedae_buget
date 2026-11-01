@@ -5,11 +5,19 @@ import 'package:sedae_budget/entity/entity.dart';
 import '../../helper/stub_server.dart';
 
 Transaction _tx(DateTime date, {int amount = 1000}) => Transaction.create(
-      amount: amount, base: BudgetCategory.transport, date: date, type: TransactionType.expense, memo: 'm',
-    );
+  amount: amount,
+  base: BudgetCategory.transport,
+  date: date,
+  type: TransactionType.expense,
+  memo: 'm',
+);
 
 /// [year]년 [month]월의 거래(보고 있는 달을 읽는 방식 그대로).
-Future<Result<List<Transaction>>> _month(TransactionRepository repo, int year, int month) {
+Future<Result<List<Transaction>>> _month(
+  TransactionRepository repo,
+  int year,
+  int month,
+) {
   final m = YearMonth.of(DateTime(year, month));
   return repo.getRange(m.start, m.end);
 }
@@ -49,7 +57,8 @@ void main() {
   test('12월 범위는 다음 해 1월 1일을 넣지 않는다', () async {
     await repo.upsert(_tx(DateTime(2026, 12, 31, 23, 59), amount: 1));
     await repo.upsert(_tx(DateTime(2027, 1, 1), amount: 2));
-    final list = ((await _month(repo, 2026, 12)) as Success<List<Transaction>>).data;
+    final list =
+        ((await _month(repo, 2026, 12)) as Success<List<Transaction>>).data;
     expect(list.map((t) => t.amount), [1]);
   });
 
@@ -79,7 +88,8 @@ void main() {
     final tx = _tx(DateTime(2026, 9, 6));
     await repo.upsert(tx);
     await repo.upsert(tx.copyWith(amount: 999));
-    final list = ((await _month(repo, 2026, 9)) as Success<List<Transaction>>).data;
+    final list =
+        ((await _month(repo, 2026, 9)) as Success<List<Transaction>>).data;
     expect(list.single.id, tx.id);
     expect(list.single.amount, 999);
   });

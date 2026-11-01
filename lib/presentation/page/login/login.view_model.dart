@@ -18,7 +18,9 @@ class AuthNotifier extends AsyncNotifier<AuthUser?> {
   Future<Result<AuthUser>> signIn(AuthProvider provider) async {
     state = const AsyncLoading();
     final res = await _auth.signIn(provider);
-    if (res is Success<AuthUser>) ref.read(sessionExpiredProvider.notifier).clear();
+    if (res is Success<AuthUser>) {
+      ref.read(sessionExpiredProvider.notifier).clear();
+    }
     state = AsyncData(res is Success<AuthUser> ? res.data : null);
     return res;
   }
@@ -43,7 +45,9 @@ class AuthNotifier extends AsyncNotifier<AuthUser?> {
   }
 }
 
-final authProvider = AsyncNotifierProvider<AuthNotifier, AuthUser?>(AuthNotifier.new);
+final authProvider = AsyncNotifierProvider<AuthNotifier, AuthUser?>(
+  AuthNotifier.new,
+);
 
 /// 세션이 만료돼 로그아웃됐는지. 로그인 화면이 안내 문구를 띄운다.
 /// 다시 로그인하거나 직접 로그아웃하면 지운다.
@@ -55,5 +59,6 @@ class SessionExpiredNotifier extends Notifier<bool> {
   void clear() => state = false;
 }
 
-final sessionExpiredProvider =
-    NotifierProvider<SessionExpiredNotifier, bool>(SessionExpiredNotifier.new);
+final sessionExpiredProvider = NotifierProvider<SessionExpiredNotifier, bool>(
+  SessionExpiredNotifier.new,
+);

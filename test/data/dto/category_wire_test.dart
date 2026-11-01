@@ -5,7 +5,10 @@ import 'package:sedae_budget/entity/entity.dart';
 void main() {
   // API 계약(docs/api-contract.md)의 기본 분류 표: 선언 순서가 id 1~19다.
   test('기본 분류의 API id는 계약 표 순서대로 1~19다', () {
-    expect(BudgetCategory.values.map((c) => c.wire).toList(), List.generate(19, (i) => i + 1));
+    expect(
+      BudgetCategory.values.map((c) => c.wire).toList(),
+      List.generate(19, (i) => i + 1),
+    );
   });
 
   test('API id로 기본 분류를 읽는다', () {

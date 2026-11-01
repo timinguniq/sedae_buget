@@ -37,34 +37,57 @@ class SummaryHeroCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(CSize.lg.radius),
         boxShadow: context.deco.coralShadow,
       ),
-      child: Stack(children: [
-        // 워터마크: 크림색 얼굴 + 코랄 이목구비, 8° 회전
-        Positioned(
-          right: -12, bottom: -18,
-          child: Transform.rotate(
-            angle: 8 * math.pi / 180,
-            child: const MascotDongle(size: 80, faceColor: Palette.cream, featureColor: Palette.primaryNormal, ring: false),
+      child: Stack(
+        children: [
+          // 워터마크: 크림색 얼굴 + 코랄 이목구비, 8° 회전
+          Positioned(
+            right: -12,
+            bottom: -18,
+            child: Transform.rotate(
+              angle: 8 * math.pi / 180,
+              child: const MascotDongle(
+                size: 80,
+                faceColor: Palette.cream,
+                featureColor: Palette.primaryNormal,
+                ring: false,
+              ),
+            ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 19, 20, 19),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('$label 총지출',
-                style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: white.withValues(alpha: 0.92))),
-            const SizedBox(height: 3),
-            Text(WonText.full.of(expense), style: context.typo.amountDisplay.copyWith(color: white)),
-            if (peer case final peer?) ...[
-              const SizedBox(height: 11),
-              _PeerPill(peer: peer),
-            ],
-            if ((income, balance) case (final income?, final balance?)) ...[
-              const SizedBox(height: 10),
-              Text('소득 ${WonText.full.of(income)} · 잔액 ${WonText.full.of(balance)}',
-                  style: context.typo.caption1W500.copyWith(color: white.withValues(alpha: 0.85))),
-            ],
-          ]),
-        ),
-      ]),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 19, 20, 19),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$label 총지출',
+                  style: context.typo.caption1W600.copyWith(
+                    fontSize: 12.5,
+                    color: white.withValues(alpha: 0.92),
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  WonText.full.of(expense),
+                  style: context.typo.amountDisplay.copyWith(color: white),
+                ),
+                if (peer case final peer?) ...[
+                  const SizedBox(height: 11),
+                  _PeerPill(peer: peer),
+                ],
+                if ((income, balance) case (final income?, final balance?)) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    '소득 ${WonText.full.of(income)} · 잔액 ${WonText.full.of(balance)}',
+                    style: context.typo.caption1W500.copyWith(
+                      color: white.withValues(alpha: 0.85),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -83,14 +106,32 @@ class _PeerPill extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
       decoration: BoxDecoration(
         color: white.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(CSize.pill.radius)),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (arrow != null) ...[
-          Text(arrow, style: context.typo.caption2W600.copyWith(fontSize: 9, fontWeight: context.typo.extraBold, color: white)),
-          const SizedBox(width: 4),
+        borderRadius: BorderRadius.circular(CSize.pill.radius),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (arrow != null) ...[
+            Text(
+              arrow,
+              style: context.typo.caption2W600.copyWith(
+                fontSize: 9,
+                fontWeight: context.typo.extraBold,
+                color: white,
+              ),
+            ),
+            const SizedBox(width: 4),
+          ],
+          Text(
+            label,
+            style: context.typo.caption1W600.copyWith(
+              fontSize: 11.5,
+              fontWeight: context.typo.bold,
+              color: white,
+            ),
+          ),
         ],
-        Text(label, style: context.typo.caption1W600.copyWith(fontSize: 11.5, fontWeight: context.typo.bold, color: white)),
-      ]),
+      ),
     );
   }
 }

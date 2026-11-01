@@ -20,17 +20,20 @@ const _loginMark = 'Google로 시작하기';
 const _onboardingMark = '먼저 나이대를 알려주세요';
 const _unreachableMark = '서버에 연결하지 못했어요';
 const _expiredMark = '로그인이 만료됐어요. 다시 로그인해 주세요';
-const _profile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000);
+const _profile = UserProfile(
+  ageGroup: AgeGroup.thirties,
+  monthlyIncome: 3000000,
+);
 
 Widget _buildApp(ProviderContainer container) => fakeScope(
-      container,
-      Consumer(
-          builder: (_, ref, _) => MaterialApp.router(
-            routerConfig: ref.watch(routerProvider),
-            theme: materialTheme(LightTheme()),
-          ),
-        ),
-    );
+  container,
+  Consumer(
+    builder: (_, ref, _) => MaterialApp.router(
+      routerConfig: ref.watch(routerProvider),
+      theme: materialTheme(LightTheme()),
+    ),
+  ),
+);
 
 /// 게이트 테스트의 공통 의존성: [server](Stub) + 광고·테마 fake.
 Future<ProviderContainer> _container(StubServer server) async {
@@ -44,8 +47,14 @@ Future<ProviderContainer> _container(StubServer server) async {
 }
 
 /// kakao로 로그인해 [profile]까지 마친 서버. 로그인하지 않았으면 [signedIn]을 false로.
-Future<StubServer> _server(WidgetTester t, {bool signedIn = true, UserProfile? profile}) =>
-    t.seedServer(provider: signedIn ? AuthProvider.kakao : null, profile: profile);
+Future<StubServer> _server(
+  WidgetTester t, {
+  bool signedIn = true,
+  UserProfile? profile,
+}) => t.seedServer(
+  provider: signedIn ? AuthProvider.kakao : null,
+  profile: profile,
+);
 
 Future<void> _boot(WidgetTester t, ProviderContainer container) async {
   t.view.physicalSize = const Size(390, 844);
@@ -96,7 +105,10 @@ void main() {
   });
 
   testWidgets('로그인 화면에서 첫 소셜 버튼 탭 → (프로필 없음) 온보딩', (t) async {
-    await _boot(t, await _container(await _server(t, signedIn: false))); // 로그인 화면 진입
+    await _boot(
+      t,
+      await _container(await _server(t, signedIn: false)),
+    ); // 로그인 화면 진입
     expect(find.text(_loginMark), findsOneWidget);
 
     await t.tap(find.byType(SocialLoginButton).first); // kakao
@@ -106,8 +118,14 @@ void main() {
 
   // 로그인하면 동의하는 것으로 보는 약관을 로그인 전에 읽을 수 있어야 한다.
   testWidgets('로그인 화면의 이용약관·개인정보처리방침 링크 → 그 탭의 약관 화면, 뒤로 → 로그인 화면', (t) async {
-    await _boot(t, await _container(await _server(t, signedIn: false))); // 로그인 화면 진입
-    for (final (link, mark) in [('이용약관', '세대 가계부 이용약관'), ('개인정보처리방침', '한눈에 보기')]) {
+    await _boot(
+      t,
+      await _container(await _server(t, signedIn: false)),
+    ); // 로그인 화면 진입
+    for (final (link, mark) in [
+      ('이용약관', '세대 가계부 이용약관'),
+      ('개인정보처리방침', '한눈에 보기'),
+    ]) {
       _tapNoticeLink(t, link);
       await t.settle(); // 가드가 로그인 화면으로 되돌리지 않는다
       expect(find.byType(LegalPage), findsOneWidget, reason: link);
@@ -122,7 +140,10 @@ void main() {
 
   // 약관을 로그인 화면 위에 쌓지 않으면 시스템 뒤로 가기(Android 뒤로 버튼)가 돌아갈 화면이 없어 앱을 닫는다.
   testWidgets('로그인 화면에서 연 약관에서 시스템 뒤로 가기 → 로그인 화면', (t) async {
-    await _boot(t, await _container(await _server(t, signedIn: false))); // 로그인 화면 진입
+    await _boot(
+      t,
+      await _container(await _server(t, signedIn: false)),
+    ); // 로그인 화면 진입
     _tapNoticeLink(t, '이용약관');
     await t.settle();
     expect(find.byType(LegalPage), findsOneWidget);
@@ -135,7 +156,8 @@ void main() {
 
   // 웹에서 주소를 치거나 새로 고치면 약관이 첫 화면이라 돌아갈 화면이 없다. 이전에는 ‹가 GoError로 멈췄다.
   testWidgets('돌아갈 화면 없이 연 약관에서 ‹ → 가드가 고른 화면(로그아웃이면 로그인)', (t) async {
-    t.platformDispatcher.defaultRouteNameTestValue = RoutePath.terms.path; // 주소창에 /terms
+    t.platformDispatcher.defaultRouteNameTestValue =
+        RoutePath.terms.path; // 주소창에 /terms
     addTearDown(t.platformDispatcher.clearDefaultRouteNameTestValue);
     await _boot(t, await _container(await _server(t, signedIn: false)));
     expect(find.byType(LegalPage), findsOneWidget);
@@ -150,7 +172,10 @@ void main() {
   });
 
   testWidgets('설정에서 로그아웃 → 로그인 화면', (t) async {
-    await _boot(t, await _container(await _server(t, profile: _profile))); // 홈 진입
+    await _boot(
+      t,
+      await _container(await _server(t, profile: _profile)),
+    ); // 홈 진입
     expect(find.byType(MainShell), findsOneWidget);
 
     rootNavigatorKey.currentContext!.go(RoutePath.setting.path);

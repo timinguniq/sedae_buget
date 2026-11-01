@@ -11,7 +11,9 @@ typedef MonthExpense = ({YearMonth month, int expense});
 class SpendingTrend {
   /// [last]까지 [length]개월(오래된 달 → [last]).
   SpendingTrend.ending(YearMonth last, {int length = 6})
-      : months = [for (var m = last, i = 0; i < length; m = m.previous, i++) m].reversed.toList();
+    : months = [
+        for (var m = last, i = 0; i < length; m = m.previous, i++) m,
+      ].reversed.toList();
 
   /// 추이에 드는 달(오래된 달부터).
   final List<YearMonth> months;
@@ -24,7 +26,12 @@ class SpendingTrend {
 
   /// [transactions]의 지출을 달별로 더한다. 수입과 기간 밖의 거래는 세지 않는다.
   List<MonthExpense> of(Iterable<Transaction> transactions) => [
-        for (final m in months)
-          (month: m, expense: ViewedMonth.expenseOf(transactions.where((t) => m.contains(t.date)))),
-      ];
+    for (final m in months)
+      (
+        month: m,
+        expense: ViewedMonth.expenseOf(
+          transactions.where((t) => m.contains(t.date)),
+        ),
+      ),
+  ];
 }

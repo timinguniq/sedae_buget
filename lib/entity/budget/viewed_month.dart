@@ -6,7 +6,11 @@ import 'package:sedae_budget/entity/budget/transaction_type.dart';
 import 'package:sedae_budget/entity/budget/year_month.dart';
 
 /// 분석 화면 한 줄. [custom]이 null이면 기본 분류 자체, 아니면 사용자 카테고리.
-typedef CategoryBreakdown = ({BudgetCategory base, CustomCategory? custom, int amount});
+typedef CategoryBreakdown = ({
+  BudgetCategory base,
+  CustomCategory? custom,
+  int amount,
+});
 
 extension CategoryBreakdownLabel on CategoryBreakdown {
   /// 줄 이름: 사용자 카테고리면 그 이름, 아니면 기본 분류 이름.
@@ -25,8 +29,8 @@ class ViewedMonth {
     required this.transactions,
     required CategoryCatalog catalog,
     int? profileIncome,
-  })  : _catalog = catalog,
-        _profileIncome = profileIncome;
+  }) : _catalog = catalog,
+       _profileIncome = profileIncome;
 
   /// 보고 있는 달.
   final YearMonth month;
@@ -37,8 +41,9 @@ class ViewedMonth {
   final CategoryCatalog _catalog;
   final int? _profileIncome;
 
-  late final List<Transaction> _expenses =
-      transactions.where((t) => t.type == TransactionType.expense).toList();
+  late final List<Transaction> _expenses = transactions
+      .where((t) => t.type == TransactionType.expense)
+      .toList();
 
   /// [txs] 중 지출의 합계.
   static int expenseOf(Iterable<Transaction> txs) => txs
@@ -74,9 +79,9 @@ class ViewedMonth {
   /// 기본 분류 [base]에 바로 적힌 지출 건수. 사용자 카테고리로 뗀 지출은 빼고,
   /// 지워진 사용자 카테고리를 가리키는 지출은 기본 분류로 센다(분석 화면과 같은 기준).
   int baseOnlyCount(BudgetCategory base) => _expenses.where((t) {
-        final of = _catalog.of(t);
-        return of.custom == null && of.base == base;
-      }).length;
+    final of = _catalog.of(t);
+    return of.custom == null && of.base == base;
+  }).length;
 
   /// 지출이 많은 기본 분류 상위 [n]개(금액 내림차순).
   List<MapEntry<BudgetCategory, int>> topCategories(int n) =>
@@ -100,9 +105,11 @@ class ViewedMonth {
       }
     }
     return <CategoryBreakdown>[
-      for (final e in base.entries) (base: e.key, custom: null, amount: e.value),
+      for (final e in base.entries)
+        (base: e.key, custom: null, amount: e.value),
       for (final c in _catalog.customs)
-        if ((byCustom[c.id] ?? 0) > 0) (base: c.base, custom: c, amount: byCustom[c.id]!),
+        if ((byCustom[c.id] ?? 0) > 0)
+          (base: c.base, custom: c, amount: byCustom[c.id]!),
     ]..sort((a, b) => b.amount.compareTo(a.amount));
   }();
 
@@ -120,7 +127,8 @@ class ViewedMonth {
   int? get balance => income == null ? null : income! - expense;
 
   /// 저축률(%) = (소득 − 지출) / 소득, 반올림. 지출이 소득보다 많으면 음수, 소득이 없으면 null.
-  int? get savingsRate => income == null ? null : ((income! - expense) * 100 / income!).round();
+  int? get savingsRate =>
+      income == null ? null : ((income! - expense) * 100 / income!).round();
 
   /// 소득 대비 지출(%). 저축률의 보수. 소득이 없으면 null.
   int? get expenseRatio => savingsRate == null ? null : 100 - savingsRate!;

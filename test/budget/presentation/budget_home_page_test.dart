@@ -9,14 +9,22 @@ import 'package:sedae_budget/presentation/presentation.dart';
 
 import '../../helper/fakes.dart';
 
-const _profile = UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000);
+const _profile = UserProfile(
+  ageGroup: AgeGroup.thirties,
+  monthlyIncome: 3000000,
+);
 
 /// 이번 달 10일 택시비 한 건.
 List<Transaction> _taxi() {
   final now = DateTime.now();
   return [
-    Transaction.create(amount: 12000, base: BudgetCategory.transport, date: DateTime(now.year, now.month, 10),
-        type: TransactionType.expense, memo: '택시'),
+    Transaction.create(
+      amount: 12000,
+      base: BudgetCategory.transport,
+      date: DateTime(now.year, now.month, 10),
+      type: TransactionType.expense,
+      memo: '택시',
+    ),
   ];
 }
 
@@ -24,7 +32,10 @@ void main() {
   setUpAll(() => initializeDateFormatting('ko'));
 
   testWidgets('shows total expense and a transaction', (tester) async {
-    final server = await tester.seedServer(profile: _profile, transactions: _taxi());
+    final server = await tester.seedServer(
+      profile: _profile,
+      transactions: _taxi(),
+    );
     await _pumpHome(tester, fakeContainer(server: server));
 
     expect(find.textContaining('12,000'), findsWidgets);
@@ -43,10 +54,17 @@ void main() {
     final now = DateTime.now();
     final server = await tester.seedServer(
       profile: _profile,
-      categories: const [CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc)],
+      categories: const [
+        CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc),
+      ],
       transactions: [
-        Transaction.create(amount: 30000, base: BudgetCategory.etc, date: DateTime(now.year, now.month, 3),
-            type: TransactionType.expense, customCategoryId: 'c1'),
+        Transaction.create(
+          amount: 30000,
+          base: BudgetCategory.etc,
+          date: DateTime(now.year, now.month, 3),
+          type: TransactionType.expense,
+          customCategoryId: 'c1',
+        ),
       ],
     );
     await _pumpHome(tester, fakeContainer(server: server));
@@ -56,7 +74,10 @@ void main() {
 
   // 또래 통계 서버가 내려가도 내 장부는 보여야 한다(또래 부분만 빠진다).
   testWidgets('또래 통계를 못 읽어도 내 지출과 최근 내역은 보인다', (tester) async {
-    final server = await tester.seedServer(profile: _profile, transactions: _taxi());
+    final server = await tester.seedServer(
+      profile: _profile,
+      transactions: _taxi(),
+    );
     server.faults.fail('GET', '/v1/peer', reason: FailureReason.server);
     await _pumpHome(tester, fakeContainer(server: server));
 
@@ -72,8 +93,16 @@ void main() {
 
   // 이전에는 안내 문구만 있어서 다시 읽을 방법이 없었다.
   testWidgets('또래 통계를 못 읽으면 다시 시도를 보여주고, 다시 시도하면 또래와 견준다', (tester) async {
-    final server = await tester.seedServer(profile: _profile, transactions: _taxi());
-    server.faults.fail('GET', '/v1/peer', reason: FailureReason.server, times: 1);
+    final server = await tester.seedServer(
+      profile: _profile,
+      transactions: _taxi(),
+    );
+    server.faults.fail(
+      'GET',
+      '/v1/peer',
+      reason: FailureReason.server,
+      times: 1,
+    );
     await _pumpHome(tester, fakeContainer(server: server));
     expect(find.text('또래 통계를 불러오지 못했어요'), findsOneWidget);
 
@@ -89,10 +118,18 @@ void main() {
   testWidgets('지난 달을 보면 그 달 이름으로 보인다', (tester) async {
     final now = DateTime.now();
     final last = DateTime(now.year, now.month - 1);
-    final server = await tester.seedServer(profile: _profile, transactions: [
-      Transaction.create(amount: 12000, base: BudgetCategory.transport, date: DateTime(last.year, last.month, 10),
-          type: TransactionType.expense, memo: '택시'),
-    ]);
+    final server = await tester.seedServer(
+      profile: _profile,
+      transactions: [
+        Transaction.create(
+          amount: 12000,
+          base: BudgetCategory.transport,
+          date: DateTime(last.year, last.month, 10),
+          type: TransactionType.expense,
+          memo: '택시',
+        ),
+      ],
+    );
     final container = fakeContainer(server: server);
     container.read(selectedMonthProvider.notifier).prev();
     await _pumpHome(tester, container);
@@ -105,7 +142,10 @@ void main() {
 
   // 이전에는 히어로가 거래 수입(₩0)을, 같은 화면의 저축률은 프로필 소득을 기준으로 했다.
   testWidgets('히어로의 소득·잔액은 저축률과 같은 소득을 쓴다', (tester) async {
-    final server = await tester.seedServer(profile: _profile, transactions: _taxi());
+    final server = await tester.seedServer(
+      profile: _profile,
+      transactions: _taxi(),
+    );
     await _pumpHome(tester, fakeContainer(server: server));
 
     expect(find.text('소득 ₩3,000,000 · 잔액 ₩2,988,000'), findsOneWidget);
@@ -114,7 +154,12 @@ void main() {
   // 이전에는 '잔액 ₩-2,000'처럼 ₩ 뒤에 하이픈을 붙였다. 앱의 다른 음수는 '−'를 쓴다.
   testWidgets('잔액이 음수면 −₩로 쓴다', (tester) async {
     final server = await tester.seedServer(
-        profile: const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 10000), transactions: _taxi());
+      profile: const UserProfile(
+        ageGroup: AgeGroup.thirties,
+        monthlyIncome: 10000,
+      ),
+      transactions: _taxi(),
+    );
     await _pumpHome(tester, fakeContainer(server: server));
 
     expect(find.text('소득 ₩10,000 · 잔액 −₩2,000'), findsOneWidget);
@@ -145,7 +190,10 @@ void main() {
 
   // 이전에는 '불러오기 실패: <예외 문자열>'만 보이고 다시 읽을 방법이 없었다.
   testWidgets('이달 거래를 못 읽으면 이유와 다시 시도를 보여주고, 다시 시도하면 읽는다', (tester) async {
-    final server = await tester.seedServer(profile: _profile, transactions: _taxi());
+    final server = await tester.seedServer(
+      profile: _profile,
+      transactions: _taxi(),
+    );
     server.faults.fail('GET', '/v1/transactions', times: 1);
     await _pumpHome(tester, fakeContainer(server: server));
 
@@ -160,10 +208,17 @@ void main() {
   // 이전에는 지출 0원인 달에 '또래 평균보다 100% 덜 썼어요'와 '상위 100%' 순위 카드를 보였다.
   testWidgets('빈 달(지출 0원)은 또래와 견주지 않는다', (tester) async {
     final now = DateTime.now();
-    final server = await tester.seedServer(profile: _profile, transactions: [
-      Transaction.create(amount: 3000000, base: BudgetCategory.groceries, date: DateTime(now.year, now.month, 1),
-          type: TransactionType.income),
-    ]);
+    final server = await tester.seedServer(
+      profile: _profile,
+      transactions: [
+        Transaction.create(
+          amount: 3000000,
+          base: BudgetCategory.groceries,
+          date: DateTime(now.year, now.month, 1),
+          type: TransactionType.income,
+        ),
+      ],
+    );
     await _pumpHome(tester, fakeContainer(server: server));
 
     expect(find.text('내역을 추가하면 비교가 시작돼요'), findsOneWidget);
@@ -191,6 +246,8 @@ Future<void> _pumpHome(WidgetTester tester, ProviderContainer container) async {
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  await tester.pumpWidget(fakeScope(container, const MaterialApp(home: BudgetHomePage())));
+  await tester.pumpWidget(
+    fakeScope(container, const MaterialApp(home: BudgetHomePage())),
+  );
   await tester.settle();
 }

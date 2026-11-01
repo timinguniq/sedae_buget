@@ -1,7 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/peer/peer_comparison.dart';
 
-PeerComparison _c(int mine, int peer) => PeerComparison.of(mine: mine, peer: peer)!;
+PeerComparison _c(int mine, int peer) =>
+    PeerComparison.of(mine: mine, peer: peer)!;
 
 void main() {
   test('또래 값이 없으면(0·빠짐) 비교하지 않는다', () {

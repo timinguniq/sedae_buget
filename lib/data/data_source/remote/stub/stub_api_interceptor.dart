@@ -26,9 +26,11 @@ typedef _Json = Map<String, dynamic>;
 /// - 요청은 온 순서대로 하나씩 처리한다. 한 요청의 변경·저장·되돌리기가 다른 요청과 섞이지 않는다.
 /// - 또래 통계는 [peerStats]가 정한다. 기본은 [StubPeerData](결정적)이고, 테스트는 나이대별 값을 줄 수 있다.
 class StubApiInterceptor extends Interceptor {
-  StubApiInterceptor({StubStateStore? store, PeerStats Function(AgeGroup)? peerStats})
-      : _store = store,
-        _peerStats = peerStats ?? StubPeerData.forGroup;
+  StubApiInterceptor({
+    StubStateStore? store,
+    PeerStats Function(AgeGroup)? peerStats,
+  }) : _store = store,
+       _peerStats = peerStats ?? StubPeerData.forGroup;
 
   static const _tokenPrefix = 'stub.';
 
@@ -43,7 +45,10 @@ class StubApiInterceptor extends Interceptor {
   Future<void> _previous = Future.value();
 
   @override
-  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) {
     final turn = _previous.then((_) => _handle(options, handler));
     // 한 요청이 어쩌다 던져도(핸들러를 두 번 부르는 결함 등) 다음 요청들이 멈추지 않게 한다.
     _previous = turn.catchError((Object _) {});
@@ -51,11 +56,17 @@ class StubApiInterceptor extends Interceptor {
   }
 
   /// 요청 하나를 처리한다. 모든 실패를 응답으로 바꾸므로 던지지 않는다.
-  Future<void> _handle(RequestOptions options, RequestInterceptorHandler handler) async {
+  Future<void> _handle(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     try {
       await _ensureLoaded();
       final (status, body) = await _route(options);
-      handler.resolve(Response(requestOptions: options, statusCode: status, data: body), true);
+      handler.resolve(
+        Response(requestOptions: options, statusCode: status, data: body),
+        true,
+      );
     } on _StubError catch (e) {
       handler.reject(_error(options, e.status, e.code, e.message), true);
     } catch (e) {
@@ -63,29 +74,47 @@ class StubApiInterceptor extends Interceptor {
     }
   }
 
-  DioException _error(RequestOptions options, int status, String code, String message) => DioException(
-        requestOptions: options,
-        type: DioExceptionType.badResponse,
-        response: Response(requestOptions: options, statusCode: status, data: {'code': code, 'message': message}),
-      );
+  DioException _error(
+    RequestOptions options,
+    int status,
+    String code,
+    String message,
+  ) => DioException(
+    requestOptions: options,
+    type: DioExceptionType.badResponse,
+    response: Response(
+      requestOptions: options,
+      statusCode: status,
+      data: {'code': code, 'message': message},
+    ),
+  );
 
   Future<(int, Object?)> _route(RequestOptions o) async {
     final m = o.method, p = o.path;
-    if (m == 'POST' && p == ApiPath.login) return (200, await _login(_bodyOf(o.data)));
+    if (m == 'POST' && p == ApiPath.login) {
+      return (200, await _login(_bodyOf(o.data)));
+    }
 
     final token = _bearer(o); // 이하 전부 Bearer 필수
     final provider = _authed(token);
     final userData = _state.of(provider.name); // 로그인한 사용자의 데이터만 본다
     if (m == 'POST' && p == ApiPath.logout) {
-      await _commitState(() => _state.activeTokens.remove(token), () => _state.activeTokens.add(token));
+      await _commitState(
+        () => _state.activeTokens.remove(token),
+        () => _state.activeTokens.add(token),
+      );
       return (204, null);
     }
     if (m == 'GET' && p == ApiPath.me) return (200, _user(provider));
     if (p == ApiPath.profile) return _profile(userData, m, o.data);
-    if (m == 'GET' && p == ApiPath.transactions) return (200, _listTx(userData, o.queryParameters));
+    if (m == 'GET' && p == ApiPath.transactions) {
+      return (200, _listTx(userData, o.queryParameters));
+    }
     final txId = _idAfter(ApiPath.transactions, p);
     if (txId != null) return _tx(userData, m, txId, o.data);
-    if (m == 'GET' && p == ApiPath.categories) return (200, _listCategories(userData));
+    if (m == 'GET' && p == ApiPath.categories) {
+      return (200, _listCategories(userData));
+    }
     final catId = _idAfter(ApiPath.categories, p);
     if (catId != null) return _category(userData, m, catId, o.data);
     if (m == 'GET' && p == ApiPath.peerStats) {
@@ -98,7 +127,10 @@ class StubApiInterceptor extends Interceptor {
         200,
         [
           for (final g in AgeGroup.values)
-            {'ageGroup': g.wire, 'avgMonthlyExpense': _peerStats(g).avgMonthlyExpense},
+            {
+              'ageGroup': g.wire,
+              'avgMonthlyExpense': _peerStats(g).avgMonthlyExpense,
+            },
         ],
       );
     }
@@ -113,9 +145,14 @@ class StubApiInterceptor extends Interceptor {
       throw _StubError(400, 'VALIDATION', 'idToken이 필요합니다.');
     }
     final provider = _providerOrNull(body['provider']);
-    if (provider == null) throw _StubError(400, 'VALIDATION', 'provider가 잘못되었습니다.');
+    if (provider == null) {
+      throw _StubError(400, 'VALIDATION', 'provider가 잘못되었습니다.');
+    }
     final token = '$_tokenPrefix${provider.name}.${const Uuid().v4()}';
-    await _commitState(() => _state.activeTokens.add(token), () => _state.activeTokens.remove(token));
+    await _commitState(
+      () => _state.activeTokens.add(token),
+      () => _state.activeTokens.remove(token),
+    );
     return {'accessToken': token, 'user': _user(provider)};
   }
 
@@ -137,7 +174,8 @@ class StubApiInterceptor extends Interceptor {
     return provider;
   }
 
-  AuthProvider? _providerOrNull(Object? name) => _enumOrNull(AuthProvider.values, name);
+  AuthProvider? _providerOrNull(Object? name) =>
+      _enumOrNull(AuthProvider.values, name);
 
   /// [values] 중 이름이 [name]인 값. 없거나 문자열이 아니면 null.
   T? _enumOrNull<T extends Enum>(List<T> values, Object? name) {
@@ -147,12 +185,19 @@ class StubApiInterceptor extends Interceptor {
     return null;
   }
 
-  _Json _user(AuthProvider p) =>
-      {'id': 'stub-${p.name}', 'provider': p.name, 'nickname': '${p.label} 사용자'};
+  _Json _user(AuthProvider p) => {
+    'id': 'stub-${p.name}',
+    'provider': p.name,
+    'nickname': '${p.label} 사용자',
+  };
 
   // --- profile ---
 
-  Future<(int, Object?)> _profile(StubUserData userData, String method, Object? body) async {
+  Future<(int, Object?)> _profile(
+    StubUserData userData,
+    String method,
+    Object? body,
+  ) async {
     switch (method) {
       case 'GET':
         final p = userData.profile;
@@ -164,8 +209,16 @@ class StubApiInterceptor extends Interceptor {
         if (ageGroupFromWire(b['ageGroup']) == null) {
           throw _StubError(400, 'VALIDATION', 'ageGroup이 잘못되었습니다.');
         }
-        if (income is! int || income < 0) throw _StubError(400, 'VALIDATION', 'monthlyIncome은 0 이상 정수입니다.');
-        await _commit(userData, () => userData.profile = {'ageGroup': b['ageGroup'], 'monthlyIncome': income});
+        if (income is! int || income < 0) {
+          throw _StubError(400, 'VALIDATION', 'monthlyIncome은 0 이상 정수입니다.');
+        }
+        await _commit(
+          userData,
+          () => userData.profile = {
+            'ageGroup': b['ageGroup'],
+            'monthlyIncome': income,
+          },
+        );
         return (200, Map<String, dynamic>.of(userData.profile!));
     }
     throw _StubError(404, 'NOT_FOUND', '경로가 없습니다: $method ${ApiPath.profile}');
@@ -184,18 +237,26 @@ class StubApiInterceptor extends Interceptor {
   List<_Json> _listTx(StubUserData userData, Map<String, dynamic> query) {
     final from = _utcOrNull(query['from']);
     final to = _utcOrNull(query['to']);
-    if (from == null || to == null) throw _StubError(400, 'VALIDATION', 'from·to(UTC)가 필요합니다.');
+    if (from == null || to == null) {
+      throw _StubError(400, 'VALIDATION', 'from·to(UTC)가 필요합니다.');
+    }
     DateTime dateOf(_Json r) => DateTime.parse(r['date'] as String);
-    final rows = userData.transactions.values.where((r) {
-      final d = dateOf(r);
-      return !d.isBefore(from) && d.isBefore(to);
-    }).toList()
-      // 문자열이 아니라 시각으로 정렬한다(소수 초 자릿수가 다르면 문자열 순서가 시각 순서와 어긋난다).
-      ..sort((a, b) => dateOf(b).compareTo(dateOf(a)));
+    final rows =
+        userData.transactions.values.where((r) {
+            final d = dateOf(r);
+            return !d.isBefore(from) && d.isBefore(to);
+          }).toList()
+          // 문자열이 아니라 시각으로 정렬한다(소수 초 자릿수가 다르면 문자열 순서가 시각 순서와 어긋난다).
+          ..sort((a, b) => dateOf(b).compareTo(dateOf(a)));
     return [for (final r in rows) Map<String, dynamic>.of(r)];
   }
 
-  Future<(int, Object?)> _tx(StubUserData userData, String method, String id, Object? body) async {
+  Future<(int, Object?)> _tx(
+    StubUserData userData,
+    String method,
+    String id,
+    Object? body,
+  ) async {
     switch (method) {
       case 'PUT':
         final b = _bodyOf(body);
@@ -203,7 +264,9 @@ class StubApiInterceptor extends Interceptor {
         final existing = userData.transactions[id];
         final now = DateTime.now().toUtc().toIso8601String();
         final customId = b['customCategoryId'] as String?;
-        final custom = customId == null ? null : userData.customCategories[customId];
+        final custom = customId == null
+            ? null
+            : userData.customCategories[customId];
         if (customId != null && custom == null) {
           throw _StubError(400, 'VALIDATION', '없는 카테고리입니다: $customId');
         }
@@ -222,19 +285,32 @@ class StubApiInterceptor extends Interceptor {
         await _commit(userData, () => userData.transactions[id] = row);
         return (existing == null ? 201 : 200, Map<String, dynamic>.of(row));
       case 'DELETE':
-        if (!userData.transactions.containsKey(id)) throw _StubError(404, 'NOT_FOUND', '거래가 없습니다: $id');
+        if (!userData.transactions.containsKey(id)) {
+          throw _StubError(404, 'NOT_FOUND', '거래가 없습니다: $id');
+        }
         await _commit(userData, () => userData.transactions.remove(id));
         return (204, null);
     }
-    throw _StubError(404, 'NOT_FOUND', '경로가 없습니다: $method ${ApiPath.transaction(id)}');
+    throw _StubError(
+      404,
+      'NOT_FOUND',
+      '경로가 없습니다: $method ${ApiPath.transaction(id)}',
+    );
   }
 
   // --- categories ---
 
-  List<_Json> _listCategories(StubUserData userData) =>
-      [for (final r in userData.customCategories.values) Map<String, dynamic>.of(r)];
+  List<_Json> _listCategories(StubUserData userData) => [
+    for (final r in userData.customCategories.values)
+      Map<String, dynamic>.of(r),
+  ];
 
-  Future<(int, Object?)> _category(StubUserData userData, String method, String id, Object? body) async {
+  Future<(int, Object?)> _category(
+    StubUserData userData,
+    String method,
+    String id,
+    Object? body,
+  ) async {
     // 기본 분류(1~19)는 계약 상수 — 사용자 카테고리 경로로 만들거나 지울 수 없다.
     if (int.tryParse(id) != null) {
       throw _StubError(403, 'CATEGORY_IMMUTABLE', '기본 카테고리는 수정하거나 삭제할 수 없습니다.');
@@ -247,17 +323,29 @@ class StubApiInterceptor extends Interceptor {
         final rawBase = b['baseCategoryId'];
         final baseId = rawBase is int ? rawBase : null;
         if (name == null) {
-          throw _StubError(400, 'VALIDATION', '이름은 1~${CategoryName.maxLength}자여야 합니다.');
+          throw _StubError(
+            400,
+            'VALIDATION',
+            '이름은 1~${CategoryName.maxLength}자여야 합니다.',
+          );
         }
         if (budgetCategoryFromWire(baseId) == null) {
           throw _StubError(400, 'VALIDATION', '상위 카테고리가 잘못되었습니다.');
         }
         final duplicated = userData.customCategories.entries.any(
-          (e) => e.key != id && (e.value['name'] as String).toLowerCase() == name.toLowerCase(),
+          (e) =>
+              e.key != id &&
+              (e.value['name'] as String).toLowerCase() == name.toLowerCase(),
         );
-        if (duplicated) throw _StubError(409, 'CATEGORY_DUPLICATE', '이미 있는 이름입니다: $name');
+        if (duplicated) {
+          throw _StubError(409, 'CATEGORY_DUPLICATE', '이미 있는 이름입니다: $name');
+        }
         final existing = userData.customCategories[id];
-        final row = <String, dynamic>{'id': id, 'name': name, 'baseCategoryId': baseId};
+        final row = <String, dynamic>{
+          'id': id,
+          'name': name,
+          'baseCategoryId': baseId,
+        };
         await _commit(userData, () {
           userData.customCategories[id] = row;
           // 상위 분류를 바꾸면 이 카테고리로 기록한 거래도 새 분류로 옮긴다.
@@ -267,7 +355,9 @@ class StubApiInterceptor extends Interceptor {
         });
         return (existing == null ? 201 : 200, Map<String, dynamic>.of(row));
       case 'DELETE':
-        if (!userData.customCategories.containsKey(id)) throw _StubError(404, 'NOT_FOUND', '카테고리가 없습니다: $id');
+        if (!userData.customCategories.containsKey(id)) {
+          throw _StubError(404, 'NOT_FOUND', '카테고리가 없습니다: $id');
+        }
         await _commit(userData, () {
           userData.customCategories.remove(id);
           // 참조하던 거래는 상위 기본 분류로 되돌린다.
@@ -277,13 +367,18 @@ class StubApiInterceptor extends Interceptor {
         });
         return (204, null);
     }
-    throw _StubError(404, 'NOT_FOUND', '경로가 없습니다: $method ${ApiPath.category(id)}');
+    throw _StubError(
+      404,
+      'NOT_FOUND',
+      '경로가 없습니다: $method ${ApiPath.category(id)}',
+    );
   }
 
   // --- validation ---
 
-  _Json _bodyOf(Object? body) =>
-      body is _Json ? body : throw _StubError(400, 'VALIDATION', 'JSON 객체 바디가 필요합니다.');
+  _Json _bodyOf(Object? body) => body is _Json
+      ? body
+      : throw _StubError(400, 'VALIDATION', 'JSON 객체 바디가 필요합니다.');
 
   /// 계약의 일시(UTC, `...Z`)로 읽는다. `Z`로 끝나고 [DateTime.tryParse]가 읽으면 받으므로 엄격한 ISO-8601
   /// 검사는 아니다(tryParse가 받는 다른 모양도 통과한다). 같은 순간이라도 `+09:00` 같은 오프셋은 받지 않는다.
@@ -292,7 +387,10 @@ class StubApiInterceptor extends Interceptor {
 
   /// 계약의 거래 규칙. 수입은 카테고리가 없으므로 categoryId는 정수이기만 하면 된다.
   void _validateTransaction(_Json b) {
-    final amount = b['amount'], categoryId = b['categoryId'], memo = b['memo'], customId = b['customCategoryId'];
+    final amount = b['amount'],
+        categoryId = b['categoryId'],
+        memo = b['memo'],
+        customId = b['customCategoryId'];
     final type = _enumOrNull(TransactionType.values, b['type']);
     String? problem;
     if (amount is! int || amount < 1) {
@@ -300,7 +398,8 @@ class StubApiInterceptor extends Interceptor {
     } else if (type == null) {
       problem = 'type은 expense 또는 income입니다.';
     } else if (categoryId is! int ||
-        (type == TransactionType.expense && budgetCategoryFromWire(categoryId) == null)) {
+        (type == TransactionType.expense &&
+            budgetCategoryFromWire(categoryId) == null)) {
       problem = '지출의 categoryId는 1~19입니다.';
     } else if (_utcOrNull(b['date']) == null) {
       problem = 'date는 ISO-8601 UTC입니다.';
@@ -330,7 +429,10 @@ class StubApiInterceptor extends Interceptor {
   }
 
   /// 사용자 데이터 밖의 상태(준 토큰)를 [change]로 바꾸고 기기에 저장한다. 저장하지 못하면 [undo]하고 던진다.
-  Future<void> _commitState(void Function() change, void Function() undo) async {
+  Future<void> _commitState(
+    void Function() change,
+    void Function() undo,
+  ) async {
     change();
     try {
       await _store?.save(_state.encode());

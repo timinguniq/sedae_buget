@@ -12,11 +12,17 @@ abstract class TransactionApi {
 
   /// `[from, to)` 반개구간. date 내림차순.
   @GET(ApiPath.transactions)
-  Future<List<TransactionDto>> list(@Query('from') String from, @Query('to') String to);
+  Future<List<TransactionDto>> list(
+    @Query('from') String from,
+    @Query('to') String to,
+  );
 
   /// id는 클라이언트 UUID(upsert). 타임스탬프는 서버 응답을 따른다.
   @PUT('${ApiPath.transactions}/{id}')
-  Future<TransactionDto> put(@Path('id') String id, @Body() TransactionBodyDto body);
+  Future<TransactionDto> put(
+    @Path('id') String id,
+    @Body() TransactionBodyDto body,
+  );
 
   @DELETE('${ApiPath.transactions}/{id}')
   Future<void> delete(@Path('id') String id);

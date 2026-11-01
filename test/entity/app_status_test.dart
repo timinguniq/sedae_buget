@@ -1,19 +1,27 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
-const _android = AppVersion(releaseVersion: 20, minimumAvailableVersion: 15, link: 'android-store');
-const _ios = AppVersion(releaseVersion: 30, minimumAvailableVersion: 25, link: 'ios-store');
+const _android = AppVersion(
+  releaseVersion: 20,
+  minimumAvailableVersion: 15,
+  link: 'android-store',
+);
+const _ios = AppVersion(
+  releaseVersion: 30,
+  minimumAvailableVersion: 25,
+  link: 'ios-store',
+);
 
 AppInitialInfo _info({bool available = true}) => AppInitialInfo(
-      android: _android,
-      ios: _ios,
-      serviceStatus: AppServiceStatus(
-        available: available,
-        noticeTitle: '점검 중',
-        noticeContent: '곧 돌아올게요',
-        expectedTimeToBeAvailable: DateTime(2026, 9, 24, 23, 59, 59),
-      ),
-    );
+  android: _android,
+  ios: _ios,
+  serviceStatus: AppServiceStatus(
+    available: available,
+    noticeTitle: '점검 중',
+    noticeContent: '곧 돌아올게요',
+    expectedTimeToBeAvailable: DateTime(2026, 9, 24, 23, 59, 59),
+  ),
+);
 
 AppStatus _of(AppInitialInfo? info, {int? build = 20, bool isIOS = false}) =>
     AppStatus.of(info, build: build, isIOS: isIOS);

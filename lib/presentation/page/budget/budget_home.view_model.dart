@@ -9,6 +9,11 @@ import 'package:sedae_budget/presentation/page/compare/compare.view_model.dart';
 final monthOverviewProvider = Provider<AsyncValue<MonthOverview>>((ref) {
   final month = ref.watch(viewedMonthProvider);
   final peer = ref.watch(peerStatsProvider);
-  if (!month.hasError && !peer.hasValue && !peer.hasError) return const AsyncLoading();
-  return month.whenData((month) => MonthOverview(month: month, peer: peer.hasError ? null : peer.value));
+  if (!month.hasError && !peer.hasValue && !peer.hasError) {
+    return const AsyncLoading();
+  }
+  return month.whenData(
+    (month) =>
+        MonthOverview(month: month, peer: peer.hasError ? null : peer.value),
+  );
 });

@@ -28,7 +28,10 @@ class ReportPage extends ConsumerWidget {
           // '내 세대' 강조는 순위·인사이트를 계산한 또래 통계의 나이대를 따른다.
           final ageGroup = peer.ageGroup;
           // 빈 달이거나 표본이 없으면 순위가 없다.
-          final rank = switch (o.standing) { PeerCompared(:final rank) => rank, _ => null };
+          final rank = switch (o.standing) {
+            PeerCompared(:final rank) => rank,
+            _ => null,
+          };
           // 소득이 없으면 저축률·소득 대비 지출 모두 '—'.
           final savingsRate = o.month.savingsRate;
           final incomeRatio = o.month.expenseRatio;
@@ -38,10 +41,18 @@ class ReportPage extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
             children: [
               // ── 헤더 ─────────────────────────────────────────────
-              Text(_eyebrow(month, ref.read(selectedMonthProvider.notifier).today),
-                  style: context.typo.caption1W600.copyWith(color: context.color.label.assistive)),
-              Text(month.fullName,
-                  style: context.typo.pageTitle.copyWith(color: context.color.label.normal)),
+              Text(
+                _eyebrow(month, ref.read(selectedMonthProvider.notifier).today),
+                style: context.typo.caption1W600.copyWith(
+                  color: context.color.label.assistive,
+                ),
+              ),
+              Text(
+                month.fullName,
+                style: context.typo.pageTitle.copyWith(
+                  color: context.color.label.normal,
+                ),
+              ),
               const SizedBox(height: 14),
 
               // ── 이달의 발견 ──────────────────────────────────────
@@ -53,49 +64,84 @@ class ReportPage extends ConsumerWidget {
               const SizedBox(height: 13),
 
               // ── 3 stat tiles ─────────────────────────────────────
-              Row(children: [
-                Expanded(child: _StatTile(
-                    label: rankSideLabel, value: rank?.topPercentText ?? '—', accent: true)),
-                const SizedBox(width: 9),
-                Expanded(child: _StatTile(
-                    label: '저축률', value: savingsRate == null ? '—' : '$savingsRate%')),
-                const SizedBox(width: 9),
-                Expanded(child: _StatTile(
-                    label: '소득 대비 지출', value: incomeRatio == null ? '—' : '$incomeRatio%')),
-              ]),
+              Row(
+                children: [
+                  Expanded(
+                    child: _StatTile(
+                      label: rankSideLabel,
+                      value: rank?.topPercentText ?? '—',
+                      accent: true,
+                    ),
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: _StatTile(
+                      label: '저축률',
+                      value: savingsRate == null ? '—' : '$savingsRate%',
+                    ),
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: _StatTile(
+                      label: '소득 대비 지출',
+                      value: incomeRatio == null ? '—' : '$incomeRatio%',
+                    ),
+                  ),
+                ],
+              ),
 
               const SizedBox(height: 14),
 
               // ── 세대별 월평균 ──────────────────────────────────────
               SurfaceCard(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('세대별 월평균 지출',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '세대별 월평균 지출',
                       style: context.typo.sectionTitle.copyWith(
-                          fontSize: 13, color: context.color.label.normal)),
-                  const SizedBox(height: 14),
-                  generationAvg.when(
-                    loading: () => const SizedBox(height: 84),
-                    error: (e, _) => LoadErrorView(error: e),
-                    data: (avgs) => GenerationAvgChart(myGroup: ageGroup, avgByGroup: avgs),
-                  ),
-                ]),
+                        fontSize: 13,
+                        color: context.color.label.normal,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    generationAvg.when(
+                      loading: () => const SizedBox(height: 84),
+                      error: (e, _) => LoadErrorView(error: e),
+                      data: (avgs) => GenerationAvgChart(
+                        myGroup: ageGroup,
+                        avgByGroup: avgs,
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
               const SizedBox(height: 14),
 
               // ── 세대별 대표 소비 ───────────────────────────────────
-              Text('세대별 대표 소비',
-                  style: context.typo.caption1W600.copyWith(
-                      fontWeight: context.typo.bold, color: context.color.label.normal)),
+              Text(
+                '세대별 대표 소비',
+                style: context.typo.caption1W600.copyWith(
+                  fontWeight: context.typo.bold,
+                  color: context.color.label.normal,
+                ),
+              ),
               const SizedBox(height: 9),
               Wrap(
-                spacing: 7, runSpacing: 7,
+                spacing: 7,
+                runSpacing: 7,
                 children: [
                   for (final g in AgeGroup.values)
                     DesignChip(
                       label: '${g.label} · ${g.signatureSpend}',
-                      style: g == ageGroup ? DesignChipStyle.coral : DesignChipStyle.outline,
-                      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
+                      style: g == ageGroup
+                          ? DesignChipStyle.coral
+                          : DesignChipStyle.outline,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 11,
+                        vertical: 6,
+                      ),
                     ),
                 ],
               ),
@@ -104,18 +150,27 @@ class ReportPage extends ConsumerWidget {
 
               // ── 자기 추이 ─────────────────────────────────────────
               SurfaceCard(
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text('최근 6개월 내 지출',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '최근 6개월 내 지출',
                       style: context.typo.sectionTitle.copyWith(
-                          fontSize: 13, color: context.color.label.normal)),
-                  const SizedBox(height: 14),
-                  selfTrend.when(
-                    loading: () =>
-                        const SizedBox(height: 96, child: Center(child: CircularProgressIndicator())),
-                    error: (e, _) => LoadErrorView(error: e),
-                    data: (trend) => _SelfTrendBars(trend: trend),
-                  ),
-                ]),
+                        fontSize: 13,
+                        color: context.color.label.normal,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    selfTrend.when(
+                      loading: () => const SizedBox(
+                        height: 96,
+                        child: Center(child: CircularProgressIndicator()),
+                      ),
+                      error: (e, _) => LoadErrorView(error: e),
+                      data: (trend) => _SelfTrendBars(trend: trend),
+                    ),
+                  ],
+                ),
               ),
             ],
           );
@@ -135,17 +190,26 @@ class ReportPage extends ConsumerWidget {
   ) {
     if (i == null) return const TextSpan(text: noInsightText);
     final (:prefix, :highlight, :suffix) = i.comparison.insightLine(i.category);
-    return TextSpan(children: [
-      TextSpan(text: prefix),
-      TextSpan(text: highlight, style: MonthlyInsightCard.highlightStyle(context)),
-      TextSpan(text: suffix),
-    ]);
+    return TextSpan(
+      children: [
+        TextSpan(text: prefix),
+        TextSpan(
+          text: highlight,
+          style: MonthlyInsightCard.highlightStyle(context),
+        ),
+        TextSpan(text: suffix),
+      ],
+    );
   }
 }
 
 /// 디자인 stat 타일: 값 800·19(첫 타일 코랄) + 라벨 500·10, r16 + border.
 class _StatTile extends StatelessWidget {
-  const _StatTile({required this.label, required this.value, this.accent = false});
+  const _StatTile({
+    required this.label,
+    required this.value,
+    this.accent = false,
+  });
 
   final String label;
   final String value;
@@ -161,15 +225,24 @@ class _StatTile extends StatelessWidget {
         children: [
           FittedBox(
             fit: BoxFit.scaleDown,
-            child: Text(value,
-                style: context.typo.amountDisplaySmall.copyWith(
-                    fontSize: 19, letterSpacing: -0.3,
-                    color: accent ? context.color.primary.normal : context.color.label.normal)),
+            child: Text(
+              value,
+              style: context.typo.amountDisplaySmall.copyWith(
+                fontSize: 19,
+                letterSpacing: -0.3,
+                color: accent
+                    ? context.color.primary.normal
+                    : context.color.label.normal,
+              ),
+            ),
           ),
           const SizedBox(height: 2),
-          Text(label,
-              style: context.typo.caption2W500
-                  .copyWith(color: context.color.label.assistive)),
+          Text(
+            label,
+            style: context.typo.caption2W500.copyWith(
+              color: context.color.label.assistive,
+            ),
+          ),
         ],
       ),
     );
@@ -183,7 +256,10 @@ class _SelfTrendBars extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxExpense = trend.fold<int>(1, (m, e) => e.expense > m ? e.expense : m);
+    final maxExpense = trend.fold<int>(
+      1,
+      (m, e) => e.expense > m ? e.expense : m,
+    );
 
     return SizedBox(
       height: 96,
@@ -201,14 +277,17 @@ class _SelfTrendBars extends StatelessWidget {
                     height: h,
                     decoration: BoxDecoration(
                       color: context.color.line.neutral,
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(4),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     e.month.shortName,
-                    style: context.typo.caption2W600
-                        .copyWith(color: context.color.label.assistive),
+                    style: context.typo.caption2W600.copyWith(
+                      color: context.color.label.assistive,
+                    ),
                   ),
                 ],
               ),

@@ -8,19 +8,37 @@ import 'package:sedae_budget/theme/theme.dart';
 import '../../helper/fakes.dart';
 
 void main() {
-
   /// 온보딩을 띄우고 소득 단계까지 진행한다.
-  Future<void> pumpToIncomeStep(WidgetTester t, ProviderContainer container) async {
+  Future<void> pumpToIncomeStep(
+    WidgetTester t,
+    ProviderContainer container,
+  ) async {
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
 
-    final router = GoRouter(initialLocation: '/onboarding', routes: [
-      GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingFlowPage()),
-      GoRoute(path: '/budget', builder: (_, _) => const Scaffold(body: Text('HOME'))),
-    ]);
-    await t.pumpWidget(fakeScope(container, MaterialApp.router(routerConfig: router,
-        theme: materialTheme(LightTheme()))));
+    final router = GoRouter(
+      initialLocation: '/onboarding',
+      routes: [
+        GoRoute(
+          path: '/onboarding',
+          builder: (_, _) => const OnboardingFlowPage(),
+        ),
+        GoRoute(
+          path: '/budget',
+          builder: (_, _) => const Scaffold(body: Text('HOME')),
+        ),
+      ],
+    );
+    await t.pumpWidget(
+      fakeScope(
+        container,
+        MaterialApp.router(
+          routerConfig: router,
+          theme: materialTheme(LightTheme()),
+        ),
+      ),
+    );
     await t.pump();
     await t.tap(find.text('20대'));
     await t.pump();
@@ -82,12 +100,28 @@ void main() {
     t.view.devicePixelRatio = 1.0;
     addTearDown(t.view.reset);
 
-    final router = GoRouter(initialLocation: '/onboarding', routes: [
-      GoRoute(path: '/onboarding', builder: (_, _) => const OnboardingFlowPage()),
-      GoRoute(path: '/budget', builder: (_, _) => const Scaffold(body: Text('HOME'))),
-    ]);
-    await t.pumpWidget(fakeScope(fakeContainer(), MaterialApp.router(routerConfig: router,
-        theme: materialTheme(LightTheme()))));
+    final router = GoRouter(
+      initialLocation: '/onboarding',
+      routes: [
+        GoRoute(
+          path: '/onboarding',
+          builder: (_, _) => const OnboardingFlowPage(),
+        ),
+        GoRoute(
+          path: '/budget',
+          builder: (_, _) => const Scaffold(body: Text('HOME')),
+        ),
+      ],
+    );
+    await t.pumpWidget(
+      fakeScope(
+        fakeContainer(),
+        MaterialApp.router(
+          routerConfig: router,
+          theme: materialTheme(LightTheme()),
+        ),
+      ),
+    );
     await t.pump();
 
     expect(find.text('다음'), findsOneWidget);
@@ -95,11 +129,16 @@ void main() {
     await t.pump();
     await t.tap(find.text('다음'));
     await t.pump(); // process tap → starts nextPage() animation
-    await t.pump(const Duration(milliseconds: 300)); // advance through 250ms animation
+    await t.pump(
+      const Duration(milliseconds: 300),
+    ); // advance through 250ms animation
     await t.pump(); // rebuild after onPageChanged setState
     expect(find.text('시작하기'), findsOneWidget);
     // 소득은 서버에 저장된다. 이전 문구는 '기기에 안전하게 보관'이라고 했다.
-    expect(find.text('소득 정보는 저축률 계산과 또래 비교에만 쓰이고, 비교는 익명 통계로만 이뤄져요.'), findsOneWidget);
+    expect(
+      find.text('소득 정보는 저축률 계산과 또래 비교에만 쓰이고, 비교는 익명 통계로만 이뤄져요.'),
+      findsOneWidget,
+    );
     expect(find.textContaining('기기에'), findsNothing);
     // 소득은 저축률·잔액의 기준이기도 하다. 이전 문구는 '또래 평균과 비교할 때만 사용해요.'였다.
     expect(find.text('저축률 계산과 또래 비교에만 사용해요.'), findsOneWidget);

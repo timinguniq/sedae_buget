@@ -14,9 +14,10 @@ class UserProfileRepositoryImpl implements UserProfileRepository {
   /// 다른 404(경로가 없음·주소가 틀림)는 '프로필 없음'이 아니라 실패다. 기존 사용자를 온보딩으로 보내지 않는다.
   @override
   Future<Result<UserProfile?>> current() => guardApi<UserProfile?>(
-        () async => (await _api.get()).toEntity(),
-        recover: (f) => f.code == 'PROFILE_NOT_FOUND' ? const Result.success(null) : null,
-      );
+    () async => (await _api.get()).toEntity(),
+    recover: (f) =>
+        f.code == 'PROFILE_NOT_FOUND' ? const Result.success(null) : null,
+  );
 
   @override
   Future<Result<void>> save(UserProfile profile) =>

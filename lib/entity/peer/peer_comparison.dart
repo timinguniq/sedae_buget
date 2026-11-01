@@ -29,10 +29,10 @@ class PeerComparison {
   int get percent => ((mine - peer) * 100 / peer).round();
 
   PeerDirection get direction => switch (percent) {
-        > 0 => PeerDirection.more,
-        < 0 => PeerDirection.less,
-        _ => PeerDirection.similar,
-      };
+    > 0 => PeerDirection.more,
+    < 0 => PeerDirection.less,
+    _ => PeerDirection.similar,
+  };
 
   /// 또래보다 50% 이상 더 씀(강조해서 보여줄 차이).
   bool get strong => percent >= 50;

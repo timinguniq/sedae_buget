@@ -10,7 +10,8 @@ class SharedPrefsStubStateStore implements StubStateStore {
   static const _key = 'stub_api_state';
 
   @override
-  Future<String?> load() async => (await SharedPreferences.getInstance()).getString(_key);
+  Future<String?> load() async =>
+      (await SharedPreferences.getInstance()).getString(_key);
 
   @override
   Future<void> save(String json) async =>

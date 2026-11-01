@@ -2,11 +2,7 @@ import 'package:sedae_budget/entity/core/failure_reason.dart';
 
 /// 도메인 계약의 실패. 모든 repository는 실패를 이 타입으로 돌려준다.
 class ErrorResult {
-  const ErrorResult({
-    required this.reason,
-    required this.message,
-    this.code,
-  });
+  const ErrorResult({required this.reason, required this.message, this.code});
 
   /// 호출부가 분기하는 기준.
   final FailureReason reason;

@@ -3,14 +3,14 @@ import 'package:lottie/lottie.dart';
 
 class LottieAsset extends StatelessWidget {
   const LottieAsset(
-      this.url, {
-        super.key,
-        this.height = 100,
-        this.width,
-        this.repeat = true,
-        this.fit = BoxFit.fitHeight,
-        this.animate,
-      });
+    this.url, {
+    super.key,
+    this.height = 100,
+    this.width,
+    this.repeat = true,
+    this.fit = BoxFit.fitHeight,
+    this.animate,
+  });
 
   final String url;
   final double? height;

@@ -117,10 +117,7 @@ class AccentColorType {
 }
 
 class StaticColorType {
-  const StaticColorType({
-    required this.white,
-    required this.black,
-  });
+  const StaticColorType({required this.white, required this.black});
 
   final Color white;
   final Color black;
