@@ -32,7 +32,7 @@ class CommitGateTest(HarnessTestCase):
         calls = self.flutter_calls()
         self.assertEqual(len(calls), 2, calls)
         self.assertTrue(
-            calls[0].startswith("analyze --no-pub --no-fatal-warnings --no-fatal-infos @ "), calls
+            calls[0].startswith("analyze --no-pub --no-fatal-infos @ "), calls
         )
         self.assertTrue(calls[1].startswith("test --no-pub @ "), calls)
         for call in dart_calls + calls:

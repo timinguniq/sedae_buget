@@ -90,7 +90,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 |---|---|
 | 의존성 설치 | `flutter pub get` |
 | 포맷 | `dart format lib test` |
-| 정적 분석 | `flutter analyze --no-pub --no-fatal-warnings --no-fatal-infos` |
+| 정적 분석 | `flutter analyze --no-pub --no-fatal-infos` |
 | 전체 테스트 | `flutter test` |
 | 일부 테스트 | `flutter test test/<경로>_test.dart` |
 | 코드 생성(freezed·json_serializable·retrofit) | `dart run build_runner build` |
@@ -99,7 +99,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 | 앱 실행 | `flutter run` (`.env` 필요. 환경 지정은 `--dart-define=env=<이름>`) |
 
 - 포맷 정책: `dart format` 기본 설정(80열)을 그대로 쓴다. 게이트가 어긋난 파일을 차단하므로 커밋 전에 `dart format lib test`를 실행한다.
-- 분석 정책: **오류만 차단**한다. 경고·정보는 허용하지만 새로 늘리지 않는다.
+- 분석 정책: **오류와 경고를 차단**한다. 정보는 허용하지만 새로 늘리지 않는다.
 - 생성 파일(`*.g.dart`, `*.freezed.dart`)은 저장소에 커밋한다. 원본을 바꾸면 코드 생성을 다시 실행하고 결과를 함께 커밋한다.
 - 새 clone에서는 `flutter pub get` → `.env` 준비 → `git config --local core.hooksPath .githooks` 순서로 준비한다(`docs/harness.md`).
 

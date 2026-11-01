@@ -37,7 +37,7 @@ git config --local core.hooksPath .githooks
 |---|---|---|
 | 필수 도구·입력 | `git`, `flutter`, `dart`, `.dart_tool/package_config.json`, `.dart_tool/package_graph.json`, `.env` 존재 확인 | 하나라도 없으면 이유를 표시하고 차단 |
 | 포맷 | `dart format --output=none --set-exit-if-changed lib test` | `dart format` 기본 설정(80열)과 다른 파일이 하나라도 있으면 차단. 어긋난 파일을 `Changed <경로>`로 출력 |
-| 정적 분석 | `flutter analyze --no-pub --no-fatal-warnings --no-fatal-infos` | **오류만 차단.** 경고·정보는 허용 |
+| 정적 분석 | `flutter analyze --no-pub --no-fatal-infos` | **오류·경고 차단.** 정보는 허용 |
 | 테스트 | `flutter test --no-pub` | 실패·실행 오류·테스트 0개 모두 차단 |
 | 레이어 의존성 | `test/architecture/layer_dependency_test.dart` | 위 테스트 실행에 포함 |
 
@@ -87,7 +87,6 @@ Claude Code는 `if: "Bash(git *)"`로 git 명령에만 어댑터를 실행하고
 
 | 검사 | 제외 사유 | 도입 시점 |
 |---|---|---|
-| 경고를 오류로 처리 | 기존 코드에 경고가 남아 있다(생성 파일의 `duplicate_ignore`, 미사용 import·선언). 고치는 일은 하네스 설정 범위 밖 | 기존 경고를 정리한 뒤 `--no-fatal-warnings` 제거 |
 | 별도 의존성 검사기(`tool/dep_guard.sh`) | 같은 규칙을 `test/architecture/`가 이미 강제하고 게이트에 포함된다. 중복 | 규칙이 import 문자열 검사로 표현되지 않을 때 |
 | 의존성 현황 측정(`tool/dep_audit.sh`) | 필요한 측정이 없다 | 패키지 정리·업그레이드 작업 때 |
 | 커버리지 임계값 | 기준 수치와 분모·제외 규칙(생성 파일, `main.dart`, 테마 리소스)을 아직 정하지 않았다 | 기준을 정한 뒤 `flutter test --coverage` 결과를 게이트에서 판정 |
@@ -115,7 +114,7 @@ bash tool/commit_gate.sh                                      # 현재 인덱스
 
 하네스 테스트가 실제로 발견·실행됐는지(0개가 아닌지) 확인한다. 하네스 테스트는 가짜 flutter·dart로 **호출·분기**를 검증한다: 정상 통과, 포맷 위반(분석·테스트를 시작하지 않음), 포맷터 실행 실패, 분석 오류, 분석기 실행 실패, 테스트 실패, 도구·입력 부재, stage와 작업 디렉터리 불일치, 첫 커밋, `git -C`/`git -c`/별칭, `commit -a`, worktree, 게이트 없는 트리, 어댑터의 통과·차단·우회 감지(here-document 본문, 토큰화 실패 시 문자열 검색 포함).
 
-실제 SDK 확인은 하네스를 바꿀 때마다 임시 clone에서 수행한다: 포맷이 어긋난 파일 stage → 차단, 타입 오류 stage → 차단, 실패 테스트 → 차단, `domain`에 `package:flutter` import → 차단, 경고만 있는 변경 → 통과, 미추적 파일의 오류 → 통과.
+실제 SDK 확인은 하네스를 바꿀 때마다 임시 clone에서 수행한다: 포맷이 어긋난 파일 stage → 차단, 타입 오류 stage → 차단, 실패 테스트 → 차단, `domain`에 `package:flutter` import → 차단, 경고만 있는 변경(예: 미사용 import) → 차단, 정보만 있는 변경 → 통과, 미추적 파일의 오류 → 통과.
 
 ## 실패했을 때
 
@@ -126,7 +125,7 @@ bash tool/commit_gate.sh                                      # 현재 인덱스
 | `필수 로컬 파일이 없습니다: .dart_tool/…` | `flutter pub get` |
 | `필수 로컬 파일이 없습니다: .env` | `.env`를 준비(값이 없으면 `touch .env`) |
 | `포맷 실패` | 출력의 `Changed <경로>` 줄이 어긋난 파일이다. `dart format lib test`로 맞춘 뒤 `git add`로 다시 stage |
-| `정적 분석 실패` | 출력의 `error •` 줄을 고친다. 작업 디렉터리에서 고쳤다면 `git add`로 다시 stage |
+| `정적 분석 실패` | 출력의 `error •`·`warning •` 줄을 고친다. 작업 디렉터리에서 고쳤다면 `git add`로 다시 stage |
 | `테스트 실패` | 출력의 `[E]` 테스트를 고친다. 로컬에서는 통과하는데 게이트에서만 실패하면 `git add`하지 않은 파일이 있는지 확인 |
 | `인덱스 내용을 내보내지 못했습니다` | 병합 충돌을 먼저 해결 |
 | `이 작업 트리에 게이트가 없습니다` | 하네스가 들어간 `main`을 병합·rebase |

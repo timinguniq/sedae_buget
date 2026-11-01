@@ -54,8 +54,8 @@ run_check() {
 
 # 정책: `dart format` 기본 설정(80열)과 다른 파일이 있으면 차단한다. 어긋난 파일은 `Changed <경로>`로 출력된다.
 run_check "포맷" dart format --output=none --set-exit-if-changed lib test
-# 정책: 분석 오류만 차단한다. 경고·정보는 허용(docs/harness.md).
-run_check "정적 분석" flutter analyze --no-pub --no-fatal-warnings --no-fatal-infos
+# 정책: 분석 오류·경고를 차단한다. 정보는 허용(docs/harness.md).
+run_check "정적 분석" flutter analyze --no-pub --no-fatal-infos
 # 레이어 의존성 규칙(test/architecture)도 이 실행에 포함된다.
 run_check "테스트" flutter test --no-pub
 
