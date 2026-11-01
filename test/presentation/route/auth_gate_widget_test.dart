@@ -1,16 +1,16 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/page/legal/legal.page.dart';
 import 'package:sedae_budget/presentation/page/login/widget/social_login_button.dart';
 import 'package:sedae_budget/presentation/page/main/main_shell.dart';
 import 'package:sedae_budget/presentation/page/setting/profile_edit.page.dart';
 import 'package:sedae_budget/presentation/page/setting/setting.page.dart';
 import 'package:sedae_budget/presentation/page/setting/widget/profile_card.dart';
-import 'package:sedae_budget/presentation/page/legal/legal.page.dart';
 import 'package:sedae_budget/presentation/route/custom_route.dart';
 import 'package:sedae_budget/theme/theme.dart';
 

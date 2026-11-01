@@ -10,7 +10,7 @@ import 'package:dio/dio.dart';
 class FakeHttpAdapter implements HttpClientAdapter {
   /// [status]와 [body]로 답한다.
   FakeHttpAdapter.reply(int status, String body, {String contentType = Headers.jsonContentType})
-      : _reply = ((status: status, body: body, contentType: contentType)),
+      : _reply = (status: status, body: body, contentType: contentType),
         _fail = null;
 
   /// 응답을 받기 전에 [type]으로 실패한다(시간 초과·연결 안 됨).

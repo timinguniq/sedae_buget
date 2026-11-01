@@ -105,7 +105,7 @@ class StubApiInterceptor extends Interceptor {
     throw _StubError(404, 'NOT_FOUND', '경로가 없습니다: $m $p');
   }
 
-  // auth --------------------//
+  // --- auth ---
 
   Future<_Json> _login(_Json body) async {
     final idToken = body['idToken'];
@@ -150,7 +150,7 @@ class StubApiInterceptor extends Interceptor {
   _Json _user(AuthProvider p) =>
       {'id': 'stub-${p.name}', 'provider': p.name, 'nickname': '${p.label} 사용자'};
 
-  // profile --------------------//
+  // --- profile ---
 
   Future<(int, Object?)> _profile(StubUserData userData, String method, Object? body) async {
     switch (method) {
@@ -171,7 +171,7 @@ class StubApiInterceptor extends Interceptor {
     throw _StubError(404, 'NOT_FOUND', '경로가 없습니다: $method ${ApiPath.profile}');
   }
 
-  // transactions --------------------//
+  // --- transactions ---
 
   /// `/v1/things/{id}` 형태 경로에서 id를 뽑는다. 모양이 다르면 null.
   String? _idAfter(String collection, String path) {
@@ -229,7 +229,7 @@ class StubApiInterceptor extends Interceptor {
     throw _StubError(404, 'NOT_FOUND', '경로가 없습니다: $method ${ApiPath.transaction(id)}');
   }
 
-  // categories --------------------//
+  // --- categories ---
 
   List<_Json> _listCategories(StubUserData userData) =>
       [for (final r in userData.customCategories.values) Map<String, dynamic>.of(r)];
@@ -280,7 +280,7 @@ class StubApiInterceptor extends Interceptor {
     throw _StubError(404, 'NOT_FOUND', '경로가 없습니다: $method ${ApiPath.category(id)}');
   }
 
-  // validation --------------------//
+  // --- validation ---
 
   _Json _bodyOf(Object? body) =>
       body is _Json ? body : throw _StubError(400, 'VALIDATION', 'JSON 객체 바디가 필요합니다.');
@@ -312,7 +312,7 @@ class StubApiInterceptor extends Interceptor {
     if (problem != null) throw _StubError(400, 'VALIDATION', problem);
   }
 
-  // persistence --------------------//
+  // --- persistence ---
 
   Future<void> _ensureLoaded() => _loading ??= _load();
 

@@ -47,11 +47,11 @@ class _SplashPageState extends ConsumerState<SplashPage> {
               ],
             ),
           ),
-          Align(
+          const Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: const EdgeInsets.only(bottom: 46),
-              child: const LottieAsset(CLotties.splashLoadingDots, height: 20, repeat: true),
+              padding: EdgeInsets.only(bottom: 46),
+              child: LottieAsset(CLotties.splashLoadingDots, height: 20),
             ),
           ),
         ],

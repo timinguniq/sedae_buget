@@ -4,8 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/budget_home.page.dart';
+import 'package:sedae_budget/presentation/presentation.dart';
 
 import '../../helper/fakes.dart';
 
@@ -191,6 +191,6 @@ Future<void> _pumpHome(WidgetTester tester, ProviderContainer container) async {
   tester.view.devicePixelRatio = 1.0;
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
-  await tester.pumpWidget(fakeScope(container, MaterialApp(home: const BudgetHomePage())));
+  await tester.pumpWidget(fakeScope(container, const MaterialApp(home: BudgetHomePage())));
   await tester.settle();
 }

@@ -1,28 +1,27 @@
-import 'package:sedae_budget/presentation/presentation.dart';
-import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/page/budget/budget_home.page.dart';
-import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart';
-import 'package:sedae_budget/presentation/page/budget/category_analysis.page.dart';
-import 'package:sedae_budget/presentation/page/budget/category_manage.page.dart';
-import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart';
-import 'package:sedae_budget/presentation/page/compare/compare.page.dart';
-import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
-import 'package:sedae_budget/presentation/page/login/login.page.dart';
-import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
-import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
-import 'package:sedae_budget/presentation/page/report/report.page.dart';
-import 'package:sedae_budget/presentation/page/setting/profile_edit.page.dart';
-import 'package:sedae_budget/presentation/page/legal/legal.page.dart';
-import 'package:sedae_budget/presentation/page/legal/legal_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/page/budget/budget_home.page.dart';
+import 'package:sedae_budget/presentation/page/budget/category_analysis.page.dart';
+import 'package:sedae_budget/presentation/page/budget/category_manage.page.dart';
+import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart';
+import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart';
+import 'package:sedae_budget/presentation/page/compare/compare.page.dart';
+import 'package:sedae_budget/presentation/page/legal/legal.page.dart';
+import 'package:sedae_budget/presentation/page/legal/legal_content.dart';
+import 'package:sedae_budget/presentation/page/login/login.page.dart';
+import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
+import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
+import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
+import 'package:sedae_budget/presentation/page/report/report.page.dart';
+import 'package:sedae_budget/presentation/page/setting/profile_edit.page.dart';
+import 'package:sedae_budget/presentation/presentation.dart';
 
-part 'route_path.dart';
 part 'auth_gate.dart';
+part 'route_path.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 /// 세션 상태([sessionGateProvider])가 바뀌면 go_router redirect를 재평가시키는 브리지.
 class RouterRefreshNotifier extends ChangeNotifier {
@@ -64,9 +63,5 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(path: RoutePath.unreachable.path, builder: (_, _) => const UnreachablePage()),
     ],
     debugLogDiagnostics: true,
-    observers: [
-      //FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
-      //AmplitudeNavigatorObserver(),
-    ],
   );
 });

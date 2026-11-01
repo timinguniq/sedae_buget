@@ -25,7 +25,7 @@ class IncomePicker extends StatelessWidget {
       SliderTheme(
         data: SliderTheme.of(context).copyWith(padding: EdgeInsets.zero),
         child: Slider(
-          min: 0, max: _incomeMax.toDouble(), divisions: 60,
+          max: _incomeMax.toDouble(), divisions: 60,
           value: income.clamp(0, _incomeMax.toDouble()), onChanged: onChanged),
       ),
       const SizedBox(height: 14),

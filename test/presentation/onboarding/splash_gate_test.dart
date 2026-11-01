@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/core/ads/index.dart';
 import 'package:sedae_budget/core/app_config/remote_config.dart';
@@ -11,8 +11,8 @@ import 'package:sedae_budget/presentation/page/initial/splash.page.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
 import 'package:sedae_budget/presentation/route/custom_route.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sedae_budget/theme/theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../helper/fakes.dart';
 

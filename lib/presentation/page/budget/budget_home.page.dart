@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_rank_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/savings_rate_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/summary_hero_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/top_category_card.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/transaction_tile.dart';
+import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 class BudgetHomePage extends ConsumerWidget {
@@ -31,7 +31,7 @@ class BudgetHomePage extends ConsumerWidget {
             ]),
             GestureDetector(
               onTap: () => context.push(RoutePath.setting.path),
-              child: const MascotDongle(size: 40, ring: false)),
+              child: const MascotDongle(ring: false)),
           ]),
           const SizedBox(height: 16),
           Expanded(child: overview.when(

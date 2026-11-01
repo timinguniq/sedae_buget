@@ -9,8 +9,8 @@ void main() {
   const profile = AsyncData<UserProfile?>(
       UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000));
   const noProfile = AsyncData<UserProfile?>(null);
-  final offline = AsyncError<Never>(
-      const ResultFailure(ErrorResult(reason: FailureReason.offline, message: '')), StackTrace.empty);
+  const offline = AsyncError<Never>(
+      ResultFailure(ErrorResult(reason: FailureReason.offline, message: '')), StackTrace.empty);
 
   group('SessionGate.of', () {
     test('인증을 확인하는 중이면 확인 중', () {

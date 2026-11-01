@@ -61,9 +61,9 @@ void main() {
     });
 
     test('인원이 100으로 나눠떨어지지 않으면 올림한다: 3명 중 1등은 34%', () {
-      final three = PeerStats(
+      const three = PeerStats(
         ageGroup: AgeGroup.thirties, avgMonthlyExpense: 500000, avgSavingsRate: 0.2,
-        avgByCategory: const {}, samples: const [100000, 200000]);
+        avgByCategory: {}, samples: [100000, 200000]);
       expect(three.rankOf(300000)!.topPercent, 34);
       expect(three.rankOf(150000)!.topPercent, 67);
     });
@@ -77,9 +77,9 @@ void main() {
 
     // 이전에는 표본이 없어도 '또래 1명 중 1등 · 상위 100%'로 보였다.
     test('표본이 없으면 순위를 매기지 않는다', () {
-      final empty = PeerStats(
+      const empty = PeerStats(
         ageGroup: AgeGroup.twenties, avgMonthlyExpense: 0, avgSavingsRate: 0,
-        avgByCategory: const {}, samples: const []);
+        avgByCategory: {}, samples: []);
       expect(empty.rankOf(1000000), isNull);
     });
   });
@@ -90,12 +90,12 @@ void main() {
 
   group('bucketIndexOf', () {
     test('표본이 없으면 0', () {
-      final empty = PeerStats(
+      const empty = PeerStats(
         ageGroup: AgeGroup.twenties,
         avgMonthlyExpense: 0,
         avgSavingsRate: 0,
-        avgByCategory: const {},
-        samples: const [],
+        avgByCategory: {},
+        samples: [],
       );
       expect(empty.bucketIndexOf(123456, 15), 0);
     });

@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/widget/common/failure_message.dart';
 import 'package:sedae_budget/presentation/page/budget/ledger.view_model.dart';
+import 'package:sedae_budget/presentation/widget/common/failure_message.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 카테고리 추가·수정 바텀시트. [existing]이 null이면 추가.
@@ -93,7 +93,7 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
             Text('내가 만든 카테고리는 언제든 삭제할 수 있어요.',
                 style: context.typo.caption1W400.copyWith(color: context.color.label.assistive)),
             const SizedBox(height: 20),
-            _FieldLabel(text: '이름'),
+            const _FieldLabel(text: '이름'),
             const SizedBox(height: 8),
             TextField(
               key: const Key('category-name-field'),
@@ -109,7 +109,7 @@ class _CategoryEditSheetState extends ConsumerState<CategoryEditSheet> {
             ),
             const SizedBox(height: 12),
             Row(children: [
-              _FieldLabel(text: '상위 카테고리'),
+              const _FieldLabel(text: '상위 카테고리'),
               const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),

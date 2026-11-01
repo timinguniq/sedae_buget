@@ -30,8 +30,16 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    # avoid_print: false  # Uncomment to disable the `avoid_print` rule
-    # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
+    # import·export 순서: dart → package → 상대, 각 묶음 안은 알파벳순. lib 안은 package: import만 쓴다.
+    directives_ordering: true
+    always_use_package_imports: true
+    # 빠진 const, 지역 변수의 타입 생략, 불필요한 람다·괄호 등 코드베이스가 이미 따르는 관례.
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    omit_local_variable_types: true
+    unnecessary_lambdas: true
+    unnecessary_parenthesis: true
+    eol_at_end_of_file: true
 
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options

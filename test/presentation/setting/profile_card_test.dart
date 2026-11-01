@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/setting/widget/logout_button.dart';
 import 'package:sedae_budget/presentation/page/setting/widget/profile_card.dart';
@@ -19,9 +19,7 @@ Widget _wrap(ProviderContainer container) => fakeScope(
     );
 
 void main() {
-  setUp(() {
-    TestWidgetsFlutterBinding.ensureInitialized();
-  });
+  setUp(TestWidgetsFlutterBinding.ensureInitialized);
 
   // 세션 게이트가 로그아웃 상태에선 설정을 보여주지 않는다. 로그아웃 직후 한 프레임은 아무것도 그리지 않는다.
   testWidgets('signed out: draws neither the card nor 로그아웃', (t) async {

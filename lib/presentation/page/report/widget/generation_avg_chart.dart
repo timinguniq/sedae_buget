@@ -12,7 +12,7 @@ class GenerationAvgChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final groups = AgeGroup.values;
+    const groups = AgeGroup.values;
     final maxAvg = avgByGroup.values.fold<int>(1, (m, v) => v > m ? v : m);
     final coral = context.color.primary.normal;
     final faint = context.color.label.assistive;

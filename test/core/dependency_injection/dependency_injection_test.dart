@@ -15,7 +15,7 @@ MemoryAuthTokenStore _configure() {
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
-  tearDown(() => locator.reset());
+  tearDown(locator.reset);
 
   // 세션 인터셉터가 Stub보다 앞에 있고 모든 저장소가 같은 클라이언트를 써야 로그인한 사용자로 호출된다.
   test('조립한 의존성으로 로그인 → 거래 저장 → 조회가 된다', () async {

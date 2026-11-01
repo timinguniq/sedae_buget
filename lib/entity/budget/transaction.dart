@@ -1,7 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:uuid/uuid.dart';
 import 'package:sedae_budget/entity/budget/budget_category.dart';
 import 'package:sedae_budget/entity/budget/transaction_type.dart';
+import 'package:uuid/uuid.dart';
 
 part 'transaction.freezed.dart';
 

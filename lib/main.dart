@@ -1,11 +1,6 @@
 import 'dart:async';
 
-import 'package:sedae_budget/presentation/presentation.dart';
-import 'package:sedae_budget/core/ads/index.dart';
-import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
-import 'package:sedae_budget/core/local_storage/secure_auth_token_store.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -13,9 +8,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sedae_budget/core/ads/index.dart';
+import 'package:sedae_budget/core/dependency_injection/dependency_injection.dart';
+import 'package:sedae_budget/core/local_storage/secure_auth_token_store.dart';
+import 'package:sedae_budget/core/util/logger/custom_logger.dart';
+import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
-import 'core/util/logger/custom_logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 final _logger = CustomLogger.create(tag: 'main');
 final _lightTheme = materialTheme(LightTheme());
@@ -24,7 +23,6 @@ final _darkTheme = materialTheme(DarkTheme());
 Future<void> main() async {
   unawaited(
     runZonedGuarded(() async {
-      //---------------- Configuration initialize -------------------\\
       WidgetsFlutterBinding.ensureInitialized();
 
       await initializeDateFormatting();
@@ -36,8 +34,8 @@ Future<void> main() async {
       configureAppStatusDependencies();
       unawaited(locator<AdService>().initialize()); // 부팅을 막지 않고 미리 워밍업
 
-      //await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
+      // Firebase는 아직 초기화하지 않는다(firebase_options.dart 없음). 그래서 아래 설정은 실패하고,
+      // 실패하면 건너뛴다.
       try {
         FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
         await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
@@ -50,8 +48,6 @@ Future<void> main() async {
         DeviceOrientation.portraitUp,
         DeviceOrientation.portraitDown,
       ]);
-
-      //HttpOverrides.global = NoCheckCertificateHttpOverrides(); // 생성된 HttpOverrides 객체 등록
 
       runApp(UncontrolledProviderScope(container: appContainer(), child: const MyApp()));
     }, (e, s) {

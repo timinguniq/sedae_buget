@@ -225,7 +225,7 @@ void main() {
     await tester.enterText(_nameField, '  가나다라마바사아자차카타');
     await tester.pump();
     expect(_nameController(tester).text, '  가나다라마바사아자차');
-  }, variant: TargetPlatformVariant({TargetPlatform.android, TargetPlatform.iOS}));
+  }, variant: const TargetPlatformVariant({TargetPlatform.android, TargetPlatform.iOS}));
 
   // 고른 글자를 바꾸는 입력은 꽉 찬 칸에서도 받고 10자로 자른다(LengthLimitingTextInputFormatter와 같다).
   testWidgets('꽉 찬 이름에서 고른 글자 위에 더 긴 글을 붙여 넣으면 앞 10자만 남는다', (tester) async {

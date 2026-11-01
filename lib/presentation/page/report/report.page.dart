@@ -157,7 +157,6 @@ class _StatTile extends StatelessWidget {
       radius: 16,
       padding: const EdgeInsets.symmetric(vertical: 13, horizontal: 8),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
           FittedBox(
