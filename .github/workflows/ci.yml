@@ -28,7 +28,7 @@ jobs:
       - name: Harness self-tests
         run: python3 -m unittest discover -s tool/test -p '*_test.py' -v
 
-      # 로컬 pre-commit 훅과 같은 게이트(분석 + 전체 테스트 + 레이어 규칙).
+      # 로컬 pre-commit 훅과 같은 게이트(포맷 + 분석 + 전체 테스트 + 레이어 규칙).
       # 깨끗한 체크아웃에서는 인덱스가 체크아웃한 커밋과 같으므로 그 커밋 전체를 검사한다.
       - name: Commit gate
         run: bash tool/commit_gate.sh

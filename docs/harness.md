@@ -11,7 +11,7 @@
 | `tool/agent_pre_commit.py` | Claude Code·Codex 공용 `PreToolUse` 어댑터 |
 | `.claude/settings.json`, `.codex/hooks.json` | 두 도구의 훅 등록 |
 | `.claude/agents/regression-verifier.md` | Claude Code 회귀 검증 서브에이전트 |
-| `tool/test/*_test.py` | 하네스 자체 테스트(임시 Git 저장소 + 가짜 flutter) |
+| `tool/test/*_test.py` | 하네스 자체 테스트(임시 Git 저장소 + 가짜 flutter·dart) |
 | `.github/workflows/ci.yml` | CI: 하네스 테스트 + 게이트 |
 
 ## 새 clone·새 worktree 준비
@@ -35,7 +35,8 @@ git config --local core.hooksPath .githooks
 
 | 검사 | 명령 | 정책 |
 |---|---|---|
-| 필수 도구·입력 | `git`, `flutter`, `.dart_tool/package_config.json`, `.dart_tool/package_graph.json`, `.env` 존재 확인 | 하나라도 없으면 이유를 표시하고 차단 |
+| 필수 도구·입력 | `git`, `flutter`, `dart`, `.dart_tool/package_config.json`, `.dart_tool/package_graph.json`, `.env` 존재 확인 | 하나라도 없으면 이유를 표시하고 차단 |
+| 포맷 | `dart format --output=none --set-exit-if-changed lib test` | `dart format` 기본 설정(80열)과 다른 파일이 하나라도 있으면 차단. 어긋난 파일을 `Changed <경로>`로 출력 |
 | 정적 분석 | `flutter analyze --no-pub --no-fatal-warnings --no-fatal-infos` | **오류만 차단.** 경고·정보는 허용 |
 | 테스트 | `flutter test --no-pub` | 실패·실행 오류·테스트 0개 모두 차단 |
 | 레이어 의존성 | `test/architecture/layer_dependency_test.dart` | 위 테스트 실행에 포함 |
@@ -68,7 +69,7 @@ git config --local core.hooksPath .githooks
 어댑터가 게이트를 직접 실행하지 않는 이유:
 
 - `PreToolUse`는 명령 실행 **전**에 발동한다. 에이전트가 흔히 쓰는 `git add -A && git commit …`에서는 그 시점의 인덱스가 최종 커밋 내용이 아니라서, 여기서 검사하면 엉뚱한 내용을 검사한다. 정확한 시점은 Git 훅뿐이다.
-- 중복 실행 측정: 게이트 1회 약 20초(분석 약 2초 + 스냅샷 테스트 약 18초). 어댑터에서도 돌리면 에이전트 커밋마다 약 40초가 된다. 현재 구성은 어댑터 약 0.02초(일반 명령)·0.05초(커밋 명령) + Git 훅의 게이트 1회로, **같은 검사의 중복 실행은 없다.**
+- 중복 실행 측정: 게이트 1회 약 20초(포맷 1초 미만 + 분석 약 2초 + 스냅샷 테스트 약 18초). 어댑터에서도 돌리면 에이전트 커밋마다 약 40초가 된다. 현재 구성은 어댑터 약 0.02초(일반 명령)·0.05초(커밋 명령) + Git 훅의 게이트 1회로, **같은 검사의 중복 실행은 없다.**
 
 한계: 어댑터는 명령 문자열만 보므로 아래 경로는 감지하지 못한다. 그중 Git 훅 자체를 끄는 경로는 CI만 잡는다.
 
@@ -112,17 +113,19 @@ python3 -m unittest discover -s tool/test -p '*_test.py' -v   # 하네스 테스
 bash tool/commit_gate.sh                                      # 현재 인덱스 검사
 ```
 
-하네스 테스트가 실제로 발견·실행됐는지(0개가 아닌지) 확인한다. 하네스 테스트는 가짜 flutter로 **호출·분기**를 검증한다: 정상 통과, 분석 오류, 분석기 실행 실패, 테스트 실패, 도구·입력 부재, stage와 작업 디렉터리 불일치, 첫 커밋, `git -C`/`git -c`/별칭, `commit -a`, worktree, 게이트 없는 트리, 어댑터의 통과·차단·우회 감지(here-document 본문, 토큰화 실패 시 문자열 검색 포함).
+하네스 테스트가 실제로 발견·실행됐는지(0개가 아닌지) 확인한다. 하네스 테스트는 가짜 flutter·dart로 **호출·분기**를 검증한다: 정상 통과, 포맷 위반(분석·테스트를 시작하지 않음), 포맷터 실행 실패, 분석 오류, 분석기 실행 실패, 테스트 실패, 도구·입력 부재, stage와 작업 디렉터리 불일치, 첫 커밋, `git -C`/`git -c`/별칭, `commit -a`, worktree, 게이트 없는 트리, 어댑터의 통과·차단·우회 감지(here-document 본문, 토큰화 실패 시 문자열 검색 포함).
 
-실제 SDK 확인은 하네스를 바꿀 때마다 임시 clone에서 수행한다: 타입 오류 stage → 차단, 실패 테스트 → 차단, `domain`에 `package:flutter` import → 차단, 경고만 있는 변경 → 통과, 미추적 파일의 오류 → 통과.
+실제 SDK 확인은 하네스를 바꿀 때마다 임시 clone에서 수행한다: 포맷이 어긋난 파일 stage → 차단, 타입 오류 stage → 차단, 실패 테스트 → 차단, `domain`에 `package:flutter` import → 차단, 경고만 있는 변경 → 통과, 미추적 파일의 오류 → 통과.
 
 ## 실패했을 때
 
 | 메시지 | 조치 |
 |---|---|
 | `flutter를 찾을 수 없습니다` | Flutter SDK 설치·PATH 확인. IDE에서 커밋한다면 IDE의 PATH도 확인 |
+| `dart를 찾을 수 없습니다` | Flutter SDK의 `bin` 디렉터리(`dart`도 들어 있다)를 PATH에 추가 |
 | `필수 로컬 파일이 없습니다: .dart_tool/…` | `flutter pub get` |
 | `필수 로컬 파일이 없습니다: .env` | `.env`를 준비(값이 없으면 `touch .env`) |
+| `포맷 실패` | 출력의 `Changed <경로>` 줄이 어긋난 파일이다. `dart format lib test`로 맞춘 뒤 `git add`로 다시 stage |
 | `정적 분석 실패` | 출력의 `error •` 줄을 고친다. 작업 디렉터리에서 고쳤다면 `git add`로 다시 stage |
 | `테스트 실패` | 출력의 `[E]` 테스트를 고친다. 로컬에서는 통과하는데 게이트에서만 실패하면 `git add`하지 않은 파일이 있는지 확인 |
 | `인덱스 내용을 내보내지 못했습니다` | 병합 충돌을 먼저 해결 |

@@ -1,6 +1,6 @@
-"""하네스 테스트 공통 기반: 임시 Git 저장소와 가짜 flutter.
+"""하네스 테스트 공통 기반: 임시 Git 저장소와 가짜 flutter·dart.
 
-가짜 flutter는 호출·분기 검증용이다. 실제 SDK와 실제 위반 코드로 하는 확인 절차는
+가짜 flutter·dart는 호출·분기 검증용이다. 실제 SDK와 실제 위반 코드로 하는 확인 절차는
 docs/harness.md에 있다.
 """
 
@@ -32,6 +32,22 @@ esac
 exit 64
 """
 
+# 가짜 dart: `dart format`만 흉내 낸다. 표식이 든 파일을 어긋난 파일로 출력하고 1로 끝난다.
+FAKE_DART = """#!/bin/bash
+echo "$* @ $PWD" >> "$FAKE_DART_LOG"
+[ -z "${GIT_DIR:-}${GIT_INDEX_FILE:-}${GIT_WORK_TREE:-}" ] || {
+  echo "fake dart: 훅의 GIT_* 변수가 검사 도구로 새어 들어왔습니다" >&2
+  exit 4
+}
+case "$1" in
+  format)
+    changed="$(grep -rls FORMAT_VIOLATION lib test)"
+    [ -z "$changed" ] || { printf 'Changed %s\\n' $changed; exit 1; }
+    exit "${FAKE_FORMAT_EXIT:-0}" ;;
+esac
+exit 64
+"""
+
 
 class HarnessTestCase(unittest.TestCase):
     def setUp(self):
@@ -41,16 +57,19 @@ class HarnessTestCase(unittest.TestCase):
 
         bin_dir = self.tmp / "bin"
         bin_dir.mkdir()
-        fake = bin_dir / "flutter"
-        fake.write_text(FAKE_FLUTTER)
-        fake.chmod(0o755)
+        for name, script in [("flutter", FAKE_FLUTTER), ("dart", FAKE_DART)]:
+            fake = bin_dir / name
+            fake.write_text(script)
+            fake.chmod(0o755)
         self.flutter_log = self.tmp / "flutter.log"
+        self.dart_log = self.tmp / "dart.log"
 
         # 개인 Git 설정과, 훅 안에서 실행될 때 물려받는 GIT_* 변수로부터 격리한다.
         self.env = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")}
         self.env.update(
             PATH=f"{bin_dir}{os.pathsep}{os.environ['PATH']}",
             FAKE_FLUTTER_LOG=str(self.flutter_log),
+            FAKE_DART_LOG=str(self.dart_log),
             GIT_CONFIG_GLOBAL=os.devnull,
             GIT_CONFIG_SYSTEM=os.devnull,
             GIT_AUTHOR_NAME="harness",
@@ -103,6 +122,9 @@ class HarnessTestCase(unittest.TestCase):
 
     def flutter_calls(self):
         return self.flutter_log.read_text().splitlines() if self.flutter_log.exists() else []
+
+    def dart_calls(self):
+        return self.dart_log.read_text().splitlines() if self.dart_log.exists() else []
 
     def head(self, repo=None):
         result = self.git("rev-parse", "--verify", "-q", "HEAD", cwd=repo, check=False)

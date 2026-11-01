@@ -89,6 +89,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 | 목적 | 명령 |
 |---|---|
 | 의존성 설치 | `flutter pub get` |
+| 포맷 | `dart format lib test` |
 | 정적 분석 | `flutter analyze --no-pub --no-fatal-warnings --no-fatal-infos` |
 | 전체 테스트 | `flutter test` |
 | 일부 테스트 | `flutter test test/<경로>_test.dart` |
@@ -97,6 +98,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 | 하네스 자체 테스트 | `python3 -m unittest discover -s tool/test -p '*_test.py' -v` |
 | 앱 실행 | `flutter run` (`.env` 필요. 환경 지정은 `--dart-define=env=<이름>`) |
 
+- 포맷 정책: `dart format` 기본 설정(80열)을 그대로 쓴다. 게이트가 어긋난 파일을 차단하므로 커밋 전에 `dart format lib test`를 실행한다.
 - 분석 정책: **오류만 차단**한다. 경고·정보는 허용하지만 새로 늘리지 않는다.
 - 생성 파일(`*.g.dart`, `*.freezed.dart`)은 저장소에 커밋한다. 원본을 바꾸면 코드 생성을 다시 실행하고 결과를 함께 커밋한다.
 - 새 clone에서는 `flutter pub get` → `.env` 준비 → `git config --local core.hooksPath .githooks` 순서로 준비한다(`docs/harness.md`).
@@ -106,7 +108,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 변경을 완료로 보고하려면 다음을 모두 만족해야 한다.
 
 1. 변경과 관련된 테스트를 실행했고 통과한다. 버그 수정·새 로직은 **실패하는 테스트를 먼저 실행한 기록**과 수정 후 통과 기록을 남긴다.
-2. `bash tool/commit_gate.sh`(분석 + 전체 테스트 + 레이어 의존성 규칙)가 통과한다.
+2. `bash tool/commit_gate.sh`(포맷 + 분석 + 전체 테스트 + 레이어 의존성 규칙)가 통과한다.
 3. 아래 "검증 절차"를 수행했고, 실행하지 못한 검증은 **미실행과 사유**를 적었다. 미실행을 통과로 표기하지 않는다.
 4. 레이어 규칙이나 하네스를 바꿨다면 `docs/architecture.md`·`docs/harness.md`와 해당 테스트를 함께 고쳤다.
 

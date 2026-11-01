@@ -9,6 +9,7 @@ import unittest
 
 from harness_fixture import HarnessTestCase
 
+FORMAT_BAD = "// FORMAT_VIOLATION\n"
 ANALYZE_BAD = "// ANALYZE_VIOLATION\n"
 TEST_BAD = "// TEST_VIOLATION\n"
 
@@ -23,14 +24,36 @@ class CommitGateTest(HarnessTestCase):
         result = self.run_gate()
 
         self.assertEqual(result.returncode, 0, result.stderr)
+        dart_calls = self.dart_calls()
+        self.assertEqual(len(dart_calls), 1, dart_calls)
+        self.assertTrue(
+            dart_calls[0].startswith("format --output=none --set-exit-if-changed lib test @ "), dart_calls
+        )
         calls = self.flutter_calls()
         self.assertEqual(len(calls), 2, calls)
         self.assertTrue(
             calls[0].startswith("analyze --no-pub --no-fatal-warnings --no-fatal-infos @ "), calls
         )
         self.assertTrue(calls[1].startswith("test --no-pub @ "), calls)
-        for call in calls:
+        for call in dart_calls + calls:
             self.assertNotEqual(call.split(" @ ")[1], str(self.repo), "작업 트리가 아닌 스냅샷을 검사해야 한다")
+
+    def test_format_violation_blocks_before_analysis(self):
+        self.write("lib/bad.dart", FORMAT_BAD)
+        self.git("add", "-A")
+
+        result = self.run_gate()
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("포맷 실패", result.stderr)
+        self.assertIn("Changed lib/bad.dart", result.stdout, "어긋난 파일을 알려야 한다")
+        self.assertEqual(self.flutter_calls(), [], "포맷이 어긋나면 분석·테스트를 시작하지 않는다")
+
+    def test_formatter_execution_failure_blocks(self):
+        result = self.run_gate(env={**self.env, "FAKE_FORMAT_EXIT": "70"})
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("포맷 실패(종료 코드 70)", result.stderr)
 
     def test_analysis_error_blocks(self):
         self.write("lib/bad.dart", ANALYZE_BAD)
@@ -66,6 +89,19 @@ class CommitGateTest(HarnessTestCase):
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("flutter를 찾을 수 없습니다", result.stderr)
 
+    def test_missing_dart_blocks_with_reason(self):
+        flutter_only = self.tmp / "flutter only"
+        flutter_only.mkdir()
+        shutil.copy(self.tmp / "bin" / "flutter", flutter_only / "flutter")
+        without_dart = os.pathsep.join(
+            d for d in self.env["PATH"].split(os.pathsep) if not shutil.which("dart", path=d)
+        )
+
+        result = self.run_gate(env={**self.env, "PATH": f"{flutter_only}{os.pathsep}{without_dart}"})
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("dart를 찾을 수 없습니다", result.stderr)
+
     def test_missing_local_input_blocks_with_reason(self):
         for relative in [".dart_tool/package_config.json", ".dart_tool/package_graph.json", ".env"]:
             with self.subTest(relative):
@@ -76,7 +112,7 @@ class CommitGateTest(HarnessTestCase):
 
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn(f"필수 로컬 파일이 없습니다: {relative}", result.stderr)
-        self.assertEqual(self.flutter_calls(), [], "입력이 없으면 검사를 시작하지 않는다")
+        self.assertEqual(self.dart_calls() + self.flutter_calls(), [], "입력이 없으면 검사를 시작하지 않는다")
 
     def test_staged_violation_is_caught_even_if_worktree_is_fixed(self):
         bad = self.write("lib/bad.dart", ANALYZE_BAD)
@@ -132,6 +168,7 @@ class PreCommitHookTest(HarnessTestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn("새어 들어왔습니다", result.stderr)
+        self.assertEqual(len(self.dart_calls()), 1)
         self.assertEqual(len(self.flutter_calls()), 2)
 
     def test_hook_runs_for_dash_C_dash_c_and_alias(self):
