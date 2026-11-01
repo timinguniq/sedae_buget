@@ -18,7 +18,7 @@ class SettingPage extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(22, 4, 22, 16),
           child: Row(children: [
-            RoundIconButton(icon: Icons.chevron_left, onTap: () => context.pop()),
+            RoundIconButton(icon: Icons.chevron_left, onTap: context.popOrHome),
             const SizedBox(width: 12),
             Text('설정', style: context.typo.pageTitle.copyWith(fontSize: 20, color: context.color.label.normal)),
           ]),

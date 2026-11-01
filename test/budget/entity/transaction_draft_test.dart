@@ -50,6 +50,12 @@ void main() {
       expect(tx.memo, '버스');
     });
 
+    // 이전에는 날짜 선택이 시각을 00:00으로 지워, 타일의 시각이 사라지고 같은 날의 맨 아래로 갔다.
+    test('날짜를 바꿔도 시각은 그대로다', () {
+      final d = TransactionDraft.create(DateTime(2026, 6, 5, 14, 30)).withDate(DateTime(2026, 6, 7));
+      expect(d.date, DateTime(2026, 6, 7, 14, 30));
+    });
+
     test('빈 메모는 저장하지 않는다', () {
       final tx = TransactionDraft.create(_day).withAmount(1).withMemo('   ')
           .toTransaction(const CategoryCatalog());

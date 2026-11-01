@@ -39,15 +39,16 @@ enum WonText {
 
   static String _short(int abs) {
     if (abs < 10000) return _digits.format(abs);
-    final man = abs / 10000;
-    if (man < 100) return '${_oneDecimal(man)}만';
-    if (man.round() < 10000) return '${man.round()}만';
-    return '${_oneDecimal(abs / 100000000)}억';
+    if (abs < 1000000) return '${_oneDecimal(abs, 10000)}만';
+    final man = (abs + 5000) ~/ 10000;
+    if (man < 10000) return '$man만';
+    return '${_oneDecimal(abs, 100000000)}억';
   }
 
-  /// 소수 한 자리로 반올림하고 `.0`은 뗀다.
-  static String _oneDecimal(double v) {
-    final s = v.toStringAsFixed(1);
-    return s.endsWith('.0') ? s.substring(0, s.length - 2) : s;
+  /// [abs]를 [unit] 단위 소수 한 자리로 반올림하고 `.0`은 뗀다. 정수로 셈해 .x5를 올린다
+  /// (14,500원 → 1.5만. 이진 소수 1.45는 1.4499…라 `toStringAsFixed`는 내렸다).
+  static String _oneDecimal(int abs, int unit) {
+    final tenths = (abs * 10 + unit ~/ 2) ~/ unit;
+    return tenths % 10 == 0 ? '${tenths ~/ 10}' : '${tenths ~/ 10}.${tenths % 10}';
   }
 }

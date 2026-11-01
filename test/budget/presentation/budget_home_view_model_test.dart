@@ -162,6 +162,25 @@ void main() {
       await c.read(peerStatsProvider.future);
       expect(c.read(monthOverviewProvider).requireValue.peer, isNotNull);
     });
+
+    // 이전에는 나이대를 바꾼 뒤 또래 통계를 다시 못 읽으면 바꾸기 전 나이대의 통계가 이달 개요에 그대로 남았다
+    // (실패한 AsyncValue가 이전 값을 쥔다).
+    test('다시 읽다 실패하면 옛 통계를 쓰지 않고 또래를 뺀다', () async {
+      final server = await _server(
+          profile: const UserProfile(ageGroup: AgeGroup.twenties, monthlyIncome: 3000000),
+          transactions: [_expense(1200, BudgetCategory.transport)]);
+      final c = fakeContainer(server: server);
+      expect((await _overview(c)).peer?.ageGroup, AgeGroup.twenties);
+
+      server.faults.fail('GET', '/v1/peer/stats', reason: FailureReason.server);
+      (await c.read(userProfileProvider.notifier)
+              .save(const UserProfile(ageGroup: AgeGroup.thirties, monthlyIncome: 3000000)))
+          .unwrap();
+      await c.read(peerStatsProvider.future).then((_) {}, onError: (_) {});
+      expect(c.read(peerStatsProvider).hasError, isTrue);
+
+      expect(c.read(monthOverviewProvider).requireValue.peer, isNull);
+    });
   });
 
   group('overPeer', () {

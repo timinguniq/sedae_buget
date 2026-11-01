@@ -43,6 +43,40 @@ void main() {
     expect(find.text('저장하지 못했어요. 인터넷에 연결되어 있지 않아요'), findsOneWidget);
   });
 
+  // 이전에는 저장 응답을 기다리는 동안 다시 누르면 프로필을 두 번 보냈다.
+  testWidgets('저장 응답을 기다리는 동안 다시 눌러도 한 번만 보낸다', (t) async {
+    final server = await t.seedServer();
+    final reply = server.faults.hold('PUT', '/v1/me/profile');
+    await pumpToIncomeStep(t, fakeContainer(server: server));
+    final start = find.widgetWithText(FilledButton, '시작하기');
+
+    await t.tap(start);
+    await t.pump();
+    expect(t.widget<FilledButton>(start).onPressed, isNull);
+    await t.tap(start, warnIfMissed: false);
+    await t.pump();
+
+    reply.complete();
+    await t.settle();
+    expect(server.faults.count('PUT', '/v1/me/profile'), 1);
+  });
+
+  // 꺼진 버튼을 그리기 전(같은 프레임)에 다시 눌리면 버튼은 아직 켜져 있다.
+  testWidgets('다시 그리기 전에 두 번 눌려도 한 번만 보낸다', (t) async {
+    final server = await t.seedServer();
+    final reply = server.faults.hold('PUT', '/v1/me/profile');
+    await pumpToIncomeStep(t, fakeContainer(server: server));
+    final start = find.widgetWithText(FilledButton, '시작하기');
+
+    await t.tap(start);
+    await t.tap(start);
+    await t.pump();
+
+    reply.complete();
+    await t.settle();
+    expect(server.faults.count('PUT', '/v1/me/profile'), 1);
+  });
+
   testWidgets('age select enables 다음, income step shows 시작하기', (t) async {
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;

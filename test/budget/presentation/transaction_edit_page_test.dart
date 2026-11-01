@@ -28,8 +28,9 @@ void main() {
     void Function(ServerFaults faults)? faults,
     Transaction? existing,
     bool lastMonth = false,
+    Size size = const Size(390, 844),
   }) async {
-    tester.view.physicalSize = const Size(390, 844);
+    tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
@@ -98,6 +99,30 @@ void main() {
     await tester.settle();
     expect(server.faults.count('PUT', '/v1/transactions'), 1);
     expect(find.byType(TransactionEditPage), findsNothing);
+  });
+
+  // 이전에는 작은 화면(360×640)에서 메모 키보드가 올라오면 키패드·저장 버튼이 아래로 넘쳤다(RenderFlex overflow).
+  testWidgets('작은 화면에서 키보드가 올라와도 넘치지 않고 저장할 수 있다', (tester) async {
+    final server = await pumpEditPage(tester, size: const Size(360, 640));
+    for (final k in ['1', '0', '0', '0']) {
+      await tester.tap(find.text(k));
+      await tester.pump();
+    }
+    tester.view.viewInsets = const FakeViewPadding(bottom: 340); // 추천 단어 줄이 있는 키보드
+    addTearDown(tester.view.resetViewInsets);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+
+    await tester.ensureVisible(find.byKey(const Key('save-button')));
+    await tester.tap(find.byKey(const Key('save-button')));
+    await tester.settle();
+    expect((await _onServer(tester, server)).single.amount, 1000);
+  });
+
+  // 화면이 남으면 키패드·저장 버튼은 아래에 붙는다(디자인). 스크롤로 감싸도 위로 뜨지 않는다.
+  testWidgets('큰 화면에서는 저장 버튼이 아래에 붙는다', (tester) async {
+    await pumpEditPage(tester);
+    expect(tester.getBottomLeft(find.byKey(const Key('save-button'))).dy, 844 - 22); // 아래 여백 22
   });
 
   // 디자인: 입력 화면은 지출만 적는다(소득은 프로필 월소득). 지출/수입 토글 대신 제목이 있다.

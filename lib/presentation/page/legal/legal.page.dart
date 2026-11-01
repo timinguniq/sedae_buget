@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/presentation/page/legal/legal.view_model.dart';
 import 'package:sedae_budget/presentation/page/legal/legal_content.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
@@ -34,10 +33,6 @@ class _LegalPageState extends ConsumerState<LegalPage> {
     setState(() => _tab = tab);
   }
 
-  /// 연 화면으로 돌아간다. 웹에서 주소로 바로 열어 돌아갈 화면이 없으면 홈으로 보내고,
-  /// 실제 행선지(로그인·온보딩·연결 안 됨·홈)는 전역 가드(sessionRedirect)가 정한다.
-  void _close() => context.canPop() ? context.pop() : context.go(RoutePath.budgetHome.path);
-
   @override
   Widget build(BuildContext context) {
     final colors = _LegalColors.of(context);
@@ -48,7 +43,7 @@ class _LegalPageState extends ConsumerState<LegalPage> {
         Padding(
           padding: const EdgeInsets.fromLTRB(22, 4, 22, 14),
           child: Row(children: [
-            RoundIconButton(icon: Icons.chevron_left, onTap: _close),
+            RoundIconButton(icon: Icons.chevron_left, onTap: context.popOrHome),
             const SizedBox(width: 12),
             Text('약관 및 정책', style: context.typo.pageTitle.copyWith(fontSize: 20, color: colors.text)),
           ]),

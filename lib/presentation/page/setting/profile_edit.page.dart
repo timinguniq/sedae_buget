@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
@@ -21,7 +20,7 @@ class ProfileEditPage extends ConsumerWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(22, 4, 22, 16),
           child: Row(children: [
-            RoundIconButton(icon: Icons.chevron_left, onTap: () => context.pop()),
+            RoundIconButton(icon: Icons.chevron_left, onTap: context.popOrHome),
             const SizedBox(width: 12),
             Text('프로필 수정', style: context.typo.pageTitle.copyWith(fontSize: 20, color: context.color.label.normal)),
           ]),
@@ -57,7 +56,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
     setState(() => _saving = false);
     final error = res.failureOrNull;
     if (error == null) {
-      context.pop();
+      context.popOrHome();
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
