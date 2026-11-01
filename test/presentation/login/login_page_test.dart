@@ -55,6 +55,29 @@ void main() {
     expect(find.text('로그인하지 못했어요. 서버에 문제가 생겼어요. 잠시 후 다시 시도해 주세요'), findsOneWidget);
   });
 
+  // 이전에는 로그인 응답을 기다리는 동안 다시 누르면 로그인을 두 번 보냈다.
+  testWidgets('로그인 응답을 기다리는 동안 다시 눌러도 한 번만 보낸다', (t) async {
+    final server = StubServer();
+    final reply = server.faults.hold('POST', '/v1/auth/login');
+    t.view.physicalSize = const Size(390, 844);
+    t.view.devicePixelRatio = 1.0;
+    addTearDown(t.view.reset);
+    await t.pumpWidget(fakeScope(
+      fakeContainer(server: server),
+      MaterialApp(home: const LoginPage(), theme: materialTheme(LightTheme())),
+    ));
+    await t.pump();
+
+    await t.tap(find.text('카카오로 시작하기'));
+    await t.pump();
+    await t.tap(find.text('카카오로 시작하기'));
+    await t.pump();
+
+    reply.complete();
+    await t.settle();
+    expect(server.faults.count('POST', '/v1/auth/login'), 1);
+  });
+
   testWidgets('renders 3 social buttons and kakao tap signs in', (t) async {
     t.view.physicalSize = const Size(390, 844);
     t.view.devicePixelRatio = 1.0;

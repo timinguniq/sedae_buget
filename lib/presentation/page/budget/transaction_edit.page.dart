@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
@@ -61,7 +60,7 @@ class _State extends ConsumerState<TransactionEditPage> {
     if (!mounted) return;
     final error = res.failureOrNull;
     if (error == null) {
-      context.pop();
+      context.popOrHome();
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
@@ -90,80 +89,87 @@ class _State extends ConsumerState<TransactionEditPage> {
     return DefaultLayout(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(22, 6, 22, 22),
-        child: Column(children: [
-          Row(children: [
-            RoundIconButton(icon: Icons.close, onTap: () => context.pop()),
-            Expanded(child: Text(
-              '${_draft.type == TransactionType.income ? '수입' : '지출'} ${_draft.isEdit ? '수정' : '입력'}',
-              textAlign: TextAlign.center,
-              style: context.typo.label1W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.normal),
-            )),
-            // 제목이 가운데 오도록 오른쪽도 ✕와 같은 폭을 차지한다.
-            if (_draft.isEdit)
-              RoundIconButton(key: const Key('delete-button'), icon: Icons.delete_outline, onTap: _delete)
-            else
-              const SizedBox(width: 30),
-          ]),
-          Expanded(child: SingleChildScrollView(child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 22),
-              Center(child: _CategoryPill(label: _draft.label(catalog))),
-              const SizedBox(height: 14),
-              Text(WonText.full.of(_draft.amount),
+        // 화면이 모자라면(작은 폰에서 메모 키보드가 올라올 때) 전체가 세로로 스크롤되고,
+        // 남으면 키패드·저장 버튼이 아래에 붙는다.
+        child: LayoutBuilder(builder: (context, constraints) => SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(child: Column(children: [
+              Row(children: [
+                RoundIconButton(icon: Icons.close, onTap: context.popOrHome),
+                Expanded(child: Text(
+                  '${_draft.type == TransactionType.income ? '수입' : '지출'} ${_draft.isEdit ? '수정' : '입력'}',
                   textAlign: TextAlign.center,
-                  style: context.typo.amountHero.copyWith(color: context.color.label.normal)),
-              const SizedBox(height: 5),
-              // 가맹점/메모: 디자인의 금액 아래 한 줄이 곧 입력 필드.
-              TextField(
-                controller: _memo,
-                textAlign: TextAlign.center,
-                style: context.typo.caption1W500.copyWith(color: context.color.label.normal),
-                // 전역 inputDecorationTheme의 outline 테두리가 collapsed에도 적용되므로 명시적으로 끈다.
-                decoration: InputDecoration.collapsed(
-                  hintText: '메모 (선택)',
-                  hintStyle: context.typo.caption1W500.copyWith(color: context.color.label.assistive),
-                ).copyWith(enabledBorder: InputBorder.none, focusedBorder: InputBorder.none),
-              ),
-              const SizedBox(height: 8),
-              Center(child: InkWell(
-                onTap: _pickDate,
-                borderRadius: BorderRadius.circular(CSize.pill.radius),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  child: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.calendar_today_outlined, size: 14, color: context.color.label.assistive),
-                    const SizedBox(width: 6),
-                    Text(DateFormat('yyyy.M.d', 'ko').format(_draft.date),
-                        style: context.typo.caption1W600.copyWith(color: context.color.label.alternative)),
-                  ]),
-                ),
+                  style: context.typo.label1W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.normal),
+                )),
+                // 제목이 가운데 오도록 오른쪽도 ✕와 같은 폭을 차지한다.
+                if (_draft.isEdit)
+                  RoundIconButton(key: const Key('delete-button'), icon: Icons.delete_outline, onTap: _delete)
+                else
+                  const SizedBox(width: 30),
+              ]),
+              Expanded(child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 22),
+                  Center(child: _CategoryPill(label: _draft.label(catalog))),
+                  const SizedBox(height: 14),
+                  Text(WonText.full.of(_draft.amount),
+                      textAlign: TextAlign.center,
+                      style: context.typo.amountHero.copyWith(color: context.color.label.normal)),
+                  const SizedBox(height: 5),
+                  // 가맹점/메모: 디자인의 금액 아래 한 줄이 곧 입력 필드.
+                  TextField(
+                    controller: _memo,
+                    textAlign: TextAlign.center,
+                    style: context.typo.caption1W500.copyWith(color: context.color.label.normal),
+                    // 전역 inputDecorationTheme의 outline 테두리가 collapsed에도 적용되므로 명시적으로 끈다.
+                    decoration: InputDecoration.collapsed(
+                      hintText: '메모 (선택)',
+                      hintStyle: context.typo.caption1W500.copyWith(color: context.color.label.assistive),
+                    ).copyWith(enabledBorder: InputBorder.none, focusedBorder: InputBorder.none),
+                  ),
+                  const SizedBox(height: 8),
+                  Center(child: InkWell(
+                    onTap: _pickDate,
+                    borderRadius: BorderRadius.circular(CSize.pill.radius),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(Icons.calendar_today_outlined, size: 14, color: context.color.label.assistive),
+                        const SizedBox(width: 6),
+                        Text(DateFormat('yyyy.M.d', 'ko').format(_draft.date),
+                            style: context.typo.caption1W600.copyWith(color: context.color.label.alternative)),
+                      ]),
+                    ),
+                  )),
+                  // 수입은 카테고리가 없다.
+                  if (_draft.hasCategory) ...[
+                    const SizedBox(height: 14),
+                    _CategoryChips(
+                      selected: _draft.base,
+                      selectedCustomId: _draft.customCategoryId,
+                      customs: catalog.customs,
+                      onPickBase: (c) => setState(() => _draft = _draft.pickBase(c)),
+                      onPickCustom: (c) => setState(() => _draft = _draft.pickCustom(c)),
+                      onAdd: _addCategory,
+                    ),
+                  ],
+                ],
               )),
-              // 수입은 카테고리가 없다.
-              if (_draft.hasCategory) ...[
-                const SizedBox(height: 14),
-                _CategoryChips(
-                  selected: _draft.base,
-                  selectedCustomId: _draft.customCategoryId,
-                  customs: catalog.customs,
-                  onPickBase: (c) => setState(() => _draft = _draft.pickBase(c)),
-                  onPickCustom: (c) => setState(() => _draft = _draft.pickCustom(c)),
-                  onAdd: _addCategory,
-                ),
-              ],
-            ],
-          ))),
-          const SizedBox(height: 12),
-          AmountKeypad(
-            value: KeypadInput(_draft.amount),
-            onChanged: (v) => setState(() => _draft = _draft.withAmount(v.amount)),
+              const SizedBox(height: 12),
+              AmountKeypad(
+                value: KeypadInput(_draft.amount),
+                onChanged: (v) => setState(() => _draft = _draft.withAmount(v.amount)),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(width: double.infinity, child: FilledButton(
+                key: const Key('save-button'),
+                onPressed: _busy ? null : _save,
+                child: const Text('저장하기'))),
+            ])),
           ),
-          const SizedBox(height: 12),
-          SizedBox(width: double.infinity, child: FilledButton(
-            key: const Key('save-button'),
-            onPressed: _busy ? null : _save,
-            child: const Text('저장하기'))),
-        ]),
+        )),
       ),
     );
   }

@@ -114,7 +114,7 @@ class _Header extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 4, 22, 14),
       child: Row(children: [
-        RoundIconButton(icon: Icons.chevron_left, onTap: () => context.pop()),
+        RoundIconButton(icon: Icons.chevron_left, onTap: context.popOrHome),
         Expanded(child: Center(child: Text('카테고리 분석',
             style: context.typo.body1W600.copyWith(fontWeight: context.typo.extraBold, color: context.color.label.normal)))),
         Row(mainAxisSize: MainAxisSize.min, children: [

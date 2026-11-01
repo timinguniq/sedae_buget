@@ -97,8 +97,12 @@ class TransactionDraft {
   bool get hasCategory => type == TransactionType.expense;
 
   TransactionDraft withAmount(int amount) => _copy(amount: amount);
-  TransactionDraft withDate(DateTime date) => _copy(date: date);
   TransactionDraft withMemo(String memo) => _copy(memo: memo);
+
+  /// 날짜만 [day]로 바꾼다. 시각(적은 때)은 그대로 둔다 — 같은 날의 거래는 시각 순이다.
+  TransactionDraft withDate(DateTime day) => _copy(
+      date: DateTime(day.year, day.month, day.day,
+          date.hour, date.minute, date.second, date.millisecond, date.microsecond));
 
   TransactionDraft pickBase(BudgetCategory category) => _copy(base: category, customCategoryId: null);
 

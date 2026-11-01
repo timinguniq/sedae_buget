@@ -11,7 +11,7 @@ final _logger = CustomLogger.create(tag: 'api');
 /// - 오류 응답: 상태코드로 [FailureReason]을 정하고, 서버 바디 `{code, message}`의 도메인 코드와 문구만 옮긴다
 ///   (계약 밖 422의 문구는 옮기지 않는다).
 ///   HTTP 상태·전송 오류 코드와 Dio의 개발자용 문구는 여기서 버린다.
-/// - 해석할 수 없는 성공 응답(빈 바디·빠진 필드·모르는 값): server.
+/// - 해석할 수 없는 성공 응답(깨진 JSON·빈 바디·빠진 필드·모르는 값): server.
 ///
 /// [recover]가 실패를 값으로 바꾸면(예: 프로필이 아직 없음) 그 값으로 성공한다. null이면 실패 그대로다.
 Future<Result<T>> guardApi<T>(
@@ -40,13 +40,18 @@ ErrorResult _failureOf(DioException e) {
       final status = e.response?.statusCode;
       final data = e.response?.data;
       final body = data is Map && data['code'] is String ? data : null;
+      final message = body?['message'];
       return ErrorResult(
         reason: _reasonOf(status),
         // 422는 계약 밖이라(입력 오류는 400) 사용자에게 보일 문구라는 보장이 없다. invalid로만 두고
         // 문구는 버려, 화면이 앱 문구('입력한 값을 확인해 주세요')를 쓰게 한다(docs/api-contract.md).
-        message: status == 422 ? '' : (body?['message'] as String?) ?? '',
+        // 문구가 문자열이 아닌 것도(계약 밖) 버린다 — 던지지 않는다.
+        message: status == 422 || message is! String ? '' : message,
         code: body?['code'] as String?,
       );
+    // 응답은 받았지만 본문을 해석할 수 없다(깨진 JSON). 연결 문제가 아니라 서버 쪽이다.
+    case DioExceptionType.unknown when e.error is FormatException:
+      return const ErrorResult(reason: FailureReason.server, message: '');
     default:
       return const ErrorResult(reason: FailureReason.offline, message: '');
   }

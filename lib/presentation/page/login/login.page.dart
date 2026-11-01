@@ -9,22 +9,35 @@ import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/page/login/widget/social_login_button.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-class LoginPage extends ConsumerWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    Future<void> signIn(AuthProvider p) async {
-      final res = await ref.read(authProvider.notifier).signIn(p);
-      // 전역 가드(refreshListenable)가 로그인 성공 후 온보딩/홈으로 라우팅한다.
-      // 실패하면 로그인 화면에 머무므로, 이유만 알려준다.
-      final error = res.failureOrNull;
-      if (error != null && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(failureMessage(UserAction.signIn, error)),
-        ));
-      }
+  ConsumerState<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends ConsumerState<LoginPage> {
+  /// 로그인 응답을 기다리는 중이면 true. 그 사이 다시 눌러 두 번 보내지 않는다.
+  bool _busy = false;
+
+  Future<void> _signIn(AuthProvider p) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final res = await ref.read(authProvider.notifier).signIn(p);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    // 전역 가드(refreshListenable)가 로그인 성공 후 온보딩/홈으로 라우팅한다.
+    // 실패하면 로그인 화면에 머무므로, 이유만 알려준다.
+    final error = res.failureOrNull;
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(failureMessage(UserAction.signIn, error)),
+      ));
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final expired = ref.watch(sessionExpiredProvider);
     return DefaultLayout(
       child: Padding(
@@ -55,7 +68,7 @@ class LoginPage extends ConsumerWidget {
             const SizedBox(height: 12),
           ],
           for (final p in AuthProvider.values)
-            SocialLoginButton(provider: p, onTap: () => signIn(p)),
+            SocialLoginButton(provider: p, onTap: () => _signIn(p)),
           const SizedBox(height: 7),
           const _TermsNotice(),
         ]),

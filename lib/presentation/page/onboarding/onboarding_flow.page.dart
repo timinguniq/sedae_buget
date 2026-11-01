@@ -26,10 +26,16 @@ class _OnboardingFlowPageState extends ConsumerState<OnboardingFlowPage> {
     }
   }
 
+  /// 저장 응답을 기다리는 중이면 true. 그 사이 다시 눌러 두 번 보내지 않는다.
+  bool _busy = false;
+
   Future<void> _finish() async {
+    if (_busy) return;
+    setState(() => _busy = true);
     final res = await ref.read(userProfileProvider.notifier).save(
       UserProfile(ageGroup: _ageGroup!, monthlyIncome: _income.round()));
     if (!mounted) return;
+    setState(() => _busy = false);
     // 저장되면 전역 가드가 홈으로 옮긴다. 실패하면 이유를 보여주고 머문다.
     final error = res.failureOrNull;
     if (error != null) {
@@ -64,7 +70,7 @@ class _OnboardingFlowPageState extends ConsumerState<OnboardingFlowPage> {
             child: FilledButton(
               onPressed: _page == 0
                   ? (_ageGroup == null ? null : _next)
-                  : _finish,
+                  : (_busy ? null : _finish),
               child: Text(_page == 0 ? '다음' : '시작하기'),
             ),
           ),

@@ -81,6 +81,22 @@ void main() {
     expect((await _failure(FakeHttpAdapter.reply(200, ''))).reason, FailureReason.server);
   });
 
+  // 이전에는 깨진 JSON(Dio의 unknown)이 offline으로 번역돼 '인터넷에 연결되어 있지 않아요'가 보이고,
+  // 장부가 서버에 닿은 변경 뒤에도 다시 읽지 않았다.
+  test('깨진 JSON 응답은 offline이 아니라 server 실패다', () async {
+    final f = await _failure(FakeHttpAdapter.reply(200, '{not json'));
+    expect(f.reason, FailureReason.server);
+    expect(f.message, isEmpty);
+  });
+
+  // 이전에는 오류 바디의 message가 문자열이 아니면 변환이 던져 Result 계약 밖으로 나갔다.
+  test('오류 바디의 문구가 문자열이 아니어도 던지지 않고 문구만 비운다', () async {
+    final f = await _failure(FakeHttpAdapter.reply(409, jsonEncode({'code': 'X', 'message': 123})));
+    expect(f.reason, FailureReason.conflict);
+    expect(f.code, 'X');
+    expect(f.message, isEmpty);
+  });
+
   test('응답을 못 받으면 문구 없는 timeout·offline이다', () async {
     final timeout = await _failure(FakeHttpAdapter.fail(DioExceptionType.receiveTimeout));
     expect(timeout.reason, FailureReason.timeout);
