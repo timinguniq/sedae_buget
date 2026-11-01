@@ -7,12 +7,23 @@ sealed class AppStatus {
   const AppStatus();
 
   /// [info]가 없거나(원격 설정을 못 읽음) [build]를 모르면 쓸 수 있는 것으로 본다.
-  static AppStatus of(AppInitialInfo? info, {required int? build, required bool isIOS}) {
+  static AppStatus of(
+    AppInitialInfo? info, {
+    required int? build,
+    required bool isIOS,
+  }) {
     if (info == null) return const AppAvailable();
-    if (!info.serviceStatus.available) return AppUnderMaintenance(info.serviceStatus);
+    if (!info.serviceStatus.available) {
+      return AppUnderMaintenance(info.serviceStatus);
+    }
     final version = isIOS ? info.ios : info.android;
-    if (build == null || build >= version.releaseVersion) return const AppAvailable();
-    return AppUpdateAvailable(version, forced: build < version.minimumAvailableVersion);
+    if (build == null || build >= version.releaseVersion) {
+      return const AppAvailable();
+    }
+    return AppUpdateAvailable(
+      version,
+      forced: build < version.minimumAvailableVersion,
+    );
   }
 }
 

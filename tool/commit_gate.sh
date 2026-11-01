@@ -13,6 +13,8 @@ fail() {
 command -v git >/dev/null 2>&1 || fail "git을 찾을 수 없습니다."
 command -v flutter >/dev/null 2>&1 ||
   fail "flutter를 찾을 수 없습니다. Flutter SDK를 설치하고 PATH에 추가하세요."
+command -v dart >/dev/null 2>&1 ||
+  fail "dart를 찾을 수 없습니다. Flutter SDK의 bin 디렉터리에 함께 있으므로 그 디렉터리를 PATH에 추가하세요."
 
 root="$(git rev-parse --show-toplevel)" || fail "Git 작업 트리 안에서 실행해야 합니다."
 cd "$root"
@@ -50,8 +52,10 @@ run_check() {
   "$@" || fail "$name 실패(종료 코드 $?). 위 출력을 확인하세요."
 }
 
-# 정책: 분석 오류만 차단한다. 경고·정보는 허용(docs/harness.md).
-run_check "정적 분석" flutter analyze --no-pub --no-fatal-warnings --no-fatal-infos
+# 정책: `dart format` 기본 설정(80열)과 다른 파일이 있으면 차단한다. 어긋난 파일은 `Changed <경로>`로 출력된다.
+run_check "포맷" dart format --output=none --set-exit-if-changed lib test
+# 정책: 분석 오류·경고를 차단한다. 정보는 허용(docs/harness.md).
+run_check "정적 분석" flutter analyze --no-pub --no-fatal-infos
 # 레이어 의존성 규칙(test/architecture)도 이 실행에 포함된다.
 run_check "테스트" flutter test --no-pub
 

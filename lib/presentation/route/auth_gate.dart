@@ -12,7 +12,10 @@ enum SessionGate {
   needsProfile,
   ready;
 
-  static SessionGate of(AsyncValue<AuthUser?> auth, AsyncValue<UserProfile?> profile) {
+  static SessionGate of(
+    AsyncValue<AuthUser?> auth,
+    AsyncValue<UserProfile?> profile,
+  ) {
     if (auth.isLoading) return checking;
     if (auth.hasError) return unreachable;
     if (auth.value == null) return signedOut;
@@ -23,11 +26,16 @@ enum SessionGate {
 }
 
 final sessionGateProvider = Provider<SessionGate>(
-  (ref) => SessionGate.of(ref.watch(authProvider), ref.watch(userProfileProvider)),
+  (ref) =>
+      SessionGate.of(ref.watch(authProvider), ref.watch(userProfileProvider)),
 );
 
 /// 세션이 준비되기 전에만 머무는 화면들.
-final _gatePaths = {RoutePath.login.path, RoutePath.onboarding.path, RoutePath.unreachable.path};
+final _gatePaths = {
+  RoutePath.login.path,
+  RoutePath.onboarding.path,
+  RoutePath.unreachable.path,
+};
 
 /// 가드 면제 화면들.
 /// - 스플래시: 브랜딩과 세션 확인이 끝나면 스스로 떠나고, 그때 재평가.
@@ -46,6 +54,8 @@ String? sessionRedirect(SessionGate gate, String location) {
     SessionGate.needsProfile => RoutePath.onboarding.path,
   };
   if (required != null) return location == required ? null : required;
-  if (gate == SessionGate.ready && _gatePaths.contains(location)) return RoutePath.budgetHome.path;
+  if (gate == SessionGate.ready && _gatePaths.contains(location)) {
+    return RoutePath.budgetHome.path;
+  }
   return null;
 }

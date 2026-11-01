@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
+import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 프로필 카드. 디자인: 46px 마스코트 + 이름 700·15 + 나이대 500·11.5 + 우측 provider 배지.
@@ -21,21 +21,36 @@ class ProfileCard extends ConsumerWidget {
     return SurfaceCard(
       padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
       onTap: () => context.push(RoutePath.profileEdit.path),
-      child: Row(children: [
-        const MascotDongle(size: 46),
-        const SizedBox(width: 13),
-        Expanded(child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(user.nickname,
-              style: context.typo.body2W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.normal)),
-            const SizedBox(height: 2),
-            Text(subtitle,
-              style: context.typo.caption1W500.copyWith(fontSize: 11.5, color: context.color.label.assistive)),
-          ])),
-        ProviderBadge(provider: user.provider),
-      ]),
+      child: Row(
+        children: [
+          const MascotDongle(size: 46),
+          const SizedBox(width: 13),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  user.nickname,
+                  style: context.typo.body2W600.copyWith(
+                    fontWeight: context.typo.bold,
+                    color: context.color.label.normal,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: context.typo.caption1W500.copyWith(
+                    fontSize: 11.5,
+                    color: context.color.label.assistive,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ProviderBadge(provider: user.provider),
+        ],
+      ),
     );
   }
 }

@@ -5,14 +5,16 @@ import 'package:sedae_budget/theme/theme.dart';
 
 /// [income]에서 시작해 고른 값을 따라가는 소득 고르기.
 Widget _picker(double income) => MaterialApp(
-      theme: materialTheme(LightTheme()),
-      home: Scaffold(
-        body: StatefulBuilder(
-          builder: (_, setState) =>
-              IncomePicker(income: income, onChanged: (v) => setState(() => income = v)),
-        ),
+  theme: materialTheme(LightTheme()),
+  home: Scaffold(
+    body: StatefulBuilder(
+      builder: (_, setState) => IncomePicker(
+        income: income,
+        onChanged: (v) => setState(() => income = v),
       ),
-    );
+    ),
+  ),
+);
 
 void main() {
   // 프로필 수정은 서버에 저장된 소득으로 열리므로 상한(600만)보다 클 수 있다.
@@ -28,7 +30,9 @@ void main() {
     await t.pumpWidget(_picker(0));
 
     final slider = t.getRect(find.byType(Slider));
-    await t.tapAt(Offset(slider.left + slider.width * 31 / 60, slider.center.dy));
+    await t.tapAt(
+      Offset(slider.left + slider.width * 31 / 60, slider.center.dy),
+    );
     await t.pump();
     expect(find.text('₩3,100,000'), findsOneWidget);
   });

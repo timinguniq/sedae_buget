@@ -25,16 +25,34 @@ class SettingsTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 17, vertical: 15),
         child: Row(
           children: [
-            Text(label, style: context.typo.label2W600.copyWith(fontSize: 13.5, color: context.color.label.normal)),
+            Text(
+              label,
+              style: context.typo.label2W600.copyWith(
+                fontSize: 13.5,
+                color: context.color.label.normal,
+              ),
+            ),
             const Spacer(),
             if (value != null) ...[
-              Text(value!, style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.assistive)),
+              Text(
+                value!,
+                style: context.typo.caption1W600.copyWith(
+                  fontSize: 12.5,
+                  color: context.color.label.assistive,
+                ),
+              ),
               const SizedBox(width: 8),
             ],
             trailing ??
                 (onTap != null
-                    ? Text('›', style: context.typo.body2W600.copyWith(
-                        fontWeight: context.typo.bold, height: 1, color: context.color.label.disable))
+                    ? Text(
+                        '›',
+                        style: context.typo.body2W600.copyWith(
+                          fontWeight: context.typo.bold,
+                          height: 1,
+                          color: context.color.label.disable,
+                        ),
+                      )
                     : const SizedBox.shrink()),
           ],
         ),

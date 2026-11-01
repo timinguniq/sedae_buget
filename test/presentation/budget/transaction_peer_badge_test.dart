@@ -6,7 +6,9 @@ import 'package:sedae_budget/presentation/page/budget/widget/transaction_tile.da
 import 'package:sedae_budget/theme/theme.dart';
 
 Widget _wrap(Widget child) => MaterialApp(
-          home: Scaffold(body: child), theme: materialTheme(LightTheme()));
+  home: Scaffold(body: child),
+  theme: materialTheme(LightTheme()),
+);
 
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
@@ -23,7 +25,18 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
 
-    await tester.pumpWidget(_wrap(SizedBox(width: 390, child: TransactionTile(tx: tx, label: BudgetCategory.groceries.label, overPeer: true))));
+    await tester.pumpWidget(
+      _wrap(
+        SizedBox(
+          width: 390,
+          child: TransactionTile(
+            tx: tx,
+            label: BudgetCategory.groceries.label,
+            overPeer: true,
+          ),
+        ),
+      ),
+    );
     await tester.pump();
 
     expect(find.text('또래보다 많이'), findsOneWidget);
@@ -34,7 +47,14 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
 
-    await tester.pumpWidget(_wrap(SizedBox(width: 390, child: TransactionTile(tx: tx, label: BudgetCategory.groceries.label))));
+    await tester.pumpWidget(
+      _wrap(
+        SizedBox(
+          width: 390,
+          child: TransactionTile(tx: tx, label: BudgetCategory.groceries.label),
+        ),
+      ),
+    );
     await tester.pump();
 
     expect(find.text('또래보다 많이'), findsNothing);
@@ -55,7 +75,18 @@ void main() {
       memo: '오늘 마트에서 장 봤어요 그리고 또 다른 것도 많이 샀습니다 정말로',
     );
 
-    await tester.pumpWidget(_wrap(SizedBox(width: 390, child: TransactionTile(tx: longTx, label: BudgetCategory.groceries.label, overPeer: true))));
+    await tester.pumpWidget(
+      _wrap(
+        SizedBox(
+          width: 390,
+          child: TransactionTile(
+            tx: longTx,
+            label: BudgetCategory.groceries.label,
+            overPeer: true,
+          ),
+        ),
+      ),
+    );
     await tester.pump();
 
     expect(find.text('또래보다 많이'), findsOneWidget);

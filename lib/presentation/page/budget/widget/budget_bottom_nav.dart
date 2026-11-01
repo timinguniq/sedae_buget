@@ -56,8 +56,13 @@ class BudgetBottomNav extends StatelessWidget {
         ? context.color.primary.normal
         : (dark ? context.color.label.disable : _inactiveIconLight);
     final labelStyle = selected
-        ? context.typo.caption2W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.normal)
-        : context.typo.caption2W600.copyWith(color: context.color.label.assistive);
+        ? context.typo.caption2W600.copyWith(
+            fontWeight: context.typo.bold,
+            color: context.color.label.normal,
+          )
+        : context.typo.caption2W600.copyWith(
+            color: context.color.label.assistive,
+          );
     return Expanded(
       child: InkWell(
         onTap: () => onTap(index),

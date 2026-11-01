@@ -11,21 +11,25 @@ class CategoryRepositoryImpl implements CategoryRepository {
   final CategoryApi _api;
 
   @override
-  Future<Result<List<CustomCategory>>> getAll() =>
-      guardApi(() async => [for (final dto in await _api.list()) dto.toEntity()]);
+  Future<Result<List<CustomCategory>>> getAll() => guardApi(
+    () async => [for (final dto in await _api.list()) dto.toEntity()],
+  );
 
   @override
   Future<Result<CustomCategory>> upsert(CustomCategory category) => guardApi(
-        () async => (await _api.put(category.id, CustomCategoryBodyDto.fromEntity(category)))
-            .toEntity(),
-      );
+    () async => (await _api.put(
+      category.id,
+      CustomCategoryBodyDto.fromEntity(category),
+    )).toEntity(),
+  );
 
   @override
   Future<Result<CustomCategory>> delete(CustomCategory category) => guardApi(
-        () async {
-          await _api.delete(category.id);
-          return category;
-        },
-        recover: (f) => f.reason == FailureReason.notFound ? Result.success(category) : null,
-      );
+    () async {
+      await _api.delete(category.id);
+      return category;
+    },
+    recover: (f) =>
+        f.reason == FailureReason.notFound ? Result.success(category) : null,
+  );
 }

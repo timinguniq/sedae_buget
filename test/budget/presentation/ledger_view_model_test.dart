@@ -11,7 +11,11 @@ final _now = DateTime.now();
 final _thisMonth = DateTime(_now.year, _now.month, 1);
 
 Transaction _expense(int amount) => Transaction.create(
-    amount: amount, base: BudgetCategory.groceries, date: _thisMonth, type: TransactionType.expense);
+  amount: amount,
+  base: BudgetCategory.groceries,
+  date: _thisMonth,
+  type: TransactionType.expense,
+);
 
 /// kakao로 로그인해 [categories]·[transactions]를 심은 서버.
 Future<StubServer> _server({
@@ -25,7 +29,10 @@ Future<StubServer> _server({
 
 /// 서버에 저장된 이달 거래.
 Future<List<Transaction>> _saved(StubServer server) async =>
-    (await server.transactions.getRange(YearMonth.of(_thisMonth).start, YearMonth.of(_thisMonth).end)).unwrap();
+    (await server.transactions.getRange(
+      YearMonth.of(_thisMonth).start,
+      YearMonth.of(_thisMonth).end,
+    )).unwrap();
 
 /// 서버가 받은 거래 조회 수(이달·추이 모두).
 int _reads(StubServer server) => server.faults.count('GET', '/v1/transactions');
@@ -45,11 +52,15 @@ void main() {
     final c = fakeContainer(server: await _server());
     expect((await c.read(selfTrendProvider.future)).last.expense, 0);
 
-    final res = await c.read(monthlyTransactionsProvider.notifier)
+    final res = await c
+        .read(monthlyTransactionsProvider.notifier)
         .save(TransactionDraft.create(_thisMonth).withAmount(7000));
     expect(res.failureOrNull, isNull);
 
-    expect((await c.read(monthlyTransactionsProvider.future)).single.amount, 7000);
+    expect(
+      (await c.read(monthlyTransactionsProvider.future)).single.amount,
+      7000,
+    );
     expect((await c.read(selfTrendProvider.future)).last.expense, 7000);
   });
 
@@ -58,8 +69,11 @@ void main() {
     final server = await _server(categories: const [_pet]);
     final c = fakeContainer(server: server);
 
-    await c.read(monthlyTransactionsProvider.notifier)
-        .save(TransactionDraft.create(_thisMonth).withAmount(1000).pickCustom(_pet));
+    await c
+        .read(monthlyTransactionsProvider.notifier)
+        .save(
+          TransactionDraft.create(_thisMonth).withAmount(1000).pickCustom(_pet),
+        );
 
     final saved = (await _saved(server)).single;
     expect(saved.customCategoryId, _pet.id);
@@ -72,8 +86,11 @@ void main() {
     server.faults.fail('GET', '/v1/categories');
     final c = fakeContainer(server: server);
 
-    final res = await c.read(monthlyTransactionsProvider.notifier)
-        .save(TransactionDraft.create(_thisMonth).withAmount(1000).pickCustom(_pet));
+    final res = await c
+        .read(monthlyTransactionsProvider.notifier)
+        .save(
+          TransactionDraft.create(_thisMonth).withAmount(1000).pickCustom(_pet),
+        );
 
     expect(res.failureOrNull, isNull);
     expect((await _saved(server)).single.customCategoryId, _pet.id);
@@ -85,7 +102,10 @@ void main() {
     final c = fakeContainer(server: server);
 
     expect(c.read(categoryCatalogProvider).isComplete, isFalse);
-    await expectLater(c.read(customCategoriesProvider.future), throwsA(anything));
+    await expectLater(
+      c.read(customCategoriesProvider.future),
+      throwsA(anything),
+    );
     expect(c.read(categoryCatalogProvider).isComplete, isFalse);
   });
 
@@ -107,7 +127,10 @@ void main() {
 
     server.faults.fail('GET', '/v1/categories');
     c.invalidate(customCategoriesProvider);
-    await expectLater(c.read(customCategoriesProvider.future), throwsA(anything));
+    await expectLater(
+      c.read(customCategoriesProvider.future),
+      throwsA(anything),
+    );
 
     expect(sub.read().customs, [_pet]);
   });
@@ -125,8 +148,12 @@ void main() {
     final c = fakeContainer(server: await _server(categories: const [_pet]));
     await c.read(customCategoriesProvider.future);
     final tx = Transaction.create(
-        amount: 1000, base: BudgetCategory.groceries, date: _thisMonth, type: TransactionType.expense,
-        customCategoryId: _pet.id);
+      amount: 1000,
+      base: BudgetCategory.groceries,
+      date: _thisMonth,
+      type: TransactionType.expense,
+      customCategoryId: _pet.id,
+    );
 
     final draft = c.read(monthlyTransactionsProvider.notifier).editDraft(tx);
     expect(draft.base, BudgetCategory.etc); // 사용자 카테고리의 지금 상위 분류
@@ -135,8 +162,16 @@ void main() {
 
   // Stub 서버가 사용자마다 데이터를 따로 둔다(계약). 장부는 세션이 바뀌면 새 사용자로 다시 읽어야 한다.
   test('다른 사용자로 다시 로그인하면 이전 사용자의 장부가 남지 않는다', () async {
-    final c = fakeContainer(server: await _server(categories: const [_pet], transactions: [_expense(1111)]));
-    expect((await c.read(monthlyTransactionsProvider.future)).single.amount, 1111);
+    final c = fakeContainer(
+      server: await _server(
+        categories: const [_pet],
+        transactions: [_expense(1111)],
+      ),
+    );
+    expect(
+      (await c.read(monthlyTransactionsProvider.future)).single.amount,
+      1111,
+    );
     expect((await c.read(selfTrendProvider.future)).last.expense, 1111);
     expect(await c.read(customCategoriesProvider.future), const [_pet]);
 
@@ -180,7 +215,8 @@ void main() {
     await c.read(monthlyTransactionsProvider.future);
     final reads = _reads(server);
 
-    await c.read(customCategoriesProvider.notifier)
+    await c
+        .read(customCategoriesProvider.notifier)
         .save(CategoryDraft.edit(_pet).pickBase(BudgetCategory.recreation));
     await c.read(monthlyTransactionsProvider.future);
 
@@ -200,8 +236,12 @@ void main() {
 
     expect(first.failureOrNull?.reason, FailureReason.timeout);
     expect(retry.failureOrNull, isNull);
-    expect((await server.categories.getAll()).unwrap().map((e) => e.name), ['반려식물']);
-    expect((await c.read(customCategoriesProvider.future)).map((e) => e.name), ['반려식물']);
+    expect((await server.categories.getAll()).unwrap().map((e) => e.name), [
+      '반려식물',
+    ]);
+    expect((await c.read(customCategoriesProvider.future)).map((e) => e.name), [
+      '반려식물',
+    ]);
   });
 
   // 서버는 지웠는데 응답이 시간 초과로 사라지면, 장부가 지운 거래를 계속 보여줬다(그 거래를 저장하면 되살아났다).
@@ -211,7 +251,9 @@ void main() {
     final c = fakeContainer(server: server);
     final shown = (await c.read(monthlyTransactionsProvider.future)).single;
 
-    final res = await c.read(monthlyTransactionsProvider.notifier).delete(shown);
+    final res = await c
+        .read(monthlyTransactionsProvider.notifier)
+        .delete(shown);
 
     expect(res.failureOrNull?.reason, FailureReason.timeout);
     expect(await c.read(monthlyTransactionsProvider.future), isEmpty);

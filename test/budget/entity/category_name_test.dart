@@ -34,12 +34,27 @@ void main() {
   // 입력 칸에 다 들어가지 않는 입력(붙여넣기 등)은 들어가는 앞부분까지 남긴다.
   test('넘치는 입력은 앞뒤 공백을 빼고 10자가 되는 가장 긴 앞부분까지 남긴다', () {
     expect(CategoryName.fittingPrefix('가나다라마바사아자차카타'), '가나다라마바사아자차');
-    expect(CategoryName.fittingPrefix('  ${'가' * 12}'), '  ${'가' * 10}'); // 앞 공백은 세지 않는다
-    expect(CategoryName.fittingPrefix('${'가' * 10}  나'), '${'가' * 10}  '); // 뒤 공백도 세지 않는다
-    expect(CategoryName.fittingPrefix('반려 식물${'가' * 6}'), '반려 식물${'가' * 5}'); // 가운데 공백은 센다
-    expect(CategoryName.fittingPrefix('${'가' * 11} 나'), '가' * 10); // 처음 넘친 글자 뒤는 남기지 않는다
+    expect(
+      CategoryName.fittingPrefix('  ${'가' * 12}'),
+      '  ${'가' * 10}',
+    ); // 앞 공백은 세지 않는다
+    expect(
+      CategoryName.fittingPrefix('${'가' * 10}  나'),
+      '${'가' * 10}  ',
+    ); // 뒤 공백도 세지 않는다
+    expect(
+      CategoryName.fittingPrefix('반려 식물${'가' * 6}'),
+      '반려 식물${'가' * 5}',
+    ); // 가운데 공백은 센다
+    expect(
+      CategoryName.fittingPrefix('${'가' * 11} 나'),
+      '가' * 10,
+    ); // 처음 넘친 글자 뒤는 남기지 않는다
     expect(CategoryName.fittingPrefix('🐶' * 11), '🐶' * 10);
-    expect(CategoryName.fittingPrefix('👨‍👩‍👧' * 11), '👨‍👩‍👧' * 10); // 이어 붙인 이모지를 가르지 않는다
+    expect(
+      CategoryName.fittingPrefix('👨‍👩‍👧' * 11),
+      '👨‍👩‍👧' * 10,
+    ); // 이어 붙인 이모지를 가르지 않는다
   });
 
   test('이미 들어가는 입력은 그대로 둔다', () {

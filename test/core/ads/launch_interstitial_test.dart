@@ -7,11 +7,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../helper/fakes.dart';
 
 Future<int> _count() async =>
-    (await SharedPreferences.getInstance()).getInt(LaunchInterstitial.prefsKey) ?? 0;
+    (await SharedPreferences.getInstance()).getInt(
+      LaunchInterstitial.prefsKey,
+    ) ??
+    0;
 
 void main() {
   Future<LaunchInterstitial> build(FakeAdService ads, {int count = 0}) async {
-    SharedPreferences.setMockInitialValues({LaunchInterstitial.prefsKey: count});
+    SharedPreferences.setMockInitialValues({
+      LaunchInterstitial.prefsKey: count,
+    });
     return LaunchInterstitial(await SharedPreferences.getInstance(), ads);
   }
 

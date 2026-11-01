@@ -5,7 +5,10 @@ import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_m
 
 import '../../helper/fakes.dart';
 
-const _profile = UserProfile(ageGroup: AgeGroup.twenties, monthlyIncome: 2500000);
+const _profile = UserProfile(
+  ageGroup: AgeGroup.twenties,
+  monthlyIncome: 2500000,
+);
 
 /// kakao 사용자가 프로필을 저장해 둔 뒤 로그아웃한 서버.
 Future<StubServer> _savedThenSignedOut() async {
@@ -19,7 +22,10 @@ void main() {
   test('logged in + nothing saved → null', () async {
     final server = StubServer();
     await server.signIn(AuthProvider.kakao);
-    expect(await fakeContainer(server: server).read(userProfileProvider.future), isNull);
+    expect(
+      await fakeContainer(server: server).read(userProfileProvider.future),
+      isNull,
+    );
   });
 
   test('not logged in → null even if the server has a profile', () async {
@@ -39,14 +45,20 @@ void main() {
     expect((await c2.read(userProfileProvider.future))?.monthlyIncome, 2500000);
   });
 
-  test('signIn refetches the profile from the server; signOut clears it', () async {
-    final c = fakeContainer(server: await _savedThenSignedOut());
-    expect(await c.read(userProfileProvider.future), isNull);
+  test(
+    'signIn refetches the profile from the server; signOut clears it',
+    () async {
+      final c = fakeContainer(server: await _savedThenSignedOut());
+      expect(await c.read(userProfileProvider.future), isNull);
 
-    await c.read(authProvider.notifier).signIn(AuthProvider.kakao);
-    expect((await c.read(userProfileProvider.future))?.ageGroup, AgeGroup.twenties);
+      await c.read(authProvider.notifier).signIn(AuthProvider.kakao);
+      expect(
+        (await c.read(userProfileProvider.future))?.ageGroup,
+        AgeGroup.twenties,
+      );
 
-    await c.read(authProvider.notifier).signOut();
-    expect(await c.read(userProfileProvider.future), isNull);
-  });
+      await c.read(authProvider.notifier).signOut();
+      expect(await c.read(userProfileProvider.future), isNull);
+    },
+  );
 }

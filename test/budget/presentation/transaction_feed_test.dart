@@ -3,11 +3,11 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/transaction_feed.dart';
 
 Transaction _tx(DateTime date, {int amount = 1000}) => Transaction.create(
-      amount: amount,
-      base: BudgetCategory.transport,
-      date: date,
-      type: TransactionType.expense,
-    );
+  amount: amount,
+  base: BudgetCategory.transport,
+  date: date,
+  type: TransactionType.expense,
+);
 
 void main() {
   group('buildTransactionFeed', () {
@@ -22,7 +22,11 @@ void main() {
         _tx(DateTime(2026, 6, 4)),
       ]);
       final days = feed.whereType<FeedDayHeader>().map((h) => h.day).toList();
-      expect(days, [DateTime(2026, 6, 5), DateTime(2026, 6, 4), DateTime(2026, 6, 3)]);
+      expect(days, [
+        DateTime(2026, 6, 5),
+        DateTime(2026, 6, 4),
+        DateTime(2026, 6, 3),
+      ]);
     });
 
     test('같은 날 거래 사이에만 구분선이 들어간다', () {
@@ -51,25 +55,31 @@ void main() {
         _tx(DateTime(2026, 6, 4)),
       ]);
       final ads = feed.whereType<FeedAdSlot>().toList();
-      expect(ads.map((a) => a.day), [DateTime(2026, 6, 5), DateTime(2026, 6, 4)]);
+      expect(ads.map((a) => a.day), [
+        DateTime(2026, 6, 5),
+        DateTime(2026, 6, 4),
+      ]);
     });
 
     test('광고는 위에서부터 maxAds개까지만', () {
-      final feed = buildTransactionFeed(
-        [for (var d = 1; d <= 6; d++) _tx(DateTime(2026, 6, d))],
-      );
+      final feed = buildTransactionFeed([
+        for (var d = 1; d <= 6; d++) _tx(DateTime(2026, 6, d)),
+      ]);
       final ads = feed.whereType<FeedAdSlot>().toList();
       expect(ads.length, 3);
       // 가장 최근 날짜 그룹부터 채운다.
-      expect(ads.map((a) => a.day),
-          [DateTime(2026, 6, 6), DateTime(2026, 6, 5), DateTime(2026, 6, 4)]);
+      expect(ads.map((a) => a.day), [
+        DateTime(2026, 6, 6),
+        DateTime(2026, 6, 5),
+        DateTime(2026, 6, 4),
+      ]);
     });
 
     test('maxAds가 0이면 광고가 없다', () {
-      final feed = buildTransactionFeed(
-        [_tx(DateTime(2026, 6, 5)), _tx(DateTime(2026, 6, 4))],
-        maxAds: 0,
-      );
+      final feed = buildTransactionFeed([
+        _tx(DateTime(2026, 6, 5)),
+        _tx(DateTime(2026, 6, 4)),
+      ], maxAds: 0);
       expect(feed.whereType<FeedAdSlot>(), isEmpty);
     });
 

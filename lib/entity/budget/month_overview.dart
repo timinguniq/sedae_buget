@@ -69,7 +69,12 @@ final class PeerCompared extends PeerStanding {
 /// [share]는 이달 지출에서 줄 금액([amount])이 차지하는 몫(0–1)이고, 이달 지출이 0원이면 0이다.
 /// 또래 비교([peer])는 기본 분류 줄에만 붙는다(사용자 카테고리·나머지 줄, 또래 값이 없으면 null).
 /// 그 비교는 줄 금액([amount])이 아니라 그 분류의 사용자 카테고리까지 합친 금액([MonthOverview.category])으로 한다.
-typedef AnalysisRow = ({CategoryBreakdown? item, int amount, double share, PeerComparison? peer});
+typedef AnalysisRow = ({
+  CategoryBreakdown? item,
+  int amount,
+  double share,
+  PeerComparison? peer,
+});
 
 /// 이달 개요: 보고 있는 달([month])을 또래([peer])와 견준 결과.
 ///
@@ -89,9 +94,14 @@ class MonthOverview {
   /// 이달을 또래와 견준 상황.
   late final PeerStanding standing = () {
     final p = _comparable;
-    if (p == null) return peer == null ? const PeerUnavailable() : const PeerEmptyMonth();
+    if (p == null) {
+      return peer == null ? const PeerUnavailable() : const PeerEmptyMonth();
+    }
     final total = p.compareTotal(month.expense);
-    final savings = SavingsComparison(mine: month.savingsRate, peer: p.avgSavingsRatePercent);
+    final savings = SavingsComparison(
+      mine: month.savingsRate,
+      peer: p.avgSavingsRatePercent,
+    );
     return PeerCompared(
       total: total,
       rank: p.rankOf(month.expense),
@@ -119,15 +129,22 @@ class MonthOverview {
       for (final e in rows.take(n))
         // 또래 비교는 기본 분류로만 한다. 사용자 카테고리로 뗀 줄에는 붙이지 않는다.
         // 기본 분류 줄은 뗀 나머지([amount])가 아니라 사용자 카테고리까지 합친 금액으로 견준다(홈·비교와 같은 값).
-        (item: e, amount: e.amount, share: share(e.amount), peer: e.custom == null ? category(e.base) : null),
+        (
+          item: e,
+          amount: e.amount,
+          share: share(e.amount),
+          peer: e.custom == null ? category(e.base) : null,
+        ),
       if (rest > 0) (item: null, amount: rest, share: share(rest), peer: null),
     ];
   }
 
   /// 많이 쓴 기본 분류 [n]개(금액 내림차순)와 각 분류의 또래 비교.
-  List<({BudgetCategory category, int amount, PeerComparison? peer})> topCategories(int n) => [
-        for (final e in month.topCategories(n)) (category: e.key, amount: e.value, peer: category(e.key)),
-      ];
+  List<({BudgetCategory category, int amount, PeerComparison? peer})>
+  topCategories(int n) => [
+    for (final e in month.topCategories(n))
+      (category: e.key, amount: e.value, peer: category(e.key)),
+  ];
 
   /// 또래 평균과 차이가 가장 큰 기본 분류.
   ({BudgetCategory category, PeerComparison comparison})? get largestGap =>
@@ -136,7 +153,9 @@ class MonthOverview {
   /// 또래가 가장 많이 쓰는 분류(또래 평균을 가장 끌어올리는 항목).
   BudgetCategory? get peerTopCategory {
     MapEntry<BudgetCategory, int>? top;
-    for (final e in peer?.avgByCategory.entries ?? const <MapEntry<BudgetCategory, int>>[]) {
+    for (final e
+        in peer?.avgByCategory.entries ??
+            const <MapEntry<BudgetCategory, int>>[]) {
       if (top == null || e.value > top.value) top = e;
     }
     return top?.key;

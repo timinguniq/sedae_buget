@@ -1,28 +1,27 @@
-import 'package:sedae_budget/presentation/presentation.dart';
-import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/page/budget/budget_home.page.dart';
-import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart';
-import 'package:sedae_budget/presentation/page/budget/category_analysis.page.dart';
-import 'package:sedae_budget/presentation/page/budget/category_manage.page.dart';
-import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart';
-import 'package:sedae_budget/presentation/page/compare/compare.page.dart';
-import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
-import 'package:sedae_budget/presentation/page/login/login.page.dart';
-import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
-import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
-import 'package:sedae_budget/presentation/page/report/report.page.dart';
-import 'package:sedae_budget/presentation/page/setting/profile_edit.page.dart';
-import 'package:sedae_budget/presentation/page/legal/legal.page.dart';
-import 'package:sedae_budget/presentation/page/legal/legal_content.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sedae_budget/entity/entity.dart';
+import 'package:sedae_budget/presentation/page/budget/budget_home.page.dart';
+import 'package:sedae_budget/presentation/page/budget/category_analysis.page.dart';
+import 'package:sedae_budget/presentation/page/budget/category_manage.page.dart';
+import 'package:sedae_budget/presentation/page/budget/transaction_edit.page.dart';
+import 'package:sedae_budget/presentation/page/budget/transaction_list.page.dart';
+import 'package:sedae_budget/presentation/page/compare/compare.page.dart';
+import 'package:sedae_budget/presentation/page/legal/legal.page.dart';
+import 'package:sedae_budget/presentation/page/legal/legal_content.dart';
+import 'package:sedae_budget/presentation/page/login/login.page.dart';
+import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
+import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.page.dart';
+import 'package:sedae_budget/presentation/page/onboarding/onboarding_flow.view_model.dart';
+import 'package:sedae_budget/presentation/page/report/report.page.dart';
+import 'package:sedae_budget/presentation/page/setting/profile_edit.page.dart';
+import 'package:sedae_budget/presentation/presentation.dart';
 
-part 'route_path.dart';
 part 'auth_gate.dart';
+part 'route_path.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorKey = GlobalKey<NavigatorState>();
 
 /// 세션 상태([sessionGateProvider])가 바뀌면 go_router redirect를 재평가시키는 브리지.
 class RouterRefreshNotifier extends ChangeNotifier {
@@ -38,35 +37,87 @@ final routerProvider = Provider<GoRouter>((ref) {
     navigatorKey: rootNavigatorKey,
     initialLocation: RoutePath.splash.path,
     refreshListenable: refresh,
-    redirect: (context, state) => sessionRedirect(ref.read(sessionGateProvider), state.matchedLocation),
+    redirect: (context, state) =>
+        sessionRedirect(ref.read(sessionGateProvider), state.matchedLocation),
     routes: [
-      GoRoute(path: RoutePath.splash.path, builder: (_, _) => const SplashPage()),
-      GoRoute(path: RoutePath.onboarding.path, builder: (_, _) => const OnboardingFlowPage()),
+      GoRoute(
+        path: RoutePath.splash.path,
+        builder: (_, _) => const SplashPage(),
+      ),
+      GoRoute(
+        path: RoutePath.onboarding.path,
+        builder: (_, _) => const OnboardingFlowPage(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (_, _, shell) => MainShell(navigationShell: shell),
         branches: [
-          StatefulShellBranch(routes: [GoRoute(path: RoutePath.budgetHome.path, builder: (_, _) => const BudgetHomePage())]),
-          StatefulShellBranch(routes: [GoRoute(path: RoutePath.compare.path, builder: (_, _) => const ComparePage())]),
-          StatefulShellBranch(routes: [GoRoute(path: RoutePath.history.path, builder: (_, _) => const TransactionListPage())]),
-          StatefulShellBranch(routes: [GoRoute(path: RoutePath.report.path, builder: (_, _) => const ReportPage())]),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePath.budgetHome.path,
+                builder: (_, _) => const BudgetHomePage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePath.compare.path,
+                builder: (_, _) => const ComparePage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePath.history.path,
+                builder: (_, _) => const TransactionListPage(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: RoutePath.report.path,
+                builder: (_, _) => const ReportPage(),
+              ),
+            ],
+          ),
         ],
       ),
-      GoRoute(path: RoutePath.transactionEdit.path, builder: (_, state) =>
-          TransactionEditPage(existing: state.extra as Transaction?)),
-      GoRoute(path: RoutePath.categoryAnalysis.path, builder: (_, _) => const CategoryAnalysisPage()),
-      GoRoute(path: RoutePath.categoryManage.path, builder: (_, state) =>
-          CategoryManagePage(initialEditing: state.extra as bool? ?? false)),
-      GoRoute(path: RoutePath.setting.path, builder: (_, _) => const SettingPage()),
-      GoRoute(path: RoutePath.profileEdit.path, builder: (_, _) => const ProfileEditPage()),
+      GoRoute(
+        path: RoutePath.transactionEdit.path,
+        builder: (_, state) =>
+            TransactionEditPage(existing: state.extra as Transaction?),
+      ),
+      GoRoute(
+        path: RoutePath.categoryAnalysis.path,
+        builder: (_, _) => const CategoryAnalysisPage(),
+      ),
+      GoRoute(
+        path: RoutePath.categoryManage.path,
+        builder: (_, state) =>
+            CategoryManagePage(initialEditing: state.extra as bool? ?? false),
+      ),
+      GoRoute(
+        path: RoutePath.setting.path,
+        builder: (_, _) => const SettingPage(),
+      ),
+      GoRoute(
+        path: RoutePath.profileEdit.path,
+        builder: (_, _) => const ProfileEditPage(),
+      ),
       GoRoute(path: RoutePath.login.path, builder: (_, _) => const LoginPage()),
-      GoRoute(path: RoutePath.terms.path, builder: (_, state) =>
-          LegalPage(initialTab: state.extra as LegalTab? ?? LegalTab.terms)),
-      GoRoute(path: RoutePath.unreachable.path, builder: (_, _) => const UnreachablePage()),
+      GoRoute(
+        path: RoutePath.terms.path,
+        builder: (_, state) =>
+            LegalPage(initialTab: state.extra as LegalTab? ?? LegalTab.terms),
+      ),
+      GoRoute(
+        path: RoutePath.unreachable.path,
+        builder: (_, _) => const UnreachablePage(),
+      ),
     ],
     debugLogDiagnostics: true,
-    observers: [
-      //FirebaseAnalyticsObserver(analytics: FirebaseAnalytics.instance),
-      //AmplitudeNavigatorObserver(),
-    ],
   );
 });

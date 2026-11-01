@@ -49,6 +49,8 @@ enum WonText {
   /// (14,500원 → 1.5만. 이진 소수 1.45는 1.4499…라 `toStringAsFixed`는 내렸다).
   static String _oneDecimal(int abs, int unit) {
     final tenths = (abs * 10 + unit ~/ 2) ~/ unit;
-    return tenths % 10 == 0 ? '${tenths ~/ 10}' : '${tenths ~/ 10}.${tenths % 10}';
+    return tenths % 10 == 0
+        ? '${tenths ~/ 10}'
+        : '${tenths ~/ 10}.${tenths % 10}';
   }
 }

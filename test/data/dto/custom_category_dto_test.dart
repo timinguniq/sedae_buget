@@ -3,8 +3,11 @@ import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/entity/entity.dart';
 
 void main() {
-  CustomCategory read(int baseCategoryId) =>
-      CustomCategoryDto.fromJson({'id': 'c1', 'name': '반려동물', 'baseCategoryId': baseCategoryId}).toEntity();
+  CustomCategory read(int baseCategoryId) => CustomCategoryDto.fromJson({
+    'id': 'c1',
+    'name': '반려동물',
+    'baseCategoryId': baseCategoryId,
+  }).toEntity();
 
   test('아는 상위 분류는 그대로다', () {
     expect(read(14).base, BudgetCategory.recreation);

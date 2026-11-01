@@ -91,7 +91,8 @@ extension PeerStatsX on PeerStats {
   /// 또래 평균과 차이(%)가 가장 큰 기본 분류와 그 비교. 내 지출과 또래 평균이 모두 있는 항목만 본다.
   /// 비교할 항목이 없으면 null.
   ({BudgetCategory category, PeerComparison comparison})? largestCategoryGap(
-      Map<BudgetCategory, int> mySummary) {
+    Map<BudgetCategory, int> mySummary,
+  ) {
     ({BudgetCategory category, PeerComparison comparison})? best;
     var bestGap = -1.0;
     for (final c in BudgetCategory.values) {

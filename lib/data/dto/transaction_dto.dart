@@ -19,7 +19,8 @@ class TransactionDto {
     required this.updatedAt,
   });
 
-  factory TransactionDto.fromJson(Map<String, dynamic> json) => _$TransactionDtoFromJson(json);
+  factory TransactionDto.fromJson(Map<String, dynamic> json) =>
+      _$TransactionDtoFromJson(json);
 
   final String id;
   final int amount;
@@ -34,16 +35,16 @@ class TransactionDto {
   /// 서버 응답(UTC) → 엔티티(로컬 시각). 모르는 분류 id(서버가 늘린 분류, 수입에 적힌 아무 값)는
   /// 기타로 읽는다 — 지출은 합계에서 빠지지 않고, 수입의 분류는 앱이 쓰지 않는다.
   Transaction toEntity() => Transaction(
-        id: id,
-        amount: amount,
-        base: budgetCategoryFromWire(categoryId) ?? BudgetCategory.etc,
-        date: date.toLocal(),
-        type: type,
-        memo: memo,
-        customCategoryId: customCategoryId,
-        createdAt: createdAt.toLocal(),
-        updatedAt: updatedAt.toLocal(),
-      );
+    id: id,
+    amount: amount,
+    base: budgetCategoryFromWire(categoryId) ?? BudgetCategory.etc,
+    date: date.toLocal(),
+    type: type,
+    memo: memo,
+    customCategoryId: customCategoryId,
+    createdAt: createdAt.toLocal(),
+    updatedAt: updatedAt.toLocal(),
+  );
 }
 
 /// PUT 바디. id/createdAt/updatedAt은 서버 소관이라 보내지 않는다.
@@ -60,13 +61,13 @@ class TransactionBodyDto {
 
   /// 일시는 UTC로 보낸다.
   factory TransactionBodyDto.fromEntity(Transaction t) => TransactionBodyDto(
-        amount: t.amount,
-        categoryId: t.base.wire,
-        date: t.date.toUtc(),
-        type: t.type,
-        memo: t.memo,
-        customCategoryId: t.customCategoryId,
-      );
+    amount: t.amount,
+    categoryId: t.base.wire,
+    date: t.date.toUtc(),
+    type: t.type,
+    memo: t.memo,
+    customCategoryId: t.customCategoryId,
+  );
 
   final int amount;
   final int categoryId;

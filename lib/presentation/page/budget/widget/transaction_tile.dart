@@ -29,46 +29,80 @@ class TransactionTile extends StatelessWidget {
     final memo = tx.memo?.trim() ?? '';
     final title = memo.isEmpty ? label : memo;
     final hasTime = tx.date.hour != 0 || tx.date.minute != 0;
-    final subtitle = hasTime ? '$label · ${DateFormat('HH:mm').format(tx.date)}' : label;
+    final subtitle = hasTime
+        ? '$label · ${DateFormat('HH:mm').format(tx.date)}'
+        : label;
     return InkWell(
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 11),
-        child: Row(children: [
-          Container(
-            width: 38, height: 38,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: context.color.background.alternative,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(label.isEmpty ? '' : label.characters.first,
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: context.color.background.alternative,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                label.isEmpty ? '' : label.characters.first,
                 style: context.typo.label2W600.copyWith(
-                    fontWeight: context.typo.bold, color: context.color.label.alternative)),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Flexible(
-                  child: Text(title,
-                      maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: context.typo.label2W600.copyWith(fontSize: 13.5, color: context.color.label.normal)),
-                ),
-                if (overPeer) ...[const SizedBox(width: 6), const _PeerBadge()],
-              ]),
-              const SizedBox(height: 2),
-              Text(subtitle,
-                  maxLines: 1, overflow: TextOverflow.ellipsis,
-                  style: context.typo.caption2W500.copyWith(fontSize: 11, color: context.color.label.assistive)),
-            ]),
-          ),
-          const SizedBox(width: 10),
-          Text(WonText.signed.of(isExpense ? -tx.amount : tx.amount),
-              style: context.typo.label2W600.copyWith(
                   fontWeight: context.typo.bold,
-                  color: isExpense ? context.color.label.normal : context.color.primary.normal)),
-        ]),
+                  color: context.color.label.alternative,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: context.typo.label2W600.copyWith(
+                            fontSize: 13.5,
+                            color: context.color.label.normal,
+                          ),
+                        ),
+                      ),
+                      if (overPeer) ...[
+                        const SizedBox(width: 6),
+                        const _PeerBadge(),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: context.typo.caption2W500.copyWith(
+                      fontSize: 11,
+                      color: context.color.label.assistive,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              WonText.signed.of(isExpense ? -tx.amount : tx.amount),
+              style: context.typo.label2W600.copyWith(
+                fontWeight: context.typo.bold,
+                color: isExpense
+                    ? context.color.label.normal
+                    : context.color.primary.normal,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -86,9 +120,15 @@ class _PeerBadge extends StatelessWidget {
         color: context.color.primary.tint,
         borderRadius: BorderRadius.circular(7),
       ),
-      child: Text(overPeerText,
-          style: context.typo.caption2W600.copyWith(
-              fontSize: 8.5, height: 1.3, fontWeight: context.typo.bold, color: context.color.primary.normal)),
+      child: Text(
+        overPeerText,
+        style: context.typo.caption2W600.copyWith(
+          fontSize: 8.5,
+          height: 1.3,
+          fontWeight: context.typo.bold,
+          color: context.color.primary.normal,
+        ),
+      ),
     );
   }
 }

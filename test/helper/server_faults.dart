@@ -22,13 +22,14 @@ class ServerFaults extends Interceptor {
     FailureReason reason = FailureReason.offline,
     int? times,
     String message = '서버가 내려갔어요',
-  }) =>
-      _failures.add(_Failure(method, path, reason, times, message));
+  }) => _failures.add(_Failure(method, path, reason, times, message));
 
   /// [method] [path]로 가는 요청은 서버가 처리하지만, 그 응답을 [times]번 시간 초과로 잃는다
   /// (서버는 저장했는데 앱은 실패로 아는 상황).
   void loseResponse(String method, String path, {int times = 1}) =>
-      _lostResponses.add(_Failure(method, path, FailureReason.timeout, times, ''));
+      _lostResponses.add(
+        _Failure(method, path, FailureReason.timeout, times, ''),
+      );
 
   final _lostResponses = <_Failure>[];
 
@@ -46,10 +47,14 @@ class ServerFaults extends Interceptor {
   }
 
   /// [method] [path]로 간 요청 수.
-  int count(String method, String path) => requests.where((r) => r.startsWith('$method $path')).length;
+  int count(String method, String path) =>
+      requests.where((r) => r.startsWith('$method $path')).length;
 
   @override
-  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     final method = options.method, path = options.path;
     final hold = _holds.where((h) => h.matches(method, path)).firstOrNull;
     if (hold != null) {
@@ -67,9 +72,14 @@ class ServerFaults extends Interceptor {
   }
 
   @override
-  void onResponse(Response<dynamic> response, ResponseInterceptorHandler handler) {
+  void onResponse(
+    Response<dynamic> response,
+    ResponseInterceptorHandler handler,
+  ) {
     final o = response.requestOptions;
-    final lost = _lostResponses.where((f) => f.matches(o.method, o.path)).firstOrNull;
+    final lost = _lostResponses
+        .where((f) => f.matches(o.method, o.path))
+        .firstOrNull;
     if (lost != null) {
       if (lost.used()) _lostResponses.remove(lost);
       handler.reject(lost.toException(o), true);
@@ -99,18 +109,24 @@ class _Failure {
   }
 
   DioException toException(RequestOptions o) => switch (reason) {
-        FailureReason.offline => DioException(requestOptions: o, type: DioExceptionType.connectionError),
-        FailureReason.timeout => DioException(requestOptions: o, type: DioExceptionType.receiveTimeout),
-        _ => DioException(
-            requestOptions: o,
-            type: DioExceptionType.badResponse,
-            response: Response(
-              requestOptions: o,
-              statusCode: 500,
-              data: {'code': 'INTERNAL', 'message': message},
-            ),
-          ),
-      };
+    FailureReason.offline => DioException(
+      requestOptions: o,
+      type: DioExceptionType.connectionError,
+    ),
+    FailureReason.timeout => DioException(
+      requestOptions: o,
+      type: DioExceptionType.receiveTimeout,
+    ),
+    _ => DioException(
+      requestOptions: o,
+      type: DioExceptionType.badResponse,
+      response: Response(
+        requestOptions: o,
+        statusCode: 500,
+        data: {'code': 'INTERNAL', 'message': message},
+      ),
+    ),
+  };
 }
 
 class _Hold {

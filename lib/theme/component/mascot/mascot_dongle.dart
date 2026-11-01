@@ -6,7 +6,13 @@ import 'package:sedae_budget/theme/theme.dart';
 /// 코랄 원형 얼굴 마스코트 '동글이'(점선 링 + 눈 2 + 미소). [size]로 26~88px 스케일.
 /// [size] >= [inkThreshold]면 디자인대로 잉크색 이목구비 + 볼터치, 작으면 흰색 이목구비.
 class MascotDongle extends StatelessWidget {
-  const MascotDongle({super.key, this.size = 40, this.faceColor, this.featureColor, this.ring = true});
+  const MascotDongle({
+    super.key,
+    this.size = 40,
+    this.faceColor,
+    this.featureColor,
+    this.ring = true,
+  });
 
   final double size;
   final Color? faceColor;
@@ -23,19 +29,29 @@ class MascotDongle extends StatelessWidget {
   Widget build(BuildContext context) {
     final large = size >= inkThreshold;
     return SizedBox(
-      width: size, height: size,
-      child: CustomPaint(painter: _DonglePainter(
-        face: faceColor ?? Palette.primaryNormal,
-        feature: featureColor ?? (large ? Palette.labelNormal : Palette.staticWhite),
-        cheeks: large,
-        ring: ring,
-      )),
+      width: size,
+      height: size,
+      child: CustomPaint(
+        painter: _DonglePainter(
+          face: faceColor ?? Palette.primaryNormal,
+          feature:
+              featureColor ??
+              (large ? Palette.labelNormal : Palette.staticWhite),
+          cheeks: large,
+          ring: ring,
+        ),
+      ),
     );
   }
 }
 
 class _DonglePainter extends CustomPainter {
-  const _DonglePainter({required this.face, required this.feature, required this.cheeks, required this.ring});
+  const _DonglePainter({
+    required this.face,
+    required this.feature,
+    required this.cheeks,
+    required this.ring,
+  });
   final Color face;
   final Color feature;
   final bool cheeks;
@@ -63,8 +79,22 @@ class _DonglePainter extends CustomPainter {
 
     if (cheeks) {
       final blush = Paint()..color = Palette.staticWhite.withValues(alpha: 0.4);
-      canvas.drawOval(Rect.fromCenter(center: Offset(w * 0.28, w * 0.57), width: w * 0.125, height: w * 0.068), blush);
-      canvas.drawOval(Rect.fromCenter(center: Offset(w * 0.72, w * 0.57), width: w * 0.125, height: w * 0.068), blush);
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(w * 0.28, w * 0.57),
+          width: w * 0.125,
+          height: w * 0.068,
+        ),
+        blush,
+      );
+      canvas.drawOval(
+        Rect.fromCenter(
+          center: Offset(w * 0.72, w * 0.57),
+          width: w * 0.125,
+          height: w * 0.068,
+        ),
+        blush,
+      );
     }
   }
 
@@ -84,5 +114,8 @@ class _DonglePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_DonglePainter old) =>
-      old.face != face || old.feature != feature || old.cheeks != cheeks || old.ring != ring;
+      old.face != face ||
+      old.feature != feature ||
+      old.cheeks != cheeks ||
+      old.ring != ring;
 }

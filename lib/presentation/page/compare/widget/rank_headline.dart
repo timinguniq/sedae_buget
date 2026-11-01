@@ -15,27 +15,57 @@ class RankHeadline extends StatelessWidget {
     final r = rank;
     final coral = context.color.primary.normal;
     final (:number, :unit) = r.headlinePlace;
-    return Column(children: [
-      Text(r.headlineLead,
-        style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.alternative)),
-      const SizedBox(height: 1),
-      Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.baseline,
-        textBaseline: TextBaseline.alphabetic,
-        children: [
-          Text(number, style: context.typo.amountDisplay.copyWith(fontSize: 46, height: 1.1, letterSpacing: -2, color: coral)),
-          const SizedBox(width: 5),
-          Text(unit, style: context.typo.heading2W700.copyWith(fontWeight: context.typo.extraBold, color: coral)),
-        ],
-      ),
-      const SizedBox(height: 3),
-      Container(
-        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
-        decoration: BoxDecoration(color: InkCard.colorOf(context), borderRadius: BorderRadius.circular(20)),
-        child: Text(r.sideText,
-          style: context.typo.caption1W600.copyWith(fontSize: 11.5, fontWeight: context.typo.bold, color: context.color.static.white)),
-      ),
-    ]);
+    return Column(
+      children: [
+        Text(
+          r.headlineLead,
+          style: context.typo.caption1W600.copyWith(
+            fontSize: 12.5,
+            color: context.color.label.alternative,
+          ),
+        ),
+        const SizedBox(height: 1),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              number,
+              style: context.typo.amountDisplay.copyWith(
+                fontSize: 46,
+                height: 1.1,
+                letterSpacing: -2,
+                color: coral,
+              ),
+            ),
+            const SizedBox(width: 5),
+            Text(
+              unit,
+              style: context.typo.heading2W700.copyWith(
+                fontWeight: context.typo.extraBold,
+                color: coral,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 3),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
+          decoration: BoxDecoration(
+            color: InkCard.colorOf(context),
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Text(
+            r.sideText,
+            style: context.typo.caption1W600.copyWith(
+              fontSize: 11.5,
+              fontWeight: context.typo.bold,
+              color: context.color.static.white,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 }

@@ -1,8 +1,8 @@
 export 'button/index.dart';
 export 'card/index.dart';
 export 'chip/index.dart';
+export 'donut/index.dart';
 export 'icon/index.dart';
 export 'indicator/index.dart';
 export 'lottie/index.dart';
 export 'mascot/index.dart';
-export 'donut/index.dart';

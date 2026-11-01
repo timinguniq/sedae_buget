@@ -3,7 +3,12 @@ import 'package:sedae_budget/theme/theme.dart';
 
 /// 디자인 헤더용 원형 아이콘 버튼 30px: surface 배경 + line.normal 1px 테두리 (‹ / ✕).
 class RoundIconButton extends StatelessWidget {
-  const RoundIconButton({super.key, required this.icon, required this.onTap, this.size = 30});
+  const RoundIconButton({
+    super.key,
+    required this.icon,
+    required this.onTap,
+    this.size = 30,
+  });
 
   final IconData icon;
   final VoidCallback onTap;
@@ -15,7 +20,8 @@ class RoundIconButton extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
-        width: size, height: size,
+        width: size,
+        height: size,
         decoration: BoxDecoration(
           color: context.color.background.surface,
           border: Border.all(color: context.color.line.normal),

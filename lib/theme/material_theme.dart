@@ -1,148 +1,58 @@
-// ignore_for_file: avoid_redundant_argument_values
-
 import 'package:flutter/material.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 앱 토큰([AppTheme])으로 만든 Material 테마. 라이트·다크 모두 이 규칙 하나로 만든다.
 ThemeData materialTheme(AppTheme theme) {
   return ThemeData(
-    // Iterable<Adaptation<Object>>? adaptations,
-    // bool? applyElevationOverlayColor,
-    // NoDefaultCupertinoThemeData? cupertinoOverrideTheme,
-    // Iterable<ThemeExtension<dynamic>>? extensions,
-    inputDecorationTheme: _inputDecorationTheme(theme),
-    // MaterialTapTargetSize? materialTapTargetSize,
-    // PageTransitionsTheme? pageTransitionsTheme,
-    // TargetPlatform? platform,
-    // ScrollbarThemeData? scrollbarTheme,
-    // InteractiveInkFeatureFactory? splashFactory,
     useMaterial3: true,
-    // VisualDensity? visualDensity,
-
-    /// COLOR
-    // [colorScheme] is the preferred way to configure colors. The other color
-    // Brightness? brightness,
-    // Color? canvasColor,
-    // Color? cardColor,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: theme.color.primary.normal,
-      brightness: theme.brightness,
-    ).copyWith(
-      primary: theme.color.primary.normal,
-      onPrimary: theme.color.static.white,
-    ),
-    // Color? colorSchemeSeed,
-    // Color? dialogBackgroundColor,
-    // Color? disabledColor,
-    // Color? dividerColor,
-    // Color? focusColor,
-    // Color? highlightColor,
-    // Color? hintColor,
-    // Color? hoverColor,
-    // Color? indicatorColor,
-    // Color? primaryColor,
-    // Color? primaryColorDark,
-    // Color? primaryColorLight,
-    // MaterialColor? primarySwatch,
+    colorScheme:
+        ColorScheme.fromSeed(
+          seedColor: theme.color.primary.normal,
+          brightness: theme.brightness,
+        ).copyWith(
+          primary: theme.color.primary.normal,
+          onPrimary: theme.color.static.white,
+        ),
     scaffoldBackgroundColor: theme.color.background.normal,
-    // Color? secondaryHeaderColor,
-    // Color? shadowColor,
-    // Color? splashColor,
-    // Color? unselectedWidgetColor,
-
-    /// TYPOGRAPHY & ICONOGRAPHY
-    // String? fontFamily,
-    // List<String>? fontFamilyFallback,
-    // String? package,
     iconTheme: _iconThemeData(theme),
-    // IconThemeData? primaryIconTheme,
-    // TextTheme? primaryTextTheme,
-    // Typography? typography,
-
-    /// COMPONENT THEMES
-    // ActionIconThemeData? actionIconTheme,
+    inputDecorationTheme: _inputDecorationTheme(theme),
     appBarTheme: _appBarTheme(theme),
-    // BadgeThemeData? badgeTheme,
-    // MaterialBannerThemeData? bannerTheme,
-    // BottomAppBarTheme? bottomAppBarTheme,
     bottomNavigationBarTheme: _bottomNavigationBarTheme(theme),
     bottomSheetTheme: _bottomSheetThemeData(theme),
-    // ButtonBarThemeData? buttonBarTheme,
-    // ButtonThemeData? buttonTheme,
-    // CardTheme? cardTheme,
-    // cardTheme: cardTheme(),
-    // CheckboxThemeData? checkboxTheme,
-    // ChipThemeData? chipTheme,
-    // DataTableThemeData? dataTableTheme,
-    // DatePickerThemeData? datePickerTheme,
-    // DialogTheme? dialogTheme,
-    // DividerThemeData? dividerTheme,
     dividerTheme: _dividerTheme(theme),
     drawerTheme: _drawerTheme(theme),
-    // DropdownMenuThemeData? dropdownMenuTheme,
-    // ElevatedButtonThemeData? elevatedButtonTheme,
-    // ExpansionTileThemeData? expansionTileTheme,
     filledButtonTheme: _filledButtonTheme(theme),
     floatingActionButtonTheme: _floatingActionButtonTheme(theme),
-    // iconButtonTheme: iconButtonThemeData(),
-    // ListTileThemeData? listTileTheme,
-    // MenuBarThemeData? menuBarTheme,
-    // MenuButtonThemeData? menuButtonTheme,
-    // MenuThemeData? menuTheme,
-    // NavigationBarThemeData? navigationBarTheme,
-    // NavigationDrawerThemeData? navigationDrawerTheme,
-    // NavigationRailThemeData? navigationRailTheme,
-    // OutlinedButtonThemeData? outlinedButtonTheme,
-    // PopupMenuThemeData? popupMenuTheme,
     progressIndicatorTheme: _progressIndicatorThemeData(theme),
-    // RadioThemeData? radioTheme,
-    // SearchBarThemeData? searchBarTheme,
-    // SearchViewThemeData? searchViewTheme,
-    // SegmentedButtonThemeData? segmentedButtonTheme,
     sliderTheme: _sliderThemeData(theme),
-    // SnackBarThemeData? snackBarTheme,
     switchTheme: _switchThemeData(theme),
     tabBarTheme: _tabBarTheme(theme),
-    // TextButtonThemeData? textButtonTheme,
-    // TextSelectionThemeData? textSelectionTheme,
-    // TimePickerThemeData? timePickerTheme,
-    // ToggleButtonsThemeData? toggleButtonsTheme,
-    // TooltipThemeData? tooltipTheme,
   );
 }
 
 InputDecorationTheme _inputDecorationTheme(AppTheme theme) {
   return InputDecorationTheme(
-    labelStyle: theme.typo.body1W500.copyWith(color: theme.color.primary.strong),
-    // floatingLabelStyle:,
-    helperStyle: theme.typo.label2W400.copyWith(color: theme.color.label.alternative),
+    labelStyle: theme.typo.body1W500.copyWith(
+      color: theme.color.primary.strong,
+    ),
+    helperStyle: theme.typo.label2W400.copyWith(
+      color: theme.color.label.alternative,
+    ),
     helperMaxLines: 2,
-    hintStyle: theme.typo.body1W500.copyWith(color: theme.color.label.assistive),
+    hintStyle: theme.typo.body1W500.copyWith(
+      color: theme.color.label.assistive,
+    ),
     hintFadeDuration: const Duration(milliseconds: 100),
-    errorStyle: theme.typo.label2W400.copyWith(color: theme.color.primary.strong),
+    errorStyle: theme.typo.label2W400.copyWith(
+      color: theme.color.primary.strong,
+    ),
     errorMaxLines: 2,
     floatingLabelBehavior: FloatingLabelBehavior.never,
-    // floatingLabelAlignment = FloatingLabelAlignment.start:,
-    // isDense: true,
     contentPadding: const EdgeInsets.symmetric(horizontal: 25, vertical: 17),
-    // isCollapsed = false:,
-    // iconColor:,
-    // prefixStyle:,
-    // prefixIconColor:,
-    // suffixStyle:,
-    // suffixIconColor:,
-    // counterStyle:,
-    // filled = false:,
-    // fillColor:,
-    // activeIndicatorBorder:,
-    // outlineBorder:,
-    // focusColor:,
-    // hoverColor:,
     errorBorder: OutlineInputBorder(
       borderSide: BorderSide(width: 3, color: theme.color.primary.strong),
       borderRadius: BorderRadius.circular(10),
     ),
-    // focusedBorder:,
     focusedBorder: OutlineInputBorder(
       borderSide: BorderSide(width: 3, color: theme.color.label.strong),
       borderRadius: BorderRadius.circular(10),
@@ -152,16 +62,14 @@ InputDecorationTheme _inputDecorationTheme(AppTheme theme) {
       borderRadius: BorderRadius.circular(10),
     ),
     disabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(width: 1, color: theme.color.label.assistive),
+      borderSide: BorderSide(color: theme.color.label.assistive),
       borderRadius: BorderRadius.circular(10),
     ),
     enabledBorder: OutlineInputBorder(
-      borderSide: BorderSide(width: 1, color: theme.color.label.assistive),
+      borderSide: BorderSide(color: theme.color.label.assistive),
       borderRadius: BorderRadius.circular(10),
     ),
-    // border:,
     alignLabelWithHint: true,
-    // constraints:,
   );
 }
 
@@ -224,7 +132,6 @@ BottomSheetThemeData _bottomSheetThemeData(AppTheme theme) {
     showDragHandle: true,
     dragHandleColor: theme.color.static.black,
     dragHandleSize: const Size(48, 4),
-    // constraints: const BoxConstraints(maxHeight: 600),
   );
 }
 
@@ -287,10 +194,14 @@ SliderThemeData _sliderThemeData(AppTheme theme) {
 SwitchThemeData _switchThemeData(AppTheme theme) {
   return SwitchThemeData(
     thumbColor: WidgetStateProperty.resolveWith(
-      (states) => states.contains(WidgetState.selected) ? theme.color.static.white : theme.color.label.assistive,
+      (states) => states.contains(WidgetState.selected)
+          ? theme.color.static.white
+          : theme.color.label.assistive,
     ),
     trackColor: WidgetStateProperty.resolveWith(
-      (states) => states.contains(WidgetState.selected) ? theme.color.primary.normal : theme.color.line.normal,
+      (states) => states.contains(WidgetState.selected)
+          ? theme.color.primary.normal
+          : theme.color.line.normal,
     ),
     trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
     trackOutlineWidth: const WidgetStatePropertyAll(0),
@@ -318,7 +229,8 @@ class _RingThumbShape extends SliderComponentShape {
   static const double border = 3.5;
 
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) => Size.fromRadius(radius);
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
+      const Size.fromRadius(radius);
 
   @override
   void paint(

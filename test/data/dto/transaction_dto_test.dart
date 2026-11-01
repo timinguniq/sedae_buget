@@ -5,23 +5,43 @@ import 'package:sedae_budget/entity/entity.dart';
 void main() {
   test('body omits server-owned fields and sends UTC date', () {
     final tx = Transaction.create(
-      amount: 12000, base: BudgetCategory.household, date: DateTime(2026, 9, 6), // 로컬 자정
-      type: TransactionType.expense, memo: '버스',
+      amount: 12000,
+      base: BudgetCategory.household,
+      date: DateTime(2026, 9, 6), // 로컬 자정
+      type: TransactionType.expense,
+      memo: '버스',
     );
     final body = TransactionBodyDto.fromEntity(tx).toJson();
-    expect(body.keys,
-        unorderedEquals(['amount', 'categoryId', 'date', 'type', 'memo', 'customCategoryId']));
+    expect(
+      body.keys,
+      unorderedEquals([
+        'amount',
+        'categoryId',
+        'date',
+        'type',
+        'memo',
+        'customCategoryId',
+      ]),
+    );
     expect(body['type'], 'expense');
     expect(body['customCategoryId'], isNull);
     expect((body['date'] as String).endsWith('Z'), isTrue);
-    expect(DateTime.parse(body['date'] as String), DateTime(2026, 9, 6).toUtc());
+    expect(
+      DateTime.parse(body['date'] as String),
+      DateTime(2026, 9, 6).toUtc(),
+    );
   });
 
   test('fromJson → toEntity converts UTC strings to local DateTime', () {
     final tx = TransactionDto.fromJson({
-      'id': 'x', 'amount': 500, 'categoryId': 2,
-      'date': '2026-09-05T15:00:00.000Z', 'type': 'income', 'memo': null,
-      'createdAt': '2026-09-06T01:02:03.000Z', 'updatedAt': '2026-09-06T01:02:04.000Z',
+      'id': 'x',
+      'amount': 500,
+      'categoryId': 2,
+      'date': '2026-09-05T15:00:00.000Z',
+      'type': 'income',
+      'memo': null,
+      'createdAt': '2026-09-06T01:02:03.000Z',
+      'updatedAt': '2026-09-06T01:02:04.000Z',
     }).toEntity();
     expect(tx.id, 'x');
     expect(tx.type, TransactionType.income);
@@ -36,16 +56,26 @@ void main() {
   });
 
   test('customCategoryId round-trips', () {
-    final body = TransactionBodyDto.fromEntity(Transaction.create(
-      amount: 3000, base: BudgetCategory.health, date: DateTime(2026, 9, 6),
-      type: TransactionType.expense, customCategoryId: 'cat-1',
-    )).toJson();
+    final body = TransactionBodyDto.fromEntity(
+      Transaction.create(
+        amount: 3000,
+        base: BudgetCategory.health,
+        date: DateTime(2026, 9, 6),
+        type: TransactionType.expense,
+        customCategoryId: 'cat-1',
+      ),
+    ).toJson();
     expect(body['customCategoryId'], 'cat-1');
     final tx = TransactionDto.fromJson({
-      'id': 'x', 'amount': 3000, 'categoryId': 12,
-      'date': '2026-09-05T15:00:00.000Z', 'type': 'expense', 'memo': null,
+      'id': 'x',
+      'amount': 3000,
+      'categoryId': 12,
+      'date': '2026-09-05T15:00:00.000Z',
+      'type': 'expense',
+      'memo': null,
       'customCategoryId': 'cat-1',
-      'createdAt': '2026-09-06T01:02:03.000Z', 'updatedAt': '2026-09-06T01:02:04.000Z',
+      'createdAt': '2026-09-06T01:02:03.000Z',
+      'updatedAt': '2026-09-06T01:02:04.000Z',
     }).toEntity();
     expect(tx.customCategoryId, 'cat-1');
   });
@@ -59,10 +89,15 @@ void main() {
   // 서버가 새 분류를 늘리거나 수입에 아무 id(0 등)를 적어도, 앱 안쪽은 기본 분류(1~19)만 본다.
   group('모르는 분류 id', () {
     Transaction read(int categoryId, String type) => TransactionDto.fromJson({
-          'id': 'x', 'amount': 500, 'categoryId': categoryId,
-          'date': '2026-09-05T15:00:00.000Z', 'type': type, 'memo': null,
-          'createdAt': '2026-09-06T01:02:03.000Z', 'updatedAt': '2026-09-06T01:02:04.000Z',
-        }).toEntity();
+      'id': 'x',
+      'amount': 500,
+      'categoryId': categoryId,
+      'date': '2026-09-05T15:00:00.000Z',
+      'type': type,
+      'memo': null,
+      'createdAt': '2026-09-06T01:02:03.000Z',
+      'updatedAt': '2026-09-06T01:02:04.000Z',
+    }).toEntity();
 
     test('지출의 모르는 분류는 기타로 읽는다(돈이 합계에서 빠지지 않는다)', () {
       expect(read(20, 'expense').base, BudgetCategory.etc);

@@ -31,17 +31,22 @@ class AmountKeypad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      for (var r = 0; r < _rows.length; r++) ...[
-        if (r > 0) const SizedBox(height: 5),
-        Row(children: [
-          for (var i = 0; i < _rows[r].length; i++) ...[
-            if (i > 0) const SizedBox(width: 5),
-            Expanded(child: _key(context, _rows[r][i])),
-          ],
-        ]),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var r = 0; r < _rows.length; r++) ...[
+          if (r > 0) const SizedBox(height: 5),
+          Row(
+            children: [
+              for (var i = 0; i < _rows[r].length; i++) ...[
+                if (i > 0) const SizedBox(width: 5),
+                Expanded(child: _key(context, _rows[r][i])),
+              ],
+            ],
+          ),
+        ],
       ],
-    ]);
+    );
   }
 
   Widget _key(BuildContext context, String k) {
@@ -61,10 +66,22 @@ class AmountKeypad extends StatelessWidget {
                 borderRadius: BorderRadius.circular(14),
               ),
         child: erase
-            ? Icon(Icons.backspace_outlined, size: 22, color: context.color.label.alternative)
-            : Text(k, style: doubleZero
-                ? context.typo.heading1W600.copyWith(fontSize: 19, color: context.color.label.alternative)
-                : context.typo.heading1W600.copyWith(color: context.color.label.normal)),
+            ? Icon(
+                Icons.backspace_outlined,
+                size: 22,
+                color: context.color.label.alternative,
+              )
+            : Text(
+                k,
+                style: doubleZero
+                    ? context.typo.heading1W600.copyWith(
+                        fontSize: 19,
+                        color: context.color.label.alternative,
+                      )
+                    : context.typo.heading1W600.copyWith(
+                        color: context.color.label.normal,
+                      ),
+              ),
       ),
     );
   }

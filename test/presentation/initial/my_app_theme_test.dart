@@ -24,7 +24,10 @@ void main() {
 
     await t.pumpWidget(fakeScope(container, const MyApp()));
 
-    expect(t.widget<MaterialApp>(find.byType(MaterialApp)).themeMode, ThemeMode.dark);
+    expect(
+      t.widget<MaterialApp>(find.byType(MaterialApp)).themeMode,
+      ThemeMode.dark,
+    );
     await t.pump(const Duration(milliseconds: 2100)); // 스플래시 타이머를 끝낸다
     await t.settle();
   });

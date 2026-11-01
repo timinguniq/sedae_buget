@@ -30,7 +30,9 @@ String failureMessage(UserAction action, Object error) {
 String _reason(ErrorResult? failure) {
   if (failure == null) return _unknown;
   final server = failure.message.trim();
-  final fixable = failure.reason == FailureReason.conflict || failure.reason == FailureReason.invalid;
+  final fixable =
+      failure.reason == FailureReason.conflict ||
+      failure.reason == FailureReason.invalid;
   if (fixable && server.isNotEmpty) return server;
   return switch (failure.reason) {
     FailureReason.offline => '인터넷에 연결되어 있지 않아요',

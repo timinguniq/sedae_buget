@@ -22,7 +22,9 @@ void main() {
         );
         await server.auth.signIn(AuthProvider.kakao);
       },
-      zoneSpecification: ZoneSpecification(print: (_, _, _, line) => lines.add(line)),
+      zoneSpecification: ZoneSpecification(
+        print: (_, _, _, line) => lines.add(line),
+      ),
     );
     expect(lines.join('\n'), contains('/v1/auth/login'));
   });

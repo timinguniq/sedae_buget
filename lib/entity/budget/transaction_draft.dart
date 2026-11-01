@@ -27,16 +27,16 @@ class TransactionDraft {
 
   /// 새 거래. 지출·장보기·금액 0으로 시작하고, 저장할 거래의 id를 여기서 한 번 정한다.
   TransactionDraft.create(DateTime date)
-      : this._(
-          id: const Uuid().v4(),
-          amount: 0,
-          type: TransactionType.expense,
-          base: BudgetCategory.groceries,
-          customCategoryId: null,
-          date: date,
-          memo: '',
-          existing: null,
-        );
+    : this._(
+        id: const Uuid().v4(),
+        amount: 0,
+        type: TransactionType.expense,
+        base: BudgetCategory.groceries,
+        customCategoryId: null,
+        date: date,
+        memo: '',
+        existing: null,
+      );
 
   /// [tx]를 고친다. 카테고리는 [catalog]로 판정한다. 수입은 카테고리가 없어 판정하지 않고
   /// 읽어 둔 분류를 그대로 둔다(서버도 앱도 수입의 분류는 쓰지 않는다).
@@ -101,10 +101,20 @@ class TransactionDraft {
 
   /// 날짜만 [day]로 바꾼다. 시각(적은 때)은 그대로 둔다 — 같은 날의 거래는 시각 순이다.
   TransactionDraft withDate(DateTime day) => _copy(
-      date: DateTime(day.year, day.month, day.day,
-          date.hour, date.minute, date.second, date.millisecond, date.microsecond));
+    date: DateTime(
+      day.year,
+      day.month,
+      day.day,
+      date.hour,
+      date.minute,
+      date.second,
+      date.millisecond,
+      date.microsecond,
+    ),
+  );
 
-  TransactionDraft pickBase(BudgetCategory category) => _copy(base: category, customCategoryId: null);
+  TransactionDraft pickBase(BudgetCategory category) =>
+      _copy(base: category, customCategoryId: null);
 
   TransactionDraft pickCustom(CustomCategory category) =>
       _copy(base: category.base, customCategoryId: category.id);
@@ -122,8 +132,8 @@ class TransactionDraft {
     final customId = !hasCategory
         ? null
         : catalog.isComplete
-            ? custom?.id
-            : customCategoryId;
+        ? custom?.id
+        : customCategoryId;
     final recorded = custom?.base ?? base;
     final trimmed = memo.trim();
     final memoOrNull = trimmed.isEmpty ? null : trimmed;
@@ -157,16 +167,16 @@ class TransactionDraft {
     Object? customCategoryId = _keep,
     DateTime? date,
     String? memo,
-  }) =>
-      TransactionDraft._(
-        id: id,
-        amount: amount ?? this.amount,
-        type: type,
-        base: base ?? this.base,
-        customCategoryId:
-            identical(customCategoryId, _keep) ? this.customCategoryId : customCategoryId as String?,
-        date: date ?? this.date,
-        memo: memo ?? this.memo,
-        existing: existing,
-      );
+  }) => TransactionDraft._(
+    id: id,
+    amount: amount ?? this.amount,
+    type: type,
+    base: base ?? this.base,
+    customCategoryId: identical(customCategoryId, _keep)
+        ? this.customCategoryId
+        : customCategoryId as String?,
+    date: date ?? this.date,
+    memo: memo ?? this.memo,
+    existing: existing,
+  );
 }

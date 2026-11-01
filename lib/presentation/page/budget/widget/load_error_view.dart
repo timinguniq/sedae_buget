@@ -10,7 +10,8 @@ import 'package:sedae_budget/theme/theme.dart';
 /// 다시 시도는 장부가 한다(달 화면이 읽는 서버 데이터를 모두 다시 읽는다). 이미 그린 값은 다시 읽는 동안에도 그대로다.
 class LoadErrorView extends ConsumerWidget {
   /// 화면이 AsyncError로 받은 [error]. 문구는 [failureMessage]가 정한다.
-  LoadErrorView({super.key, required Object error}) : _message = failureMessage(UserAction.load, error);
+  LoadErrorView({super.key, required Object error})
+    : _message = failureMessage(UserAction.load, error);
 
   /// 또래 통계를 못 읽었을 때(이달 개요에 또래가 없다).
   const LoadErrorView.peer({super.key}) : _message = peerUnavailableText;
@@ -19,20 +20,25 @@ class LoadErrorView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Text(
-              _message,
-              textAlign: TextAlign.center,
-              style: context.typo.body2W400.copyWith(color: context.color.label.alternative),
+    child: Padding(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            _message,
+            textAlign: TextAlign.center,
+            style: context.typo.body2W400.copyWith(
+              color: context.color.label.alternative,
             ),
-            const SizedBox(height: 8),
-            TextButton(
-              onPressed: ref.read(monthlyTransactionsProvider.notifier).reload,
-              child: const Text('다시 시도'),
-            ),
-          ]),
-        ),
-      );
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: ref.read(monthlyTransactionsProvider.notifier).reload,
+            child: const Text('다시 시도'),
+          ),
+        ],
+      ),
+    ),
+  );
 }

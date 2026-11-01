@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/legal/legal_content.dart';
 import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/page/login/widget/social_login_button.dart';
+import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -30,9 +30,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     // 실패하면 로그인 화면에 머무므로, 이유만 알려준다.
     final error = res.failureOrNull;
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(failureMessage(UserAction.signIn, error)),
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(failureMessage(UserAction.signIn, error))),
+      );
     }
   }
 
@@ -42,36 +42,59 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     return DefaultLayout(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(26, 0, 26, 32),
-        child: Column(children: [
-          Expanded(
-            child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const MascotDongle(size: 88),
-              const SizedBox(height: 22),
-              Text('세대 가계부',
-                style: context.typo.titleW700.copyWith(
-                  fontWeight: context.typo.extraBold, letterSpacing: -0.7, color: context.color.label.normal)),
-              const SizedBox(height: 9),
-              Text('내 또래는 얼마나 쓸까?',
-                style: context.typo.label2W600.copyWith(
-                  fontWeight: context.typo.bold, color: context.color.primary.normal)),
-              const SizedBox(height: 8),
-              Text('또래·세대 평균과 내 소비를\n나란히 비교하는 가계부',
+        child: Column(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const MascotDongle(size: 88),
+                  const SizedBox(height: 22),
+                  Text(
+                    '세대 가계부',
+                    style: context.typo.titleW700.copyWith(
+                      fontWeight: context.typo.extraBold,
+                      letterSpacing: -0.7,
+                      color: context.color.label.normal,
+                    ),
+                  ),
+                  const SizedBox(height: 9),
+                  Text(
+                    '내 또래는 얼마나 쓸까?',
+                    style: context.typo.label2W600.copyWith(
+                      fontWeight: context.typo.bold,
+                      color: context.color.primary.normal,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '또래·세대 평균과 내 소비를\n나란히 비교하는 가계부',
+                    textAlign: TextAlign.center,
+                    style: context.typo.caption1W500.copyWith(
+                      fontSize: 12.5,
+                      height: 1.55,
+                      color: context.color.label.assistive,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (expired) ...[
+              Text(
+                '로그인이 만료됐어요. 다시 로그인해 주세요',
                 textAlign: TextAlign.center,
-                style: context.typo.caption1W500.copyWith(
-                  fontSize: 12.5, height: 1.55, color: context.color.label.assistive)),
-            ]),
-          ),
-          if (expired) ...[
-            Text('로그인이 만료됐어요. 다시 로그인해 주세요',
-              textAlign: TextAlign.center,
-              style: context.typo.caption1W600.copyWith(color: context.color.primary.normal)),
-            const SizedBox(height: 12),
+                style: context.typo.caption1W600.copyWith(
+                  color: context.color.primary.normal,
+                ),
+              ),
+              const SizedBox(height: 12),
+            ],
+            for (final p in AuthProvider.values)
+              SocialLoginButton(provider: p, onTap: () => _signIn(p)),
+            const SizedBox(height: 7),
+            const _TermsNotice(),
           ],
-          for (final p in AuthProvider.values)
-            SocialLoginButton(provider: p, onTap: () => _signIn(p)),
-          const SizedBox(height: 7),
-          const _TermsNotice(),
-        ]),
+        ),
       ),
     );
   }
@@ -87,8 +110,10 @@ class _TermsNotice extends StatefulWidget {
 }
 
 class _TermsNoticeState extends State<_TermsNotice> {
-  late final _openTerms = TapGestureRecognizer()..onTap = () => _open(LegalTab.terms);
-  late final _openPrivacy = TapGestureRecognizer()..onTap = () => _open(LegalTab.privacy);
+  late final _openTerms = TapGestureRecognizer()
+    ..onTap = () => _open(LegalTab.terms);
+  late final _openPrivacy = TapGestureRecognizer()
+    ..onTap = () => _open(LegalTab.privacy);
 
   void _open(LegalTab tab) => context.push(RoutePath.terms.path, extra: tab);
 
@@ -109,7 +134,11 @@ class _TermsNoticeState extends State<_TermsNotice> {
     );
     return Text.rich(
       TextSpan(
-        style: context.typo.caption2W500.copyWith(fontSize: 10.5, height: 1.55, color: context.color.label.disable),
+        style: context.typo.caption2W500.copyWith(
+          fontSize: 10.5,
+          height: 1.55,
+          color: context.color.label.disable,
+        ),
         children: [
           const TextSpan(text: '로그인 시 '),
           TextSpan(text: '이용약관', style: link, recognizer: _openTerms),

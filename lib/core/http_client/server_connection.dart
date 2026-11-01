@@ -26,7 +26,9 @@ Dio connectToServer({
 }) {
   final isLocal = env == AppEnvironment.local;
   if (!isLocal && env.server.isEmpty) {
-    throw StateError('env=${env.name}의 서버 주소가 비어 있어요. environment_config.dart에 적어 주세요.');
+    throw StateError(
+      'env=${env.name}의 서버 주소가 비어 있어요. environment_config.dart에 적어 주세요.',
+    );
   }
   final dio = Dio(
     BaseOptions(
@@ -39,7 +41,8 @@ Dio connectToServer({
   );
   dio.interceptors.addAll([
     session.interceptor,
-    if (requestLog) PrettyDioLogger(requestBody: true, responseBody: false, maxWidth: 120),
+    if (requestLog)
+      PrettyDioLogger(requestBody: true, responseBody: false, maxWidth: 120),
     ...beforeServer,
     if (isLocal) localServer(),
   ]);

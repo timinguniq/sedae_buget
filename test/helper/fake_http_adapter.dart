@@ -9,26 +9,35 @@ import 'package:dio/dio.dart';
 /// 이 adapter는 그 처리를 실제와 같이 거친다.
 class FakeHttpAdapter implements HttpClientAdapter {
   /// [status]와 [body]로 답한다.
-  FakeHttpAdapter.reply(int status, String body, {String contentType = Headers.jsonContentType})
-      : _reply = ((status: status, body: body, contentType: contentType)),
-        _fail = null;
+  FakeHttpAdapter.reply(
+    int status,
+    String body, {
+    String contentType = Headers.jsonContentType,
+  }) : _reply = (status: status, body: body, contentType: contentType),
+       _fail = null;
 
   /// 응답을 받기 전에 [type]으로 실패한다(시간 초과·연결 안 됨).
-  FakeHttpAdapter.fail(DioExceptionType type)
-      : _reply = null,
-        _fail = type;
+  FakeHttpAdapter.fail(DioExceptionType type) : _reply = null, _fail = type;
 
   final ({int status, String body, String contentType})? _reply;
   final DioExceptionType? _fail;
 
   @override
-  Future<ResponseBody> fetch(RequestOptions o, Stream<Uint8List>? _, Future<void>? _) async {
+  Future<ResponseBody> fetch(
+    RequestOptions o,
+    Stream<Uint8List>? _,
+    Future<void>? _,
+  ) async {
     final fail = _fail;
     if (fail != null) throw DioException(requestOptions: o, type: fail);
     final r = _reply!;
-    return ResponseBody.fromString(r.body, r.status, headers: {
-      Headers.contentTypeHeader: [r.contentType],
-    });
+    return ResponseBody.fromString(
+      r.body,
+      r.status,
+      headers: {
+        Headers.contentTypeHeader: [r.contentType],
+      },
+    );
   }
 
   @override

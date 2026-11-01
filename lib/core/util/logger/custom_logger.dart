@@ -5,33 +5,34 @@ class CustomLogger extends Logger {
   static Logger create({String? tag, bool excludeTimeSinceStart = true}) {
     return Logger(
       printer: PrefixPrinter(
-        _CustomPrettyPrinter(tag: tag, excludeTimeSinceStart: excludeTimeSinceStart),
+        _CustomPrettyPrinter(
+          tag: tag,
+          excludeTimeSinceStart: excludeTimeSinceStart,
+        ),
       ),
     );
   }
 }
 
 class _CustomPrettyPrinter extends PrettyPrinter {
-  _CustomPrettyPrinter({
-    this.tag,
-    this.excludeTimeSinceStart = true,
-  }) : super(
-    methodCount: 0,
-    errorMethodCount: null,
-    lineLength: 120,
-    colors: false,
-    excludeBox: {
-      Level.all: true,
-      Level.trace: false,
-      Level.debug: true,
-      Level.info: true,
-      Level.warning: true,
-      Level.error: false,
-      Level.fatal: false,
-      Level.off: false,
-    },
-    dateTimeFormat: DateTimeFormat.none,
-  );
+  _CustomPrettyPrinter({this.tag, this.excludeTimeSinceStart = true})
+    : super(
+        methodCount: 0,
+        errorMethodCount: null,
+        lineLength: 120,
+        colors: false,
+        excludeBox: {
+          Level.all: true,
+          Level.trace: false,
+          Level.debug: true,
+          Level.info: true,
+          Level.warning: true,
+          Level.error: false,
+          Level.fatal: false,
+          Level.off: false,
+        },
+        dateTimeFormat: DateTimeFormat.none,
+      );
 
   final String? tag;
   final bool excludeTimeSinceStart;

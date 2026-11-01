@@ -16,7 +16,8 @@ enum AppEnvironment {
 
   /// 빌드할 때 지정한 환경(`--dart-define=env=dev`). 지정하지 않았으면 local이다(release 빌드도).
   // TODO: 서버 준비 후 기본값을 prod로 변경
-  static AppEnvironment get current => parse(const String.fromEnvironment('env'));
+  static AppEnvironment get current =>
+      parse(const String.fromEnvironment('env'));
 
   /// 환경 이름을 읽는다. 비었거나 모르는 이름이면 local.
   static AppEnvironment parse(String name) {

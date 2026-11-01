@@ -3,16 +3,23 @@ import 'package:sedae_budget/entity/entity.dart';
 
 void main() {
   const pet = CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc);
-  const study = CustomCategory(id: 'c2', name: '자기계발', base: BudgetCategory.recreation);
+  const study = CustomCategory(
+    id: 'c2',
+    name: '자기계발',
+    base: BudgetCategory.recreation,
+  );
   const catalog = CategoryCatalog([pet, study]);
 
-  Transaction tx({BudgetCategory base = BudgetCategory.etc, String? customCategoryId}) => Transaction.create(
-        amount: 1000,
-        base: base,
-        date: DateTime(2026, 9, 6),
-        type: TransactionType.expense,
-        customCategoryId: customCategoryId,
-      );
+  Transaction tx({
+    BudgetCategory base = BudgetCategory.etc,
+    String? customCategoryId,
+  }) => Transaction.create(
+    amount: 1000,
+    base: base,
+    date: DateTime(2026, 9, 6),
+    type: TransactionType.expense,
+    customCategoryId: customCategoryId,
+  );
 
   test('기본 분류 거래는 적힌 기본 분류 그대로', () {
     final c = catalog.of(tx(base: BudgetCategory.transport));
@@ -36,7 +43,9 @@ void main() {
   });
 
   test('지워진 사용자 카테고리를 가리키면 적힌 기본 분류로 돌아간다', () {
-    final c = catalog.of(tx(base: BudgetCategory.etc, customCategoryId: 'gone'));
+    final c = catalog.of(
+      tx(base: BudgetCategory.etc, customCategoryId: 'gone'),
+    );
     expect(c.custom, isNull);
     expect(c.base, BudgetCategory.etc);
     expect(c.label, BudgetCategory.etc.label);

@@ -33,7 +33,11 @@ class SurfaceCard extends StatelessWidget {
       child: child,
     );
     if (onTap == null) return card;
-    return GestureDetector(onTap: onTap, behavior: HitTestBehavior.opaque, child: card);
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: card,
+    );
   }
 }
 
@@ -52,7 +56,9 @@ class InkCard extends StatelessWidget {
 
   /// 밝기별 잉크 카드 배경(다크에선 sunken surface).
   static Color colorOf(BuildContext context) =>
-      context.theme.brightness == Brightness.dark ? Palette.darkSurfaceSunken : Palette.labelNormal;
+      context.theme.brightness == Brightness.dark
+      ? Palette.darkSurfaceSunken
+      : Palette.labelNormal;
 
   @override
   Widget build(BuildContext context) {

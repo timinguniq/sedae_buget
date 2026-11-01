@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:sedae_budget/theme/theme.dart';
 import 'package:go_router/go_router.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 class CDialog<T> extends StatelessWidget {
   const CDialog({
@@ -32,16 +32,16 @@ class CDialog<T> extends StatelessWidget {
             child: Column(
               children: [
                 const SizedBox(height: 30), // 상단 여백
-
                 /// 타이틀
                 Text(title, style: context.typo.title3W600),
 
                 const SizedBox(height: 30), // 간격
-
                 /// 설명
                 Text(
                   description,
-                  style: context.typo.headline1W500.copyWith(color: context.color.label.normal),
+                  style: context.typo.headline1W500.copyWith(
+                    color: context.color.label.normal,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ],
@@ -58,37 +58,37 @@ class CDialog<T> extends StatelessWidget {
 
                 return direction == Axis.vertical
                     ? Column(
-                  children: [
-                    /// 상단 버튼
-                    _Button(item: buttons[0]),
+                        children: [
+                          /// 상단 버튼
+                          _Button(item: buttons[0]),
 
-                    /// 하단 버튼
-                    if (buttons.length > 1)
-                      Padding(
-                        padding: const EdgeInsets.only(top: spacer),
-                        child: _Button(item: buttons[1]),
-                      ),
-                  ],
-                )
+                          /// 하단 버튼
+                          if (buttons.length > 1)
+                            Padding(
+                              padding: const EdgeInsets.only(top: spacer),
+                              child: _Button(item: buttons[1]),
+                            ),
+                        ],
+                      )
                     : Row(
-                  children: [
-                    /// 왼쪽 버튼
-                    SizedBox(
-                      width: (constraints.maxWidth - spacer) / 2,
-                      child: _Button(item: buttons[0]),
-                    ),
+                        children: [
+                          /// 왼쪽 버튼
+                          SizedBox(
+                            width: (constraints.maxWidth - spacer) / 2,
+                            child: _Button(item: buttons[0]),
+                          ),
 
-                    /// 오른쪽 버튼
-                    if (buttons.length > 1)
-                      Padding(
-                        padding: const EdgeInsets.only(left: spacer),
-                        child: SizedBox(
-                          width: (constraints.maxWidth - spacer) / 2,
-                          child: _Button(item: buttons[1]),
-                        ),
-                      ),
-                  ],
-                );
+                          /// 오른쪽 버튼
+                          if (buttons.length > 1)
+                            Padding(
+                              padding: const EdgeInsets.only(left: spacer),
+                              child: SizedBox(
+                                width: (constraints.maxWidth - spacer) / 2,
+                                child: _Button(item: buttons[1]),
+                              ),
+                            ),
+                        ],
+                      );
               },
             ),
           ),
@@ -99,10 +99,7 @@ class CDialog<T> extends StatelessWidget {
 }
 
 class _Button<T> extends StatelessWidget {
-  const _Button({
-    super.key,
-    required this.item,
-  });
+  const _Button({super.key, required this.item});
 
   final CDialogButton item;
 

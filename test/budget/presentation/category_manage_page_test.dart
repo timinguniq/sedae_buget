@@ -30,17 +30,31 @@ Future<StubServer> pumpPage(
   addTearDown(tester.view.resetPhysicalSize);
   addTearDown(tester.view.resetDevicePixelRatio);
 
-  final server = await tester.seedServer(categories: customs, transactions: month);
+  final server = await tester.seedServer(
+    categories: customs,
+    transactions: month,
+  );
   final container = fakeContainer(server: server);
   // 페이지의 닫기 버튼과 CDialog가 go_router의 context.pop을 쓰므로 실제 라우터 위에 띄운다.
   final router = GoRouter(
     initialLocation: '/',
     routes: [
-      GoRoute(path: '/', builder: (_, _) => const Scaffold(body: SizedBox.shrink())),
-      GoRoute(path: '/manage', builder: (_, _) => CategoryManagePage(initialEditing: editing)),
+      GoRoute(
+        path: '/',
+        builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
+      ),
+      GoRoute(
+        path: '/manage',
+        builder: (_, _) => CategoryManagePage(initialEditing: editing),
+      ),
     ],
   );
-  await tester.pumpWidget(fakeScope(container, MaterialApp.router(theme: theme, routerConfig: router)));
+  await tester.pumpWidget(
+    fakeScope(
+      container,
+      MaterialApp.router(theme: theme, routerConfig: router),
+    ),
+  );
   await tester.pump();
   router.push('/manage');
   await tester.settle();
@@ -48,8 +62,10 @@ Future<StubServer> pumpPage(
 }
 
 /// 서버에 있는 사용자 카테고리.
-Future<List<CustomCategory>> _onServer(WidgetTester tester, StubServer server) async =>
-    (await tester.untilDone(server.categories.getAll())).unwrap();
+Future<List<CustomCategory>> _onServer(
+  WidgetTester tester,
+  StubServer server,
+) async => (await tester.untilDone(server.categories.getAll())).unwrap();
 
 final _nameField = find.byKey(const Key('category-name-field'));
 
@@ -65,23 +81,33 @@ TextEditingController _nameController(WidgetTester tester) =>
     tester.widget<TextField>(_nameField).controller!;
 
 /// 키보드(IME)가 이름 칸에 [text]를 보낸다. [composing]은 조합 중(한글 등)인 범위.
-Future<void> _imeSends(WidgetTester tester, String text, {TextRange composing = TextRange.empty}) async {
-  tester.testTextInput.updateEditingValue(TextEditingValue(
-    text: text,
-    selection: TextSelection.collapsed(offset: text.length),
-    composing: composing,
-  ));
+Future<void> _imeSends(
+  WidgetTester tester,
+  String text, {
+  TextRange composing = TextRange.empty,
+}) async {
+  tester.testTextInput.updateEditingValue(
+    TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+      composing: composing,
+    ),
+  );
   await tester.pump();
 }
 
 void main() {
-
-  testWidgets('view mode: 안내 카드 + 기본 19개 + 내 카테고리, 편집 링크로 편집 모드 전환', (tester) async {
+  testWidgets('view mode: 안내 카드 + 기본 19개 + 내 카테고리, 편집 링크로 편집 모드 전환', (
+    tester,
+  ) async {
     await pumpPage(tester);
 
     expect(find.text('카테고리 관리'), findsOneWidget);
     expect(find.textContaining('또래 비교 통계의 기준'), findsOneWidget);
-    expect(find.text('기본 카테고리 ${BudgetCategory.values.length}'), findsOneWidget);
+    expect(
+      find.text('기본 카테고리 ${BudgetCategory.values.length}'),
+      findsOneWidget,
+    );
     expect(find.text('내 카테고리 1'), findsOneWidget);
     expect(find.text('반려식물'), findsOneWidget);
     // 기본 카테고리에는 삭제 버튼이 없다.
@@ -97,13 +123,20 @@ void main() {
   // (지워진 카테고리를 가리키는 거래를 기본 분류로 세는 규칙은 ViewedMonth 테스트가 본다.)
   testWidgets('기본 카테고리 건수는 사용자 카테고리 거래를 빼고 센다', (tester) async {
     Transaction tx({String? customCategoryId}) => Transaction.create(
-          amount: 1000, base: BudgetCategory.etc, date: _day(),
-          type: TransactionType.expense, customCategoryId: customCategoryId);
-    await pumpPage(tester, month: [
-      tx(),
-      tx(),
-      tx(customCategoryId: 'c1'), // 반려식물 → 따로 센다
-    ]);
+      amount: 1000,
+      base: BudgetCategory.etc,
+      date: _day(),
+      type: TransactionType.expense,
+      customCategoryId: customCategoryId,
+    );
+    await pumpPage(
+      tester,
+      month: [
+        tx(),
+        tx(),
+        tx(customCategoryId: 'c1'), // 반려식물 → 따로 센다
+      ],
+    );
 
     expect(find.text('2건'), findsOneWidget);
   });
@@ -111,8 +144,15 @@ void main() {
   // 이전에는 수입(기본값 식료품)이 식료품 건수에 섞였다.
   testWidgets('기본 카테고리 건수에 수입은 세지 않는다', (tester) async {
     Transaction tx(TransactionType type) => Transaction.create(
-          amount: 1000, base: BudgetCategory.groceries, date: _day(), type: type);
-    await pumpPage(tester, month: [tx(TransactionType.expense), tx(TransactionType.income)]);
+      amount: 1000,
+      base: BudgetCategory.groceries,
+      date: _day(),
+      type: type,
+    );
+    await pumpPage(
+      tester,
+      month: [tx(TransactionType.expense), tx(TransactionType.income)],
+    );
 
     expect(find.text('1건'), findsOneWidget);
     expect(find.text('2건'), findsNothing);
@@ -153,7 +193,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.byType(CategoryEditSheet), findsOneWidget);
-    await tester.enterText(find.byKey(const Key('category-name-field')), '반려식물');
+    await tester.enterText(
+      find.byKey(const Key('category-name-field')),
+      '반려식물',
+    );
     await tester.pump();
     // 상위 카테고리 기본값은 '기타'
     await tester.tap(find.byKey(const Key('category-submit-button')));
@@ -172,7 +215,10 @@ void main() {
     await tester.tap(find.byKey(const Key('category-add-button')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.enterText(find.byKey(const Key('category-name-field')), '🐶' * 6);
+    await tester.enterText(
+      find.byKey(const Key('category-name-field')),
+      '🐶' * 6,
+    );
     await tester.pump();
     expect(find.text('6 / 10'), findsOneWidget);
 
@@ -213,30 +259,44 @@ void main() {
 
   // 입력 제한은 LengthLimitingTextInputFormatter와 같게 막고, 글자 수만 CategoryName으로 센다.
   // 이전에는 넘치는 입력을 통째로 거절해 붙여넣기가 아무것도 넣지 않았다.
-  testWidgets('10자가 넘는 이름을 붙여 넣으면 앞 10자만 들어간다', (tester) async {
-    await _openAddSheet(tester);
-    await tester.enterText(_nameField, '가나다라마바사아자차카타');
-    await tester.pump();
-    expect(_nameController(tester).text, '가나다라마바사아자차');
-    expect(find.text('10 / 10'), findsOneWidget);
+  testWidgets(
+    '10자가 넘는 이름을 붙여 넣으면 앞 10자만 들어간다',
+    (tester) async {
+      await _openAddSheet(tester);
+      await tester.enterText(_nameField, '가나다라마바사아자차카타');
+      await tester.pump();
+      expect(_nameController(tester).text, '가나다라마바사아자차');
+      expect(find.text('10 / 10'), findsOneWidget);
 
-    // 앞 공백은 글자 수에 넣지 않으므로 공백 뒤로 10자가 들어간다.
-    await tester.enterText(_nameField, '');
-    await tester.enterText(_nameField, '  가나다라마바사아자차카타');
-    await tester.pump();
-    expect(_nameController(tester).text, '  가나다라마바사아자차');
-  }, variant: TargetPlatformVariant({TargetPlatform.android, TargetPlatform.iOS}));
+      // 앞 공백은 글자 수에 넣지 않으므로 공백 뒤로 10자가 들어간다.
+      await tester.enterText(_nameField, '');
+      await tester.enterText(_nameField, '  가나다라마바사아자차카타');
+      await tester.pump();
+      expect(_nameController(tester).text, '  가나다라마바사아자차');
+    },
+    variant: const TargetPlatformVariant({
+      TargetPlatform.android,
+      TargetPlatform.iOS,
+    }),
+  );
 
   // 고른 글자를 바꾸는 입력은 꽉 찬 칸에서도 받고 10자로 자른다(LengthLimitingTextInputFormatter와 같다).
   testWidgets('꽉 찬 이름에서 고른 글자 위에 더 긴 글을 붙여 넣으면 앞 10자만 남는다', (tester) async {
     await _openAddSheet(tester);
     await tester.enterText(_nameField, '가나다라마바사아자차');
     await tester.pump();
-    _nameController(tester).selection = const TextSelection(baseOffset: 0, extentOffset: 1); // '가'를 고른다
+    _nameController(tester).selection = const TextSelection(
+      baseOffset: 0,
+      extentOffset: 1,
+    ); // '가'를 고른다
     await tester.pump();
 
-    tester.testTextInput.updateEditingValue(const TextEditingValue(
-      text: 'XY나다라마바사아자차', selection: TextSelection.collapsed(offset: 2)));
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: 'XY나다라마바사아자차',
+        selection: TextSelection.collapsed(offset: 2),
+      ),
+    );
     await tester.pump();
     expect(_nameController(tester).text, 'XY나다라마바사아자');
   });
@@ -245,7 +305,9 @@ void main() {
   testWidgets('이미 넘친 이름에서도 지울 수 있다', (tester) async {
     await _openAddSheet(tester);
     _nameController(tester).value = TextEditingValue(
-      text: '가' * 12, selection: const TextSelection.collapsed(offset: 12)); // 입력 제한을 거치지 않은 값
+      text: '가' * 12,
+      selection: const TextSelection.collapsed(offset: 12),
+    ); // 입력 제한을 거치지 않은 값
     await tester.pump();
 
     await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
@@ -263,8 +325,12 @@ void main() {
     await tester.enterText(_nameField, '가나다라마바사아자차');
     await tester.pump();
 
-    tester.testTextInput.updateEditingValue(const TextEditingValue(
-      text: '가나다라마X바사아자차', selection: TextSelection.collapsed(offset: 6)));
+    tester.testTextInput.updateEditingValue(
+      const TextEditingValue(
+        text: '가나다라마X바사아자차',
+        selection: TextSelection.collapsed(offset: 6),
+      ),
+    );
     await tester.pump();
     expect(_nameController(tester).text, '가나다라마바사아자차');
   });
@@ -274,15 +340,27 @@ void main() {
   testWidgets('iOS: 조합 중에는 넘쳐도 받고, 조합이 끝나면 10자로 자른다', (tester) async {
     await _openAddSheet(tester);
     final nine = '가' * 9;
-    await _imeSends(tester, '$nine간', composing: const TextRange(start: 9, end: 10)); // 10자째 조합 중
-    await _imeSends(tester, '$nine가나', composing: const TextRange(start: 10, end: 11)); // 'ㅏ' → '가나'
+    await _imeSends(
+      tester,
+      '$nine간',
+      composing: const TextRange(start: 9, end: 10),
+    ); // 10자째 조합 중
+    await _imeSends(
+      tester,
+      '$nine가나',
+      composing: const TextRange(start: 10, end: 11),
+    ); // 'ㅏ' → '가나'
     expect(_nameController(tester).text, '$nine가나');
 
     await _imeSends(tester, '$nine가나'); // 조합이 끝났다
     expect(_nameController(tester).text, '$nine가');
 
     // 꽉 찬 칸에서는 새 조합을 시작하지 않는다.
-    await _imeSends(tester, '$nine가ㄴ', composing: const TextRange(start: 10, end: 11));
+    await _imeSends(
+      tester,
+      '$nine가ㄴ',
+      composing: const TextRange(start: 10, end: 11),
+    );
     expect(_nameController(tester).text, '$nine가');
   }, variant: TargetPlatformVariant.only(TargetPlatform.iOS));
 
@@ -291,9 +369,16 @@ void main() {
     await _openAddSheet(tester);
     final nine = '가' * 9;
     await _imeSends(tester, nine);
-    await _imeSends(tester, '$nineにほ', composing: const TextRange(start: 9, end: 11));
+    await _imeSends(
+      tester,
+      '$nineにほ',
+      composing: const TextRange(start: 9, end: 11),
+    );
     expect(_nameController(tester).value.text, '$nineに');
-    expect(_nameController(tester).value.composing, const TextRange(start: 9, end: 10));
+    expect(
+      _nameController(tester).value.composing,
+      const TextRange(start: 9, end: 10),
+    );
   }, variant: TargetPlatformVariant.only(TargetPlatform.android));
 
   // 서버는 저장했는데 응답을 잃었다. 다시 누르면 같은 카테고리로 저장돼 이름이 겹친다고 막히지 않는다.
@@ -304,7 +389,10 @@ void main() {
     await tester.tap(find.byKey(const Key('category-add-button')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.enterText(find.byKey(const Key('category-name-field')), '반려식물');
+    await tester.enterText(
+      find.byKey(const Key('category-name-field')),
+      '반려식물',
+    );
     await tester.pump();
     await tester.tap(find.byKey(const Key('category-submit-button')));
     await tester.settle();
@@ -324,7 +412,10 @@ void main() {
     await tester.tap(find.byKey(const Key('category-add-button')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    await tester.enterText(find.byKey(const Key('category-name-field')), '반려식물');
+    await tester.enterText(
+      find.byKey(const Key('category-name-field')),
+      '반려식물',
+    );
     await tester.pump();
     await tester.tap(find.byKey(const Key('category-submit-button')));
     await tester.settle();
@@ -333,29 +424,54 @@ void main() {
     expect(find.byType(CategoryEditSheet), findsOneWidget);
   });
 
-  testWidgets('다크 모드에서 안내 카드 배경은 라이트용 잉크색이 아니라 sunken surface다', (tester) async {
+  testWidgets('다크 모드에서 안내 카드 배경은 라이트용 잉크색이 아니라 sunken surface다', (
+    tester,
+  ) async {
     await pumpPage(tester, theme: ThemeData(brightness: Brightness.dark));
-    final card = tester.widget<Container>(find
-        .ancestor(of: find.textContaining('또래 비교 통계의 기준'), matching: find.byType(Container))
-        .first);
+    final card = tester.widget<Container>(
+      find
+          .ancestor(
+            of: find.textContaining('또래 비교 통계의 기준'),
+            matching: find.byType(Container),
+          )
+          .first,
+    );
     expect((card.decoration as BoxDecoration).color, Palette.darkSurfaceSunken);
   });
 
   // 이전에는 설명이 검정 80% 고정이라 다크 대화상자 배경 위에서 읽히지 않았다.
   testWidgets('다크 모드에서 삭제 확인창의 설명·버튼은 다크 토큰 색이다', (tester) async {
-    await pumpPage(tester, editing: true, theme: ThemeData(brightness: Brightness.dark));
+    await pumpPage(
+      tester,
+      editing: true,
+      theme: ThemeData(brightness: Brightness.dark),
+    );
     await tester.tap(find.byKey(const Key('category-delete-c1')));
     await tester.settle();
 
     Color? fillOf(String label) => tester
-        .widget<ElevatedButton>(find.ancestor(of: find.text(label), matching: find.byType(ElevatedButton)))
+        .widget<ElevatedButton>(
+          find.ancestor(
+            of: find.text(label),
+            matching: find.byType(ElevatedButton),
+          ),
+        )
         .style!
         .backgroundColor!
         .resolve({});
-    expect(tester.widget<Text>(find.textContaining('(으)로 돌아가요')).style!.color, Palette.darkText);
-    expect(tester.widget<Text>(find.text('취소')).style!.color, Palette.darkTextSecondary);
+    expect(
+      tester.widget<Text>(find.textContaining('(으)로 돌아가요')).style!.color,
+      Palette.darkText,
+    );
+    expect(
+      tester.widget<Text>(find.text('취소')).style!.color,
+      Palette.darkTextSecondary,
+    );
     expect(fillOf('취소'), Palette.darkSurfaceSunken);
     expect(fillOf('삭제'), Palette.primaryHeavy);
-    expect(tester.widget<Text>(find.text('삭제')).style!.color, Palette.staticWhite);
+    expect(
+      tester.widget<Text>(find.text('삭제')).style!.color,
+      Palette.staticWhite,
+    );
   });
 }

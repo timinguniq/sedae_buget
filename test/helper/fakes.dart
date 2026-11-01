@@ -22,8 +22,8 @@ export 'stub_server.dart';
 /// 전면은 [interstitial]의 결과를 따른다.
 class FakeAdService implements AdService {
   FakeAdService({Future<bool>? interstitial, Future<LoadedBanner?>? banner})
-      : _interstitial = interstitial ?? Future.value(true),
-        _banner = banner ?? Future.value();
+    : _interstitial = interstitial ?? Future.value(true),
+      _banner = banner ?? Future.value();
 
   final Future<bool> _interstitial;
   final Future<LoadedBanner?> _banner;
@@ -102,8 +102,11 @@ ProviderContainer fakeContainer({
       adServiceProvider.overrideWithValue(adService ?? FakeAdService()),
       if (launchInterstitial != null)
         launchInterstitialProvider.overrideWithValue(launchInterstitial),
-      appStatusSourceProvider.overrideWithValue(appStatusSource ?? FakeAppStatusSource()),
-      if (themeModeStore != null) themeModeStoreProvider.overrideWithValue(themeModeStore),
+      appStatusSourceProvider.overrideWithValue(
+        appStatusSource ?? FakeAppStatusSource(),
+      ),
+      if (themeModeStore != null)
+        themeModeStoreProvider.overrideWithValue(themeModeStore),
       // 테스트가 점검 안내를 확인해도 테스트 프로세스가 끝나지 않게 한다.
       appExitProvider.overrideWithValue(exitApp ?? () {}),
     ],

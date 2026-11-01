@@ -11,9 +11,17 @@ import '../../helper/fakes.dart';
 const _pet = CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc);
 
 /// 서버에 저장된 이번 달 거래(새 초안의 날짜는 오늘이다).
-Future<List<Transaction>> _onServer(WidgetTester tester, StubServer server) async {
+Future<List<Transaction>> _onServer(
+  WidgetTester tester,
+  StubServer server,
+) async {
   final now = DateTime.now();
-  return (await tester.untilDone(server.transactions.getRange(YearMonth.of(now).start, YearMonth.of(now).end))).unwrap();
+  return (await tester.untilDone(
+    server.transactions.getRange(
+      YearMonth.of(now).start,
+      YearMonth.of(now).end,
+    ),
+  )).unwrap();
 }
 
 void main() {
@@ -42,8 +50,14 @@ void main() {
     final router = GoRouter(
       initialLocation: '/',
       routes: [
-        GoRoute(path: '/', builder: (_, _) => const Scaffold(body: SizedBox.shrink())),
-        GoRoute(path: '/edit', builder: (_, _) => TransactionEditPage(existing: existing)),
+        GoRoute(
+          path: '/',
+          builder: (_, _) => const Scaffold(body: SizedBox.shrink()),
+        ),
+        GoRoute(
+          path: '/edit',
+          builder: (_, _) => TransactionEditPage(existing: existing),
+        ),
       ],
     );
     await tester.pumpWidget(
@@ -70,7 +84,10 @@ void main() {
 
   // 이전에는 저장 실패를 삼키고 화면을 닫아, 사용자가 저장된 줄 알았다.
   testWidgets('저장이 실패하면 화면을 닫지 않고 이유를 보여준다', (tester) async {
-    await pumpEditPage(tester, faults: (f) => f.fail('PUT', '/v1/transactions'));
+    await pumpEditPage(
+      tester,
+      faults: (f) => f.fail('PUT', '/v1/transactions'),
+    );
     for (final k in ['1', '2', '0', '0', '0']) {
       await tester.tap(find.text(k));
       await tester.pump();
@@ -108,7 +125,9 @@ void main() {
       await tester.tap(find.text(k));
       await tester.pump();
     }
-    tester.view.viewInsets = const FakeViewPadding(bottom: 340); // 추천 단어 줄이 있는 키보드
+    tester.view.viewInsets = const FakeViewPadding(
+      bottom: 340,
+    ); // 추천 단어 줄이 있는 키보드
     addTearDown(tester.view.resetViewInsets);
     await tester.pump();
     expect(tester.takeException(), isNull);
@@ -122,7 +141,10 @@ void main() {
   // 화면이 남으면 키패드·저장 버튼은 아래에 붙는다(디자인). 스크롤로 감싸도 위로 뜨지 않는다.
   testWidgets('큰 화면에서는 저장 버튼이 아래에 붙는다', (tester) async {
     await pumpEditPage(tester);
-    expect(tester.getBottomLeft(find.byKey(const Key('save-button'))).dy, 844 - 22); // 아래 여백 22
+    expect(
+      tester.getBottomLeft(find.byKey(const Key('save-button'))).dy,
+      844 - 22,
+    ); // 아래 여백 22
   });
 
   // 디자인: 입력 화면은 지출만 적는다(소득은 프로필 월소득). 지출/수입 토글 대신 제목이 있다.
@@ -136,8 +158,15 @@ void main() {
     });
 
     testWidgets('지출을 고치면 지출 수정이고 지울 수 있다', (tester) async {
-      await pumpEditPage(tester, existing: Transaction.create(
-          amount: 1000, base: BudgetCategory.groceries, date: DateTime.now(), type: TransactionType.expense));
+      await pumpEditPage(
+        tester,
+        existing: Transaction.create(
+          amount: 1000,
+          base: BudgetCategory.groceries,
+          date: DateTime.now(),
+          type: TransactionType.expense,
+        ),
+      );
       expect(find.text('지출 수정'), findsOneWidget);
       expect(find.byKey(const Key('delete-button')), findsOneWidget);
     });
@@ -145,8 +174,16 @@ void main() {
     // 전에 적은 수입은 남아 있으니 고칠 수 있어야 한다. 수입은 카테고리가 없다
     // (이전에는 수입에도 지출 카테고리 칩을 보여 월급이 '식료품'으로 저장됐다).
     testWidgets('수입을 고치면 수입 수정이고 카테고리를 고르지 않는다', (tester) async {
-      await pumpEditPage(tester, customs: const [_pet], existing: Transaction.create(
-          amount: 3000000, base: BudgetCategory.groceries, date: DateTime.now(), type: TransactionType.income));
+      await pumpEditPage(
+        tester,
+        customs: const [_pet],
+        existing: Transaction.create(
+          amount: 3000000,
+          base: BudgetCategory.groceries,
+          date: DateTime.now(),
+          type: TransactionType.income,
+        ),
+      );
       expect(find.text('수입 수정'), findsOneWidget);
       expect(find.byKey(const Key('category-add-chip')), findsNothing);
       expect(find.text('반려식물'), findsNothing);
@@ -157,8 +194,15 @@ void main() {
   // 응답을 잃은 뒤 다시 지우면 서버는 404다. 이전에는 '이미 지워졌거나 찾을 수 없어요'를 띄우고 화면을 닫지 않았다.
   testWidgets('이미 지워진 거래를 지우면 화면을 닫는다', (tester) async {
     // 서버에 없는 거래다.
-    await pumpEditPage(tester, existing: Transaction.create(
-        amount: 1000, base: BudgetCategory.groceries, date: DateTime.now(), type: TransactionType.expense));
+    await pumpEditPage(
+      tester,
+      existing: Transaction.create(
+        amount: 1000,
+        base: BudgetCategory.groceries,
+        date: DateTime.now(),
+        type: TransactionType.expense,
+      ),
+    );
 
     await tester.tap(find.byKey(const Key('delete-button')));
     await tester.settle();
@@ -175,7 +219,9 @@ void main() {
   });
 
   // 사용자 카테고리를 고르면 상위 기본 분류가 함께 저장돼 또래 비교 집계가 유지된다.
-  testWidgets('custom category chip stores base id + customCategoryId', (tester) async {
+  testWidgets('custom category chip stores base id + customCategoryId', (
+    tester,
+  ) async {
     final server = await pumpEditPage(tester, customs: const [_pet]);
 
     await tester.ensureVisible(find.text('반려식물')); // 가로 스크롤 칩 행 끝
@@ -197,13 +243,18 @@ void main() {
   testWidgets('추가 칩으로 만든 카테고리가 바로 선택된다', (tester) async {
     final server = await pumpEditPage(tester);
 
-    await tester.ensureVisible(find.byKey(const Key('category-add-chip'))); // 가로 스크롤 칩 행 끝
+    await tester.ensureVisible(
+      find.byKey(const Key('category-add-chip')),
+    ); // 가로 스크롤 칩 행 끝
     await tester.tap(find.byKey(const Key('category-add-chip')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
     expect(find.text('카테고리 추가'), findsOneWidget);
 
-    await tester.enterText(find.byKey(const Key('category-name-field')), '반려식물');
+    await tester.enterText(
+      find.byKey(const Key('category-name-field')),
+      '반려식물',
+    );
     await tester.pump();
     await tester.tap(find.byKey(const Key('category-submit-button')));
     await tester.settle();
@@ -232,7 +283,12 @@ void main() {
 
     final now = DateTime.now();
     final last = DateTime(now.year, now.month - 1);
-    final saved = (await tester.untilDone(server.transactions.getRange(YearMonth.of(last).start, YearMonth.of(last).end))).unwrap();
+    final saved = (await tester.untilDone(
+      server.transactions.getRange(
+        YearMonth.of(last).start,
+        YearMonth.of(last).end,
+      ),
+    )).unwrap();
     expect(saved.single.amount, 1000);
   });
 
@@ -243,7 +299,9 @@ void main() {
     await tester.tap(find.byIcon(Icons.calendar_today_outlined));
     await tester.pumpAndSettle();
 
-    final picker = tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
+    final picker = tester.widget<DatePickerDialog>(
+      find.byType(DatePickerDialog),
+    );
     expect(DateUtils.isSameDay(picker.lastDate, DateTime.now()), isTrue);
   });
 
@@ -262,8 +320,15 @@ void main() {
   // 10일 전은 지난 달일 수 있다(월초). 고를 수 있는 날짜는 보고 있는 달과 상관없으므로 그래도 된다.
   testWidgets('지난 거래를 고칠 때도 날짜는 오늘까지 고를 수 있다', (tester) async {
     final now = DateTime.now();
-    await pumpEditPage(tester, existing: Transaction.create(amount: 1000, base: BudgetCategory.groceries,
-        date: DateTime(now.year, now.month, now.day - 10), type: TransactionType.expense));
+    await pumpEditPage(
+      tester,
+      existing: Transaction.create(
+        amount: 1000,
+        base: BudgetCategory.groceries,
+        date: DateTime(now.year, now.month, now.day - 10),
+        type: TransactionType.expense,
+      ),
+    );
     await tester.tap(find.byIcon(Icons.calendar_today_outlined));
     await tester.pumpAndSettle();
     if (!DateUtils.isSameDay(DateTime.now(), now)) {
@@ -271,26 +336,39 @@ void main() {
       return;
     }
 
-    final picker = tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
+    final picker = tester.widget<DatePickerDialog>(
+      find.byType(DatePickerDialog),
+    );
     expect(DateUtils.isSameDay(picker.lastDate, now), isTrue);
   });
 
   // 이전에는 첫 날짜가 2020년으로 박혀 있어 그보다 이른 거래의 날짜를 누르면 assert로 멈췄다.
   testWidgets('2020년보다 이른 거래도 날짜를 고를 수 있다', (tester) async {
     final old = Transaction.create(
-        amount: 1000, base: BudgetCategory.groceries, date: DateTime(2019, 12, 27), type: TransactionType.expense);
+      amount: 1000,
+      base: BudgetCategory.groceries,
+      date: DateTime(2019, 12, 27),
+      type: TransactionType.expense,
+    );
     await pumpEditPage(tester, existing: old);
     await tester.tap(find.byIcon(Icons.calendar_today_outlined));
     await tester.pumpAndSettle();
 
-    final picker = tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
+    final picker = tester.widget<DatePickerDialog>(
+      find.byType(DatePickerDialog),
+    );
     expect(picker.firstDate, DateTime(2019, 12, 27));
   });
 
-  testWidgets('메모 필드는 전역 inputDecorationTheme의 outline 테두리를 받지 않는다', (tester) async {
+  testWidgets('메모 필드는 전역 inputDecorationTheme의 outline 테두리를 받지 않는다', (
+    tester,
+  ) async {
     await pumpEditPage(tester);
     final memo = tester.widget<TextField>(
-        find.byWidgetPredicate((w) => w is TextField && w.decoration?.hintText == '메모 (선택)'));
+      find.byWidgetPredicate(
+        (w) => w is TextField && w.decoration?.hintText == '메모 (선택)',
+      ),
+    );
     expect(memo.decoration?.enabledBorder, InputBorder.none);
     expect(memo.decoration?.focusedBorder, InputBorder.none);
   });

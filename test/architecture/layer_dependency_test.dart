@@ -10,8 +10,9 @@ List<String> violations(
   bool Function(String path)? skip,
 }) {
   final out = <String>[];
-  final files =
-      Directory('lib/$layer').listSync(recursive: true).whereType<File>();
+  final files = Directory(
+    'lib/$layer',
+  ).listSync(recursive: true).whereType<File>();
   for (final f in files) {
     final p = f.path;
     if (!p.endsWith('.dart') ||
@@ -43,7 +44,10 @@ void main() {
       subfolders('data'),
       unorderedEquals(['data_source', 'dto', 'repository_impl']),
     );
-    expect(subfolders('data/data_source'), unorderedEquals(['local', 'remote']));
+    expect(
+      subfolders('data/data_source'),
+      unorderedEquals(['local', 'remote']),
+    );
   });
 
   test('domain은 manager·repository·usecase 폴더로만 구성한다', () {
@@ -56,10 +60,12 @@ void main() {
   // 오류 규약: 실패를 Result로만 전달한다. throw/null/삼킴으로 갈라지지 않게 고정한다.
   test('domain/repository의 비동기(Future) 메서드는 모두 Future<Result<...>>를 돌려준다', () {
     final offenders = <String>[];
-    for (final f in Directory('lib/domain/repository')
-        .listSync()
-        .whereType<File>()
-        .where((f) => f.path.endsWith('.dart') && !f.path.endsWith('index.dart'))) {
+    for (final f
+        in Directory(
+          'lib/domain/repository',
+        ).listSync().whereType<File>().where(
+          (f) => f.path.endsWith('.dart') && !f.path.endsWith('index.dart'),
+        )) {
       for (final line in f.readAsLinesSync()) {
         final t = line.trim();
         if (!t.startsWith('Future<')) continue;
@@ -103,7 +109,8 @@ void main() {
           'sedae_budget/core/core.dart',
         ],
         skip: (p) =>
-            p.startsWith('lib/presentation/service/') && p.endsWith('_provider.dart'),
+            p.startsWith('lib/presentation/service/') &&
+            p.endsWith('_provider.dart'),
       ),
       isEmpty,
     );
@@ -112,22 +119,32 @@ void main() {
   // composition root(DI)는 data·domain 구현을 모두 안다. 배럴이 다시 내보내면
   // 배럴을 import한 모든 파일(로거 → data 등)이 전이로 data·domain에 묶인다.
   test('core/core.dart는 composition root를 export하지 않는다', () {
-    final exports = File('lib/core/core.dart')
-        .readAsLinesSync()
-        .where((l) => l.startsWith('export ') && l.contains('dependency_injection'));
+    final exports = File('lib/core/core.dart').readAsLinesSync().where(
+      (l) => l.startsWith('export ') && l.contains('dependency_injection'),
+    );
     expect(exports, isEmpty);
   });
 
   test('composition root는 main·service provider만 import한다', () {
     final offenders = <String>[];
-    for (final layer in ['core', 'data', 'domain', 'entity', 'presentation', 'theme']) {
-      offenders.addAll(violations(
-        layer,
-        ['sedae_budget/core/dependency_injection'],
-        skip: (p) =>
-            p.startsWith('lib/core/dependency_injection/') ||
-            (p.startsWith('lib/presentation/service/') && p.endsWith('_provider.dart')),
-      ));
+    for (final layer in [
+      'core',
+      'data',
+      'domain',
+      'entity',
+      'presentation',
+      'theme',
+    ]) {
+      offenders.addAll(
+        violations(
+          layer,
+          ['sedae_budget/core/dependency_injection'],
+          skip: (p) =>
+              p.startsWith('lib/core/dependency_injection/') ||
+              (p.startsWith('lib/presentation/service/') &&
+                  p.endsWith('_provider.dart')),
+        ),
+      );
     }
     expect(offenders, isEmpty);
   });
@@ -167,11 +184,10 @@ void main() {
 
   test('core는 composition root 외에는 domain/data를 import하지 않는다', () {
     expect(
-      violations(
-        'core',
-        ['sedae_budget/domain', 'sedae_budget/data'],
-        skip: (p) => p.startsWith('lib/core/dependency_injection/'),
-      ),
+      violations('core', [
+        'sedae_budget/domain',
+        'sedae_budget/data',
+      ], skip: (p) => p.startsWith('lib/core/dependency_injection/')),
       isEmpty,
     );
   });
@@ -192,9 +208,18 @@ void main() {
 
   // AdService 경계(ad_service.dart)도 SDK를 모른다. 화면은 LoadedBanner만 받는다.
   test('광고 SDK(google_mobile_ads)는 AdMob 구현에만 있다', () {
-    for (final layer in ['core', 'data', 'domain', 'entity', 'presentation', 'theme']) {
+    for (final layer in [
+      'core',
+      'data',
+      'domain',
+      'entity',
+      'presentation',
+      'theme',
+    ]) {
       expect(
-        violations(layer, ['google_mobile_ads/'], skip: (p) => p == 'lib/core/ads/admob_ad_service.dart'),
+        violations(layer, [
+          'google_mobile_ads/',
+        ], skip: (p) => p == 'lib/core/ads/admob_ad_service.dart'),
         isEmpty,
         reason: layer,
       );
@@ -203,11 +228,11 @@ void main() {
 
   test('data의 로컬 저장 기술은 data_source/local에서만 쓴다', () {
     expect(
-      violations(
-        'data',
-        ['drift/', 'shared_preferences/', 'flutter_secure_storage/'],
-        skip: (p) => p.startsWith('lib/data/data_source/local/'),
-      ),
+      violations('data', [
+        'drift/',
+        'shared_preferences/',
+        'flutter_secure_storage/',
+      ], skip: (p) => p.startsWith('lib/data/data_source/local/')),
       isEmpty,
     );
   });

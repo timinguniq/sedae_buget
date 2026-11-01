@@ -12,9 +12,9 @@ class AppDeco {
   final List<BoxShadow> coralShadow; // 0 12px 26px rgba(242,96,60,.26)
 
   BoxDecoration cardBoxDecoration(CSize size, [Color? color]) => BoxDecoration(
-        color: color ?? Palette.surface,
-        borderRadius: BorderRadius.circular(size.radius),
-      );
+    color: color ?? Palette.surface,
+    borderRadius: BorderRadius.circular(size.radius),
+  );
 }
 
 /// 디자인 radius 스케일 (sm12 / md18 / lg22 / pill999), 카드 20·22 포함.
@@ -26,10 +26,10 @@ enum CSize {
   pill;
 
   double get radius => switch (this) {
-        CSize.sm => 12,
-        CSize.md => 18,
-        CSize.card => 20,
-        CSize.lg => 22,
-        CSize.pill => 999,
-      };
+    CSize.sm => 12,
+    CSize.md => 18,
+    CSize.card => 20,
+    CSize.lg => 22,
+    CSize.pill => 999,
+  };
 }

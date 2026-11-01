@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/category_battle_row.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/distribution_histogram.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/insight_banner.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/rank_headline.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/versus_bar_card.dart';
+import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 /// 세대 비교 화면. 상단 시안 A(등수·분포·나 vs 또래·저축률) + 하단 시안 B(항목별 차이·인사이트).
@@ -34,29 +34,53 @@ class ComparePage extends ConsumerWidget {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
-                child: Column(mainAxisSize: MainAxisSize.min, children: [
-                  const MascotDongle(size: 64),
-                  const SizedBox(height: 16),
-                  Text(emptyMonthText,
-                    textAlign: TextAlign.center,
-                    style: context.typo.body1W500.copyWith(color: context.color.label.alternative)),
-                ]),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const MascotDongle(size: 64),
+                    const SizedBox(height: 16),
+                    Text(
+                      emptyMonthText,
+                      textAlign: TextAlign.center,
+                      style: context.typo.body1W500.copyWith(
+                        color: context.color.label.alternative,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             );
           }
           final top6 = o.topCategories(6);
           // 소득이 없으면 내 저축률은 계산할 수 없다: 막대는 0, 값은 '—'.
-          final PeerCompared(:total, :totalBars, :rank, :savings, :savingsBars) = standing;
-          final topInsight = switch (o.peerTopCategory) { final top? => peer.topInsight(top), null => null };
+          final PeerCompared(
+            :total,
+            :totalBars,
+            :rank,
+            :savings,
+            :savingsBars,
+          ) = standing;
+          final topInsight = switch (o.peerTopCategory) {
+            final top? => peer.topInsight(top),
+            null => null,
+          };
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
             children: [
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('또래 비교',
-                  style: context.typo.pageTitle.copyWith(fontSize: 20, color: context.color.label.normal)),
-                _AgeChip(label: peer.ageGroup.label),
-              ]),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '또래 비교',
+                    style: context.typo.pageTitle.copyWith(
+                      fontSize: 20,
+                      color: context.color.label.normal,
+                    ),
+                  ),
+                  _AgeChip(label: peer.ageGroup.label),
+                ],
+              ),
               const SizedBox(height: 18),
               if (rank != null) ...[
                 RankHeadline(rank: rank),
@@ -74,7 +98,10 @@ class ComparePage extends ConsumerWidget {
                   peerText: WonText.short.of(total.peer),
                   footer: Text(
                     total.totalFooter(),
-                    style: context.typo.caption2W600.copyWith(fontSize: 11, color: total.tone(context)),
+                    style: context.typo.caption2W600.copyWith(
+                      fontSize: 11,
+                      color: total.tone(context),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 13),
@@ -89,18 +116,38 @@ class ComparePage extends ConsumerWidget {
                 peerText: '${savings.peer}%',
               ),
               const SizedBox(height: 18),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                Text('항목별 차이', style: context.typo.sectionTitle.copyWith(color: context.color.label.normal)),
-                Text('← 덜 씀 · 더 씀 →',
-                  style: context.typo.caption2W500.copyWith(color: context.color.label.assistive)),
-              ]),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '항목별 차이',
+                    style: context.typo.sectionTitle.copyWith(
+                      color: context.color.label.normal,
+                    ),
+                  ),
+                  Text(
+                    '← 덜 씀 · 더 씀 →',
+                    style: context.typo.caption2W500.copyWith(
+                      color: context.color.label.assistive,
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 13),
               for (final e in top6)
                 if (e.peer case final comparison?)
-                  CategoryBattleRow(category: e.category, comparison: comparison),
-              if (topInsight case (:final prefix, :final highlight, :final suffix)?) ...[
+                  CategoryBattleRow(
+                    category: e.category,
+                    comparison: comparison,
+                  ),
+              if (topInsight
+                  case (:final prefix, :final highlight, :final suffix)?) ...[
                 const SizedBox(height: 2),
-                InsightBanner(prefix: prefix, highlight: highlight, suffix: suffix),
+                InsightBanner(
+                  prefix: prefix,
+                  highlight: highlight,
+                  suffix: suffix,
+                ),
               ],
             ],
           );
@@ -124,8 +171,14 @@ class _AgeChip extends StatelessWidget {
         border: Border.all(color: context.color.line.normal),
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(label, style: context.typo.caption2W600.copyWith(
-        fontSize: 11, fontWeight: context.typo.bold, color: context.color.label.normal)),
+      child: Text(
+        label,
+        style: context.typo.caption2W600.copyWith(
+          fontSize: 11,
+          fontWeight: context.typo.bold,
+          color: context.color.label.normal,
+        ),
+      ),
     );
   }
 }

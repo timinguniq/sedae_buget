@@ -8,9 +8,18 @@ enum CButtonSize {
   xl;
 
   EdgeInsets get padding => switch (this) {
-    CButtonSize.sm => const EdgeInsets.symmetric(horizontal: 20, vertical: 6), // h32(20+12)
-    CButtonSize.md => const EdgeInsets.symmetric(horizontal: 17, vertical: 8), // h40(24+16)
-    CButtonSize.lg => const EdgeInsets.symmetric(horizontal: 30, vertical: 17), // h58(24+34)
+    CButtonSize.sm => const EdgeInsets.symmetric(
+      horizontal: 20,
+      vertical: 6,
+    ), // h32(20+12)
+    CButtonSize.md => const EdgeInsets.symmetric(
+      horizontal: 17,
+      vertical: 8,
+    ), // h40(24+16)
+    CButtonSize.lg => const EdgeInsets.symmetric(
+      horizontal: 30,
+      vertical: 17,
+    ), // h58(24+34)
     CButtonSize.xl => EdgeInsets.zero,
   };
 

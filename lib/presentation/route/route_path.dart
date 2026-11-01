@@ -29,9 +29,7 @@ enum RoutePath {
   terms('/terms'),
 
   /// 세션을 확인하지 못함(서버에 닿지 못함) — 다시 시도
-  unreachable('/unreachable'),
-
-  ;
+  unreachable('/unreachable');
 
   const RoutePath(this.path);
 

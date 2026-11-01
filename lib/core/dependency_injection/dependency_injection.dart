@@ -34,7 +34,7 @@ void configureAppStatusDependencies() {
 /// 광고 의존성. web은 google_mobile_ads가 지원하지 않으므로 Null Object([NoAdService])를 끼운다.
 void configureAdDependencies(SharedPreferences prefs) {
   if (locator.isRegistered<AdService>()) return;
-  final AdService ads = kIsWeb ? const NoAdService() : AdMobAdService();
+  final ads = kIsWeb ? const NoAdService() : AdMobAdService();
   locator
     ..registerSingleton<AdService>(ads)
     ..registerSingleton<LaunchInterstitial>(LaunchInterstitial(prefs, ads));

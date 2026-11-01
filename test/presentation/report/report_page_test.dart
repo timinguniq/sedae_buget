@@ -3,31 +3,53 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:sedae_budget/data/data.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/report/report.page.dart';
 import 'package:sedae_budget/presentation/page/report/widget/generation_avg_chart.dart';
+import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
 final _now = DateTime.now();
 
-DateTime _monthsAgo(int months, int day) => DateTime(_now.year, _now.month - months, day);
+DateTime _monthsAgo(int months, int day) =>
+    DateTime(_now.year, _now.month - months, day);
 
 /// 이달 식료품 지출 60만·수입 300만과, 지난 두 달의 지출(최근 6개월 추이용).
 List<Transaction> _ledger() => [
-      Transaction.create(amount: 600000, base: BudgetCategory.groceries, date: _monthsAgo(0, 1),
-          type: TransactionType.expense, memo: '식료품'),
-      Transaction.create(amount: 3000000, base: BudgetCategory.groceries, date: _monthsAgo(0, 1), type: TransactionType.income),
-      Transaction.create(amount: 450000, base: BudgetCategory.transport, date: _monthsAgo(1, 15), type: TransactionType.expense),
-      Transaction.create(amount: 300000, base: BudgetCategory.diningOut, date: _monthsAgo(2, 20), type: TransactionType.expense),
-    ];
+  Transaction.create(
+    amount: 600000,
+    base: BudgetCategory.groceries,
+    date: _monthsAgo(0, 1),
+    type: TransactionType.expense,
+    memo: '식료품',
+  ),
+  Transaction.create(
+    amount: 3000000,
+    base: BudgetCategory.groceries,
+    date: _monthsAgo(0, 1),
+    type: TransactionType.income,
+  ),
+  Transaction.create(
+    amount: 450000,
+    base: BudgetCategory.transport,
+    date: _monthsAgo(1, 15),
+    type: TransactionType.expense,
+  ),
+  Transaction.create(
+    amount: 300000,
+    base: BudgetCategory.diningOut,
+    date: _monthsAgo(2, 20),
+    type: TransactionType.expense,
+  ),
+];
 
 void main() {
   setUpAll(() => initializeDateFormatting('ko'));
 
-  testWidgets('report page renders insight, stats, and section headers',
-      (tester) async {
+  testWidgets('report page renders insight, stats, and section headers', (
+    tester,
+  ) async {
     await _pumpReport(tester);
 
     expect(find.text('이달의 발견'), findsOneWidget);
@@ -114,9 +136,17 @@ void main() {
 
   // 소득이 없으면 저축률도 소득 대비 지출도 계산할 수 없다. 두 칸이 같은 규칙을 따른다.
   testWidgets('소득이 없으면 저축률과 소득 대비 지출이 모두 — 다', (tester) async {
-    await _pumpReport(tester, transactions: [
-      Transaction.create(amount: 600000, base: BudgetCategory.groceries, date: _monthsAgo(0, 1), type: TransactionType.expense),
-    ]);
+    await _pumpReport(
+      tester,
+      transactions: [
+        Transaction.create(
+          amount: 600000,
+          base: BudgetCategory.groceries,
+          date: _monthsAgo(0, 1),
+          type: TransactionType.expense,
+        ),
+      ],
+    );
 
     expect(find.text('저축률'), findsOneWidget);
     expect(find.text('—'), findsNWidgets(2));
@@ -124,9 +154,17 @@ void main() {
 
   // 이전에는 지출 0원인 달을 '또래 상위 100%'로 보였다.
   testWidgets('빈 달(지출 0원)은 또래 순위를 매기지 않는다', (tester) async {
-    await _pumpReport(tester, transactions: [
-      Transaction.create(amount: 3000000, base: BudgetCategory.groceries, date: _monthsAgo(0, 1), type: TransactionType.income),
-    ]);
+    await _pumpReport(
+      tester,
+      transactions: [
+        Transaction.create(
+          amount: 3000000,
+          base: BudgetCategory.groceries,
+          date: _monthsAgo(0, 1),
+          type: TransactionType.income,
+        ),
+      ],
+    );
 
     // 많이 쓰는 쪽 칸만 '—'다(저축률 100%·소득 대비 지출 0%는 내 값이라 남는다).
     expect(find.text('—'), findsOneWidget);
@@ -134,8 +172,15 @@ void main() {
   });
 
   testWidgets('또래 통계를 못 읽으면 안내와 다시 시도를 보여주고, 다시 시도하면 읽는다', (tester) async {
-    await _pumpReport(tester,
-        faults: (f) => f.fail('GET', '/v1/peer/stats', reason: FailureReason.server, times: 1));
+    await _pumpReport(
+      tester,
+      faults: (f) => f.fail(
+        'GET',
+        '/v1/peer/stats',
+        reason: FailureReason.server,
+        times: 1,
+      ),
+    );
 
     expect(find.text('또래 통계를 불러오지 못했어요'), findsOneWidget);
     expect(find.text('이달의 발견'), findsNothing);
@@ -149,7 +194,10 @@ void main() {
 
   // 이전에는 세대별 평균을 못 읽으면 그 카드가 아무 말 없이 비었다.
   testWidgets('세대별 평균을 못 읽으면 이유와 다시 시도를 보여주고, 다시 시도하면 그린다', (tester) async {
-    await _pumpReport(tester, faults: (f) => f.fail('GET', '/v1/peer/generations', times: 1));
+    await _pumpReport(
+      tester,
+      faults: (f) => f.fail('GET', '/v1/peer/generations', times: 1),
+    );
 
     expect(find.byType(GenerationAvgChart), findsNothing);
     expect(find.text('불러오지 못했어요. 인터넷에 연결되어 있지 않아요'), findsOneWidget);
@@ -164,18 +212,32 @@ void main() {
   // 세대 차트와 대표 소비 칩은 '내 세대' 하나만 강조한다.
   group('내 세대 강조', () {
     void expectMyGroup(WidgetTester tester, AgeGroup mine) {
-      expect(tester.widget<GenerationAvgChart>(find.byType(GenerationAvgChart)).myGroup, mine);
+      expect(
+        tester
+            .widget<GenerationAvgChart>(find.byType(GenerationAvgChart))
+            .myGroup,
+        mine,
+      );
       final chips = tester.widgetList<DesignChip>(find.byType(DesignChip));
       expect(chips, hasLength(AgeGroup.values.length));
       for (final chip in chips) {
         final isMine = chip.label.startsWith('${mine.label} ');
-        expect(chip.style, isMine ? DesignChipStyle.coral : DesignChipStyle.outline, reason: chip.label);
+        expect(
+          chip.style,
+          isMine ? DesignChipStyle.coral : DesignChipStyle.outline,
+          reason: chip.label,
+        );
       }
     }
 
     testWidgets('프로필의 나이대를 강조한다', (tester) async {
-      await _pumpReport(tester,
-          profile: const UserProfile(ageGroup: AgeGroup.forties, monthlyIncome: 3000000));
+      await _pumpReport(
+        tester,
+        profile: const UserProfile(
+          ageGroup: AgeGroup.forties,
+          monthlyIncome: 3000000,
+        ),
+      );
       expectMyGroup(tester, AgeGroup.forties);
     });
 
@@ -210,7 +272,11 @@ Future<void> _pumpReport(
   faults?.call(server.faults);
   final container = fakeContainer(server: server);
   if (lastMonth) container.read(selectedMonthProvider.notifier).prev();
-  await tester.pumpWidget(fakeScope(container,
-        MaterialApp(theme: materialTheme(LightTheme()), home: const ReportPage())));
+  await tester.pumpWidget(
+    fakeScope(
+      container,
+      MaterialApp(theme: materialTheme(LightTheme()), home: const ReportPage()),
+    ),
+  );
   await tester.settle();
 }

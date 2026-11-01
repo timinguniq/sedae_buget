@@ -13,7 +13,8 @@ import 'package:sedae_budget/presentation/service/dependency_provider.dart';
 // - 변경 뒤 무엇을 다시 읽을지는 여기서만 정한다. 화면은 변경 메서드만 부르고 invalidate하지 않는다.
 
 /// 로그인 중이면 true. 이것을 부른 provider는 세션이 바뀌면 다시 만들어진다.
-Future<bool> _signedIn(Ref ref) async => await ref.watch(authProvider.future) != null;
+Future<bool> _signedIn(Ref ref) async =>
+    await ref.watch(authProvider.future) != null;
 
 /// 변경 뒤 서버의 장부가 바뀌었을 수 있는가: 성공했거나, 시간 초과라 서버에서 바뀌었는지 모를 때.
 /// 연결이 안 됐거나 서버가 거절했으면 바뀐 것이 없다(다시 읽어도 같고, 연결이 안 되면 뒤 화면까지 실패로 바뀐다).
@@ -49,10 +50,13 @@ class SelectedMonthNotifier extends Notifier<YearMonth> {
 
 /// 장부가 보여줄 달.
 final selectedMonthProvider =
-    NotifierProvider<SelectedMonthNotifier, YearMonth>(SelectedMonthNotifier.new);
+    NotifierProvider<SelectedMonthNotifier, YearMonth>(
+      SelectedMonthNotifier.new,
+    );
 
 class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
-  TransactionRepository get _transactions => ref.read(transactionRepositoryProvider);
+  TransactionRepository get _transactions =>
+      ref.read(transactionRepositoryProvider);
 
   @override
   Future<List<Transaction>> build() async {
@@ -64,11 +68,14 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   /// 새 거래의 초안. 보고 있는 달에 적는다(지난 달을 보며 추가하면 그 달의 거래다. 날짜는 [YearMonth.draftDate]).
   TransactionDraft newDraft() {
     final today = ref.read(selectedMonthProvider.notifier).today;
-    return TransactionDraft.create(ref.read(selectedMonthProvider).draftDate(today));
+    return TransactionDraft.create(
+      ref.read(selectedMonthProvider).draftDate(today),
+    );
   }
 
   /// [tx]를 고치는 초안. 카테고리는 지금 아는 사용자 카테고리([categoryCatalogProvider])로 판정한다.
-  TransactionDraft editDraft(Transaction tx) => TransactionDraft.edit(tx, ref.read(categoryCatalogProvider));
+  TransactionDraft editDraft(Transaction tx) =>
+      TransactionDraft.edit(tx, ref.read(categoryCatalogProvider));
 
   /// 변경 메서드는 서버 결과를 그대로 돌려준다. 실패를 호출부가 보고 문구를 띄운다.
   ///
@@ -89,7 +96,8 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
     }
   }
 
-  Future<Result<Transaction>> delete(Transaction tx) => _apply(() => _transactions.delete(tx));
+  Future<Result<Transaction>> delete(Transaction tx) =>
+      _apply(() => _transactions.delete(tx));
 
   /// 불러오기에 실패한 달 화면의 '다시 시도'(`LoadErrorView`). 달 화면이 읽는 서버 데이터
   /// (이달 거래·추이·사용자 카테고리·또래 통계·세대별 평균)를 모두 다시 읽는다.
@@ -102,7 +110,9 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
   }
 
   /// 거래가 바뀌었을 수 있으면 이달 거래와 추이를 다시 읽는다.
-  Future<Result<Transaction>> _apply(Future<Result<Transaction>> Function() run) async {
+  Future<Result<Transaction>> _apply(
+    Future<Result<Transaction>> Function() run,
+  ) async {
     final res = await run();
     if (_mayHaveChanged(res)) {
       ref.invalidateSelf();
@@ -114,7 +124,8 @@ class MonthlyTransactionsNotifier extends AsyncNotifier<List<Transaction>> {
 
 final monthlyTransactionsProvider =
     AsyncNotifierProvider<MonthlyTransactionsNotifier, List<Transaction>>(
-        MonthlyTransactionsNotifier.new);
+      MonthlyTransactionsNotifier.new,
+    );
 
 /// 보고 있는 달까지 최근 6개월 지출 추이(오래된 달 → 보고 있는 달). 규칙은 [SpendingTrend].
 final selfTrendProvider = FutureProvider<List<MonthExpense>>((ref) async {
@@ -134,17 +145,22 @@ final viewedMonthProvider = Provider<AsyncValue<ViewedMonth>>((ref) {
   final txs = ref.watch(monthlyTransactionsProvider);
   final catalog = ref.watch(categoryCatalogProvider);
   final profileIncome = ref.watch(userProfileProvider).value?.monthlyIncome;
-  return txs.whenData((txs) => ViewedMonth(
-        month: month,
-        transactions: txs,
-        catalog: catalog,
-        profileIncome: profileIncome,
-      ));
+  return txs.whenData(
+    (txs) => ViewedMonth(
+      month: month,
+      transactions: txs,
+      catalog: catalog,
+      profileIncome: profileIncome,
+    ),
+  );
 });
 
 /// 보고 있는 달을 화면에서 부르는 이름([YearMonth.name]). 오늘은 [SelectedMonthNotifier.today]로 읽어 화면이 시계를 모르게 한다.
-final viewedMonthNameProvider = Provider<String>((ref) =>
-    ref.watch(selectedMonthProvider).name(ref.read(selectedMonthProvider.notifier).today));
+final viewedMonthNameProvider = Provider<String>(
+  (ref) => ref
+      .watch(selectedMonthProvider)
+      .name(ref.read(selectedMonthProvider.notifier).today),
+);
 
 /// 사용자가 만든 카테고리 목록(서버). 기본 분류([BudgetCategory])는 계약 상수라 여기 없다.
 ///
@@ -169,7 +185,8 @@ class CustomCategoriesNotifier extends AsyncNotifier<List<CustomCategory>> {
   /// 카테고리가 바뀌었을 수 있으면 카테고리와 이달 거래를 다시 읽는다. 서버는 지운 카테고리의 거래를
   /// 기본 분류로 되돌리고, 상위 분류를 바꾸면 거래를 새 분류로 옮긴다. 추이는 금액만 보므로 그대로 둔다.
   Future<Result<CustomCategory>> _apply(
-      Future<Result<CustomCategory>> Function() run) async {
+    Future<Result<CustomCategory>> Function() run,
+  ) async {
     final res = await run();
     if (_mayHaveChanged(res)) {
       ref.invalidateSelf();
@@ -181,11 +198,14 @@ class CustomCategoriesNotifier extends AsyncNotifier<List<CustomCategory>> {
 
 final customCategoriesProvider =
     AsyncNotifierProvider<CustomCategoriesNotifier, List<CustomCategory>>(
-        CustomCategoriesNotifier.new);
+      CustomCategoriesNotifier.new,
+    );
 
 /// 화면이 거래의 카테고리를 판정할 카탈로그. 사용자 카테고리 목록을 아직 읽지 못했으면(읽는 중·실패)
 /// 모른다([CategoryCatalog.unknown]). 다시 읽는 동안에는 앞서 읽은 목록을 쓴다.
 final categoryCatalogProvider = Provider<CategoryCatalog>((ref) {
   final customs = ref.watch(customCategoriesProvider).value;
-  return customs == null ? const CategoryCatalog.unknown() : CategoryCatalog(customs);
+  return customs == null
+      ? const CategoryCatalog.unknown()
+      : CategoryCatalog(customs);
 });

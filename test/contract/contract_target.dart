@@ -67,7 +67,11 @@ class ContractClient {
 
   /// [provider]로 로그인하고 액세스 토큰을 돌려준다.
   Future<String> login(String provider) async {
-    final res = await send('POST', '/v1/auth/login', body: {'provider': provider, 'idToken': _target.idToken});
+    final res = await send(
+      'POST',
+      '/v1/auth/login',
+      body: {'provider': provider, 'idToken': _target.idToken},
+    );
     expect(res.status, 200, reason: '$res');
     return res.json['accessToken'] as String;
   }

@@ -25,7 +25,9 @@ Future<Result<T>> guardApi<T>(
     return recover?.call(failure) ?? Result.failure(failure);
   } catch (e, s) {
     _logger.e('서버 응답을 해석하지 못했어요', error: e, stackTrace: s);
-    return const Result.failure(ErrorResult(reason: FailureReason.server, message: ''));
+    return const Result.failure(
+      ErrorResult(reason: FailureReason.server, message: ''),
+    );
   }
 }
 

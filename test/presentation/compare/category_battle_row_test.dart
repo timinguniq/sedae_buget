@@ -4,11 +4,17 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/compare/widget/category_battle_row.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-Widget _wrap(Widget child) =>
-    MaterialApp(home: Scaffold(body: SizedBox(width: 350, child: child)), theme: materialTheme(LightTheme()));
+Widget _wrap(Widget child) => MaterialApp(
+  home: Scaffold(body: SizedBox(width: 350, child: child)),
+  theme: materialTheme(LightTheme()),
+);
 
-Widget _row(int mine, int peer) => _wrap(CategoryBattleRow(
-    category: BudgetCategory.groceries, comparison: PeerComparison.of(mine: mine, peer: peer)!));
+Widget _row(int mine, int peer) => _wrap(
+  CategoryBattleRow(
+    category: BudgetCategory.groceries,
+    comparison: PeerComparison.of(mine: mine, peer: peer)!,
+  ),
+);
 
 void main() {
   testWidgets('more than peer → +N% (coral side)', (tester) async {
@@ -26,7 +32,11 @@ void main() {
   testWidgets('덜 쓴 막대는 흐린 회색이다', (tester) async {
     await tester.pumpWidget(_row(90, 100));
     final bar = tester.widget<DecoratedBox>(
-        find.descendant(of: find.byType(CategoryBattleRow), matching: find.byType(DecoratedBox)));
+      find.descendant(
+        of: find.byType(CategoryBattleRow),
+        matching: find.byType(DecoratedBox),
+      ),
+    );
     expect((bar.decoration as BoxDecoration).color, Palette.labelDisable);
   });
 

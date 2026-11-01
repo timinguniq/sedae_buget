@@ -21,8 +21,12 @@ void main() {
   test('avgSavingsRatePercent는 비율을 반올림한 %', () {
     expect(stats.avgSavingsRatePercent, 20);
     PeerStats withRate(double r) => PeerStats(
-        ageGroup: AgeGroup.thirties, avgMonthlyExpense: 0, avgSavingsRate: r,
-        avgByCategory: const {}, samples: const []);
+      ageGroup: AgeGroup.thirties,
+      avgMonthlyExpense: 0,
+      avgSavingsRate: r,
+      avgByCategory: const {},
+      samples: const [],
+    );
     expect(withRate(0.235).avgSavingsRatePercent, 24);
     expect(withRate(0.234).avgSavingsRatePercent, 23);
   });
@@ -30,7 +34,10 @@ void main() {
   group('compareTotal · compareCategory', () {
     test('월 합계와 분류별 지출을 또래 평균과 비교한다', () {
       expect(stats.compareTotal(2200000)?.percent, 10);
-      expect(stats.compareCategory(BudgetCategory.groceries, 270000)?.percent, -10);
+      expect(
+        stats.compareCategory(BudgetCategory.groceries, 270000)?.percent,
+        -10,
+      );
     });
 
     // 또래 평균이 0이거나 빠진 분류를 '넘었다'고 읽으면 그 분류의 모든 지출에 배지가 붙었다.
@@ -52,8 +59,12 @@ void main() {
     test('전체 인원은 표본에 나를 더한 수, 많이 쓰는 쪽 %는 등수 ÷ 인원을 올림한 값', () {
       final samples = [for (var i = 1; i <= 99; i++) i * 10000];
       final hundred = PeerStats(
-        ageGroup: AgeGroup.thirties, avgMonthlyExpense: 500000, avgSavingsRate: 0.2,
-        avgByCategory: const {}, samples: samples);
+        ageGroup: AgeGroup.thirties,
+        avgMonthlyExpense: 500000,
+        avgSavingsRate: 0.2,
+        avgByCategory: const {},
+        samples: samples,
+      );
       final r = hundred.rankOf(665000)!; // 67만~99만 33명이 더 많이 쓴다
       expect(r.total, 100);
       expect(r.rank, 34);
@@ -61,9 +72,13 @@ void main() {
     });
 
     test('인원이 100으로 나눠떨어지지 않으면 올림한다: 3명 중 1등은 34%', () {
-      final three = PeerStats(
-        ageGroup: AgeGroup.thirties, avgMonthlyExpense: 500000, avgSavingsRate: 0.2,
-        avgByCategory: const {}, samples: const [100000, 200000]);
+      const three = PeerStats(
+        ageGroup: AgeGroup.thirties,
+        avgMonthlyExpense: 500000,
+        avgSavingsRate: 0.2,
+        avgByCategory: {},
+        samples: [100000, 200000],
+      );
       expect(three.rankOf(300000)!.topPercent, 34);
       expect(three.rankOf(150000)!.topPercent, 67);
     });
@@ -77,9 +92,13 @@ void main() {
 
     // 이전에는 표본이 없어도 '또래 1명 중 1등 · 상위 100%'로 보였다.
     test('표본이 없으면 순위를 매기지 않는다', () {
-      final empty = PeerStats(
-        ageGroup: AgeGroup.twenties, avgMonthlyExpense: 0, avgSavingsRate: 0,
-        avgByCategory: const {}, samples: const []);
+      const empty = PeerStats(
+        ageGroup: AgeGroup.twenties,
+        avgMonthlyExpense: 0,
+        avgSavingsRate: 0,
+        avgByCategory: {},
+        samples: [],
+      );
       expect(empty.rankOf(1000000), isNull);
     });
   });
@@ -90,12 +109,12 @@ void main() {
 
   group('bucketIndexOf', () {
     test('표본이 없으면 0', () {
-      final empty = PeerStats(
+      const empty = PeerStats(
         ageGroup: AgeGroup.twenties,
         avgMonthlyExpense: 0,
         avgSavingsRate: 0,
-        avgByCategory: const {},
-        samples: const [],
+        avgByCategory: {},
+        samples: [],
       );
       expect(empty.bucketIndexOf(123456, 15), 0);
     });
@@ -146,7 +165,9 @@ void main() {
     });
     // 차이가 없는 것도 발견이다('비슷하게 썼어요'). 비교할 항목이 없는 것과 다르다.
     test('모든 항목이 또래와 같으면 그중 첫 항목을 비슷하다고 고른다', () {
-      final gap = stats.largestCategoryGap(const {BudgetCategory.groceries: 300000});
+      final gap = stats.largestCategoryGap(const {
+        BudgetCategory.groceries: 300000,
+      });
       expect(gap?.category, BudgetCategory.groceries);
       expect(gap?.comparison.direction, PeerDirection.similar);
     });

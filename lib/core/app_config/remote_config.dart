@@ -39,7 +39,10 @@ class FirebaseAppStatusSource implements AppStatusSource {
       await config.fetchAndActivate();
       return _parse(config.getString(_key));
     } catch (e, s) {
-      _logger.w('fetchInitialInfo() : 원격 설정을 쓸 수 없음 — 판정하지 않는다. $e', stackTrace: s);
+      _logger.w(
+        'fetchInitialInfo() : 원격 설정을 쓸 수 없음 — 판정하지 않는다. $e',
+        stackTrace: s,
+      );
       return null;
     }
   }
@@ -75,7 +78,11 @@ class FirebaseAppStatusSource implements AppStatusSource {
     try {
       return initialInfoFromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (e, s) {
-      _logger.e('_parse() : initialInfo 형식이 잘못됨: $raw', error: e, stackTrace: s);
+      _logger.e(
+        '_parse() : initialInfo 형식이 잘못됨: $raw',
+        error: e,
+        stackTrace: s,
+      );
       return null;
     }
   }

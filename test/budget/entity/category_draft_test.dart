@@ -46,7 +46,13 @@ void main() {
     expect(d.isEdit, isTrue);
     expect(d.name, '반려식물');
     expect(d.base, BudgetCategory.etc);
-    expect(d.pickBase(BudgetCategory.groceries).toCategory(),
-        const CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.groceries));
+    expect(
+      d.pickBase(BudgetCategory.groceries).toCategory(),
+      const CustomCategory(
+        id: 'c1',
+        name: '반려식물',
+        base: BudgetCategory.groceries,
+      ),
+    );
   });
 }

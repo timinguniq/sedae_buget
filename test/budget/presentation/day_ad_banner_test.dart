@@ -22,10 +22,13 @@ class _FakeBanner {
 }
 
 /// [loaded]를 배너 로드 결과로 쓰는 [DayAdBanner]를 띄운다.
-Future<void> _pump(WidgetTester tester, Future<LoadedBanner?> loaded) => tester.pumpWidget(fakeScope(
-      fakeContainer(adService: FakeAdService(banner: loaded)),
-      const MaterialApp(home: Scaffold(body: DayAdBanner())),
-    ));
+Future<void> _pump(WidgetTester tester, Future<LoadedBanner?> loaded) =>
+    tester.pumpWidget(
+      fakeScope(
+        fakeContainer(adService: FakeAdService(banner: loaded)),
+        const MaterialApp(home: Scaffold(body: DayAdBanner())),
+      ),
+    );
 
 void main() {
   testWidgets('로드되면 광고 칩·캡션과 배너를 1px 테두리 프레임 안에 그린다', (tester) async {
@@ -37,7 +40,9 @@ void main() {
     final view = find.byKey(const Key('ad-view'));
     expect(tester.getSize(view), const Size(320, 100));
     // 테두리가 광고를 가리지 않게 프레임은 배너보다 2px 높다.
-    final frame = find.ancestor(of: view, matching: find.byType(Container)).first;
+    final frame = find
+        .ancestor(of: view, matching: find.byType(Container))
+        .first;
     expect(tester.getSize(frame).height, 102);
   });
 

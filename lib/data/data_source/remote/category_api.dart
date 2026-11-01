@@ -16,7 +16,10 @@ abstract class CategoryApi {
 
   /// id는 클라이언트 UUID(upsert) — 거래와 같은 규칙.
   @PUT('${ApiPath.categories}/{id}')
-  Future<CustomCategoryDto> put(@Path('id') String id, @Body() CustomCategoryBodyDto body);
+  Future<CustomCategoryDto> put(
+    @Path('id') String id,
+    @Body() CustomCategoryBodyDto body,
+  );
 
   @DELETE('${ApiPath.categories}/{id}')
   Future<void> delete(@Path('id') String id);

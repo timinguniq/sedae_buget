@@ -11,9 +11,17 @@ class ProviderBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (bg, fg, border) = switch (provider) {
-      AuthProvider.kakao => (const Color(0xFFFEE500), const Color(0xFF1A1700), null),
+      AuthProvider.kakao => (
+        const Color(0xFFFEE500),
+        const Color(0xFF1A1700),
+        null,
+      ),
       AuthProvider.naver => (const Color(0xFF03C75A), Colors.white, null),
-      AuthProvider.google => (Colors.white, Palette.labelNormal, context.color.line.normal),
+      AuthProvider.google => (
+        Colors.white,
+        Palette.labelNormal,
+        context.color.line.normal,
+      ),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
@@ -22,8 +30,14 @@ class ProviderBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(CSize.pill.radius),
         border: border == null ? null : Border.all(color: border),
       ),
-      child: Text(provider.label,
-        style: context.typo.caption2W600.copyWith(fontSize: 10.5, fontWeight: context.typo.bold, color: fg)),
+      child: Text(
+        provider.label,
+        style: context.typo.caption2W600.copyWith(
+          fontSize: 10.5,
+          fontWeight: context.typo.bold,
+          color: fg,
+        ),
+      ),
     );
   }
 }

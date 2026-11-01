@@ -11,7 +11,10 @@ class MainShell extends StatelessWidget {
     return DefaultLayout(
       bottomNavigationBar: BudgetBottomNav(
         currentIndex: navigationShell.currentIndex,
-        onTap: (i) => navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex),
+        onTap: (i) => navigationShell.goBranch(
+          i,
+          initialLocation: i == navigationShell.currentIndex,
+        ),
         onFabTap: () => context.push(RoutePath.transactionEdit.path),
       ),
       child: navigationShell,

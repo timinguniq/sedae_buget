@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/data/data.dart';
-import 'package:sedae_budget/presentation/page/budget/widget/summary_hero_card.dart';
+import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/peer_rank_card.dart';
+import 'package:sedae_budget/presentation/page/budget/widget/summary_hero_card.dart';
 import 'package:sedae_budget/presentation/widget/common/peer_text.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
@@ -19,40 +19,68 @@ PeerPill? _peer(int expense, {int avg = 2000000}) {
   ).heroPill;
 }
 
-Widget _wrap(Widget child) => MaterialApp(home: Scaffold(body: child), theme: materialTheme(LightTheme()));
+Widget _wrap(Widget child) => MaterialApp(
+  home: Scaffold(body: child),
+  theme: materialTheme(LightTheme()),
+);
 
 void main() {
   testWidgets('hero pill shows peer comparison', (t) async {
-    await t.pumpWidget(_wrap(SummaryHeroCard(label: '이번 달', expense: 1800000, peer: _peer(1800000))));
+    await t.pumpWidget(
+      _wrap(
+        SummaryHeroCard(label: '이번 달', expense: 1800000, peer: _peer(1800000)),
+      ),
+    );
     await t.pump();
     expect(find.text('또래 평균보다 10% 덜 썼어요'), findsOneWidget);
     expect(find.text('▼'), findsOneWidget);
   });
 
   testWidgets('hero pill shows ▲ when over peer', (t) async {
-    await t.pumpWidget(_wrap(SummaryHeroCard(label: '이번 달', expense: 2220000, peer: _peer(2220000))));
+    await t.pumpWidget(
+      _wrap(
+        SummaryHeroCard(label: '이번 달', expense: 2220000, peer: _peer(2220000)),
+      ),
+    );
     await t.pump();
     expect(find.text('또래 평균보다 11% 더 썼어요'), findsOneWidget);
     expect(find.text('▲'), findsOneWidget);
   });
 
   testWidgets('또래 평균이 없으면 집계 중이라고 보인다', (t) async {
-    await t.pumpWidget(_wrap(SummaryHeroCard(label: '이번 달', expense: 1800000, peer: _peer(1800000, avg: 0))));
+    await t.pumpWidget(
+      _wrap(
+        SummaryHeroCard(
+          label: '이번 달',
+          expense: 1800000,
+          peer: _peer(1800000, avg: 0),
+        ),
+      ),
+    );
     await t.pump();
     expect(find.text('또래 평균 집계 중'), findsOneWidget);
     expect(find.text('▲'), findsNothing);
   });
 
   testWidgets('빈 달이면 비교 대신 내역을 추가하라고 보인다', (t) async {
-    await t.pumpWidget(_wrap(SummaryHeroCard(
-        label: '이번 달', expense: 0, peer: const PeerEmptyMonth().heroPill)));
+    await t.pumpWidget(
+      _wrap(
+        SummaryHeroCard(
+          label: '이번 달',
+          expense: 0,
+          peer: const PeerEmptyMonth().heroPill,
+        ),
+      ),
+    );
     await t.pump();
     expect(find.text('내역을 추가하면 비교가 시작돼요'), findsOneWidget);
     expect(find.text('▼'), findsNothing);
   });
 
   // 디자인: '상위 N%'는 좋은 뜻으로 읽혀 '많이 쓰는 쪽 N%'로 바뀌었다.
-  testWidgets('rank card shows 등 and 많이 쓰는 쪽 with axis labels and 자세히', (t) async {
+  testWidgets('rank card shows 등 and 많이 쓰는 쪽 with axis labels and 자세히', (
+    t,
+  ) async {
     final stats = StubPeerData.forGroup(AgeGroup.thirties);
     final rank = stats.rankOf(2600000)!;
     await t.pumpWidget(_wrap(PeerRankCard(rank: rank)));
@@ -73,10 +101,14 @@ void main() {
     addTearDown(t.view.resetPhysicalSize);
     addTearDown(t.view.resetDevicePixelRatio);
     final stats = StubPeerData.forGroup(AgeGroup.thirties);
-    await t.pumpWidget(_wrap(Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: PeerRankCard(rank: stats.rankOf(2600000)!),
-    )));
+    await t.pumpWidget(
+      _wrap(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: PeerRankCard(rank: stats.rankOf(2600000)!),
+        ),
+      ),
+    );
     await t.pump();
     expect(find.textContaining('많이 쓰는 쪽'), findsOneWidget);
   });

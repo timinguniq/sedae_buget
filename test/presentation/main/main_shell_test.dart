@@ -11,10 +11,26 @@ void main() {
         StatefulShellRoute.indexedStack(
           builder: (_, _, shell) => MainShell(navigationShell: shell),
           branches: [
-            StatefulShellBranch(routes: [GoRoute(path: '/a', builder: (_, _) => const Text('BRANCH_A'))]),
-            StatefulShellBranch(routes: [GoRoute(path: '/b', builder: (_, _) => const Text('BRANCH_B'))]),
-            StatefulShellBranch(routes: [GoRoute(path: '/c', builder: (_, _) => const Text('BRANCH_C'))]),
-            StatefulShellBranch(routes: [GoRoute(path: '/d', builder: (_, _) => const Text('BRANCH_D'))]),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(path: '/a', builder: (_, _) => const Text('BRANCH_A')),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(path: '/b', builder: (_, _) => const Text('BRANCH_B')),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(path: '/c', builder: (_, _) => const Text('BRANCH_C')),
+              ],
+            ),
+            StatefulShellBranch(
+              routes: [
+                GoRoute(path: '/d', builder: (_, _) => const Text('BRANCH_D')),
+              ],
+            ),
           ],
         ),
       ],

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/theme/theme.dart';
 import 'package:sedae_budget/presentation/page/budget/category_analysis.page.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
+import 'package:sedae_budget/theme/theme.dart';
 
 import '../../helper/fakes.dart';
 
@@ -15,9 +15,18 @@ DateTime _d(int day) {
   return DateTime(now.year, now.month, day);
 }
 
-Transaction _expense(int amount, BudgetCategory base, int day, {String? customCategoryId}) => Transaction.create(
-    amount: amount, base: base, date: _d(day), type: TransactionType.expense,
-    customCategoryId: customCategoryId);
+Transaction _expense(
+  int amount,
+  BudgetCategory base,
+  int day, {
+  String? customCategoryId,
+}) => Transaction.create(
+  amount: amount,
+  base: base,
+  date: _d(day),
+  type: TransactionType.expense,
+  customCategoryId: customCategoryId,
+);
 
 /// [transactions]·[customs]를 심은 서버로 분석 화면을 띄운다. [faults]로 서버 장애를 건다.
 Future<void> _pump(
@@ -26,17 +35,27 @@ Future<void> _pump(
   List<CustomCategory> customs = const [],
   void Function(ServerFaults faults)? faults,
 }) async {
-  final server = await t.seedServer(profile: noIncomeProfile, categories: customs, transactions: transactions);
+  final server = await t.seedServer(
+    profile: noIncomeProfile,
+    categories: customs,
+    transactions: transactions,
+  );
   faults?.call(server.faults);
-  await t.pumpWidget(fakeScope(fakeContainer(server: server), const MaterialApp(home: CategoryAnalysisPage())));
+  await t.pumpWidget(
+    fakeScope(
+      fakeContainer(server: server),
+      const MaterialApp(home: CategoryAnalysisPage()),
+    ),
+  );
   await t.settle();
 }
 
 void main() {
-
   testWidgets('shows donut + rows when data', (tester) async {
-    await _pump(tester,
-        [_expense(10000, BudgetCategory.transport, 5), _expense(4000, BudgetCategory.diningOut, 6)]);
+    await _pump(tester, [
+      _expense(10000, BudgetCategory.transport, 5),
+      _expense(4000, BudgetCategory.diningOut, 6),
+    ]);
     expect(find.byType(CategoryDonut), findsOneWidget);
     expect(find.byType(CategoryRow), findsWidgets);
   });
@@ -46,10 +65,23 @@ void main() {
     tester.view.physicalSize = const Size(390, 1600);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
-    await _pump(tester, [for (var i = 0; i < 8; i++) _expense(1000 * (8 - i), BudgetCategory.values[i], 5)]);
+    await _pump(tester, [
+      for (var i = 0; i < 8; i++)
+        _expense(1000 * (8 - i), BudgetCategory.values[i], 5),
+    ]);
 
-    final rows = tester.widgetList<CategoryRow>(find.byType(CategoryRow)).toList();
-    expect(rows.map((r) => r.amount), [8000, 7000, 6000, 5000, 4000, 3000, 2000 + 1000]);
+    final rows = tester
+        .widgetList<CategoryRow>(find.byType(CategoryRow))
+        .toList();
+    expect(rows.map((r) => r.amount), [
+      8000,
+      7000,
+      6000,
+      5000,
+      4000,
+      3000,
+      2000 + 1000,
+    ]);
     expect(rows.last.label, '그 외');
     expect(rows.last.peer, isNull);
   });
@@ -61,15 +93,21 @@ void main() {
     addTearDown(tester.view.reset);
     await _pump(tester, [
       _expense(9000, BudgetCategory.etc, 5),
-      for (var i = 0; i < 7; i++) _expense(1000 * (8 - i), BudgetCategory.values[i], 5),
+      for (var i = 0; i < 7; i++)
+        _expense(1000 * (8 - i), BudgetCategory.values[i], 5),
     ]);
 
-    final labels = tester.widgetList<CategoryRow>(find.byType(CategoryRow)).map((r) => r.label).toList();
+    final labels = tester
+        .widgetList<CategoryRow>(find.byType(CategoryRow))
+        .map((r) => r.label)
+        .toList();
     expect(labels.first, '기타');
     expect(labels.last, '그 외');
   });
 
-  testWidgets('custom header shows title, month total and month navigator', (tester) async {
+  testWidgets('custom header shows title, month total and month navigator', (
+    tester,
+  ) async {
     await _pump(tester, [_expense(1920000, BudgetCategory.transport, 5)]);
     expect(find.text('카테고리 분석'), findsOneWidget);
     expect(find.byType(RoundIconButton), findsOneWidget);
@@ -78,7 +116,8 @@ void main() {
     expect(find.text('192만'), findsOneWidget);
 
     final now = DateTime.now();
-    String label(DateTime m) => '${m.year}.${m.month.toString().padLeft(2, '0')}';
+    String label(DateTime m) =>
+        '${m.year}.${m.month.toString().padLeft(2, '0')}';
     expect(find.text(label(DateTime(now.year, now.month))), findsOneWidget);
     // 이전에는 다음 달로 끝없이 넘어가 아직 오지 않은 달을 볼 수 있었다.
     await tester.tap(find.byKey(const Key('month-next')));
@@ -92,8 +131,9 @@ void main() {
 
   // 또래 통계가 실패해도 내 분석은 보인다. 또래 비교 토글만 빠진다.
   testWidgets('또래 통계를 못 읽어도 분석이 보이고 또래 토글은 없다', (tester) async {
-    await _pump(tester, [_expense(10000, BudgetCategory.transport, 5)],
-        faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server));
+    await _pump(tester, [
+      _expense(10000, BudgetCategory.transport, 5),
+    ], faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server));
 
     expect(find.byType(CategoryDonut), findsOneWidget);
     expect(find.byType(CategoryRow), findsOneWidget);
@@ -107,9 +147,15 @@ void main() {
 
   // 카테고리 목록을 못 읽으면 사용자 카테고리 분리 없이 기본 분류로만 묶인다(합계는 그대로).
   testWidgets('카테고리 조회 실패해도 기본 분류로 분석 화면이 그려진다', (tester) async {
-    await _pump(tester,
-        [_expense(10000, BudgetCategory.etc, 5), _expense(20000, BudgetCategory.etc, 6, customCategoryId: 'c1')],
-        customs: const [_pet], faults: (f) => f.fail('GET', '/v1/categories'));
+    await _pump(
+      tester,
+      [
+        _expense(10000, BudgetCategory.etc, 5),
+        _expense(20000, BudgetCategory.etc, 6, customCategoryId: 'c1'),
+      ],
+      customs: const [_pet],
+      faults: (f) => f.fail('GET', '/v1/categories'),
+    );
 
     expect(find.byType(CategoryDonut), findsOneWidget);
     // 둘 다 기타(19)로 합쳐진 한 줄.
@@ -124,9 +170,14 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await _pump(tester,
-        [_expense(10000, BudgetCategory.etc, 5), _expense(20000, BudgetCategory.etc, 6, customCategoryId: 'c1')],
-        customs: const [_pet]);
+    await _pump(
+      tester,
+      [
+        _expense(10000, BudgetCategory.etc, 5),
+        _expense(20000, BudgetCategory.etc, 6, customCategoryId: 'c1'),
+      ],
+      customs: const [_pet],
+    );
 
     expect(find.byType(CategoryRow), findsNWidgets(2));
     expect(find.text('반려식물'), findsOneWidget);
@@ -136,7 +187,8 @@ void main() {
     // 또래 비교를 켜면 기본 분류 행 하나에만 ▲/▼ 배지가 붙는다.
     await tester.tap(find.byType(Switch));
     await tester.settle();
-    final badges = tester.widgetList(find.textContaining('▲')).length +
+    final badges =
+        tester.widgetList(find.textContaining('▲')).length +
         tester.widgetList(find.textContaining('▼')).length;
     expect(badges, 1);
   });

@@ -19,30 +19,46 @@ class LogoutButton extends ConsumerWidget {
     final coral = context.color.primary.normal;
     final dark = context.theme.brightness == Brightness.dark;
     return SizedBox(
-      width: double.infinity, height: 52,
+      width: double.infinity,
+      height: 52,
       child: Material(
         color: context.color.background.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: dark ? context.color.line.normal : _borderLight, width: 1.5),
+          side: BorderSide(
+            color: dark ? context.color.line.normal : _borderLight,
+            width: 1.5,
+          ),
         ),
         child: InkWell(
           onTap: () async {
             // 기기에서 토큰을 지우지 못하면 로그인 상태 그대로다. 이유만 알린다.
-            final error = (await ref.read(authProvider.notifier).signOut()).failureOrNull;
+            final error =
+                (await ref.read(authProvider.notifier).signOut()).failureOrNull;
             if (error != null && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(failureMessage(UserAction.signOut, error)),
-              ));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(failureMessage(UserAction.signOut, error)),
+                ),
+              );
             }
           },
           borderRadius: BorderRadius.circular(16),
-          child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-            Icon(Icons.logout, size: 16, color: coral),
-            const SizedBox(width: 8),
-            Text('로그아웃',
-              style: context.typo.label2W600.copyWith(fontSize: 14.5, fontWeight: context.typo.bold, color: coral)),
-          ]),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.logout, size: 16, color: coral),
+              const SizedBox(width: 8),
+              Text(
+                '로그아웃',
+                style: context.typo.label2W600.copyWith(
+                  fontSize: 14.5,
+                  fontWeight: context.typo.bold,
+                  color: coral,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

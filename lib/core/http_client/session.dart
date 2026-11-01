@@ -36,11 +36,15 @@ class Session {
 
   /// 이 기기의 세션을 끝낸다. 토큰을 지운 다음 [tellServer]에 그 토큰의 `Authorization` 값을 넘겨 서버에 알린다.
   /// 토큰을 지우지 못하면 서버에 알리지 않고 실패다(세션은 그대로 쓸 수 있다). 서버에 알리지 못해도 성공이다.
-  Future<Result<void>> end({Future<void> Function(String authorization)? tellServer}) async {
+  Future<Result<void>> end({
+    Future<void> Function(String authorization)? tellServer,
+  }) async {
     final saved = await _read();
     final cleared = await _guard(_store.clear);
     final token = saved.token;
-    if (cleared.failureOrNull == null && token != null) await tellServer?.call('$_scheme$token');
+    if (cleared.failureOrNull == null && token != null) {
+      await tellServer?.call('$_scheme$token');
+    }
     return cleared;
   }
 
@@ -51,7 +55,10 @@ class Session {
   Future<({String? token, bool unreadable})> _read() async {
     try {
       final token = await _store.read();
-      return (token: token == null || token.isEmpty ? null : token, unreadable: false);
+      return (
+        token: token == null || token.isEmpty ? null : token,
+        unreadable: false,
+      );
     } catch (e, s) {
       _logger.e('토큰 저장소를 읽지 못해 세션을 끝내요', error: e, stackTrace: s);
       await _guard(_store.clear);
@@ -75,7 +82,9 @@ class Session {
       return const Result.success(null);
     } catch (e, s) {
       _logger.e('토큰 저장소에 접근하지 못했어요', error: e, stackTrace: s);
-      return const Result.failure(ErrorResult(reason: FailureReason.unknown, message: ''));
+      return const Result.failure(
+        ErrorResult(reason: FailureReason.unknown, message: ''),
+      );
     }
   }
 }
@@ -89,7 +98,10 @@ class _SessionInterceptor extends Interceptor {
   static const _scheme = Session._scheme;
 
   @override
-  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  Future<void> onRequest(
+    RequestOptions options,
+    RequestInterceptorHandler handler,
+  ) async {
     // 끝낼 세션을 직접 적은 요청(로그아웃)은 그대로 보낸다. 그 사이 새로 로그인했어도 새 토큰으로 덮지 않는다.
     if (options.headers.containsKey(_header)) return handler.next(options);
     final saved = await _session._read();
@@ -100,9 +112,14 @@ class _SessionInterceptor extends Interceptor {
   }
 
   @override
-  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
+  Future<void> onError(
+    DioException err,
+    ErrorInterceptorHandler handler,
+  ) async {
     final sent = err.requestOptions.headers[_header];
-    if (err.response?.statusCode == 401 && sent is String && sent.startsWith(_scheme)) {
+    if (err.response?.statusCode == 401 &&
+        sent is String &&
+        sent.startsWith(_scheme)) {
       await _session._rejected(sent.substring(_scheme.length));
     }
     handler.next(err);

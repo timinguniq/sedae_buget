@@ -92,7 +92,10 @@ void main() {
     final server = await _signedIn();
     server.faults.fail('GET', '/v1/me', times: 1);
     final c = fakeContainer(server: server);
-    await expectLater(c.read(authProvider.future), throwsA(isA<ResultFailure>()));
+    await expectLater(
+      c.read(authProvider.future),
+      throwsA(isA<ResultFailure>()),
+    );
 
     c.read(authProvider.notifier).retry();
 

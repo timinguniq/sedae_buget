@@ -5,14 +5,20 @@ import 'package:sedae_budget/entity/entity.dart';
 import 'package:sedae_budget/presentation/page/initial/app_status_dialog.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
-const _version = AppVersion(releaseVersion: 20, minimumAvailableVersion: 15, link: 'store-link');
+const _version = AppVersion(
+  releaseVersion: 20,
+  minimumAvailableVersion: 15,
+  link: 'store-link',
+);
 
-final _maintenance = AppUnderMaintenance(AppServiceStatus(
-  available: false,
-  noticeTitle: '점검 중이에요',
-  noticeContent: '곧 돌아올게요',
-  expectedTimeToBeAvailable: DateTime(2026, 9, 24, 23),
-));
+final _maintenance = AppUnderMaintenance(
+  AppServiceStatus(
+    available: false,
+    noticeTitle: '점검 중이에요',
+    noticeContent: '곧 돌아올게요',
+    expectedTimeToBeAvailable: DateTime(2026, 9, 24, 23),
+  ),
+);
 
 /// 앱처럼 GoRouter 위의 두 번째 화면에서 안내를 띄운다(닫을 때 아래 화면까지 닫히지 않는지 보려고).
 class _Harness {
@@ -20,28 +26,37 @@ class _Harness {
   final log = <String>[];
 
   Future<void> open(WidgetTester t, AppStatus status, {AppTheme? theme}) async {
-    final router = GoRouter(routes: [
-      GoRoute(
-        path: '/',
-        builder: (context, _) => TextButton(
-            onPressed: () => context.push('/second'), child: const Text('HOME')),
-      ),
-      GoRoute(
-        path: '/second',
-        builder: (context, _) => Scaffold(
-          body: TextButton(
-            onPressed: () async => result = await showAppStatusDialog(
-              context,
-              status,
-              exitApp: () => log.add('exit'),
-              openStore: (url) async => log.add('store $url'),
-            ),
-            child: const Text('SECOND'),
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (context, _) => TextButton(
+            onPressed: () => context.push('/second'),
+            child: const Text('HOME'),
           ),
         ),
+        GoRoute(
+          path: '/second',
+          builder: (context, _) => Scaffold(
+            body: TextButton(
+              onPressed: () async => result = await showAppStatusDialog(
+                context,
+                status,
+                exitApp: () => log.add('exit'),
+                openStore: (url) async => log.add('store $url'),
+              ),
+              child: const Text('SECOND'),
+            ),
+          ),
+        ),
+      ],
+    );
+    await t.pumpWidget(
+      MaterialApp.router(
+        routerConfig: router,
+        theme: materialTheme(theme ?? LightTheme()),
       ),
-    ]);
-    await t.pumpWidget(MaterialApp.router(routerConfig: router, theme: materialTheme(theme ?? LightTheme())));
+    );
     await t.tap(find.text('HOME'));
     await t.pumpAndSettle();
     await t.tap(find.text('SECOND'));
@@ -106,11 +121,22 @@ void main() {
 
   testWidgets('다크 모드에서 선택 업데이트의 닫기 버튼은 다크 토큰 색이다', (t) async {
     final h = _Harness();
-    await h.open(t, const AppUpdateAvailable(_version, forced: false), theme: DarkTheme());
+    await h.open(
+      t,
+      const AppUpdateAvailable(_version, forced: false),
+      theme: DarkTheme(),
+    );
 
     final close = t.widget<ElevatedButton>(
-        find.ancestor(of: find.text('닫기'), matching: find.byType(ElevatedButton)));
-    expect(close.style!.backgroundColor!.resolve({}), Palette.darkSurfaceSunken);
-    expect(t.widget<Text>(find.text('닫기')).style!.color, Palette.darkTextSecondary);
+      find.ancestor(of: find.text('닫기'), matching: find.byType(ElevatedButton)),
+    );
+    expect(
+      close.style!.backgroundColor!.resolve({}),
+      Palette.darkSurfaceSunken,
+    );
+    expect(
+      t.widget<Text>(find.text('닫기')).style!.color,
+      Palette.darkTextSecondary,
+    );
   });
 }

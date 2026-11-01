@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/budget/widget/category_row.dart';
+import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
 
 class CategoryAnalysisPage extends ConsumerStatefulWidget {
   const CategoryAnalysisPage({super.key});
 
   @override
-  ConsumerState<CategoryAnalysisPage> createState() => _CategoryAnalysisPageState();
+  ConsumerState<CategoryAnalysisPage> createState() =>
+      _CategoryAnalysisPageState();
 }
 
 class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
@@ -21,111 +22,229 @@ class _CategoryAnalysisPageState extends ConsumerState<CategoryAnalysisPage> {
     final month = ref.watch(selectedMonthProvider);
     final overview = ref.watch(monthOverviewProvider);
     return DefaultLayout(
-      child: Column(children: [
-        _Header(
-          month: month,
-          // 2020년 1월보다 앞으로, 이번 달보다 뒤로는 가지 않는다.
-          onPrev: ref.read(selectedMonthProvider.notifier).canGoPrevious
-              ? () => ref.read(selectedMonthProvider.notifier).prev()
-              : null,
-          onNext: ref.read(selectedMonthProvider.notifier).canGoNext
-              ? () => ref.read(selectedMonthProvider.notifier).next()
-              : null,
-        ),
-        Expanded(child: overview.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => LoadErrorView(error: e),
-        data: (o) {
-          final breakdown = o.month.breakdown;
-          if (breakdown.isEmpty) {
-            return Center(child: Text('지출이 없어요',
-                style: context.typo.body2W400.copyWith(color: context.color.label.alternative)));
-          }
-          // 금액이 큰 6줄과 나머지를 묶은 '그 외' 줄(기본 분류 '기타'와 구별한다). 또래 비교는 기본 분류 줄에만 붙는다.
-          final rows = o.analysisRows(6);
-          // 첫 조각은 코랄, 나머지는 밝기별 램프(다크는 darkRamp).
-          final ramp = context.theme.brightness == Brightness.dark ? Palette.darkRamp : Palette.neutralRamp;
-          final colors = List<Color>.generate(rows.length,
-              (i) => i == 0 ? context.color.primary.normal : ramp[(i - 1) % ramp.length]);
-          final total = o.month.expense;
-          return ListView(padding: const EdgeInsets.fromLTRB(22, 6, 22, 20), children: [
-            Center(child: SizedBox(
-              width: 170, height: 170,
-              child: Stack(alignment: Alignment.center, children: [
-                CategoryDonut(values: [for (final r in rows) r.amount], colors: colors, size: 170, stroke: 36),
-                Column(mainAxisSize: MainAxisSize.min, children: [
-                  Text('${ref.watch(viewedMonthNameProvider)} 총지출',
-                      style: context.typo.caption2W600.copyWith(fontSize: 11, color: context.color.label.assistive)),
-                  Text(WonText.short.of(total),
-                      style: context.typo.amountDisplaySmall.copyWith(fontSize: 23, color: context.color.label.normal)),
-                ]),
-              ]),
-            )),
-            const SizedBox(height: 16),
-            // 또래 비교 토글 (디자인 42×24 코랄 토글 — 테마 Switch를 축소). 또래 통계가 없으면 뺀다.
-            if (o.standing is! PeerUnavailable) ...[
-              Row(children: [
-                Text('또래 평균과 비교',
-                    style: context.typo.caption1W600.copyWith(fontSize: 12.5, color: context.color.label.normal)),
-                const Spacer(),
-                SizedBox(height: 24, child: FittedBox(
-                  child: Switch(value: _showPeer, onChanged: (v) => setState(() => _showPeer = v)))),
-              ]),
-              const SizedBox(height: 13),
-            ],
-            // 카테고리 개수 + 편집 진입(디자인: 분석 화면 → 카테고리 편집)
-            Row(children: [
-              Text('카테고리 ${breakdown.length}개',
-                  style: context.typo.caption2W600.copyWith(fontSize: 11.5, color: context.color.label.assistive)),
-              const Spacer(),
-              GestureDetector(
-                key: const Key('category-manage-link'),
-                onTap: () => context.push(RoutePath.categoryManage.path, extra: true),
-                child: Text('편집',
-                    style: context.typo.caption2W600.copyWith(fontSize: 11.5, color: context.color.primary.normal)),
-              ),
-            ]),
-            const SizedBox(height: 1),
-            for (final (i, r) in rows.indexed)
-              CategoryRow(
-                label: r.item?.label ?? '그 외', amount: r.amount,
-                color: colors[i], share: r.share,
-                peer: _showPeer ? r.peer : null),
-          ]);
-        },
-        )),
-      ]),
+      child: Column(
+        children: [
+          _Header(
+            month: month,
+            // 2020년 1월보다 앞으로, 이번 달보다 뒤로는 가지 않는다.
+            onPrev: ref.read(selectedMonthProvider.notifier).canGoPrevious
+                ? () => ref.read(selectedMonthProvider.notifier).prev()
+                : null,
+            onNext: ref.read(selectedMonthProvider.notifier).canGoNext
+                ? () => ref.read(selectedMonthProvider.notifier).next()
+                : null,
+          ),
+          Expanded(
+            child: overview.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (e, _) => LoadErrorView(error: e),
+              data: (o) {
+                final breakdown = o.month.breakdown;
+                if (breakdown.isEmpty) {
+                  return Center(
+                    child: Text(
+                      '지출이 없어요',
+                      style: context.typo.body2W400.copyWith(
+                        color: context.color.label.alternative,
+                      ),
+                    ),
+                  );
+                }
+                // 금액이 큰 6줄과 나머지를 묶은 '그 외' 줄(기본 분류 '기타'와 구별한다). 또래 비교는 기본 분류 줄에만 붙는다.
+                final rows = o.analysisRows(6);
+                // 첫 조각은 코랄, 나머지는 밝기별 램프(다크는 darkRamp).
+                final ramp = context.theme.brightness == Brightness.dark
+                    ? Palette.darkRamp
+                    : Palette.neutralRamp;
+                final colors = List<Color>.generate(
+                  rows.length,
+                  (i) => i == 0
+                      ? context.color.primary.normal
+                      : ramp[(i - 1) % ramp.length],
+                );
+                final total = o.month.expense;
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(22, 6, 22, 20),
+                  children: [
+                    Center(
+                      child: SizedBox(
+                        width: 170,
+                        height: 170,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            CategoryDonut(
+                              values: [for (final r in rows) r.amount],
+                              colors: colors,
+                              size: 170,
+                              stroke: 36,
+                            ),
+                            Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '${ref.watch(viewedMonthNameProvider)} 총지출',
+                                  style: context.typo.caption2W600.copyWith(
+                                    fontSize: 11,
+                                    color: context.color.label.assistive,
+                                  ),
+                                ),
+                                Text(
+                                  WonText.short.of(total),
+                                  style: context.typo.amountDisplaySmall
+                                      .copyWith(
+                                        fontSize: 23,
+                                        color: context.color.label.normal,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // 또래 비교 토글 (디자인 42×24 코랄 토글 — 테마 Switch를 축소). 또래 통계가 없으면 뺀다.
+                    if (o.standing is! PeerUnavailable) ...[
+                      Row(
+                        children: [
+                          Text(
+                            '또래 평균과 비교',
+                            style: context.typo.caption1W600.copyWith(
+                              fontSize: 12.5,
+                              color: context.color.label.normal,
+                            ),
+                          ),
+                          const Spacer(),
+                          SizedBox(
+                            height: 24,
+                            child: FittedBox(
+                              child: Switch(
+                                value: _showPeer,
+                                onChanged: (v) => setState(() => _showPeer = v),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 13),
+                    ],
+                    // 카테고리 개수 + 편집 진입(디자인: 분석 화면 → 카테고리 편집)
+                    Row(
+                      children: [
+                        Text(
+                          '카테고리 ${breakdown.length}개',
+                          style: context.typo.caption2W600.copyWith(
+                            fontSize: 11.5,
+                            color: context.color.label.assistive,
+                          ),
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          key: const Key('category-manage-link'),
+                          onTap: () => context.push(
+                            RoutePath.categoryManage.path,
+                            extra: true,
+                          ),
+                          child: Text(
+                            '편집',
+                            style: context.typo.caption2W600.copyWith(
+                              fontSize: 11.5,
+                              color: context.color.primary.normal,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 1),
+                    for (final (i, r) in rows.indexed)
+                      CategoryRow(
+                        label: r.item?.label ?? '그 외',
+                        amount: r.amount,
+                        color: colors[i],
+                        share: r.share,
+                        peer: _showPeer ? r.peer : null,
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
 /// ‹ 원형 버튼 + "카테고리 분석" + `‹ YYYY.MM ›` 월 네비게이터.
 class _Header extends StatelessWidget {
-  const _Header({required this.month, required this.onPrev, required this.onNext});
+  const _Header({
+    required this.month,
+    required this.onPrev,
+    required this.onNext,
+  });
   final YearMonth month;
+
   /// 이전 달로 갈 수 없으면(보고 있는 달이 하한) null.
   final VoidCallback? onPrev;
+
   /// 다음 달로 갈 수 없으면(보고 있는 달이 이번 달) null.
   final VoidCallback? onNext;
 
   @override
   Widget build(BuildContext context) {
-    final arrow = context.typo.caption1W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.disable);
+    final arrow = context.typo.caption1W600.copyWith(
+      fontWeight: context.typo.bold,
+      color: context.color.label.disable,
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(22, 4, 22, 14),
-      child: Row(children: [
-        RoundIconButton(icon: Icons.chevron_left, onTap: context.popOrHome),
-        Expanded(child: Center(child: Text('카테고리 분석',
-            style: context.typo.body1W600.copyWith(fontWeight: context.typo.extraBold, color: context.color.label.normal)))),
-        Row(mainAxisSize: MainAxisSize.min, children: [
-          GestureDetector(key: const Key('month-prev'), onTap: onPrev, behavior: HitTestBehavior.opaque,
-              child: Padding(padding: const EdgeInsets.all(4), child: Text('‹', style: arrow))),
-          Text(month.dottedName,
-              style: context.typo.caption1W600.copyWith(fontWeight: context.typo.bold, color: context.color.label.normal)),
-          GestureDetector(key: const Key('month-next'), onTap: onNext, behavior: HitTestBehavior.opaque,
-              child: Padding(padding: const EdgeInsets.all(4), child: Text('›', style: arrow))),
-        ]),
-      ]),
+      child: Row(
+        children: [
+          RoundIconButton(icon: Icons.chevron_left, onTap: context.popOrHome),
+          Expanded(
+            child: Center(
+              child: Text(
+                '카테고리 분석',
+                style: context.typo.body1W600.copyWith(
+                  fontWeight: context.typo.extraBold,
+                  color: context.color.label.normal,
+                ),
+              ),
+            ),
+          ),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                key: const Key('month-prev'),
+                onTap: onPrev,
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Text('‹', style: arrow),
+                ),
+              ),
+              Text(
+                month.dottedName,
+                style: context.typo.caption1W600.copyWith(
+                  fontWeight: context.typo.bold,
+                  color: context.color.label.normal,
+                ),
+              ),
+              GestureDetector(
+                key: const Key('month-next'),
+                onTap: onNext,
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Text('›', style: arrow),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

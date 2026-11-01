@@ -3,25 +3,30 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/page/legal/legal.page.dart';
 import 'package:sedae_budget/presentation/page/legal/legal_content.dart';
+import 'package:sedae_budget/presentation/page/login/login.view_model.dart';
 import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/theme/theme.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import '../helper/fakes.dart';
+import '../../helper/fakes.dart';
 
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     PackageInfo.setMockInitialValues(
-      appName: 'sedae', packageName: 'com.sedae.budget',
-      version: '1.0.0', buildNumber: '1', buildSignature: '');
+      appName: 'sedae',
+      packageName: 'com.sedae.budget',
+      version: '1.0.0',
+      buildNumber: '1',
+      buildSignature: '',
+    );
   });
 
-  Widget app(ProviderContainer container) => fakeScope(container, const MaterialApp(home: SettingPage()));
+  Widget app(ProviderContainer container) =>
+      fakeScope(container, const MaterialApp(home: SettingPage()));
 
   testWidgets('renders and dark chip switches theme mode', (tester) async {
     final store = await fakeThemeModeStore();
@@ -46,27 +51,44 @@ void main() {
 
   testWidgets('앱 버전을 읽지 못하면 ...을 보인다', (tester) async {
     PackageInfo.setMockInitialValues(
-      appName: 'sedae', packageName: 'com.sedae.budget',
-      version: '', buildNumber: '1', buildSignature: '');
-    await tester.pumpWidget(app(fakeContainer(themeModeStore: await fakeThemeModeStore())));
+      appName: 'sedae',
+      packageName: 'com.sedae.budget',
+      version: '',
+      buildNumber: '1',
+      buildSignature: '',
+    );
+    await tester.pumpWidget(
+      app(fakeContainer(themeModeStore: await fakeThemeModeStore())),
+    );
     await tester.settle();
 
     expect(find.text('...'), findsOneWidget);
   });
 
-  testWidgets('이용약관 · 개인정보를 누르면 약관 화면이 이용약관 탭으로 열리고, 뒤로 가면 설정이다', (tester) async {
+  testWidgets('이용약관 · 개인정보를 누르면 약관 화면이 이용약관 탭으로 열리고, 뒤로 가면 설정이다', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
-    final router = GoRouter(routes: [
-      GoRoute(path: '/', builder: (_, _) => const SettingPage()),
-      // 설정이 탭을 명시하지 않으면 개인정보처리방침으로 열리게 해, 이용약관 탭이 설정의 선택임을 확인한다.
-      GoRoute(path: RoutePath.terms.path, builder: (_, state) =>
-          LegalPage(initialTab: state.extra as LegalTab? ?? LegalTab.privacy)),
-    ]);
-    await tester.pumpWidget(fakeScope(
-      fakeContainer(themeModeStore: await fakeThemeModeStore()),
-      MaterialApp.router(routerConfig: router)));
+    final router = GoRouter(
+      routes: [
+        GoRoute(path: '/', builder: (_, _) => const SettingPage()),
+        // 설정이 탭을 명시하지 않으면 개인정보처리방침으로 열리게 해, 이용약관 탭이 설정의 선택임을 확인한다.
+        GoRoute(
+          path: RoutePath.terms.path,
+          builder: (_, state) => LegalPage(
+            initialTab: state.extra as LegalTab? ?? LegalTab.privacy,
+          ),
+        ),
+      ],
+    );
+    await tester.pumpWidget(
+      fakeScope(
+        fakeContainer(themeModeStore: await fakeThemeModeStore()),
+        MaterialApp.router(routerConfig: router),
+      ),
+    );
     await tester.settle();
 
     await tester.tap(find.text('이용약관 · 개인정보'));
@@ -102,7 +124,10 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
     final server = await tester.seedServer(provider: AuthProvider.naver);
-    final container = fakeContainer(server: server, themeModeStore: await fakeThemeModeStore());
+    final container = fakeContainer(
+      server: server,
+      themeModeStore: await fakeThemeModeStore(),
+    );
     await tester.pumpWidget(app(container));
     await tester.settle();
     server.tokens.failClear = true;

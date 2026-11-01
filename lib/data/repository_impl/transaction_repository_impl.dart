@@ -13,22 +13,26 @@ class TransactionRepositoryImpl implements TransactionRepository {
 
   @override
   Future<Result<Transaction>> upsert(Transaction tx) => guardApi(
-        () async => (await _api.put(tx.id, TransactionBodyDto.fromEntity(tx))).toEntity(),
-      );
+    () async =>
+        (await _api.put(tx.id, TransactionBodyDto.fromEntity(tx))).toEntity(),
+  );
 
   @override
   Future<Result<Transaction>> delete(Transaction tx) => guardApi(
-        () async {
-          await _api.delete(tx.id);
-          return tx;
-        },
-        recover: (f) => f.reason == FailureReason.notFound ? Result.success(tx) : null,
-      );
+    () async {
+      await _api.delete(tx.id);
+      return tx;
+    },
+    recover: (f) =>
+        f.reason == FailureReason.notFound ? Result.success(tx) : null,
+  );
 
   @override
-  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) => guardApi(
+  Future<Result<List<Transaction>>> getRange(DateTime start, DateTime end) =>
+      guardApi(
         () async => [
-          for (final dto in await _api.list(utcQuery(start), utcQuery(end))) dto.toEntity(),
+          for (final dto in await _api.list(utcQuery(start), utcQuery(end)))
+            dto.toEntity(),
         ],
       );
 }

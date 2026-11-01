@@ -58,6 +58,9 @@ abstract class StubPeerData {
   // 0.45*mean ~ 1.75*mean 선형 분포(결정적, 오름차순).
   static List<int> _spread(int mean, int count) {
     final lo = (mean * 0.45).round(), hi = (mean * 1.75).round();
-    return List.generate(count, (i) => lo + ((hi - lo) * i / (count - 1)).round());
+    return List.generate(
+      count,
+      (i) => lo + ((hi - lo) * i / (count - 1)).round(),
+    );
   }
 }

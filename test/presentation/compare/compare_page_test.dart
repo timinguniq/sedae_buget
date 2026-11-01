@@ -2,34 +2,54 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'package:sedae_budget/entity/entity.dart';
-import 'package:sedae_budget/presentation/presentation.dart';
 import 'package:sedae_budget/presentation/page/compare/compare.page.dart';
+import 'package:sedae_budget/presentation/presentation.dart';
 
 import '../../helper/fakes.dart';
 
 /// [month]의 지출: 식료품 50만·교통 20만·외식 10만.
 List<Transaction> _spending(DateTime month) => [
-      Transaction.create(amount: 500000, base: BudgetCategory.groceries, date: DateTime(month.year, month.month, 5),
-          type: TransactionType.expense, memo: '식료품'),
-      Transaction.create(amount: 200000, base: BudgetCategory.transport, date: DateTime(month.year, month.month, 10),
-          type: TransactionType.expense, memo: '교통'),
-      Transaction.create(amount: 100000, base: BudgetCategory.diningOut, date: DateTime(month.year, month.month, 15),
-          type: TransactionType.expense, memo: '외식'),
-    ];
+  Transaction.create(
+    amount: 500000,
+    base: BudgetCategory.groceries,
+    date: DateTime(month.year, month.month, 5),
+    type: TransactionType.expense,
+    memo: '식료품',
+  ),
+  Transaction.create(
+    amount: 200000,
+    base: BudgetCategory.transport,
+    date: DateTime(month.year, month.month, 10),
+    type: TransactionType.expense,
+    memo: '교통',
+  ),
+  Transaction.create(
+    amount: 100000,
+    base: BudgetCategory.diningOut,
+    date: DateTime(month.year, month.month, 15),
+    type: TransactionType.expense,
+    memo: '외식',
+  ),
+];
 
 final _now = DateTime.now();
 final _thisMonth = DateTime(_now.year, _now.month);
 
 /// 이달 지출(식료품 50만·교통 20만·외식 10만, 합계 80만)과 견줄 또래 통계.
-PeerStats _peer({int avg = 1000000, List<int> samples = const [700000, 900000, 1200000]}) =>
-    PeerStats(
-      ageGroup: AgeGroup.thirties,
-      avgMonthlyExpense: avg,
-      avgSavingsRate: 0.2,
-      // 외식(11)은 또래 평균이 없다.
-      avgByCategory: {BudgetCategory.groceries: 400000, BudgetCategory.transport: 250000},
-      samples: samples,
-    );
+PeerStats _peer({
+  int avg = 1000000,
+  List<int> samples = const [700000, 900000, 1200000],
+}) => PeerStats(
+  ageGroup: AgeGroup.thirties,
+  avgMonthlyExpense: avg,
+  avgSavingsRate: 0.2,
+  // 외식(11)은 또래 평균이 없다.
+  avgByCategory: {
+    BudgetCategory.groceries: 400000,
+    BudgetCategory.transport: 250000,
+  },
+  samples: samples,
+);
 
 /// 비교 화면을 띄운다. 서버는 [transactions](기본은 이달 지출)·[customs]를 심고 또래 통계는 [peer]로 답한다.
 Future<void> _pumpCompare(
@@ -55,7 +75,9 @@ Future<void> _pumpCompare(
   faults?.call(server.faults);
   final container = fakeContainer(server: server);
   if (lastMonth) container.read(selectedMonthProvider.notifier).prev();
-  await tester.pumpWidget(fakeScope(container, const MaterialApp(home: ComparePage())));
+  await tester.pumpWidget(
+    fakeScope(container, const MaterialApp(home: ComparePage())),
+  );
   await tester.settle();
 }
 
@@ -87,7 +109,10 @@ void main() {
   testWidgets('지난 달을 보면 지출 비교 제목에 그 달 이름을 쓴다', (tester) async {
     await _pumpCompare(tester, peer: _peer(), lastMonth: true);
     final now = DateTime.now();
-    expect(find.text('${DateTime(now.year, now.month - 1).month}월 지출 비교'), findsOneWidget);
+    expect(
+      find.text('${DateTime(now.year, now.month - 1).month}월 지출 비교'),
+      findsOneWidget,
+    );
     expect(find.text('이번 달 지출 비교'), findsNothing);
   });
 
@@ -99,24 +124,30 @@ void main() {
     expect(find.text('항목별 차이'), findsOneWidget);
   });
 
-  testWidgets('compare page renders rank headline, versus cards and battle rows', (tester) async {
-    // 프로필이 없으면 30대 또래(Stub 고정표)와 견준다.
-    await _pumpCompare(tester, height: 844);
+  testWidgets(
+    'compare page renders rank headline, versus cards and battle rows',
+    (tester) async {
+      // 프로필이 없으면 30대 또래(Stub 고정표)와 견준다.
+      await _pumpCompare(tester, height: 844);
 
-    expect(find.text('또래 비교'), findsOneWidget);
-    expect(find.text(AgeGroup.thirties.label), findsOneWidget); // 나이대 칩
-    expect(find.text('또래'), findsWidgets); // versus bar labels
-    expect(find.text('나'), findsWidgets);   // versus bar labels + histogram marker
-    expect(find.textContaining('등'), findsWidgets); // rank headline
-    // 디자인: 배지는 '상위 N% · 많이/적게 쓰는 편' 대신 '많이 쓰는 쪽 N%' 하나다.
-    expect(find.textContaining(RegExp(r'^많이 쓰는 쪽 \d+%$')), findsOneWidget);
-    expect(find.textContaining('쓰는 편'), findsNothing);
-    expect(find.text('이번 달 지출 비교'), findsOneWidget);
-    expect(find.text('소득 대비 저축률'), findsOneWidget);
-    expect(find.text('항목별 차이'), findsOneWidget);
-    expect(find.textContaining('끌어올려요'), findsOneWidget); // 인사이트 배너
-    expect(find.text('또래 통계는 예시 데이터예요'), findsNothing);
-  });
+      expect(find.text('또래 비교'), findsOneWidget);
+      expect(find.text(AgeGroup.thirties.label), findsOneWidget); // 나이대 칩
+      expect(find.text('또래'), findsWidgets); // versus bar labels
+      expect(
+        find.text('나'),
+        findsWidgets,
+      ); // versus bar labels + histogram marker
+      expect(find.textContaining('등'), findsWidgets); // rank headline
+      // 디자인: 배지는 '상위 N% · 많이/적게 쓰는 편' 대신 '많이 쓰는 쪽 N%' 하나다.
+      expect(find.textContaining(RegExp(r'^많이 쓰는 쪽 \d+%$')), findsOneWidget);
+      expect(find.textContaining('쓰는 편'), findsNothing);
+      expect(find.text('이번 달 지출 비교'), findsOneWidget);
+      expect(find.text('소득 대비 저축률'), findsOneWidget);
+      expect(find.text('항목별 차이'), findsOneWidget);
+      expect(find.textContaining('끌어올려요'), findsOneWidget); // 인사이트 배너
+      expect(find.text('또래 통계는 예시 데이터예요'), findsNothing);
+    },
+  );
 
   // 프로필 월소득도 이달 수입도 없으면 저축률을 계산할 수 없다(0%가 아니다).
   testWidgets('소득이 없으면 내 저축률은 — 로 보인다', (tester) async {
@@ -128,8 +159,11 @@ void main() {
 
   // 비교 화면은 또래 통계가 본질이라 실패하면 화면 전체가 안내로 바뀐다.
   testWidgets('또래 통계를 못 읽으면 안내와 다시 시도를 보여주고, 다시 시도하면 읽는다', (tester) async {
-    await _pumpCompare(tester,
-        faults: (f) => f.fail('GET', '/v1/peer', reason: FailureReason.server, times: 1));
+    await _pumpCompare(
+      tester,
+      faults: (f) =>
+          f.fail('GET', '/v1/peer', reason: FailureReason.server, times: 1),
+    );
 
     expect(find.text('또래 통계를 불러오지 못했어요'), findsOneWidget);
     expect(find.text('항목별 차이'), findsNothing);
@@ -148,10 +182,17 @@ void main() {
     await _pumpCompare(
       tester,
       height: 844,
-      customs: const [CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc)],
+      customs: const [
+        CustomCategory(id: 'c1', name: '반려식물', base: BudgetCategory.etc),
+      ],
       transactions: [
-        Transaction.create(amount: 300000, base: BudgetCategory.etc, date: DateTime(_now.year, _now.month, 5),
-            type: TransactionType.expense, customCategoryId: 'c1'),
+        Transaction.create(
+          amount: 300000,
+          base: BudgetCategory.etc,
+          date: DateTime(_now.year, _now.month, 5),
+          type: TransactionType.expense,
+          customCategoryId: 'c1',
+        ),
       ],
     );
 
